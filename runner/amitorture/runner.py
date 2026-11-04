@@ -361,7 +361,7 @@ def _media_options(opts, ctx, entry, media_dir):
             break
     if fn is None:
         return {}, {"available": False, "error": "media.py has none of prepare/make_media/config_options/config_lines"}
-    params = dict(opts.params, **entry.get("params", {}))
+    params = merge_params(opts.params, entry.get("params", {}))
     have = {"entry": entry, "options": entry["options"], "media_dir": media_dir, "workdir": media_dir,
             "dir": media_dir, "outdir": media_dir, "seed": int(params.get("seed", 1) or 1), "params": params}
     try:
@@ -435,6 +435,23 @@ def _add_flag(params, name):
     return params
 
 
+def _mask(v):
+    return 0xFFFFFFFFFFFFFFFF if str(v).lower() == "all" else int(str(v), 0)
+
+
+def merge_params(run, entry):
+    """The run's parameters with the entry's on top, except that two module
+    masks are ANDed: a board entry's own mask (matrix.py) and --param
+    modules=... (or narrowing's one-module mask) both apply."""
+    p = dict(run, **entry)
+    if "modules" in run and "modules" in entry:
+        try:
+            p["modules"] = f"{_mask(run['modules']) & _mask(entry['modules']):#x}"
+        except ValueError:
+            pass
+    return p
+
+
 def _with_net_flag(params, options):
     if any(str(options.get(k, "")).strip().lower() == "slirp" for k in _EMU_NET_KEYS):
         _add_flag(params, "net")
@@ -456,6 +473,25 @@ def base_result(entry):
             "machine": {k: entry.get(k) for k in ("cpu", "fpu", "chipset", "video", "model", "core")},
             "options": entry["options"], "overrides": entry.get("overrides", {}), "params": entry.get("params", {}),
             "narrow": entry.get("narrow"), "status": None, "reason": None}
+
+
+# Disks whose modules test the floppy hardware itself and need real drive
+# speed: chip (paula: raw disk DMA, DSKSYNC, motor/ready timing) and cpux
+# (dmacontention: disk DMA under load). Turbo (floppy_speed=0, disk.cpp's
+# turbo DMA path) breaks raw disk-DMA timing, but loads the payload through
+# trackdisk in a fraction of the time (about 9 s of a disk's ~12 s start).
+REAL_SPEED_GROUPS = ("chip", "cpux")
+
+
+def disk_floppy_speed(dname, entry):
+    """floppy_speed for one disk launch: "0" (turbo) for a set disk that does
+    not test the floppy hardware, None (the entry's own setting, real speed)
+    otherwise. An explicit floppy_speed (matrix entry or --set) always wins;
+    narrowing's paula variant still forces 100 through extra_options."""
+    if not dname or "floppy_speed" in (entry.get("options") or {}):
+        return None
+    group = dname.split("-", 1)[1] if "-" in dname else dname
+    return None if group in REAL_SPEED_GROUPS else "0"
 
 
 def safe_id(rid):
@@ -519,7 +555,7 @@ def _run_disk(opts, ctx, entry, binary=None, extra_options=None, disk=None):
         # board media the entry needs (e.g. a PCMCIA SRAM card image), zero-filled
         with open(os.path.join(media_dir, mf["name"]), "wb") as fh:
             fh.truncate(int(mf["size"]))
-    params = _with_entry_flags(dict(opts.params, **entry.get("params", {})), entry)
+    params = _with_entry_flags(merge_params(opts.params, entry.get("params", {})), entry)
     # Disk
     if opts.no_disk:
         floppy = ""
@@ -554,6 +590,10 @@ def _run_disk(opts, ctx, entry, binary=None, extra_options=None, disk=None):
     extra = dict(media_opts)
     extra.update(cd_opts)
     extra.update(board_opts)
+    fs = disk_floppy_speed(dname, entry)
+    if fs is not None:
+        extra["floppy_speed"] = fs
+        res["floppy_speed"] = fs
     if extra_options:
         extra.update(extra_options)
     cfg_entry = dict(entry, options={k: (v.replace("{media}", media_dir) if isinstance(v, str) else v)

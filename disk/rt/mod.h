@@ -214,8 +214,9 @@ void  amt_srand(ULONG seed);
  * only for things that cancel out (or ignore it). */
 long amt_hot(ULONG (*fn)(ULONG iter), ULONG reps, ULONG *first, ULONG *bad);
 
-/* Standard repetition count: 1000 in full mode, 100 in quick. Enough for
- * any JIT to compile a block (Amiberry compiles after a few passes). */
+/* Standard repetition count: 100 in full mode, 20 in quick. Amiberry's JIT
+ * translates a block after 4 executions, so 100 is a 25x margin. A module
+ * whose hot pass walks its inputs (cpu_basic) sizes it by coverage. */
 ULONG amt_hot_reps(void);
 
 #endif

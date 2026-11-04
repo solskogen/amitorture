@@ -472,5 +472,47 @@ class Show(unittest.TestCase):
         self.assertEqual(env["SDL_AUDIO_DRIVER"], "dummy")
 
 
+class SpeedTrims(unittest.TestCase):
+    """Board-entry module masks and the per-disk floppy speed."""
+
+    def test_module_ids_match_the_sources(self):
+        import glob
+        import re
+        from amitorture import matrix
+        root = os.path.join(os.path.dirname(__file__), "..", "..", "disk", "modules")
+        found = {}
+        for f in glob.glob(os.path.join(root, "*.c")):
+            for m in re.finditer(r"^AMT_MODULE\(\s*(\w+)\s*,\s*(\d+)\s*,", open(f).read(), re.M):
+                found[m.group(1)] = int(m.group(2))
+        self.assertEqual(found, matrix.MODULE_IDS)
+
+    def test_masks_are_anded(self):
+        from amitorture.runner import merge_params
+        p = merge_params({"modules": "0x1000", "seed": "1"}, {"modules": "0x1010000"})
+        self.assertEqual(p["modules"], "0x0")                      # narrowing to a module outside the entry
+        p = merge_params({"modules": "all"}, {"modules": "0x1010000"})
+        self.assertEqual(p["modules"], "0x1010000")
+        self.assertEqual(merge_params({"seed": "1"}, {"modules": "0x10"})["modules"], "0x10")
+
+    def test_board_entries_masked_but_one_per_bus_full(self):
+        from amitorture import matrix
+        es = {e["id"]: e for e in matrix.expand("standard")}
+        rtg = es["a4000-rtg-a2410"]
+        self.assertEqual(rtg["disk_groups"], ["exp"])
+        self.assertEqual(int(rtg["params"]["modules"], 16), (1 << 16) | (1 << 24))
+        self.assertNotIn("modules", es["a4000-rtg-cv64z3"].get("params", {}))
+        zz = es["a4000-rtg-zz9000z2"]
+        self.assertTrue(int(zz["params"]["modules"], 16) & (1 << 18))      # network too
+        self.assertIn("cpux", es["a4000-z2z3-rtg"]["disk_groups"])          # the memory modules
+
+    def test_floppy_speed_per_disk(self):
+        from amitorture.runner import disk_floppy_speed as f
+        self.assertEqual(f("1-core", {"options": {}}), "0")
+        self.assertIsNone(f("4-chip", {"options": {}}))       # paula: raw disk DMA
+        self.assertIsNone(f("6-cpux", {"options": {}}))       # dmacontention: disk DMA
+        self.assertIsNone(f("5-exp", {"options": {"floppy_speed": "100"}}))   # an explicit setting wins
+        self.assertIsNone(f(None, {"options": {}}))           # a single ADF: unknown modules
+
+
 if __name__ == "__main__":
     unittest.main()

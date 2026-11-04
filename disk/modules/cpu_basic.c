@@ -13,7 +13,7 @@
  * masked CCR, the window bytes and the stack pointer with the expectation.
  *
  * A case is one instruction family. It runs every vector once (verification
- * pass), then amt_hot() runs vector (i*7919 mod n) for i = 0..amt_hot_reps() and
+ * pass), then amt_hot() runs vector (i*7919 mod n) for i = 0..hot_reps() and
  * returns 0 for a matching vector, so a divergence after the snippets have
  * been executed many times (JIT-compiled) is reported with its iteration.
  */
@@ -498,6 +498,19 @@ static int vec_at(ULONG k, const struct cb_tpl **tp, UWORD *vi)
     return 0;
 }
 
+/* Here the hot pass is coverage, not repetition: every vector of the case
+ * once more after its snippet is warm (JIT-translated), up to 1000 vectors
+ * as before, plus a margin past the translation threshold. A small case no
+ * longer runs 1000 iterations over the same few vectors. */
+static ULONG hot_reps(void)
+{
+    ULONG n = ccase_total < 1000UL ? ccase_total : 1000UL;
+    ULONG r = n + 16;
+    if (AMT_QUICK() || r < amt_hot_reps())
+        r = amt_hot_reps();
+    return r;
+}
+
 static ULONG hot_fn(ULONG i)
 {
     const struct cb_tpl *t;
@@ -553,7 +566,7 @@ static void case_body(void)
     }
     /* hot loop: vector (i*7919 mod n), 0 = match */
     in_hot = 1;
-    cs_hr = amt_hot(hot_fn, amt_hot_reps(), &cs_first, &cs_bad);
+    cs_hr = amt_hot(hot_fn, hot_reps(), &cs_first, &cs_bad);
     in_hot = 0;
 }
 

@@ -416,6 +416,41 @@ STANDARD = [
 # Option names: src/cfgfile.cpp, board tables src/gfxboard.cpp and
 # src/expansion.cpp.
 HW_DISKS = ["core", "exp"]
+# Module ids (CONTRACT.md §10, the AMT_MODULE declarations; a unit test keeps
+# this in step) for the module masks of the board entries.
+MODULE_IDS = {"takeover": 0, "rt": 1, "cpu_basic": 2, "flags": 3, "exceptions": 4, "smc": 5, "interrupts": 6,
+              "cia": 7, "blitter": 8, "fpu": 9, "timing": 10, "devio": 11, "display": 12, "copper": 13,
+              "paula": 14, "input": 15, "rtg": 16, "expsound": 17, "network": 18, "misc_hw": 19, "mmu": 20,
+              "memory": 21, "dispatch": 22, "dmacontention": 23, "misc_hw_os": 24, "memory_os": 25}
+
+
+def module_mask(names):
+    """run-parameter module mask (mkadf modules=) for these module names"""
+    m = 0
+    for n in names:
+        m |= 1 << MODULE_IDS[n]
+    return f"{m:#x}"
+
+
+# Board entries run only what tests the board: the exp disk with the board's
+# own module plus misc_hw_os (the board's autoconfig data, ~0 s). Measured on
+# an A4000 RTG entry: core disk ~16 s, devio ~58 s and misc_hw ~8 s of the exp
+# disk, rtg 0.5 s, plus ~13 s per disk launch; the core disk, devio and
+# misc_hw gave the same results on every board entry. One entry per bus keeps
+# both disks with every module (FULL_BOARD_ENTRIES), so a board that
+# disturbs the rest of the machine (its interrupt line, the memory map) is
+# still seen.
+FULL_BOARD_ENTRIES = {"a4000-rtg-picassoii", "a4000-rtg-cv64z3", "a4000-rtg-s3trio64pci",
+                      "a4000-snd-toccata", "a1200-snd-prelude1200", "a4000-snd-uaesndz3", "a4000-snd-es1370",
+                      "a4000-net-a2065"}
+
+
+def _board_only(e, modules):
+    if e["id"] in FULL_BOARD_ENTRIES:
+        return e
+    e["disk_groups"] = ["exp"]
+    e.setdefault("params", {})["modules"] = module_mask(list(modules) + ["misc_hw_os"])
+    return e
 PIV_ROM = {"ids": [91], "what": "Picasso IV flash ROM (picasso_iv_flash.rom)", "option": "picassoiv_rom_file"}
 PCI_BRIDGE = {"prometheus_rom_file": ":ENABLED"}      # Matay Prometheus, Zorro III PCI bridge
 # (gfxcard_type config name, bus, VRAM MB); every hardware RTG board of
@@ -487,8 +522,8 @@ def hardware_entries(full=False):
         o = {"gfxcard_type": name, "gfxcard_size": str(vram)}
         if bus == "pci":
             o.update(PCI_BRIDGE)
-        out.append(_hw_entry("A4000", f"a4000-rtg-{_slug(name)}", f"RTG {name} ({bus.upper()}, {vram} MB)", o,
-                             board_roms=[PIV_ROM] if name.startswith("PicassoIV") else ()))
+        out.append(_board_only(_hw_entry("A4000", f"a4000-rtg-{_slug(name)}", f"RTG {name} ({bus.upper()}, {vram} MB)",
+                                         o, board_roms=[PIV_ROM] if name.startswith("PicassoIV") else ()), ["rtg"]))
     for name, bus, models in SOUND_CARDS:
         for model in models:
             o = {f"{name}_rom_file": ":ENABLED"}
@@ -500,6 +535,7 @@ def hardware_entries(full=False):
                 # expsound probes the clockport only with the unsafe flag (on a
                 # real A1200 nothing may be there); this entry configures the card
                 e["flags"] = ["unsafe"]
+            _board_only(e, ["expsound"])
             out.append(e)
             if model != "A500" and bus != "pci":
                 e["jit_capable"] = True
@@ -511,19 +547,25 @@ def hardware_entries(full=False):
     for e in out:
         if e["options"].get("gfxcard_type", "").startswith("ZZ9000"):
             e["options"]["zz9000_net"] = "slirp"
+            if "modules" in e.get("params", {}):
+                e["params"]["modules"] = module_mask(["rtg", "network", "misc_hw_os"])
     for name, o, model, std in NET_CARDS:
         if std or full:
             cpu = "68020" if model == "A1200" else None
-            out.append(_hw_entry(model, f"{model.lower()}-net-{_slug(name)}", f"network {name}", dict(o), cpu_key=cpu))
+            out.append(_board_only(_hw_entry(model, f"{model.lower()}-net-{_slug(name)}", f"network {name}", dict(o),
+                                             cpu_key=cpu), ["network"]))
     # Gayle: media.py gives every A600/A1200 entry a test-owned IDE hardfile
     # and the PCMCIA SRAM card (4 MB + CIS), so a600-68000-compat (KS 2.05)
     # is the "A600 Gayle IDE + SRAM card" machine; no separate entry.
-    # Zorro II + Zorro III RAM and a Zorro III RTG board on the big-box machines
+    # Zorro II + Zorro III RAM and a Zorro III RTG board on the big-box
+    # machines: the memory modules (cpux disk) test the RAM, rtg the board
     for model in ("A3000", "A4000"):
         o = {"fastmem_size": "4", "z3mem_size": "16", "gfxcard_type": "CV64_Z3", "gfxcard_size": "4"}
-        out.append(_hw_entry(model, f"{model.lower()}-z2z3-rtg", "Zorro II 4 MB + Zorro III 16 MB RAM, CV64 Z3", o,
-                             cpu_key="68030" if model == "A3000" else None,
-                             fpu="68882" if model == "A3000" else None))
+        e = _hw_entry(model, f"{model.lower()}-z2z3-rtg", "Zorro II 4 MB + Zorro III 16 MB RAM, CV64 Z3", o,
+                      cpu_key="68030" if model == "A3000" else None,
+                      fpu="68882" if model == "A3000" else None, disk_groups=["cpux", "exp"])
+        e.setdefault("params", {})["modules"] = module_mask(["memory", "memory_os", "rtg", "misc_hw_os"])
+        out.append(e)
     # SCSI controllers with their boot ROMs (media.py attaches a test-owned
     # RDB hardfile to them; the devio module on the exp disk tests it)
     for model, ctl, cpu in (("A2000", "a2091", None), ("A4000", "a4091", None)):
@@ -536,13 +578,13 @@ def hardware_entries(full=False):
     # Amiberry ignores rtc= on preset machines (docs/findings, "Config facts"):
     # for now these are the same machines as the A500 (slow RAM) and A500+
     # presets; they test the option once Amiberry honours it.
-    out.append(_hw_entry("A500+", "a500plus-rtc", "RTC MSM6242B (A500+ built in)", {"rtc": "MSM6242B"},
-                         disk_groups=["core", "exp"]))
-    out.append(_hw_entry("A500", "a500-rtc-a501", "RTC MSM6242B (A501 trapdoor)", {"rtc": "MSM6242B"},
-                         disk_groups=["core", "exp"]))
+    out.append(_board_only(_hw_entry("A500+", "a500plus-rtc", "RTC MSM6242B (A500+ built in)", {"rtc": "MSM6242B"}),
+                           ["misc_hw"]))
+    out.append(_board_only(_hw_entry("A500", "a500-rtc-a501", "RTC MSM6242B (A501 trapdoor)", {"rtc": "MSM6242B"}),
+                           ["misc_hw"]))
     if full:
-        out.append(_hw_entry("A4000", "a4000-rtc-rp5c01", "RTC RF5C01 (A4000 built in)", {"rtc": "RP5C01A"},
-                             disk_groups=["core", "exp"]))
+        out.append(_board_only(_hw_entry("A4000", "a4000-rtc-rp5c01", "RTC RF5C01 (A4000 built in)",
+                                         {"rtc": "RP5C01A"}), ["misc_hw"]))
         # PPC accelerators (QEMU PPC plugin; the 68k side only: misc_hw/memory see the board)
         for cb, ids, cpu in (("CyberStormPPC", [327, 326, 98], "68060"), ("BlizzardPPC", [331, 329, 100], "68060")):
             o = {"cpuboard_type": cb, "cpuboardmem1_size": "32", "ppc_implementation": "qemu", "ppc_model": "automatic"}

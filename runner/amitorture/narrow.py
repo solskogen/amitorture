@@ -415,7 +415,11 @@ def run(groups, launch, entry_of, module_id, budget_s, reruns=3, binaries=(), lo
                                   for f in w["base_runs"] for k, kind in g["cases"].items()):
             w["res"]["isolation_note"] = ("no failing case reproduced with the module alone; the other runs use "
                                           "the full disk")
-            w["params"].pop("modules", None)
+            # the full disk, as far as the entry runs it (a board entry's mask)
+            if "modules" in (w["entry"].get("params") or {}):
+                w["params"]["modules"] = w["entry"]["params"]["modules"]
+            else:
+                w["params"].pop("modules", None)
     # then round-robin over the groups, `jobs` tasks at a time
     queue = []
     depth = max((len(w["tasks"]) for w in work), default=0)

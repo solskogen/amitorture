@@ -105,7 +105,11 @@ ULONG amt_rand(void)
 
 ULONG amt_frames_now(void) { return amt_frames; }
 
-ULONG amt_hot_reps(void) { return AMT_QUICK() ? 100 : 1000; }
+/* Repetitions after the first run. The point is the JIT: Amiberry (like
+ * WinUAE) translates a block after 4 executions (compemu_support_*.cpp
+ * optcount[0]) and runs the translation from then on, so 100 leaves a 25x
+ * margin; more only costs time (minutes on a 7 MHz 68000). */
+ULONG amt_hot_reps(void) { return AMT_QUICK() ? 20 : 100; }
 
 long amt_hot(ULONG (*fn)(ULONG iter), ULONG reps, ULONG *first, ULONG *bad)
 {
