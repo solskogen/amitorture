@@ -1,0 +1,43 @@
+# What can be checked without an emulator or the Amiga cross toolchain:
+# the runner's unit tests and that the generated tables still match their
+# generators. Building the disks needs vasm and m68k-amigaos-gcc
+# (docs/BUILDING.md), running them needs an emulator: both stay local.
+name: ci
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  runner:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.10", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Unit tests
+        working-directory: runner
+        run: python -m unittest discover -s tests -v
+      - name: CLI starts
+        working-directory: runner
+        run: |
+          python -m amitorture --help
+          python -m amitorture matrix --matrix standard > /dev/null
+
+  generated:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Generated tables match their generators
+        run: tools/check_generated.sh

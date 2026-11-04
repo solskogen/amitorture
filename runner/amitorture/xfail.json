@@ -1,0 +1,628 @@
+{
+ "_doc": "Known emulator bugs. Key: <mod>.<case> (fnmatch patterns allowed). configs: fnmatch glob(s) on the matrix entry id. when: Amiberry options that must have these values. tbd: the case id is a placeholder until the module lands; fix the key then. A failing match is xfail; a passing match is reported as fixed. See runner/amitorture/xfail.py.",
+ "fpu.frestore_null_nan": {
+  "ref": "amiberry PR #2594",
+  "why": "native FPU (fpp_native.cpp): FRESTORE of a NULL frame must reset FP0-FP7 to non-signalling NaNs (MC68881/882 UM 6.4.2 / M68000PRM FRESTORE); the native path did not",
+  "configs": "*",
+  "when": {
+   "fpu_softfloat": "false"
+  },
+  "tbd": false,
+  "seen": "matched failing cases on a4000-68040nommu-fast/-jit and a4000-68060nommu-fast/-jit (smoke, 2026-11-03); passes on master 435db0509 (fixed by #2594)"
+ },
+ "fpu.inf_roundtrip": {
+  "ref": "amiberry PR #2594",
+  "why": "native FPU: after PR #2594 infinities survive FMOVE.X in/out, but a QNaN's mantissa payload does not (7fff0000.c0000000.00000000 comes back as 7fff0000.ffffffff.ffffffff): fp_from_exten writes all-ones for every NaN; the host double cannot hold the 63-bit payload (finding F1)",
+  "configs": "*",
+  "when": {
+   "fpu_softfloat": "false"
+  },
+  "tbd": false,
+  "seen": "matched failing cases on a4000-68040nommu-fast/-jit and a4000-68060nommu-fast/-jit (smoke, 2026-11-03)"
+ },
+ "cpu_basic.div_w": {
+  "ref": "finding C3 (check-on-hw)",
+  "why": "DIVU.W overflow leaves C set on 68020/030: setdivuflags() (newcpu_common.cpp) clears C only for 000/010/040/060; PRM says C always cleared. WinUAE identical; confirm on a real 68020",
+  "configs": "*",
+  "when": {},
+  "tbd": false,
+  "seen": "amitorture milestone 2, 2026-11-03; see docs/findings/amiberry-2026-11-03.md"
+ },
+ "cpu_basic.neg_negx": {
+  "ref": "finding J2",
+  "why": "ARM64 JIT jff_NEGX_b/_w compute N/V at 32 bits after sign extension",
+  "configs": "*",
+  "when": {
+   "cachesize": "!0"
+  },
+  "tbd": false,
+  "seen": "amitorture milestone 2, 2026-11-03; see docs/findings/amiberry-2026-11-03.md"
+ },
+ "cpu_basic.div_l": {
+  "ref": "finding J3",
+  "why": "ARM64 JIT jff/jnf_DIVLS32: no $80000000/-1 overflow check (V clear, DIVSL writes the remainder)",
+  "configs": "*",
+  "when": {
+   "cachesize": "!0"
+  },
+  "tbd": false,
+  "seen": "amitorture milestone 2, 2026-11-03; see docs/findings/amiberry-2026-11-03.md"
+ },
+ "exceptions.hot_frames": {
+  "ref": "finding J1",
+  "why": "ARM64 JIT: divide-by-zero from compiled code stacks PC = the DIVU and a stale format $2 address (execute_exception, newcpu.cpp ~5739)",
+  "configs": "*",
+  "when": {
+   "cachesize": "!0"
+  },
+  "tbd": false,
+  "seen": "amitorture milestone 2, 2026-11-03; see docs/findings/amiberry-2026-11-03.md"
+ },
+ "interrupts.priority_order": {
+  "ref": "finding J4",
+  "why": "JIT takes interrupts late after the mask is lowered (spcflags checked at block ends only)",
+  "configs": "*",
+  "when": {
+   "cachesize": "!0"
+  },
+  "tbd": false,
+  "seen": "amitorture milestone 2, 2026-11-03; see docs/findings/amiberry-2026-11-03.md"
+ },
+ "interrupts.priority_back_to_back_pc": {
+  "ref": "finding J4",
+  "why": "JIT takes interrupts late after the mask is lowered (spcflags checked at block ends only)",
+  "configs": "*",
+  "when": {
+   "cachesize": "!0"
+  },
+  "tbd": false,
+  "seen": "amitorture milestone 2, 2026-11-03; see docs/findings/amiberry-2026-11-03.md"
+ },
+ "interrupts.movesr_lower_taken_next": {
+  "ref": "finding J4",
+  "why": "JIT takes interrupts late after the mask is lowered (spcflags checked at block ends only)",
+  "configs": "*",
+  "when": {
+   "cachesize": "!0"
+  },
+  "tbd": false,
+  "seen": "amitorture milestone 2, 2026-11-03; see docs/findings/amiberry-2026-11-03.md"
+ },
+ "interrupts.andisr_lower_taken_next": {
+  "ref": "finding J4",
+  "why": "JIT takes interrupts late after the mask is lowered (spcflags checked at block ends only)",
+  "configs": "*",
+  "when": {
+   "cachesize": "!0"
+  },
+  "tbd": false,
+  "seen": "amitorture milestone 2, 2026-11-03; see docs/findings/amiberry-2026-11-03.md"
+ },
+ "interrupts.stacked_sr_is_pre_interrupt": {
+  "ref": "finding J4",
+  "why": "JIT takes interrupts late after the mask is lowered (spcflags checked at block ends only)",
+  "configs": "*",
+  "when": {
+   "cachesize": "!0"
+  },
+  "tbd": false,
+  "seen": "amitorture milestone 2, 2026-11-03; see docs/findings/amiberry-2026-11-03.md"
+ },
+ "interrupts.storm_cia_timer": {
+  "ref": "finding H1",
+  "why": "CIA continuous timer period = latch instead of latch+1 in the non-cycle-accurate CIA path (cia.cpp CIA_update)",
+  "configs": "*",
+  "when": {
+   "cycle_exact": "!true"
+  },
+  "tbd": false,
+  "seen": "amitorture milestone 2, 2026-11-03; see docs/findings/amiberry-2026-11-03.md"
+ },
+ "cia.ciaa_tod_alarm_*": {
+  "ref": "finding H2",
+  "why": "CIA-A TOD alarm lost intermittently: the delayed TOD path increments with irq=false (cia.cpp cia_delayed_tod)",
+  "configs": "*",
+  "when": {},
+  "tbd": false,
+  "seen": "amitorture milestone 2, 2026-11-03; see docs/findings/amiberry-2026-11-03.md"
+ },
+ "exceptions.rte_format_invalid": {
+  "ref": "finding C4",
+  "why": "68060 RTE accepts format $1 (gencpu.cpp emits the throwaway-frame path for all cpu_level>=2)",
+  "configs": "*68060* *68ec060* *68lc060*",
+  "when": {},
+  "tbd": false,
+  "seen": "amitorture milestone 2, 2026-11-03; see docs/findings/amiberry-2026-11-03.md"
+ },
+ "exceptions.unimpl060_*": {
+  "ref": "finding C5",
+  "why": "68060 unimplemented integer instructions execute by default (cpu_no_unimplemented=false default)",
+  "configs": "*68060* *68ec060* *68lc060*",
+  "when": {},
+  "tbd": false,
+  "seen": "amitorture milestone 2, 2026-11-03; see docs/findings/amiberry-2026-11-03.md"
+ },
+ "exceptions.trace_t0_flow": {
+  "ref": "finding C6",
+  "why": "68040 T0 change-of-flow trace wrong in the compatible/CE 040 core",
+  "configs": "*68040*",
+  "when": {},
+  "tbd": false,
+  "seen": "amitorture milestone 2, 2026-11-03; see docs/findings/amiberry-2026-11-03.md"
+ },
+ "smc.cpushl_bc_far": {
+  "ref": "finding C1",
+  "why": "CPUSHL/CPUSHP IC/BC do not invalidate the 040/060 I-cache line (flush_cpu_caches_040_2 pushes the D-cache line for k=1)",
+  "configs": "*",
+  "when": {},
+  "tbd": false,
+  "seen": "amitorture milestone 2, 2026-11-03; see docs/findings/amiberry-2026-11-03.md"
+ },
+ "smc.selfmod_d0_*": {
+  "ref": "finding C7 (by design?)",
+  "why": "68000 fast core has no prefetch emulation",
+  "configs": "*68000*",
+  "when": {
+   "cycle_exact": "false",
+   "cpu_compatible": "false"
+  },
+  "tbd": false,
+  "seen": "amitorture milestone 2, 2026-11-03; see docs/findings/amiberry-2026-11-03.md"
+ },
+ "fpu.*": {
+  "ref": "findings F2/F3",
+  "why": "native FPU (fpu_softfloat=false) uses host doubles: no exception status, 53-bit precision, transcendentals off; see F1-F4",
+  "configs": "*",
+  "when": {
+   "fpu_softfloat": "false"
+  },
+  "tbd": false,
+  "seen": "amitorture milestone 2, 2026-11-03; see docs/findings/amiberry-2026-11-03.md"
+ },
+ "copper.skip_over_wait": {
+  "ref": "finding V1 (check-on-hw)",
+  "why": "a true SKIP followed by WAIT still waits (custom.cpp ~9257/9383)",
+  "configs": "*",
+  "when": {},
+  "tbd": false,
+  "seen": "amitorture final smoke 2026-11-03; see docs/findings/amiberry-2026-11-03.md"
+ },
+ "display.fmode_2_lores": {
+  "ref": "finding V2 (check-on-hw)",
+  "why": "AGA FMODE=2 shows the high word twice (custom.cpp:9075 fetch32_bpl)",
+  "configs": "*",
+  "when": {},
+  "tbd": false,
+  "seen": "amitorture final smoke 2026-11-03; see docs/findings/amiberry-2026-11-03.md"
+ },
+ "display.scroll_aga_fine": {
+  "ref": "finding V3",
+  "why": "AGA PF1H0 fine scroll dropped depending on host gfx_resolution (drawing.cpp:3299)",
+  "configs": "*",
+  "when": {},
+  "tbd": false,
+  "seen": "amitorture final smoke 2026-11-03; see docs/findings/amiberry-2026-11-03.md"
+ },
+ "display.align_shres": {
+  "ref": "finding V4",
+  "why": "ECS superhires sprite-playfield collisions see bitplane 0 (drawing.cpp:5013 get_shres_spr_pix)",
+  "configs": "*",
+  "when": {},
+  "tbd": false,
+  "seen": "amitorture final smoke 2026-11-03; see docs/findings/amiberry-2026-11-03.md"
+ },
+ "display.mode_shres_1bpl": {
+  "ref": "finding V4",
+  "why": "ECS superhires sprite-playfield collisions see bitplane 0 (drawing.cpp:5013 get_shres_spr_pix)",
+  "configs": "*",
+  "when": {},
+  "tbd": false,
+  "seen": "amitorture final smoke 2026-11-03; see docs/findings/amiberry-2026-11-03.md"
+ },
+ "display.mode_shres_2bpl": {
+  "ref": "finding V4",
+  "why": "ECS superhires sprite-playfield collisions see bitplane 0 (drawing.cpp:5013 get_shres_spr_pix)",
+  "configs": "*",
+  "when": {},
+  "tbd": false,
+  "seen": "amitorture final smoke 2026-11-03; see docs/findings/amiberry-2026-11-03.md"
+ },
+ "display.spr_manual_mode": {
+  "ref": "finding V5",
+  "why": "manual-mode sprites lost unless cycle_exact=true (fails on the fast and the compatible core alike)",
+  "configs": "*",
+  "when": {
+   "cycle_exact": "!true"
+  },
+  "tbd": false,
+  "seen": "amitorture final smoke 2026-11-03; see docs/findings/amiberry-2026-11-03.md"
+ },
+ "exceptions.chk_*": {
+  "ref": "finding C8",
+  "why": "MMU cores stack format $2 instruction address = insn+2 (Exception_mmu030/Exception_mmu)",
+  "configs": "*",
+  "when": {
+   "mmu_model": "!0"
+  },
+  "tbd": false,
+  "seen": "amitorture final smoke 2026-11-03; see docs/findings/amiberry-2026-11-03.md"
+ },
+ "exceptions.chk2_*": {
+  "ref": "finding C8",
+  "why": "MMU cores stack format $2 instruction address = insn+2 (Exception_mmu030/Exception_mmu)",
+  "configs": "*",
+  "when": {
+   "mmu_model": "!0"
+  },
+  "tbd": false,
+  "seen": "amitorture final smoke 2026-11-03; see docs/findings/amiberry-2026-11-03.md"
+ },
+ "exceptions.div*_zero": {
+  "ref": "finding C8",
+  "why": "MMU cores stack format $2 instruction address = insn+2 (Exception_mmu030/Exception_mmu)",
+  "configs": "*",
+  "when": {
+   "mmu_model": "!0"
+  },
+  "tbd": false,
+  "seen": "amitorture final smoke 2026-11-03; see docs/findings/amiberry-2026-11-03.md"
+ },
+ "exceptions.trapcc_*": {
+  "ref": "finding C8",
+  "why": "MMU cores stack format $2 instruction address = insn+2 (Exception_mmu030/Exception_mmu)",
+  "configs": "*",
+  "when": {
+   "mmu_model": "!0"
+  },
+  "tbd": false,
+  "seen": "amitorture final smoke 2026-11-03; see docs/findings/amiberry-2026-11-03.md"
+ },
+ "exceptions.trapv_v_set": {
+  "ref": "finding C8",
+  "why": "MMU cores stack format $2 instruction address = insn+2 (Exception_mmu030/Exception_mmu)",
+  "configs": "*",
+  "when": {
+   "mmu_model": "!0"
+  },
+  "tbd": false,
+  "seen": "amitorture final smoke 2026-11-03; see docs/findings/amiberry-2026-11-03.md"
+ },
+ "dispatch.c020_s2": {
+  "ref": "finding J8",
+  "why": "ARM64 JIT BFxxx constant negative register offset -> +$1FFFFFFC (compemu_midfunc_arm64.cpp:558)",
+  "configs": "*",
+  "when": {
+   "cachesize": "!0"
+  },
+  "tbd": false,
+  "seen": "amitorture final smoke 2026-11-03; see docs/findings/amiberry-2026-11-03.md"
+ },
+ "dispatch.c040_s1": {
+  "ref": "finding J8",
+  "why": "ARM64 JIT BFxxx constant negative register offset -> +$1FFFFFFC (compemu_midfunc_arm64.cpp:558)",
+  "configs": "*",
+  "when": {
+   "cachesize": "!0"
+  },
+  "tbd": false,
+  "seen": "amitorture final smoke 2026-11-03; see docs/findings/amiberry-2026-11-03.md"
+ },
+ "cpu_basic.movem_w": {
+  "ref": "finding J10",
+  "why": "ARM64 JIT MOVEM.W memory-to-register, special-memory path: readword() without sign_extend_16_rr, so the upper word is 0 instead of the sign (op_4c90..4cbb_0_comp_ff/_nf in compemu_arm.cpp; the x86 JIT has the sign extension). comp_trustbyte=indirect sends every access down that path",
+  "configs": "*-jit-trustbyte-ind*",
+  "when": {},
+  "tbd": false,
+  "seen": "amitorture standard run 20261104-001719Z, triage 2026-11-04; see docs/findings/amiberry-2026-11-03.md"
+ },
+ "memory.chip_movem": {
+  "ref": "finding J10",
+  "why": "ARM64 JIT MOVEM.W (An),list with special memory: no sign extension of the loaded words (see cpu_basic.movem_w)",
+  "configs": "*-jit-trustbyte-ind*",
+  "when": {},
+  "tbd": false,
+  "seen": "amitorture standard run 20261104-001719Z, triage 2026-11-04; see docs/findings/amiberry-2026-11-03.md"
+ },
+ "dispatch.c040_s2": {
+  "ref": "findings J11 (trustbyte-ind) and J8 (trustlong-ind)",
+  "why": "trustbyte-ind: bset d0,-(a2) after bchg d7,d2 returns the N/V/C flags from before the preceding MOVEQ (the _comp_nf BCHG calls dont_care_flags(), so the helper call of the next memory access does not save NZCV); trustlong-ind: bfins with a constant negative offset register (J8)",
+  "configs": "*-jit-trustbyte-ind* *-jit-trustlong-ind*",
+  "when": {},
+  "tbd": false,
+  "seen": "amitorture standard run 20261104-001719Z, triage 2026-11-04; see docs/findings/amiberry-2026-11-03.md"
+ },
+ "dispatch.c0[024]0_s[123]": {
+  "ref": "finding J10",
+  "why": "on comp_trustbyte=indirect the first failing block of these dispatch cases is a MOVEM.W to registers without sign extension (J10); c020_s2/c040_s1 are matched by their J8 entries first",
+  "configs": "*-jit-trustbyte-ind*",
+  "when": {},
+  "tbd": false,
+  "seen": "amitorture standard run 20261104-001719Z, triage 2026-11-04; see docs/findings/amiberry-2026-11-03.md"
+ },
+ "memory.rom_write": {
+  "ref": "finding J12",
+  "why": "protect_roms() (osdep/amiberry_mem.cpp:1284) leaves the ROM pages writable when any comp_trust* is indirect, but on ARM64 only comp_trustbyte=indirect makes every access indirect: with comp_trustword/comp_trustlong=indirect the other sizes are still direct native stores, so a compiled write lands in the Kickstart ROM (the case then reads its own value back and reports skip instead of pass)",
+  "configs": "*-jit-trustword-ind* *-jit-trustlong-ind*",
+  "when": {},
+  "tbd": false,
+  "seen": "amitorture standard run 20261104-001719Z, triage 2026-11-04; see docs/findings/amiberry-2026-11-03.md"
+ },
+ "misc_hw.rtc_busy": {
+  "ref": "findings R1/R2",
+  "why": "RTC emulated as the host wall clock (rtc.cpp get/put_clock_*); 10-year digit from tm_year",
+  "configs": "*",
+  "when": {},
+  "tbd": false,
+  "seen": "amitorture final smoke 2026-11-03; see docs/findings/amiberry-2026-11-03.md"
+ },
+ "misc_hw.rtc_hold": {
+  "ref": "findings R1/R2",
+  "why": "RTC emulated as the host wall clock (rtc.cpp get/put_clock_*); 10-year digit from tm_year",
+  "configs": "*",
+  "when": {},
+  "tbd": false,
+  "seen": "amitorture final smoke 2026-11-03; see docs/findings/amiberry-2026-11-03.md"
+ },
+ "misc_hw.rtc_rate": {
+  "ref": "findings R1/R2",
+  "why": "RTC emulated as the host wall clock (rtc.cpp get/put_clock_*); 10-year digit from tm_year",
+  "configs": "*",
+  "when": {},
+  "tbd": false,
+  "seen": "amitorture final smoke 2026-11-03; see docs/findings/amiberry-2026-11-03.md"
+ },
+ "misc_hw.rtc_stop": {
+  "ref": "findings R1/R2",
+  "why": "RTC emulated as the host wall clock (rtc.cpp get/put_clock_*); 10-year digit from tm_year",
+  "configs": "*",
+  "when": {},
+  "tbd": false,
+  "seen": "amitorture final smoke 2026-11-03; see docs/findings/amiberry-2026-11-03.md"
+ },
+ "misc_hw.rtc_write_readback": {
+  "ref": "findings R1/R2",
+  "why": "RTC emulated as the host wall clock (rtc.cpp get/put_clock_*); 10-year digit from tm_year",
+  "configs": "*",
+  "when": {},
+  "tbd": false,
+  "seen": "amitorture final smoke 2026-11-03; see docs/findings/amiberry-2026-11-03.md"
+ },
+ "misc_hw.rtc_digits_valid": {
+  "ref": "findings R1/R2",
+  "why": "RTC emulated as the host wall clock (rtc.cpp get/put_clock_*); 10-year digit from tm_year",
+  "configs": "*",
+  "when": {},
+  "tbd": false,
+  "seen": "amitorture final smoke 2026-11-03; see docs/findings/amiberry-2026-11-03.md"
+ },
+ "misc_hw.rtc_12h_*": {
+  "ref": "findings R1/R2",
+  "why": "RTC emulated as the host wall clock (rtc.cpp get/put_clock_*); 10-year digit from tm_year",
+  "configs": "*",
+  "when": {},
+  "tbd": false,
+  "seen": "amitorture final smoke 2026-11-03; see docs/findings/amiberry-2026-11-03.md"
+ },
+ "mmu.ptest0_offset": {
+  "ref": "finding C9",
+  "why": "mmu030_ptest_atc_search compares unmasked address (cpummu30.cpp ~1669)",
+  "configs": "*",
+  "when": {},
+  "tbd": false,
+  "seen": "amitorture final smoke 2026-11-03; see docs/findings/amiberry-2026-11-03.md"
+ },
+ "mmu.pload_other_fc": {
+  "ref": "finding C10",
+  "why": "PLOAD flushes the page for every FC (cpummu30.cpp:529)",
+  "configs": "*",
+  "when": {},
+  "tbd": false,
+  "seen": "amitorture final smoke 2026-11-03; see docs/findings/amiberry-2026-11-03.md"
+ },
+ "mmu.tt_rmw": {
+  "ref": "finding C12",
+  "why": "locked RMW ignores TT RWM in compat/CE 030 MMU cores",
+  "configs": "*",
+  "when": {},
+  "tbd": false,
+  "seen": "amitorture final smoke 2026-11-03; see docs/findings/amiberry-2026-11-03.md"
+ },
+ "mmu.config_exc_tc": {
+  "ref": "finding C11",
+  "why": "stale fake prefetch after MMU configuration exception (fast 030 MMU core)",
+  "configs": "*",
+  "when": {
+   "cpu_compatible": "false"
+  },
+  "tbd": false,
+  "seen": "amitorture final smoke 2026-11-03; see docs/findings/amiberry-2026-11-03.md"
+ },
+ "cia.ciaa_tod_counts_vsync": {
+  "ref": "finding H4",
+  "why": "CD32: CIA-A TOD incremented from both cs_cd32cd hsync branch and VSYNC path",
+  "configs": "cd32*",
+  "when": {},
+  "tbd": false,
+  "seen": "amitorture final smoke 2026-11-03; see docs/findings/amiberry-2026-11-03.md"
+ },
+ "cia.ciaa_tod_latch_hi_read": {
+  "ref": "finding H4",
+  "why": "CD32: CIA-A TOD incremented from both the cs_cd32cd hsync branch and the VSYNC path (custom.cpp cia_hsync_do / ciaa_tod_maybe_inc): 5 counts in a 3-frame window",
+  "configs": "cd32*",
+  "when": {},
+  "tbd": false,
+  "seen": "amitorture standard run 20261104-001719Z (chipset/board triage); see docs/findings/amiberry-2026-11-03.md"
+ },
+ "cia.ciaa_tod_lo_read_unlatched": {
+  "ref": "finding H4",
+  "why": "CD32: CIA-A TOD counts twice per frame (see cia.ciaa_tod_counts_vsync)",
+  "configs": "cd32*",
+  "when": {},
+  "tbd": false,
+  "seen": "amitorture standard run 20261104-001719Z (chipset/board triage); see docs/findings/amiberry-2026-11-03.md"
+ },
+ "expsound.*_needs_mce": {
+  "ref": "finding S1",
+  "why": "AD1848/CS4231 MCE protection not emulated: I8/I9/I28 writable without MCE (sndboard.cpp toccata_put)",
+  "configs": "*",
+  "when": {},
+  "tbd": false,
+  "seen": "amitorture standard run 20261104-001719Z (chipset/board triage); see docs/findings/amiberry-2026-11-03.md"
+ },
+ "expsound.prelude*_i25_readonly": {
+  "ref": "finding S2",
+  "why": "CS4231 I25 (version) register writable",
+  "configs": "*",
+  "when": {},
+  "tbd": false,
+  "seen": "amitorture standard run 20261104-001719Z (chipset/board triage); see docs/findings/amiberry-2026-11-03.md"
+ },
+ "expsound.uaesnd_play_irqs": {
+  "ref": "finding S5",
+  "why": "uaesnd Zorro II: sample sets in the board's own RAM rejected (default_check instead of sub_bank_check, sndboard.cpp ~1574): no stream starts",
+  "configs": "*uaesndz2*",
+  "when": {},
+  "tbd": false,
+  "seen": "amitorture standard run 20261104-001719Z (chipset/board triage); see docs/findings/amiberry-2026-11-03.md"
+ },
+ "expsound.uaesnd_repeat_irqs": {
+  "ref": "finding S5",
+  "why": "uaesnd Zorro II: sample sets in the board's own RAM rejected (default_check instead of sub_bank_check, sndboard.cpp ~1574): no stream starts",
+  "configs": "*uaesndz2*",
+  "when": {},
+  "tbd": false,
+  "seen": "amitorture standard run 20261104-001719Z (chipset/board triage); see docs/findings/amiberry-2026-11-03.md"
+ },
+ "expsound.uaesnd_diag_start_stop": {
+  "ref": "finding S5",
+  "why": "uaesnd Zorro II: sample sets in the board's own RAM rejected (default_check instead of sub_bank_check, sndboard.cpp ~1574): no stream starts",
+  "configs": "*uaesndz2*",
+  "when": {},
+  "tbd": false,
+  "seen": "amitorture standard run 20261104-001719Z (chipset/board triage); see docs/findings/amiberry-2026-11-03.md"
+ },
+ "expsound.uaesnd_alloc_mask": {
+  "ref": "finding S6",
+  "why": "uaesnd on a 68000 with the prefetch/CE core: .L registers arriving as two word writes are ignored or half-applied (uaesndboard_wput); the 68000 fast core does a single long access and passes",
+  "configs": "*uaesnd*",
+  "when": {
+   "cpu_model": "68000",
+   "cpu_compatible": "true"
+  },
+  "tbd": false,
+  "seen": "amitorture standard run 20261104-001719Z (chipset/board triage); see docs/findings/amiberry-2026-11-03.md"
+ },
+ "expsound.uaesnd_invalid_set": {
+  "ref": "finding S6",
+  "why": "uaesnd on a 68000 with the prefetch/CE core: .L registers arriving as two word writes are ignored or half-applied (uaesndboard_wput); the 68000 fast core does a single long access and passes",
+  "configs": "*uaesnd*",
+  "when": {
+   "cpu_model": "68000",
+   "cpu_compatible": "true"
+  },
+  "tbd": false,
+  "seen": "amitorture standard run 20261104-001719Z (chipset/board triage); see docs/findings/amiberry-2026-11-03.md"
+ },
+ "expsound.uaesnd_master_inten": {
+  "ref": "finding S6",
+  "why": "uaesnd on a 68000 with the prefetch/CE core: .L registers arriving as two word writes are ignored or half-applied (uaesndboard_wput); the 68000 fast core does a single long access and passes",
+  "configs": "*uaesnd*",
+  "when": {
+   "cpu_model": "68000",
+   "cpu_compatible": "true"
+  },
+  "tbd": false,
+  "seen": "amitorture standard run 20261104-001719Z (chipset/board triage); see docs/findings/amiberry-2026-11-03.md"
+ },
+ "expsound.uaesnd_timer_irq": {
+  "ref": "finding S6",
+  "why": "uaesnd on a 68000 with the prefetch/CE core: .L registers arriving as two word writes are ignored or half-applied (uaesndboard_wput); the 68000 fast core does a single long access and passes",
+  "configs": "*uaesnd*",
+  "when": {
+   "cpu_model": "68000",
+   "cpu_compatible": "true"
+  },
+  "tbd": false,
+  "seen": "amitorture standard run 20261104-001719Z (chipset/board triage); see docs/findings/amiberry-2026-11-03.md"
+ },
+ "expsound.uaesnd_setptr_cleared": {
+  "ref": "finding S7",
+  "why": "uaesnd: the sample set pointer $0180.L is not cleared at the end of a stream (sndboard.cpp)",
+  "configs": "*",
+  "when": {},
+  "tbd": false,
+  "seen": "amitorture standard run 20261104-001719Z (chipset/board triage); see docs/findings/amiberry-2026-11-03.md"
+ },
+ "network.a2065_init_strt_dtx_drx": {
+  "ref": "finding S3",
+  "why": "A2065: INIT+STRT tests the old MODE DTX/DRX before chip_init reads the new init block (a2065.cpp ~975-985)",
+  "configs": "*",
+  "when": {},
+  "tbd": false,
+  "seen": "amitorture standard run 20261104-001719Z (chipset/board triage); see docs/findings/amiberry-2026-11-03.md"
+ },
+ "network.a2065_lb_*": {
+  "ref": "finding S4",
+  "why": "Am7990 internal loopback not emulated (MODE LOOP/INTL unused in a2065.cpp): no frame received, short frames flagged UFLO",
+  "configs": "*",
+  "when": {},
+  "tbd": false,
+  "seen": "amitorture standard run 20261104-001719Z (chipset/board triage); see docs/findings/amiberry-2026-11-03.md"
+ },
+ "rtg.merlin_dac_rw": {
+  "ref": "finding G1",
+  "why": "BT482 RAMDAC palette write-only (vid_ramdac_bt482.cpp: no RS=3 read index / RS=1 read data)",
+  "configs": "*",
+  "when": {},
+  "tbd": false,
+  "seen": "amitorture standard run 20261104-001719Z (chipset/board triage); see docs/findings/amiberry-2026-11-03.md"
+ },
+ "rtg.cv643d_vga_vint_status": {
+  "ref": "finding G3",
+  "why": "ViRGE input status 0 bit 7 stays 1 after CR11 bit 4 clears it (vid_s3_virge.cpp 3C2 read ORs subsys_stat INT_VSY)",
+  "configs": "*",
+  "when": {},
+  "tbd": false,
+  "seen": "amitorture standard run 20261104-001719Z (chipset/board triage); see docs/findings/amiberry-2026-11-03.md"
+ },
+ "rtg.cv643d_virge_blt_rop_cc": {
+  "ref": "finding G4",
+  "why": "ViRGE drops the first S3d BitBLT after setup (likely; the same command issued again works)",
+  "configs": "*",
+  "when": {},
+  "tbd": false,
+  "seen": "amitorture standard run 20261104-001719Z (chipset/board triage); see docs/findings/amiberry-2026-11-03.md"
+ },
+ "rtg.omnibus_vga_vint_status": {
+  "ref": "finding G5",
+  "why": "ET4000: no VGA vertical-interrupt status (vid_svga.cpp svga_in 0x3C2 never sets bit 7)",
+  "configs": "*",
+  "when": {},
+  "tbd": false,
+  "seen": "amitorture standard run 20261104-001719Z (chipset/board triage); see docs/findings/amiberry-2026-11-03.md"
+ },
+ "rtg.domino_vga_vint_status": {
+  "ref": "finding G5",
+  "why": "ET4000: no VGA vertical-interrupt status (vid_svga.cpp svga_in 0x3C2 never sets bit 7)",
+  "configs": "*",
+  "when": {},
+  "tbd": false,
+  "seen": "amitorture standard run 20261104-001719Z (chipset/board triage); see docs/findings/amiberry-2026-11-03.md"
+ },
+ "misc_hw.akiko_i2c_nack_absent": {
+  "ref": "finding R4",
+  "why": "Akiko I2C ACKs any device address (flashrom.cpp ~435)",
+  "configs": "cd32*",
+  "when": {},
+  "tbd": false,
+  "seen": "amitorture standard run 20261104-001719Z (chipset/board triage); see docs/findings/amiberry-2026-11-03.md"
+ },
+ "cia.ciab_tod_counts_hsync": {
+  "ref": "finding H5",
+  "why": "CD32: CIA-B TOD counts one HSYNC fewer than the beam over ~600 lines (598/599 for a 599..601 window), deterministic on cd32 fast and JIT; other machines pass with the same disk; cause not pinned (custom.cpp ciab_tod_maybe_inc cs_cd32cd branch / cia.cpp CIA_tod_handler)",
+  "configs": "cd32*",
+  "when": {},
+  "tbd": false,
+  "seen": "amitorture standard run 20261104-001719Z and triage rerun 20261104-054658Z; see docs/findings/amiberry-2026-11-03.md"
+ }
+}

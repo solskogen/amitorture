@@ -1,0 +1,34 @@
+# Compile-only check for the probe objects (the real build is disk/Makefile).
+#   make -f Makefile.probe          -> build/probe/probe.o, build/probe/probe_asm.o
+#   make -f Makefile.probe dis      -> disassembly of both
+AMIGA_TOOLCHAIN ?= /opt/amiga/bin
+NDK_INCLUDE     ?= $(AMIGA_TOOLCHAIN)/../m68k-amigaos/ndk-include
+CC      := $(AMIGA_TOOLCHAIN)/m68k-amigaos-gcc
+VASM    := $(AMIGA_TOOLCHAIN)/vasmm68k_mot
+OBJDUMP := $(AMIGA_TOOLCHAIN)/m68k-amigaos-objdump
+B       := ../build/probe-only
+
+CFLAGS  := -m68000 -Os -ffreestanding -nostdlib -fno-builtin -noixemul -fomit-frame-pointer \
+           -fno-tree-loop-distribute-patterns -Wall -Wextra -Werror -Wno-unused-parameter \
+           -I$(NDK_INCLUDE)
+# probe_asm.s sets its own CPU (machine 68060 / fpu 1 / opt o-); -m68000 is
+# what disk/Makefile passes, so check with the same flags.
+ASFLAGS := -Fhunk -quiet -m68000 -I$(NDK_INCLUDE)
+
+.PHONY: all dis clean
+all: $(B)/probe.o $(B)/probe_asm.o
+
+$(B)/probe.o: probe.c probe.h
+	@mkdir -p $(B)
+	$(CC) $(CFLAGS) -c -o $@ probe.c
+
+$(B)/probe_asm.o: probe_asm.s
+	@mkdir -p $(B)
+	$(VASM) $(ASFLAGS) -o $@ probe_asm.s
+
+dis: all
+	$(OBJDUMP) -d -r -m m68k:68060 $(B)/probe_asm.o
+	$(OBJDUMP) -d -r $(B)/probe.o
+
+clean:
+	rm -rf $(B)

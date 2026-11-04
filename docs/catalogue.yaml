@@ -1,0 +1,926 @@
+# amitorture coverage catalogue (the plan's "Coverage: everything an Amiga can do").
+#
+# Every capability of every Amiga model and expansion the emulator offers,
+# mapped to the case keys that test it. REPORT.md evaluates it on every run
+# (runner/amitorture/catalogue.py): covered (a matching case passed or
+# failed), partial (only skip/untestable, or only part is reachable), or
+# not_covered (no matching case ran, or no test can reach it: reason given).
+#
+# Format (a YAML subset; see catalogue.py): one mapping per capability.
+#   id           stable capability id
+#   area         catalogue section
+#   what         the capability
+#   cases        fnmatch globs over "<module>.<case>" keys (docs/cases/<module>.md)
+#   entries      optional globs over matrix entry ids: only cases from those entries count
+#   partial      optional: why the best possible result is partial
+#   not_covered  optional: why no test covers it (then no cases needed)
+#   needs        optional: hardware/ROM/config it needs
+# Module agents: refine the globs to your case ids when you add cases.
+
+# ----------------------------------------------------------------- CPU
+- id: cpu.integer
+  area: CPU
+  what: 68000-68060 integer ISA, every opcode family and addressing mode
+  cases: [cpu_basic.*, flags.*, dispatch.*]
+
+- id: cpu.fpu
+  area: CPU
+  what: FPU 68881/68882/68040/68060 (conversions, arithmetic, transcendental, FSAVE/FRESTORE, exceptions)
+  cases: [fpu.*]
+
+- id: cpu.mmu
+  area: CPU
+  what: MMU 68030/68040/68060 (translation tables, TTRs, ATC, PTEST/PFLUSH, bus errors)
+  cases: [mmu.*]
+
+- id: cpu.caches
+  area: CPU
+  what: caches (CACR, instruction/data cache, burst, write-allocate, copyback, CPUSH/CINV)
+  cases: [smc.ic_*, smc.cpush*, smc.cinv*, smc.cacr*, smc.loop_selfmod_icoff, memory.*cache*, memory.*copyback*, memory.*burst*]
+  partial: burst and write-allocate are visible only through timing, not through results
+
+- id: cpu.move16_cas_bitfields
+  area: CPU
+  what: MOVE16, CAS/CAS2, bitfield instructions
+  cases: [cpu_basic.cas*, cpu_basic.bf*, cpu_basic.*move16*, memory.*move16*, dispatch.*bf*]
+
+- id: cpu.exceptions
+  area: CPU
+  what: all exception types and stack frame formats per CPU variant
+  cases: [exceptions.*]
+
+- id: cpu.trace_stop
+  area: CPU
+  what: trace (T1/T0) and STOP
+  cases: [exceptions.trace*, exceptions.hot_trace, interrupts.stop*]
+
+- id: cpu.vbr_movec_moves
+  area: CPU
+  what: VBR, MOVEC, MOVES
+  cases: [exceptions.*movec*, exceptions.*vbr*, cpu_basic.*movec*, mmu.*moves*, memory.*moves*, probe.hello]
+  partial: VBR/CACR are read by the probe and used by every BARE module; MOVES is only reached by the mmu/memory modules
+
+- id: cpu.060_unimplemented
+  area: CPU
+  what: 68060 unimplemented-instruction traps (integer and FPU, no FPSP)
+  cases: [exceptions.unimpl060*, fpu.unimp*, fpu.effadd*_060]
+
+- id: cpu.self_modifying
+  area: CPU
+  what: self-modifying code, prefetch, code written by DMA
+  cases: [smc.*]
+
+- id: cpu.timing
+  area: CPU
+  what: instruction throughput fingerprint
+  cases: [timing.*]
+
+- id: cpu.jit_parity
+  area: CPU
+  what: the JIT gives the same results as the interpreter (twins; amt_hot loops)
+  cases: [cpu_basic.*, flags.*, fpu.*, dispatch.*]
+  entries: [*-jit*]
+
+# ----------------------------------------------------------------- Agnus/Alice
+- id: agnus.dma_slots
+  area: Agnus/Alice
+  what: DMA slot allocation per mode; CPU vs blitter/copper/bitplane/audio contention
+  cases: [dmacontention.*]
+
+- id: agnus.beam_counters
+  area: Agnus/Alice
+  what: beam counters VPOSR/VHPOSR (LOF/LOL, NTSC long lines), VPOSW
+  cases: [timing.lines_per_frame*, timing.cck_per_line, display.*vpos*, display.*beam*, display.*lof*, display.*lol*]
+
+- id: agnus.beamcon0
+  area: Agnus/Alice
+  what: BEAMCON0 (ECS/AGA programmable sync, PAL/NTSC switching)
+  cases: [display.*beamcon*, display.*sync*]
+
+- id: agnus.diw_ddf
+  area: Agnus/Alice
+  what: DIWSTRT/DIWSTOP/DIWHIGH, DDFSTRT/DDFSTOP edge cases
+  cases: [display.*diw*, display.*ddf*]
+
+- id: agnus.bitplane_dma
+  area: Agnus/Alice
+  what: bitplane DMA including AGA FMODE 1x/2x/4x
+  cases: [display.*fmode*, display.*bpl*, dmacontention.*bpl*, dmacontention.*bitplane*]
+
+- id: agnus.sprite_dma_refresh
+  area: Agnus/Alice
+  what: sprite DMA and refresh slots
+  cases: [display.*spr*, dmacontention.*spr*, dmacontention.*refresh*]
+
+- id: agnus.chipram_size
+  area: Agnus/Alice
+  what: chip RAM size detection (512K/1M/2M), slow RAM
+  cases: [memory.*chip*, memory.*slow*, memory.*bogo*, probe.hello]
+
+# ----------------------------------------------------------------- Copper
+- id: copper.instructions
+  area: Copper
+  what: MOVE/WAIT/SKIP, COPJMP1/2
+  cases: [copper.*move*, copper.*wait*, copper.*skip*, copper.*jmp*, copper.*cop*]
+
+- id: copper.danger
+  area: Copper
+  what: the danger bit (COPCON CDANG) and protected registers
+  cases: [copper.*dang*, copper.*protect*]
+
+- id: copper.bfd
+  area: Copper
+  what: blitter-finish disable (BFD) in WAIT
+  cases: [copper.*bfd*, copper.*blit*]
+
+- id: copper.wrap_edges
+  area: Copper
+  what: WAIT at line 255/256 wrap, horizontal positions near the edge
+  cases: [copper.*255*, copper.*256*, copper.*wrap*, copper.*edge*, copper.*hpos*]
+
+- id: copper.register_classes
+  area: Copper
+  what: writes to every register class
+  cases: [copper.*reg*, copper.*class*]
+
+# ----------------------------------------------------------------- Blitter
+- id: blitter.minterms_shifts_masks
+  area: Blitter
+  what: all minterms, shifts, first/last word masks, ascending/descending, modulos
+  cases: [blitter.minterm_*, blitter.shift_*, blitter.mask_*, blitter.mod_*, blitter.use_*, blitter.hot_*]
+
+- id: blitter.fill
+  area: Blitter
+  what: fill modes (inclusive/exclusive, FCI)
+  cases: [blitter.fill_*]
+
+- id: blitter.line
+  area: Blitter
+  what: line mode (all octants, SING, texture, oddities)
+  cases: [blitter.line_*]
+
+- id: blitter.sizes
+  area: Blitter
+  what: zero-size and maximum blits, ECS big blits (BLTSIZV/BLTSIZH)
+  cases: [blitter.size_*, blitter.zero_*, blitter.big_*, blitter.ecs_*]
+
+- id: blitter.nasty_irq_bbusy
+  area: Blitter
+  what: blitter nasty, interrupts, BBUSY timing
+  cases: [blitter.nasty*, blitter.irq_*, blitter.bbusy_*]
+
+# ----------------------------------------------------------------- Denise/Lisa
+- id: display.modes
+  area: Denise/Lisa
+  what: lores/hires/superhires, interlace, scan modes
+  cases: [display.*lores*, display.*hires*, display.*shres*, display.*lace*, display.*mode*]
+
+- id: display.ham_ehb
+  area: Denise/Lisa
+  what: HAM6/HAM8, EHB
+  cases: [display.*ham*, display.*ehb*]
+
+- id: display.playfields
+  area: Denise/Lisa
+  what: dual playfield, priorities (BPLCON2/BPLCON4)
+  cases: [display.*dpf*, display.*dual*, display.*pri*, display.*bplcon*]
+
+- id: display.palettes
+  area: Denise/Lisa
+  what: palettes (12-bit OCS, 24-bit AGA via LOCT, bank switching)
+  cases: [display.*pal*, display.*color*, display.*loct*, display.*bank*]
+
+- id: display.scrolling
+  area: Denise/Lisa
+  what: scrolling, incl. AGA fine scroll
+  cases: [display.*scroll*]
+
+- id: display.sprites
+  area: Denise/Lisa
+  what: sprites 16/32/64 wide, attached, AGA resolution and bank, border sprites (BRDRBLNK/BRDSPRT)
+  cases: [display.*spr*, display.*brd*]
+
+- id: display.collisions
+  area: Denise/Lisa
+  what: collisions (CLXCON/CLXCON2/CLXDAT)
+  cases: [display.*clx*, display.*coll*]
+
+- id: display.genlock_bits
+  area: Denise/Lisa
+  what: genlock bits (ZDBPEN, ZDCTEN, ...)
+  cases: [display.*genlock*, display.*zd*]
+
+- id: display.ecs_modes
+  area: Denise/Lisa
+  what: ECS productivity/VGA modes
+  cases: [display.*productivity*, display.*vga*, display.*ecs*]
+
+- id: display.deniseid
+  area: Denise/Lisa
+  what: the DeniseID/LisaID register
+  cases: [display.*deniseid*, display.*lisaid*, probe.hello]
+
+- id: display.screen_output
+  area: Denise/Lisa
+  what: what reaches the screen (host screenshots via the request channel)
+  cases: [display.*, copper.*]
+  partial: screenshots are hashed only for cycle-exact entries; elsewhere they are kept, not compared
+
+# ----------------------------------------------------------------- Paula
+- id: paula.audio
+  area: Paula
+  what: audio on 4 channels (period, volume, length, AUDxDAT manual mode, minimum periods, DMA on/off timing)
+  cases: [paula.*aud*, paula.*period*, paula.*vol*]
+
+- id: paula.audio_modulation
+  area: Paula
+  what: attached volume/period modulation
+  cases: [paula.*attach*, paula.*modul*, paula.*adk*]
+
+- id: paula.audio_irq
+  area: Paula
+  what: audio interrupts and their timing
+  cases: [paula.*irq*, paula.*int*]
+
+- id: paula.audio_output
+  area: Paula
+  what: audio output measured by the host (frequency, amplitude, timing per segment)
+  cases: [paula.*]
+  partial: the host analysis (SDL disk driver) is in the host records; the guest sees only the ack
+
+- id: paula.interrupts
+  area: Paula
+  what: every INTREQ/INTENA bit and level, nesting, set/clear semantics
+  cases: [interrupts.*]
+
+- id: paula.disk
+  area: Paula
+  what: disk controller (DSKSYNC, MFM read/write DMA, WORDSYNC, DSKLEN double write, DD/HD)
+  cases: [paula.*dsk*, paula.*disk*, paula.*mfm*, paula.*sync*]
+
+- id: paula.uart
+  area: Paula
+  what: UART (SERPER, 8/9 bit, RBF/TBE interrupts, overrun)
+  cases: [paula.*ser*, paula.*uart*, interrupts.map_tbe]
+  partial: the UART carries the results; loopback/overrun need the serial port looped back
+
+- id: paula.pots
+  area: Paula
+  what: pot ports (POTGO/POTINP: paddles, analog joystick, right mouse button)
+  cases: [input.*pot*, paula.*pot*]
+
+# ----------------------------------------------------------------- CIA
+- id: cia.timers
+  area: CIA
+  what: timers A/B in all modes
+  cases: [cia.ciaa_ta_*, cia.ciaa_tb_*, cia.ciab_ta_*, cia.ciab_tb_*, interrupts.cia_*]
+
+- id: cia.tod
+  area: CIA
+  what: TOD (50/60 Hz, alarm, latch semantics)
+  cases: [cia.*tod*]
+
+- id: cia.sdr
+  area: CIA
+  what: serial data register (keyboard shift register)
+  cases: [cia.*sdr*]
+
+- id: cia.ports
+  area: CIA
+  what: PRA/PRB (LED/filter, OVL, floppy control motor/step/side/select)
+  cases: [cia.*pra*, cia.*prb*, cia.*led*, cia.*ovl*, paula.*motor*, paula.*step*]
+  partial: the cia module never writes PRA/PRB (the OS owns them); only the disk module drives floppy control
+
+- id: cia.parallel
+  area: CIA
+  what: parallel port data, handshake and strobe
+  not_covered: needs a loopback plug on the parallel port (none in the emulator config); no module tests it
+
+- id: cia.icr
+  area: CIA
+  what: ICR read-clear semantics
+  cases: [cia.*icr*]
+
+# ----------------------------------------------------------------- Input
+- id: input.keyboard
+  area: Input
+  what: keyboard protocol, handshake timing, reset sequence, caps-lock LED (keys injected by the host)
+  cases: [input.*key*, input.*kbd*]
+
+- id: input.mouse_joystick
+  area: Input
+  what: mouse and joystick counters (JOYxDAT/JOYTEST), fire and second buttons
+  cases: [input.*mouse*, input.*joy*, input.*fire*, input.*button*]
+  partial: "Amiberry IPC limitation: SEND_KEY/SEND_MOUSE/SET_JOYPORT_MODE only, no joystick injection: joystick direction/fire cases stay untestable"
+
+- id: input.cd32pad
+  area: Input
+  what: CD32 pad serial protocol
+  cases: [input.*cd32*, input.*pad*]
+  partial: "Amiberry IPC limitation: no CD32 pad injection; the host acks only buttons=0 (released) on a cd32joy port, so only the pad ID and released states are testable"
+
+- id: input.lightpen
+  area: Input
+  what: lightpen (VPOSR LP)
+  cases: [input.*lightpen*, input.*lp*]
+
+# ----------------------------------------------------------------- Floppy
+- id: floppy.drives
+  area: Floppy
+  what: DF0-DF3 drive ID, motor and RDY timing, index pulse, step and track 0
+  cases: [paula.*drive*, paula.*index*, paula.*track0*, devio.td_*]
+
+- id: floppy.rw
+  area: Floppy
+  what: read/write/format/verify of runner-made test ADFs (trackdisk.device)
+  cases: [devio.td_*]
+
+- id: floppy.hd_wp_change
+  area: Floppy
+  what: HD disks, write protect, disk-change detection
+  cases: [devio.*_write, devio.td_*hd*, devio.td_*change*, paula.*hd*]
+  partial: no HD test disk is generated yet; write protect is reached by devio's TD_PROTSTATUS case
+
+- id: floppy.custom_mfm
+  area: Floppy
+  what: non-AmigaDOS MFM (long tracks, custom sync)
+  cases: [paula.*mfm*, paula.*sync*]
+  needs: runner-made odd-format ADF/IPF media (not generated yet)
+
+# ----------------------------------------------------------------- Gary/Gayle/Ramsey/Buster
+- id: bus.timeouts
+  area: Gary/Gayle/Ramsey/Buster
+  what: bus timeouts (unmapped access)
+  cases: [exceptions.bus_error*, memory.*timeout*, memory.*unmapped*, misc_hw.*timeout*]
+
+- id: gayle.ide
+  area: Gary/Gayle/Ramsey/Buster
+  what: Gayle IDE (A600/A1200) and A4000 IDE on test-owned hardfiles
+  cases: [devio.scsi_*, misc_hw.*gayle*, misc_hw.*ide*]
+  entries: [a600-*, a1200-*, a4000-*, a4000t-*]
+
+- id: gayle.pcmcia
+  area: Gary/Gayle/Ramsey/Buster
+  what: PCMCIA (SRAM card, CF), the Gayle ID and its interrupts
+  cases: [misc_hw.*pcmcia*, misc_hw.*gayle*, misc_hw.*sram*]
+  entries: [a600-*, a1200-*]
+  partial: "card eject/insert (request pcmcia) is not in Amiberry's IPC: the status-change cases stay untestable"
+
+- id: ramsey
+  area: Gary/Gayle/Ramsey/Buster
+  what: Ramsey revision, page mode, refresh
+  cases: [misc_hw.*ramsey*]
+  entries: [a3000-*, a4000-*, a4000t-*]
+
+- id: mb_ram
+  area: Gary/Gayle/Ramsey/Buster
+  what: A3000/A4000 motherboard RAM
+  cases: [memory.*mb*, memory.*motherboard*, memory.*fast*]
+  entries: [a3000-*, a4000-*, a4000t-*]
+
+- id: zorro.autoconfig
+  area: Gary/Gayle/Ramsey/Buster
+  what: Zorro II/III autoconfig (the full chain, shut-up, Z3 sizes)
+  cases: [misc_hw.*autoconfig*, misc_hw.*zorro*, misc_hw.*z2*, misc_hw.*z3*, probe.hello]
+
+# ----------------------------------------------------------------- Clocks/NVRAM
+- id: rtc.msm6242b
+  area: Clocks/NVRAM
+  what: RTC MSM6242B (read, set, alarm, leap year)
+  cases: [misc_hw.*rtc*, misc_hw.*clock*]
+  entries: [a500plus-*, a500-rtc-*, a2000-*, cdtv-*]
+
+- id: rtc.rf5c01
+  area: Clocks/NVRAM
+  what: RTC RF5C01 (A3000/A4000)
+  cases: [misc_hw.*rtc*, misc_hw.*clock*]
+  entries: [a3000-*, a4000-*, a4000t-*]
+
+- id: nvram.cd32_cdtv
+  area: Clocks/NVRAM
+  what: CD32 NVRAM, CDTV bookmark RAM
+  cases: [misc_hw.*nvram*, misc_hw.*bookmark*]
+  entries: [cd32-*, cdtv-*]
+
+# ----------------------------------------------------------------- CD32/CDTV
+- id: cd32.akiko
+  area: CD32 (Akiko)
+  what: Akiko ID, C2P (all sizes)
+  cases: [misc_hw.*akiko*, misc_hw.*c2p*]
+  entries: [cd32-*]
+
+- id: cd32.cdrom
+  area: CD32 (Akiko)
+  what: CD-ROM data reads, TOC, subchannel
+  cases: [misc_hw.*cd_*, misc_hw.*cdrom*, misc_hw.*toc*, devio.*cd*]
+  entries: [cd32-*]
+
+- id: cd32.cdda
+  area: CD32 (Akiko)
+  what: CD-DA audio playback
+  cases: [misc_hw.*cdda*]
+  entries: [cd32-*]
+  needs: a CUE/BIN image with a synthetic audio track (not generated yet; the boot disc is data only)
+
+- id: cd32.boot
+  area: CD32 (Akiko)
+  what: boot from CD (extended ROM cdstrap, CD32.TM check, s/startup-sequence)
+  cases: [probe.hello]
+  entries: [cd32-*]
+
+- id: cd32.fmv
+  area: CD32 (Akiko)
+  what: CD32 FMV (MPEG) module
+  not_covered: needs the FMV module ROM and an MPEG test stream; no test written
+
+- id: cdtv.dmac_cdrom
+  area: CDTV
+  what: DMAC, CD-ROM (data, TOC), CD-DA
+  cases: [misc_hw.*dmac*, misc_hw.*cdtv*, misc_hw.*cd_*]
+  entries: [cdtv-*]
+
+- id: cdtv.keys
+  area: CDTV
+  what: front panel and IR remote keys (injected by the host)
+  cases: [input.*cdtv*, misc_hw.*cdtv*key*]
+  entries: [cdtv-*]
+  partial: SEND_KEY reaches the front-panel codes $72-$77 only; there is no IR remote injection
+
+- id: cdtv.boot
+  area: CDTV
+  what: boot from CD (bootstrap CheckTM, CDTV.TM, s/startup-sequence)
+  cases: [probe.hello]
+  entries: [cdtv-*]
+
+- id: cdtv.cr
+  area: CDTV
+  what: CDTV-CR model differences
+  not_covered: no CDTV-CR entry (needs the CDTV-CR extended ROM, not in the ROM set)
+
+# ----------------------------------------------------------------- Storage controllers
+- id: storage.a590_a2091
+  area: Storage controllers
+  what: A590/A2091 (DMAC + WD33C93) read/write/verify, in-flight requests, odd sizes
+  cases: [devio.scsi*]
+  entries: [*a2091*]
+  needs: A590/A2091 boot ROM (amiga-boot-a590.rom)
+
+- id: storage.a3000_scsi
+  area: Storage controllers
+  what: A3000 SCSI (DMAC + WD33C93)
+  cases: [devio.scsi*]
+  entries: [a3000-*]
+
+- id: storage.a4091
+  area: Storage controllers
+  what: A4000T/A4091 (NCR 53C710)
+  cases: [devio.scsi*]
+  entries: [a4000t-*, *a4091*]
+  needs: A4091 boot ROM (amiga-boot-a4091.rom) for the a4091 entry
+
+- id: storage.ide
+  area: Storage controllers
+  what: Gayle and A4000 IDE
+  cases: [devio.scsi*]
+  entries: [a600-*, a1200-*, a4000-*]
+
+- id: storage.accelerator_scsi
+  area: Storage controllers
+  what: accelerator SCSI (CyberStorm, Blizzard)
+  not_covered: no matrix entry with an accelerator SCSI controller and no test media for it yet
+
+# ----------------------------------------------------------------- Graphics cards
+- id: rtg.uaegfx
+  area: Graphics cards
+  what: uaegfx (Amiberry's own RTG, ZorroII/ZorroIII)
+  not_covered: "uaegfx: no hardware interface (driver-only RTG); untestable bare-metal"
+
+- id: rtg.vga
+  area: Graphics cards
+  what: x86 bridgeboard VGA
+  not_covered: needs an x86 bridgeboard and its BIOS ROMs (not in the ROM set)
+
+- id: rtg.altais
+  area: Graphics cards
+  what: Altais (DraCo bus)
+  not_covered: DraCo-only board; the matrix has no DraCo
+
+- id: rtg.egs_110_24
+  area: Graphics cards
+  what: EGS 110/24 (GVP local bus)
+  not_covered: needs a GVP accelerator with the local bus slot
+
+- id: rtg.pixel64
+  area: Graphics cards
+  what: Pixel64 (AteoBus)
+  not_covered: needs the AteoBus board
+
+- id: rtg.a2410
+  area: Graphics cards
+  what: 'A2410 (Z2, 1 MB VRAM): register level, VRAM widths, banking, mode, palette, blitter, sprite'
+  cases: [rtg.*]
+  entries: [a4000-rtg-a2410]
+
+- id: rtg.spectrum2824z2
+  area: Graphics cards
+  what: 'Spectrum28/24_Z2 (Z2, 2 MB VRAM): register level, VRAM widths, banking, mode, palette, blitter, sprite'
+  cases: [rtg.*]
+  entries: [a4000-rtg-spectrum2824z2]
+
+- id: rtg.spectrum2824z3
+  area: Graphics cards
+  what: 'Spectrum28/24_Z3 (Z3, 2 MB VRAM): register level, VRAM widths, banking, mode, palette, blitter, sprite'
+  cases: [rtg.*]
+  entries: [a4000-rtg-spectrum2824z3]
+
+- id: rtg.piccoloz2
+  area: Graphics cards
+  what: 'Piccolo_Z2 (Z2, 2 MB VRAM): register level, VRAM widths, banking, mode, palette, blitter, sprite'
+  cases: [rtg.*]
+  entries: [a4000-rtg-piccoloz2]
+
+- id: rtg.piccoloz3
+  area: Graphics cards
+  what: 'Piccolo_Z3 (Z3, 2 MB VRAM): register level, VRAM widths, banking, mode, palette, blitter, sprite'
+  cases: [rtg.*]
+  entries: [a4000-rtg-piccoloz3]
+
+- id: rtg.piccolosd64z2
+  area: Graphics cards
+  what: 'PiccoloSD64_Z2 (Z2, 4 MB VRAM): register level, VRAM widths, banking, mode, palette, blitter, sprite'
+  cases: [rtg.*]
+  entries: [a4000-rtg-piccolosd64z2]
+
+- id: rtg.piccolosd64z3
+  area: Graphics cards
+  what: 'PiccoloSD64_Z3 (Z3, 4 MB VRAM): register level, VRAM widths, banking, mode, palette, blitter, sprite'
+  cases: [rtg.*]
+  entries: [a4000-rtg-piccolosd64z3]
+
+- id: rtg.cv64z3
+  area: Graphics cards
+  what: 'CV64_Z3 (Z3, 4 MB VRAM): register level, VRAM widths, banking, mode, palette, blitter, sprite'
+  cases: [rtg.*]
+  entries: [a4000-rtg-cv64z3]
+
+- id: rtg.cv643dz2
+  area: Graphics cards
+  what: 'CV643D_Z2 (Z2, 4 MB VRAM): register level, VRAM widths, banking, mode, palette, blitter, sprite'
+  cases: [rtg.*]
+  entries: [a4000-rtg-cv643dz2]
+
+- id: rtg.cv643dz3
+  area: Graphics cards
+  what: 'CV643D_Z3 (Z3, 4 MB VRAM): register level, VRAM widths, banking, mode, palette, blitter, sprite'
+  cases: [rtg.*]
+  entries: [a4000-rtg-cv643dz3]
+
+- id: rtg.picassoii
+  area: Graphics cards
+  what: 'PicassoII (Z2, 2 MB VRAM): register level, VRAM widths, banking, mode, palette, blitter, sprite'
+  cases: [rtg.*]
+  entries: [a4000-rtg-picassoii]
+
+- id: rtg.picassoiiplus
+  area: Graphics cards
+  what: 'PicassoII+ (Z2, 2 MB VRAM): register level, VRAM widths, banking, mode, palette, blitter, sprite'
+  cases: [rtg.*]
+  entries: [a4000-rtg-picassoiiplus]
+
+- id: rtg.picassoivz2
+  area: Graphics cards
+  what: 'PicassoIV_Z2 (Z2, 4 MB VRAM): register level, VRAM widths, banking, mode, palette, blitter, sprite'
+  cases: [rtg.*]
+  entries: [a4000-rtg-picassoivz2]
+  needs: Picasso IV flash ROM (romdb 91)
+
+- id: rtg.picassoivz3
+  area: Graphics cards
+  what: 'PicassoIV_Z3 (Z3, 4 MB VRAM): register level, VRAM widths, banking, mode, palette, blitter, sprite'
+  cases: [rtg.*]
+  entries: [a4000-rtg-picassoivz3]
+  needs: Picasso IV flash ROM (romdb 91)
+
+- id: rtg.retinaz2
+  area: Graphics cards
+  what: 'Retina_Z2 (Z2, 4 MB VRAM): register level, VRAM widths, banking, mode, palette, blitter, sprite'
+  cases: [rtg.*]
+  entries: [a4000-rtg-retinaz2]
+
+- id: rtg.retinaz3
+  area: Graphics cards
+  what: 'Retina_Z3 (Z3, 4 MB VRAM): register level, VRAM widths, banking, mode, palette, blitter, sprite'
+  cases: [rtg.*]
+  entries: [a4000-rtg-retinaz3]
+
+- id: rtg.merlinz2
+  area: Graphics cards
+  what: 'MerlinZ2 (Z2, 2 MB VRAM): register level, VRAM widths, banking, mode, palette, blitter, sprite'
+  cases: [rtg.*]
+  entries: [a4000-rtg-merlinz2]
+
+- id: rtg.merlinz3
+  area: Graphics cards
+  what: 'MerlinZ3 (Z3, 4 MB VRAM): register level, VRAM widths, banking, mode, palette, blitter, sprite'
+  cases: [rtg.*]
+  entries: [a4000-rtg-merlinz3]
+
+- id: rtg.graffityz2
+  area: Graphics cards
+  what: 'GraffityZ2 (Z2, 2 MB VRAM): register level, VRAM widths, banking, mode, palette, blitter, sprite'
+  cases: [rtg.*]
+  entries: [a4000-rtg-graffityz2]
+
+- id: rtg.graffityz3
+  area: Graphics cards
+  what: 'GraffityZ3 (Z3, 2 MB VRAM): register level, VRAM widths, banking, mode, palette, blitter, sprite'
+  cases: [rtg.*]
+  entries: [a4000-rtg-graffityz3]
+
+- id: rtg.visiona
+  area: Graphics cards
+  what: 'Visiona (Z2, 4 MB VRAM): register level, VRAM widths, banking, mode, palette, blitter, sprite'
+  cases: [rtg.*]
+  entries: [a4000-rtg-visiona]
+
+- id: rtg.rainbowiii
+  area: Graphics cards
+  what: 'RainbowIII (Z3, 4 MB VRAM): register level, VRAM widths, banking, mode, palette, blitter, sprite'
+  cases: [rtg.*]
+  entries: [a4000-rtg-rainbowiii]
+
+- id: rtg.domino
+  area: Graphics cards
+  what: 'Domino (Z2, 1 MB VRAM): register level, VRAM widths, banking, mode, palette, blitter, sprite'
+  cases: [rtg.*]
+  entries: [a4000-rtg-domino]
+
+- id: rtg.omnibuset4000
+  area: Graphics cards
+  what: 'OmnibusET4000 (Z2, 1 MB VRAM): register level, VRAM widths, banking, mode, palette, blitter, sprite'
+  cases: [rtg.*]
+  entries: [a4000-rtg-omnibuset4000]
+
+- id: rtg.omnibuset4000w32
+  area: Graphics cards
+  what: 'OmnibusET4000W32 (Z2, 1 MB VRAM): register level, VRAM widths, banking, mode, palette, blitter, sprite'
+  cases: [rtg.*]
+  entries: [a4000-rtg-omnibuset4000w32]
+
+- id: rtg.harlequinpal
+  area: Graphics cards
+  what: 'Harlequin_PAL (Z2, 2 MB VRAM): register level, VRAM widths, banking, mode, palette, blitter, sprite'
+  cases: [rtg.*]
+  entries: [a4000-rtg-harlequinpal]
+
+- id: rtg.rainbowii
+  area: Graphics cards
+  what: 'RainbowII (Z2, 2 MB VRAM): register level, VRAM widths, banking, mode, palette, blitter, sprite'
+  cases: [rtg.*]
+  entries: [a4000-rtg-rainbowii]
+
+- id: rtg.zz9000z2
+  area: Graphics cards
+  what: 'ZZ9000_Z2 (Z2, 4 MB VRAM): register level, VRAM widths, banking, mode, palette, blitter, sprite'
+  cases: [rtg.*]
+  entries: [a4000-rtg-zz9000z2]
+
+- id: rtg.zz9000z3
+  area: Graphics cards
+  what: 'ZZ9000_Z3 (Z3, 128 MB VRAM): register level, VRAM widths, banking, mode, palette, blitter, sprite'
+  cases: [rtg.*]
+  entries: [a4000-rtg-zz9000z3]
+
+- id: rtg.permedia2pci
+  area: Graphics cards
+  what: 'PERMEDIA2_PCI (PCI, 8 MB VRAM): register level, VRAM widths, banking, mode, palette, blitter, sprite'
+  cases: [rtg.*]
+  entries: [a4000-rtg-permedia2pci]
+
+- id: rtg.v33000
+  area: Graphics cards
+  what: 'V3_3000 (PCI, 16 MB VRAM): register level, VRAM widths, banking, mode, palette, blitter, sprite'
+  cases: [rtg.*]
+  entries: [a4000-rtg-v33000]
+
+- id: rtg.s3virgepci
+  area: Graphics cards
+  what: 'S3VIRGE_PCI (PCI, 4 MB VRAM): register level, VRAM widths, banking, mode, palette, blitter, sprite'
+  cases: [rtg.*]
+  entries: [a4000-rtg-s3virgepci]
+
+- id: rtg.s3trio64pci
+  area: Graphics cards
+  what: 'S3TRIO64_PCI (PCI, 4 MB VRAM): register level, VRAM widths, banking, mode, palette, blitter, sprite'
+  cases: [rtg.*]
+  entries: [a4000-rtg-s3trio64pci]
+
+- id: rtg.matroxmillennium
+  area: Graphics cards
+  what: 'Matrox_Millennium (PCI, 4 MB VRAM): register level, VRAM widths, banking, mode, palette, blitter, sprite'
+  cases: [rtg.*]
+  entries: [a4000-rtg-matroxmillennium]
+
+- id: rtg.matroxmillenniumii
+  area: Graphics cards
+  what: 'Matrox_Millennium_II (PCI, 8 MB VRAM): register level, VRAM widths, banking, mode, palette, blitter, sprite'
+  cases: [rtg.*]
+  entries: [a4000-rtg-matroxmillenniumii]
+
+- id: rtg.matroxmystique
+  area: Graphics cards
+  what: 'Matrox_Mystique (PCI, 8 MB VRAM): register level, VRAM widths, banking, mode, palette, blitter, sprite'
+  cases: [rtg.*]
+  entries: [a4000-rtg-matroxmystique]
+
+- id: rtg.matroxmystique220
+  area: Graphics cards
+  what: 'Matrox_Mystique220 (PCI, 8 MB VRAM): register level, VRAM widths, banking, mode, palette, blitter, sprite'
+  cases: [rtg.*]
+  entries: [a4000-rtg-matroxmystique220]
+
+- id: sound.toccata
+  area: Sound cards
+  what: 'Toccata (Zorro II; A500, A1200, A4000): register-level playback, FIFO, interrupts, rate switching'
+  cases: [expsound.*]
+  entries: [*-snd-toccata*]
+
+- id: sound.prelude
+  area: Sound cards
+  what: 'Prelude (Zorro II; A500, A1200, A4000): register-level playback, FIFO, interrupts, rate switching'
+  cases: [expsound.*]
+  entries: [*-snd-prelude, *-snd-prelude-jit]
+
+- id: sound.prelude1200
+  area: Sound cards
+  what: 'prelude1200 (clockport): register-level playback, FIFO, interrupts, rate switching'
+  cases: [expsound.*]
+  entries: [*-snd-prelude1200*]
+
+- id: sound.uaesndz2
+  area: Sound cards
+  what: 'uaesnd Z2 (A500, A1200, A4000): register-level playback, FIFO, interrupts, rate switching'
+  cases: [expsound.*]
+  entries: [*-snd-uaesndz2*]
+
+- id: sound.uaesndz3
+  area: Sound cards
+  what: 'uaesnd_z3 (z3): register-level playback, FIFO, interrupts, rate switching'
+  cases: [expsound.*]
+  entries: [*-snd-uaesndz3*]
+
+- id: sound.es1370
+  area: Sound cards
+  what: 'es1370 (pci): register-level playback, FIFO, interrupts, rate switching'
+  cases: [expsound.*]
+  entries: [*-snd-es1370*]
+
+- id: sound.fm801
+  area: Sound cards
+  what: 'fm801 (pci): register-level playback, FIFO, interrupts, rate switching'
+  cases: [expsound.*]
+  entries: [*-snd-fm801*]
+
+- id: net.a2065
+  area: Network
+  what: 'a2065: init, descriptor ring, TX/RX, internal loopback, interrupts'
+  cases: [network.*]
+  entries: [a4000-net-a2065]
+
+- id: net.ariadne
+  area: Network
+  what: 'ariadne: init, descriptor ring, TX/RX, internal loopback, interrupts'
+  cases: [network.*]
+  entries: [a4000-net-ariadne]
+  needs: full matrix
+
+- id: net.ariadne2
+  area: Network
+  what: 'ariadne2: init, descriptor ring, TX/RX, internal loopback, interrupts'
+  cases: [network.*]
+  entries: [a4000-net-ariadne2]
+  needs: full matrix
+
+- id: net.hydra
+  area: Network
+  what: 'hydra: init, descriptor ring, TX/RX, internal loopback, interrupts'
+  cases: [network.*]
+  entries: [a4000-net-hydra]
+  needs: full matrix
+
+- id: net.xsurf
+  area: Network
+  what: 'xsurf: init, descriptor ring, TX/RX, internal loopback, interrupts'
+  cases: [network.*]
+  entries: [a4000-net-xsurf]
+  needs: full matrix
+
+- id: net.xsurf100z3
+  area: Network
+  what: 'xsurf100z3: init, descriptor ring, TX/RX, internal loopback, interrupts'
+  cases: [network.*]
+  entries: [a4000-net-xsurf100z3]
+  needs: full matrix
+
+- id: net.ne2000pci
+  area: Network
+  what: 'ne2000_pci: init, descriptor ring, TX/RX, internal loopback, interrupts'
+  cases: [network.*]
+  entries: [a4000-net-ne2000pci]
+  needs: full matrix
+
+- id: net.ne2000pcmcia
+  area: Network
+  what: 'ne2000_pcmcia: init, descriptor ring, TX/RX, internal loopback, interrupts'
+  cases: [network.*]
+  entries: [a1200-net-ne2000pcmcia]
+  needs: full matrix
+
+- id: sound.zz9000
+  area: Sound cards
+  what: ZZ9000 audio (part of the ZZ9000 board)
+  cases: [expsound.*]
+  entries: [a4000-rtg-zz9000*]
+
+- id: sound.sb_isa
+  area: Sound cards
+  what: Sound Blaster ISA (x86 bridgeboard)
+  not_covered: needs an x86 bridgeboard and its BIOS ROMs
+
+- id: net.zz9000
+  area: Network
+  what: ZZ9000 network
+  cases: [network.*]
+  entries: [a4000-rtg-zz9000*]
+
+- id: net.external_echo
+  area: Network
+  what: external echo through the runner (uaenet/slirp backend)
+  not_covered: needs a host-side echo service on the slirp network; not implemented in the runner
+
+# ----------------------------------------------------------------- Accelerators and coprocessors
+- id: accel.cpu_boards
+  area: Accelerators
+  what: CPU boards (Blizzard 1230/1260/2060, CyberStorm, Apollo, ...): MAPROM, board RAM, SCSI, IRQ registers
+  not_covered: no module tests accelerator board registers yet
+
+- id: accel.ppc
+  area: Accelerators
+  what: CyberStorm PPC / Blizzard PPC (QEMU PPC plugin)
+  cases: [misc_hw.*, memory.*, probe.hello]
+  entries: [*-cpu-*ppc*]
+  partial: only the 68k side; no PPC code is run
+
+- id: accel.dsp3210
+  area: Accelerators
+  what: DSP3210 (A3000/A4000)
+  not_covered: no module drives the DSP3210
+
+- id: accel.x86_bridgeboards
+  area: Accelerators
+  what: x86 bridgeboards (A1060/A2088/A2286/A2386)
+  not_covered: needs the bridgeboard BIOS ROMs (not in the ROM set)
+
+# ----------------------------------------------------------------- Other
+- id: other.freezers
+  area: Other
+  what: Action Replay and other freezers
+  not_covered: needs the cartridge ROMs (not in the ROM set); no test written
+
+- id: other.arcadia
+  area: Other
+  what: Arcadia multi-select system
+  not_covered: needs Arcadia ROMs; no test written
+
+- id: other.genlock
+  area: Other
+  what: genlock
+  cases: [display.*genlock*]
+  partial: the genlock overlay is a host-side image effect; only the Denise genlock bits are visible to the CPU
+
+- id: other.a1000_wcs
+  area: Other
+  what: A1000 WCS/bootstrap (Kickstart loaded into WOM)
+  cases: [probe.hello]
+  entries: [a1000-*]
+
+- id: other.superkickstart
+  area: Other
+  what: A3000 SuperKickstart
+  not_covered: needs the A3000 SuperKickstart bootstrap ROM and Kickstart disks; no entry
+
+- id: other.maprom
+  area: Other
+  what: MAPROM
+  not_covered: no entry with MAPROM and no test written
+
+- id: other.extended_rom
+  area: Other
+  what: the extended ROM (CD32/CDTV, $E00000/$F00000)
+  cases: [probe.hello]
+  entries: [cd32-*, cdtv-*]
+
+- id: other.reset_paths
+  area: Other
+  what: reset paths (keyboard reset, RESET instruction, CPU-board resets)
+  not_covered: a reset ends the run; needs a reboot-aware module (end_action reboot) that is not written yet
