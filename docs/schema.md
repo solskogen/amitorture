@@ -542,7 +542,7 @@ per-module case totals:
   `freq_mhz` or `clock`+`period`+`samples` in either mark) becomes the pseudo case `host.tone_<tag>` (a leading
   `tone_` in the tag is not doubled: tag `tone_aud0` gives `host.tone_aud0`). Fingerprint:
   `{"mod":"host","case":"tone_<tag>","st","expect_hz","tol_pct","channel","freq_hz"}`.
-  - `channel`: the output channel measured, `L`/`R`: the mark's `side`, else the loudest one. The frequency is
+  - `channel`: the output channel measured, `L`/`R`: the mark's `side`, else (also for `side` `both`) the loudest one. The frequency is
     that channel's `freq_fft_hz` (`freq_zc_hz` if there is no FFT peak).
   - `st`: `pass` when the frequency is within `tol_pct` of `expect_hz` and, with a `side`, `side_ok` holds.
     `fail` when it is not, or when that channel is silent. `untestable` when the segment has no audio, or when a

@@ -258,7 +258,9 @@ def tone_case(h):
     tol_hz = e * tol_pct / 100.0
     chans = an.get("channels") or {}
     side = an.get("expect_side")
-    ch = side or an.get("loudest") or (sorted(chans)[0] if chans else None)
+    # side "both" (a mono source on left and right): measured on the loudest
+    # output; side_ok says whether the other one carries it too
+    ch = (side if side != "both" else None) or an.get("loudest") or (sorted(chans)[0] if chans else None)
     c = chans.get(ch) or {}
     src = an.get("source_ch")
     where = f"output {ch}" + (f", source channel {src}" if src is not None else "")
@@ -289,7 +291,8 @@ def tone_case(h):
         # meaningless when the tone is not at that frequency)
         why = (f"{where}: measured {m} Hz, expected {e:.6g} Hz +-{tol_pct:g} % (+-{tol_hz:.3g} Hz), "
                f"off by {off:+.2f} %" + ("" if side_ok or not freq_ok else
-                                         f"; the tone is not on {side} alone (side_amp {an.get('side_amp')})"))
+                                         (f"; the tone is not on both outputs alike (side_amp {an.get('side_amp')})" if side == "both" else
+                                          f"; the tone is not on {side} alone (side_amp {an.get('side_amp')})")))
         if freq_ok and side_ok:
             st = "pass"
             fp["freq_hz"] = round(e, 3)

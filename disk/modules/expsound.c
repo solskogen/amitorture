@@ -25,7 +25,7 @@
 #include "cia_hw.h"
 #include "expsound_hw.h"
 
-AMT_MODULE(expsound, 17, AMT_PH_BARE, 0, 0, 0);
+AMT_MODULE(expsound, 17, AMT_PH_BARE, 0, 64, 0);   /* chip: a Paula tone (uaesnd_mono_paula) */
 
 #define MAN_MACROSYSTEM 18260
 #define PROD_TOCCATA    12
@@ -604,7 +604,8 @@ static char *am_cat(char *p, const char *s)
     return p;
 }
 
-static int audio_mark(const char *tag, int start, ULONG freq_mhz, ULONG ms)
+/* side: the output the tone must come out on ("left", "right", "both"), or 0 */
+static int audio_mark(const char *tag, int start, ULONG freq_mhz, ULONG ms, const char *side)
 {
     char *p = am_args;
     if (!host_audio)
@@ -614,6 +615,11 @@ static int audio_mark(const char *tag, int start, ULONG freq_mhz, ULONG ms)
         p = amt_utoa(p, freq_mhz);
         p = am_cat(p, ",\"tol_pct\":2,\"ms\":");
         p = amt_utoa(p, ms);
+        if (side) {
+            p = am_cat(p, ",\"side\":\"");
+            p = am_cat(p, side);
+            p = am_cat(p, "\"");
+        }
         am_cat(p, "}");
     } else
         am_cat(p, "{\"edge\":\"stop\"}");
@@ -678,7 +684,9 @@ static void play(int fi, int intena, int mark)
     if (mark)
         /* u8m: a square wave of 32 frames per cycle (pb_gen); s16s: 100 */
         marked = audio_mark(tag, 1, f->rate2 * 500UL / (f->bps == 1 ? 32UL : 100UL),
-                            (total / f->bps) * 2000UL / f->rate2);
+                            (total / f->bps) * 2000UL / f->rate2,
+                            /* I8 S/M = 0: the mono sample goes to both DACs (data sheet) */
+                            (f->i8 & 0x10) ? 0 : "both");
 
     cw(9, 0x01);                       /* PEN: on the fly, no MCE needed */
     t0 = frames();
@@ -708,7 +716,7 @@ static void play(int fi, int intena, int mark)
     CREG(R_INTENA) = INT_EXTER;
     amt_irq_hook[6] = 0;
     if (mark && marked)
-        marked = audio_mark(tag, 0, 0, 0);
+        marked = audio_mark(tag, 0, 0, 0, 0);
     cw(6, 0x80);
     cw(7, 0x80);
     board_reset();
@@ -1305,10 +1313,10 @@ static void uaesnd_board(const struct amt_probe_board *bd)
         setaddr = u_set(0x100, UR + 0x1000, 4410, 22050UL << 8, 0, 0, 0, 0, 0x03);
         es_wb(UB(S0 + 0x8f), 0x03);
         /* 4410 frames at 22050 Hz (200 ms), 50 frames per cycle: 441 Hz */
-        marked = audio_mark("uaesnd_play", 1, 441000UL, 200);
+        marked = audio_mark("uaesnd_play", 1, 441000UL, 200, "both");   /* 35.B = 0: left and right */
         u_play_and_wait(setaddr, 0x82, 150);
         if (marked)
-            marked = audio_mark("uaesnd_play", 0, 0, 0);
+            marked = audio_mark("uaesnd_play", 0, 0, 0, 0);
         u_seq_case("uaesnd_play_irqs", exp2, 2, 0x87,
                    "a one-shot sample set (34.B = start|end) gives exactly two interrupts: $0187.B "
                    "bits 7+0 when the set starts, bits 7+1 when it ends (status masked with $87; uaesnd spec)",
@@ -1368,6 +1376,53 @@ static void uaesnd_board(const struct amt_probe_board *bd)
             urep("uaesnd_invalid_set", ok,
                  "flags (0.W) must be zero: a set with flags=1 is invalid and must not start",
                  "irqs_play", 0, (u_irq << 8) | (v & 1), 0);
+    }
+
+    /* ---- a mono stream is mixed into both sides without replacing what
+     * Paula plays there: a silent, endlessly repeating mono stream runs while
+     * Paula channel 1 (right output) plays a square tone; the right output
+     * must carry that tone (judged by the runner: host.tone_uaesnd_mono_paula,
+     * side right). Amiberry's mixer used to copy the left mix into the right
+     * side for a one-channel stream. */
+    {
+        UBYTE *tb = (UBYTE *)amt_chip_pool();
+        ULONG clk = amt_cck_hz(), half = amt_secs(1) / 2;
+        UWORD per = 254;                                  /* 32 samples: ~436 Hz PAL */
+        ULONG fm = (ULONG)(((unsigned long long)clk * 1000ULL) / ((ULONG)per * 32UL));
+        int a1 = 0, a2 = 0;
+        char *p;
+        for (k = 0; k < 32; k++)
+            tb[k] = k < 16 ? 96 : (UBYTE)-96;
+        for (k = 0; k < 2205; k++)
+            es_wb((volatile UBYTE *)(UR + 0x3000 + k), 0);
+        setaddr = u_set(0x400, UR + 0x3000, 2205, 22050UL << 8, UR + 0x3000, 2205, 0xffff, 0, 0);
+        es_wl(UL(0xf0), 0x00000001);
+        es_wl(UL(S0 + 0x80), setaddr);                    /* starts the stream */
+        u_wait_frames(5);
+        CREG(R_DMACON) = 0x0002;                          /* AUD1 off */
+        *(volatile ULONG *)(CUSTOM_BASE + 0x0b0) = (ULONG)tb;
+        CREG(0x0b4) = 16;                                 /* AUD1LEN (words) */
+        CREG(0x0b6) = per;                                /* AUD1PER */
+        CREG(0x0b8) = 64;                                 /* AUD1VOL */
+        if (host_audio) {
+            p = am_cat(am_args, "{\"edge\":\"start\",\"freq_mhz\":");
+            p = amt_utoa(p, fm);
+            p = am_cat(p, ",\"tol_pct\":2,\"ms\":500,\"side\":\"right\"}");
+            a1 = amt_request("audio_mark", "uaesnd_mono_paula", am_args, amt_secs(10));
+        }
+        if (a1) {
+            CREG(R_DMACON) = 0x8202;                      /* DMAEN | AUD1EN */
+            u_wait_frames(half);
+            CREG(R_DMACON) = 0x0002;
+            CREG(0x0b8) = 0;
+            a2 = audio_mark("uaesnd_mono_paula", 0, 0, 0, 0);
+        }
+        es_wl(UL(S0 + 0x80), 0);                          /* stops the stream */
+        u_wait_frames(2);
+        if (!a1)
+            host_audio = 0;
+        amt_case("uaesnd_mono_paula_capture", a1 && a2 ? AMT_ST_PASS : AMT_ST_UNTESTABLE,
+                 a1 && a2 ? 0 : "host did not act on request audio_mark");
     }
 
     cia_restore(&cia_b);

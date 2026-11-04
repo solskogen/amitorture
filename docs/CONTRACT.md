@@ -367,7 +367,7 @@ Runner notes (runner/amitorture/hostreq.py, docs/RUNNER.md "Host request channel
 - `pcmcia` (`{"op":"eject"|"insert"}`, used by misc_hw) is not served. Amiberry's IPC has no PCMCIA eject/insert command: gayle.cpp's pcmcia_eject/pcmcia_reinsert are reached only from the GUI's hardfile change. It stays an unknown `what`, never acked.
 - `cd32pad` with `{"buttons":0}` is acked when the port is a `cd32joy` port (CD32 entries: port 1), because nothing can press a button there. Any other button mask is never acked.
 - `audio_mark` is acked only when the launch captures audio (the default `--audio auto` captures every disk that contains an `audio_mark` request).
-- **Expectations in the marks.** The start mark may describe the tone with `expect_hz`, or `freq_mhz`, or `clock` + `period` + `samples`, and with `side` (`left`/`right`). The stop mark may repeat or override any of these. The host then reports `freq_ok` / `side_ok` in its analysis.
+- **Expectations in the marks.** The start mark may describe the tone with `expect_hz`, or `freq_mhz`, or `clock` + `period` + `samples`, and with `side`: `left`/`right` (the tone on that output alone), or `both` (a mono source: on both outputs, the quieter at least half the louder). The stop mark may repeat or override any of these. The host then reports `freq_ok` / `side_ok` in its analysis.
 
 The mailbox ring is 16384 bytes. The host must read `ring_size` from the header, never assume it.
 

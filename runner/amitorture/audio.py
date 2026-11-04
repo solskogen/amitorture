@@ -288,6 +288,9 @@ def side_check(res, side, channels=None):
     itself (Goertzel at expect_hz): a DC step or a click left on the other
     channel by an earlier tone does not count; otherwise of the RMS."""
     s = str(side or "").lower()
+    if s == "both":
+        _side_both(res, channels)
+        return
     want = {"l": "L", "left": "L", "r": "R", "right": "R"}.get(s)
     if want is None or res.get("silent"):
         return
@@ -302,6 +305,26 @@ def side_check(res, side, channels=None):
         a = (res["channels"].get(want) or {}).get("active_rms") or 0.0
         b = (res["channels"].get(other) or {}).get("active_rms") or 0.0
     res["side_ok"] = a > 0 and b < 0.1 * a
+
+
+def _side_both(res, channels):
+    """side "both": a mono source sent to left and right. The tone must be on
+    both outputs, the quieter at least half the louder (Goertzel at expect_hz
+    when the samples are there, else the RMS)."""
+    if res.get("silent"):
+        return
+    res["expect_side"] = "both"
+    names = list(res["channels"])
+    if "L" not in names or "R" not in names:
+        return
+    if channels is not None and res.get("expect_hz"):
+        a = goertzel_amp(channels[names.index("L")], res["rate"], res["expect_hz"])
+        b = goertzel_amp(channels[names.index("R")], res["rate"], res["expect_hz"])
+        res["side_amp"] = {"L": round(a, 6), "R": round(b, 6)}
+    else:
+        a = (res["channels"]["L"] or {}).get("active_rms") or 0.0
+        b = (res["channels"]["R"] or {}).get("active_rms") or 0.0
+    res["side_ok"] = min(a, b) > 0 and min(a, b) >= 0.5 * max(a, b)
 
 
 def write_wav(path, channels, rate):
