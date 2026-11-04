@@ -8,6 +8,18 @@ board) it runs the suite for the card's chip; case ids are
 `domino`, `merlin`, `a2410`, `zz9000`, `uaegfx`, and for boards that are only
 recognised `retina`, `visiona`, `rainbow2`, `rainbow3`, `harlequin`.
 
+Reachability in the emulator matrix (`standard`, one A4000 entry per card,
+runner/amitorture/matrix.py RTG_CARDS):
+- every card above with a suite has an entry, including the Pixel64: on real
+  hardware it sits on an AteoBus, Amiberry emulates it as an autoconfig
+  board of its own;
+- the recognised-only cards report `<card>_detect` (identification,
+  fingerprinted, so a baseline sees it change) and `<card>_suite` skip;
+- the PCI cards (Permedia2, Voodoo 3, S3 ViRGE/Trio64 PCI, the four Matrox
+  cards) are configured behind a Prometheus bridge, but the module does not
+  enumerate PCI boards yet: those entries report only `no_card`;
+- `uaegfx` is always untestable (driver traps, no registers), on any machine.
+
 Sources of expectations: IBM VGA Technical Reference (standard registers);
 Cirrus Logic GD542X Technical Reference Manual and GD543X/GD5446 TRM; S3
 Trio32/Trio64 and ViRGE data books; Tseng ET4000 data book; TI TMS34010

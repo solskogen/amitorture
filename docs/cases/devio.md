@@ -14,6 +14,7 @@ microseconds and the number of timeouts; `<dev>_u<n>_write255` / `read255` throu
 | case | intent | rule (reference) | a failure usually means |
 |---|---|---|---|
 | devices | lists the device nodes found (name, version) and all exec devices; always pass | - | (diagnostics) |
+| `setup` | untestable when no signal is free for the module's message port (only reported then) | exec AllocSignal | - |
 | `<dev>_u<n>` | skip: no disk / not test-owned / no memory | - | - |
 | `<dev>_u<n>_read0` | only with AMT_F_UNSAFE on unowned units: block 0 reads without error (read only) | exec CMD_READ | device read path broken |
 | `<dev>_u<n>_owner` | block 0 is signed, so block total-1 must be readable and signed with the same UUID; both blocks agree on first_free/kind, block size 512, kind 1-4 (1 only on trackdisk), non-empty region, total <= 4 GB (else skip); a hardfile's blocks 1-15 hold no RDSK (plain) or only the test-owned RDSK with no partition or the AMTTEST NOMOUNT PART (RDB): a repartitioned medium is not owned (review M2/M3) | CONTRACT section 11 | the device maps blocks wrongly or reports/limits capacity wrongly; unit is not written |

@@ -40,8 +40,8 @@ Exit code: 0 means no problems, 1 means problems found (read the report), 2 is a
 | Matrix | Entries | Time | What it adds |
 |---|---|---|---|
 | `smoke` | 10 | ~25 min + narrowing | one machine per CPU class and chipset |
-| `standard` | 134 | ~6 h, including a 2 h narrowing budget | every CPU/FPU variant, every RTG, sound and network board, Gayle/PCMCIA, RTC boards, SCSI controllers, MMU configs, CD32, CDTV |
-| `full` | 532 | not measured yet (about 4× `standard`) | every JIT sub-option, threaded and softfloat twins |
+| `standard` | 135 | ~6 h, including a 2 h narrowing budget | every CPU/FPU variant, every RTG, sound and network board, Gayle/PCMCIA, RTC boards, SCSI controllers, MMU configs, CD32, CDTV |
+| `full` | 533 | not measured yet (about 4× `standard`) | every JIT sub-option, threaded and softfloat twins |
 
 `python3 -m amitorture matrix --matrix standard` lists the entries.
 

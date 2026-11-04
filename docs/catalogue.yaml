@@ -512,8 +512,9 @@
 
 - id: rtg.pixel64
   area: Graphics cards
-  what: Pixel64 (AteoBus)
-  not_covered: needs the AteoBus board
+  what: 'Pixel64 (Z2, 2 MB VRAM; on an AteoBus on real hardware, an autoconfig board of its own in Amiberry): register level, VRAM widths, banking, mode, palette, blitter, sprite'
+  cases: [rtg.*]
+  entries: [a4000-rtg-pixel64]
 
 - id: rtg.a2410
   area: Graphics cards
@@ -606,12 +607,14 @@
   what: 'Retina_Z2 (Z2, 4 MB VRAM): register level, VRAM widths, banking, mode, palette, blitter, sprite'
   cases: [rtg.*]
   entries: [a4000-rtg-retinaz2]
+  partial: "recognised by its autoconfig IDs (<card>_detect, fingerprinted), but there is no register-level suite for its chip yet"
 
 - id: rtg.retinaz3
   area: Graphics cards
   what: 'Retina_Z3 (Z3, 4 MB VRAM): register level, VRAM widths, banking, mode, palette, blitter, sprite'
   cases: [rtg.*]
   entries: [a4000-rtg-retinaz3]
+  partial: "recognised by its autoconfig IDs (<card>_detect, fingerprinted), but there is no register-level suite for its chip yet"
 
 - id: rtg.merlinz2
   area: Graphics cards
@@ -642,12 +645,14 @@
   what: 'Visiona (Z2, 4 MB VRAM): register level, VRAM widths, banking, mode, palette, blitter, sprite'
   cases: [rtg.*]
   entries: [a4000-rtg-visiona]
+  partial: "recognised by its autoconfig IDs (<card>_detect, fingerprinted), but there is no register-level suite for its chip yet"
 
 - id: rtg.rainbowiii
   area: Graphics cards
   what: 'RainbowIII (Z3, 4 MB VRAM): register level, VRAM widths, banking, mode, palette, blitter, sprite'
   cases: [rtg.*]
   entries: [a4000-rtg-rainbowiii]
+  partial: "recognised by its autoconfig IDs (<card>_detect, fingerprinted), but there is no register-level suite for its chip yet"
 
 - id: rtg.domino
   area: Graphics cards
@@ -672,12 +677,14 @@
   what: 'Harlequin_PAL (Z2, 2 MB VRAM): register level, VRAM widths, banking, mode, palette, blitter, sprite'
   cases: [rtg.*]
   entries: [a4000-rtg-harlequinpal]
+  partial: "recognised by its autoconfig IDs (<card>_detect, fingerprinted), but there is no register-level suite for its chip yet"
 
 - id: rtg.rainbowii
   area: Graphics cards
   what: 'RainbowII (Z2, 2 MB VRAM): register level, VRAM widths, banking, mode, palette, blitter, sprite'
   cases: [rtg.*]
   entries: [a4000-rtg-rainbowii]
+  partial: "recognised by its autoconfig IDs (<card>_detect, fingerprinted), but there is no register-level suite for its chip yet"
 
 - id: rtg.zz9000z2
   area: Graphics cards
@@ -696,48 +703,56 @@
   what: 'PERMEDIA2_PCI (PCI, 8 MB VRAM): register level, VRAM widths, banking, mode, palette, blitter, sprite'
   cases: [rtg.*]
   entries: [a4000-rtg-permedia2pci]
+  partial: "the rtg module does not enumerate PCI boards behind the Prometheus bridge yet: it reports only no_card"
 
 - id: rtg.v33000
   area: Graphics cards
   what: 'V3_3000 (PCI, 16 MB VRAM): register level, VRAM widths, banking, mode, palette, blitter, sprite'
   cases: [rtg.*]
   entries: [a4000-rtg-v33000]
+  partial: "the rtg module does not enumerate PCI boards behind the Prometheus bridge yet: it reports only no_card"
 
 - id: rtg.s3virgepci
   area: Graphics cards
   what: 'S3VIRGE_PCI (PCI, 4 MB VRAM): register level, VRAM widths, banking, mode, palette, blitter, sprite'
   cases: [rtg.*]
   entries: [a4000-rtg-s3virgepci]
+  partial: "the rtg module does not enumerate PCI boards behind the Prometheus bridge yet: it reports only no_card"
 
 - id: rtg.s3trio64pci
   area: Graphics cards
   what: 'S3TRIO64_PCI (PCI, 4 MB VRAM): register level, VRAM widths, banking, mode, palette, blitter, sprite'
   cases: [rtg.*]
   entries: [a4000-rtg-s3trio64pci]
+  partial: "the rtg module does not enumerate PCI boards behind the Prometheus bridge yet: it reports only no_card"
 
 - id: rtg.matroxmillennium
   area: Graphics cards
   what: 'Matrox_Millennium (PCI, 4 MB VRAM): register level, VRAM widths, banking, mode, palette, blitter, sprite'
   cases: [rtg.*]
   entries: [a4000-rtg-matroxmillennium]
+  partial: "the rtg module does not enumerate PCI boards behind the Prometheus bridge yet: it reports only no_card"
 
 - id: rtg.matroxmillenniumii
   area: Graphics cards
   what: 'Matrox_Millennium_II (PCI, 8 MB VRAM): register level, VRAM widths, banking, mode, palette, blitter, sprite'
   cases: [rtg.*]
   entries: [a4000-rtg-matroxmillenniumii]
+  partial: "the rtg module does not enumerate PCI boards behind the Prometheus bridge yet: it reports only no_card"
 
 - id: rtg.matroxmystique
   area: Graphics cards
   what: 'Matrox_Mystique (PCI, 8 MB VRAM): register level, VRAM widths, banking, mode, palette, blitter, sprite'
   cases: [rtg.*]
   entries: [a4000-rtg-matroxmystique]
+  partial: "the rtg module does not enumerate PCI boards behind the Prometheus bridge yet: it reports only no_card"
 
 - id: rtg.matroxmystique220
   area: Graphics cards
   what: 'Matrox_Mystique220 (PCI, 8 MB VRAM): register level, VRAM widths, banking, mode, palette, blitter, sprite'
   cases: [rtg.*]
   entries: [a4000-rtg-matroxmystique220]
+  partial: "the rtg module does not enumerate PCI boards behind the Prometheus bridge yet: it reports only no_card"
 
 - id: sound.toccata
   area: Sound cards
@@ -774,12 +789,14 @@
   what: 'es1370 (pci): register-level playback, FIFO, interrupts, rate switching'
   cases: [expsound.*]
   entries: [*-snd-es1370*]
+  partial: "the expsound module does not recognise this PCI card yet: it reports no_board"
 
 - id: sound.fm801
   area: Sound cards
   what: 'fm801 (pci): register-level playback, FIFO, interrupts, rate switching'
   cases: [expsound.*]
   entries: [*-snd-fm801*]
+  partial: "the expsound module does not recognise this PCI card yet: it reports no_board"
 
 - id: net.a2065
   area: Network
@@ -793,6 +810,7 @@
   cases: [network.*]
   entries: [a4000-net-ariadne]
   needs: full matrix
+  partial: "the network module knows only the A2065 and the ZZ9000 yet: it reports no_board for this card (full matrix only)"
 
 - id: net.ariadne2
   area: Network
@@ -800,6 +818,7 @@
   cases: [network.*]
   entries: [a4000-net-ariadne2]
   needs: full matrix
+  partial: "the network module knows only the A2065 and the ZZ9000 yet: it reports no_board for this card (full matrix only)"
 
 - id: net.hydra
   area: Network
@@ -807,6 +826,7 @@
   cases: [network.*]
   entries: [a4000-net-hydra]
   needs: full matrix
+  partial: "the network module knows only the A2065 and the ZZ9000 yet: it reports no_board for this card (full matrix only)"
 
 - id: net.xsurf
   area: Network
@@ -814,6 +834,7 @@
   cases: [network.*]
   entries: [a4000-net-xsurf]
   needs: full matrix
+  partial: "the network module knows only the A2065 and the ZZ9000 yet: it reports no_board for this card (full matrix only)"
 
 - id: net.xsurf100z3
   area: Network
@@ -821,6 +842,7 @@
   cases: [network.*]
   entries: [a4000-net-xsurf100z3]
   needs: full matrix
+  partial: "the network module knows only the A2065 and the ZZ9000 yet: it reports no_board for this card (full matrix only)"
 
 - id: net.ne2000pci
   area: Network
@@ -828,6 +850,7 @@
   cases: [network.*]
   entries: [a4000-net-ne2000pci]
   needs: full matrix
+  partial: "the network module knows only the A2065 and the ZZ9000 yet: it reports no_board for this card (full matrix only)"
 
 - id: net.ne2000pcmcia
   area: Network
@@ -835,12 +858,14 @@
   cases: [network.*]
   entries: [a1200-net-ne2000pcmcia]
   needs: full matrix
+  partial: "the network module knows only the A2065 and the ZZ9000 yet: it reports no_board for this card (full matrix only)"
 
 - id: sound.zz9000
   area: Sound cards
   what: ZZ9000 audio (part of the ZZ9000 board)
   cases: [expsound.*]
   entries: [a4000-rtg-zz9000*]
+  partial: "ZZ9000AX audio is not implemented in the expsound module yet"
 
 - id: sound.sb_isa
   area: Sound cards
