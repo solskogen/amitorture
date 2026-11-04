@@ -16,7 +16,7 @@
  * the event with a timeout and reports exact counts.
  *
  * Host-free cases (exact everywhere): JOYTEST read-back, POTGO output pin
- * read-back via POTINP, the keyboard handshake pulse; the pot counters are
+ * read-back via POTINP; the pot counters are
  * reported as a timing field only (the values with nothing connected are
  * emulator/hardware specific).
  *
@@ -140,7 +140,6 @@ static const char *const hwhy[H_N] = {
 };
 static UBYTE hdead[H_N];     /* a request of this kind went unacknowledged */
 static UBYTE hnone;          /* the "wait" probe went unacknowledged */
-static ULONG wait_rt_frames;
 
 /* 1 = acknowledged, 0 = sent and timed out, -1 = not sent (gated) */
 static int req(int kind, const char *tag, const char *args)
@@ -454,60 +453,6 @@ static void kbd_flush(void)
         cia_kbd_handshake();
         kbd_strays++;
     }
-}
-
-/* host-free: the handshake pulse (CRA SPMODE output -> KDAT low) lasts
- * >= 85 us measured with CIA-A timer B, and CRA reads SPMODE back */
-static void kbd_handshake_test(void)
-{
-    UWORD t0, t1;
-    UBYTE cra0, cra_on, cra_off;
-    ULONG c0, c1, e;
-    int ok;
-    cia_wr(CIAA_BASE, C_CRB, 0);
-    cia_wr(CIAA_BASE, C_TBLO, 0xff);
-    cia_wr(CIAA_BASE, C_TBHI, 0xff);      /* stopped: the hi write loads */
-    cia_wr(CIAA_BASE, C_CRB, CR_START);   /* continuous, phi2 */
-    cra0 = cia_rd(CIAA_BASE, C_CRA) & (UBYTE)~CR_LOAD;
-    t0 = cia_timer(CIAA_BASE, C_TBLO, C_TBHI);
-    c0 = cia_now();
-    cia_wr(CIAA_BASE, C_CRA, cra0 | CR_SPMODE);
-    cra_on = cia_rd(CIAA_BASE, C_CRA);
-    cia_wait_cc(3 * 227UL);
-    cia_wr(CIAA_BASE, C_CRA, cra0 & (UBYTE)~CR_SPMODE);
-    c1 = cia_now();
-    t1 = cia_timer(CIAA_BASE, C_TBLO, C_TBHI);
-    cra_off = cia_rd(CIAA_BASE, C_CRA);
-    cia_wr(CIAA_BASE, C_CRB, 0);
-    (void)cia_icr(CIAA_BASE);
-    e = (UWORD)(t0 - t1);
-    /* 85 us = 60.3 E clocks PAL (709379 Hz), 60.9 NTSC (715909 Hz) */
-    ok = e >= 61 && (cra_on & CR_SPMODE) && !(cra_off & CR_SPMODE);
-    amt_case_open("kbd_handshake_pulse", ok ? AMT_ST_PASS : AMT_ST_FAIL);
-    if (!ok) {
-        json_obj("expect");
-        json_str("e_clocks", ">=61");
-        json_hexn("cra_during_and_40", CR_SPMODE, 2);
-        json_hexn("cra_after_and_40", 0, 2);
-        json_obj_end();
-        json_obj("got");
-        json_int("e_clocks", (long)e);
-        json_hexn("cra_during", cra_on, 2);
-        json_hexn("cra_after", cra_off, 2);
-        json_obj_end();
-        json_str("why", "HRM ch. 8 keyboard: the handshake holds KDAT low for at least 85 us, made by "
-                 "setting CIA-A CRA SPMODE (output) for 3 raster lines (~192 us); CIA-A timer B "
-                 "(E clock) must count >= 61 E clocks over it, and CRA must read SPMODE back");
-    }
-    json_obj("in");
-    json_hexn("cra", cra0, 2);
-    json_int("lines", 3);
-    json_obj_end();
-    json_obj("timing");
-    json_int("e_clocks", (long)e);
-    json_int("cck", (long)(c1 - c0));
-    json_obj_end();
-    amt_case_close();
 }
 
 /* one key event: request, wait for the byte, acknowledge.
@@ -1434,20 +1379,12 @@ static void cd32_tests(void)
 }
 
 /* ============================================================ main */
+/* Does the host answer requests at all? No case of its own: when the
+ * "wait" probe is not acknowledged, req() sets hnone and every host case
+ * after it reports untestable without sending its request. */
 static void host_probe(void)
 {
-    ULONG f0 = amt_frames_now();
-    int r = req(H_WAIT, "probe", "{}");
-    wait_rt_frames = amt_frames_now() - f0;
-    if (r <= 0) {
-        host_untestable("host_request_wait", H_WAIT, r);
-        return;
-    }
-    amt_case_open("host_request_wait", AMT_ST_PASS);
-    json_obj("timing");
-    json_int("frames", (long)wait_rt_frames);
-    json_obj_end();
-    amt_case_close();
+    (void)req(H_WAIT, "probe", "{}");
 }
 
 static void body(void)
@@ -1455,7 +1392,6 @@ static void body(void)
     joytest_tests();
     potinp_tests();
     pot_counter_test();
-    kbd_handshake_test();
     host_probe();
     keyboard_tests();
     mouse_tests();

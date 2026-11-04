@@ -48,10 +48,10 @@ not exist there.
 | `zero_{d,nod}_masked` | the only non-zero data is outside the 1-word mask | as above, with masks | masks ignored for BZERO |
 | `zero_{d,nod}_lf00`, `zero_{d,nod}_lfff` | minterm $00 (zero) and $FF (not zero) | as above | |
 | `zero_{d,nod}_last_word` | a single set bit in the last word of the last line | BZERO covers every word, up to the last one | the last word is not included |
-| `fill_incl_fci0`, `fill_incl_fci1`, `fill_excl_fci0`, `fill_excl_fci1` | area fill of a sparse edge image (D = A&B&C), descending, FCI 0/1 | fill goes right to left, bit by bit; the fill state starts at FCI on every line and toggles at each 1 bit; inclusive keeps both edges, exclusive drops the left edge ("Area fill mode") | fill direction, FCI not reloaded per line, exclusive/inclusive swapped |
-| `fill_incl_shift`, `fill_excl_shift` | fill after a shifted, masked minterm | the fill acts on the minterm output | fill applied before the logic |
+| `fill_incl_fci0`, `fill_incl_fci1`, `fill_excl_fci0`, `fill_excl_fci1` | area fill of a sparse edge image (D = A&B&C), descending, FCI 0/1 | fill goes right to left, bit by bit; the fill state starts at FCI on every line and toggles at each 1 bit; inclusive keeps both edges, exclusive drops the left edge ("Area fill mode"); BZERO checked (see "Unsure") | fill direction, FCI not reloaded per line, exclusive/inclusive swapped; BZERO stale in fill mode |
+| `fill_incl_shift`, `fill_excl_shift` | fill after a shifted, masked minterm | the fill acts on the minterm output; BZERO checked | fill applied before the logic |
 | `fill_incl_inplace`, `fill_excl_inplace` | the polygon idiom: one edge plane filled in place (A=D) | as above | |
-| `line_o1_0` … `line_o8_2` (24) | 3 slopes per octant (codes as in hardware/blit.h OCTANT1..8). The middle slope has dmin = dmax/2, so the error term reaches exactly 0 | BLTAPTL = 4dmin-2dmax, SIGN set if negative. Each pixel: SIGN clear means a minor step and error += BLTAMOD (4(dmin-dmax)); SIGN set means error += BLTBMOD (4dmin); the major step is always taken. SUD/SUL/AUL choose the axes; BLTSIZE = (dmax+1)<<6 \| 2 ("Line mode") | octant decoding, sign test (< 0 vs <= 0), error update order, word-crossing of ASH |
+| `line_o1_0` … `line_o8_2` (24) | 3 slopes per octant (codes as in hardware/blit.h OCTANT1..8). The middle slope has dmin = dmax/2, so the error term reaches exactly 0 | BLTAPTL = 4dmin-2dmax, SIGN set if negative. Each pixel: SIGN clear means a minor step and error += BLTAMOD (4(dmin-dmax)); SIGN set means error += BLTBMOD (4dmin); the major step is always taken. SUD/SUL/AUL choose the axes; BLTSIZE = (dmax+1)<<6 \| 2 ("Line mode"). BZERO checked in every line case (see "Unsure") | octant decoding, sign test (< 0 vs <= 0), error update order, word-crossing of ASH; BZERO stale after a line blit |
 | `line_horizontal`, `line_horizontal_left`, `line_vertical`, `line_vertical_up`, `line_diag`, `line_single_pixel`, `line_two_pixels`, `line_long` | degenerate and long lines (dmin=0, 45 degrees, 1 pixel, 320 pixels) | as above | |
 | `line_sing_o1` … `line_sing_o8` | SING with the XOR minterm $4A, one line per octant | SING draws one pixel per horizontal line (the fill-able line idiom). Modelled as the first pixel on each row | SING ignored, or the wrong pixel kept |
 | `line_texture_0` … `_5` | BLTBDAT patterns with different BSH start bits | the BLTBDAT texture bit decides each pixel; BSH is the start bit, 0 = least significant; the next pixel uses the next lower bit (see "Unsure") | texture ignored, or rotated the wrong way |
@@ -97,8 +97,15 @@ BBUSY clear for that blit. It is timing only and not compared.
   specified. The priming blit makes them zero under both possible behaviours
   (cleared at the start, or kept from the last blit). The data registers of
   enabled channels are never written by the CPU.
-- **BZERO is not checked** for fill-mode or line-mode blits (it is unclear
-  whether fill-mode BZERO is taken before or after the fill).
+- **BZERO in fill and line mode.** HRM 6: BZERO is 1 when every word the
+  blit produced was zero. Fill mode: the model takes the D output after the
+  fill circuit; line mode: the D words written. The HRM does not settle
+  whether fill-mode BZERO is taken before or after the fill, or what a SING
+  step without a dot counts as, so `tools/gen_blitter.py` also computes BZERO
+  under the other readings (before the fill; with the dot on suppressed SING
+  steps; with C on them) and checks BZERO only where all agree. All 60 fill
+  and line cases agree (their outputs are never all zero: BZERO = 0), so all
+  are checked; none tells the readings apart.
 - Not tested:
   - fill in ascending mode (the HRM says fill needs descending mode);
   - IFE and EFE set together;

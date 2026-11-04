@@ -695,6 +695,9 @@ static void t_perf(const char *kind, ULONG blk)
 }
 
 /* ------------------------------------------------------------ ROM */
+/* The probe takes the ROM base from exec's resident tag: 256 KB at $FC0000
+ * (KS 1.x, header word $1111), else the 512 KB around it ($F80000; also
+ * $E00000 if exec lived in an extended ROM). */
 static ULONG rom_size(void)
 {
     ULONG b = amt_probe_result.rom_base;
@@ -715,10 +718,20 @@ static void crc_init(void)
     }
 }
 
+/* Two checks: byte and long reads of the ROM give the same bytes (CRC-32
+ * of both), and the Kickstart checksum rule: the sum of all longwords of
+ * the ROM, with the carry out of bit 31 added back in (end-around carry),
+ * is $FFFFFFFF. Kickstart's own ROM check at reset relies on it; every
+ * Commodore ROM, 3.2.x and the AROS ROM pair Amiberry builds in
+ * (aros-rom.bin, aros-ext.bin) satisfy it, and Amiberry recomputes the
+ * checksum after it patches a ROM (memory.cpp patch_kick ->
+ * kickstart_fix_checksum). The checksum always covers the whole ROM, also
+ * in quick mode (the CRC pair then covers the first 64 KB only). */
 static void t_rom_read(void)
 {
     ULONG base = amt_probe_result.rom_base, size = rom_size(), n, i;
     ULONG cb = 0, cl = 0, sum = 0, t0, t1, chunk = 0x4000;
+    int crc_ok, sum_ok;
     if (base < 0xe00000UL || base >= 0x1000000UL) {
         amt_case("rom_read", AMT_ST_UNTESTABLE, "ROM base from the probe is not in $E00000-$FFFFFF");
         return;
@@ -733,21 +746,24 @@ static void t_rom_read(void)
     }
     t1 = amt_ticks();
     amt_perf("rom_crc2", 2 * n, t1 - t0);
-    if (n == size)
-        for (i = 0; i < n; i += 4) {
-            ULONG l = *(volatile ULONG *)(base + i), s2 = sum + l;
-            if (s2 < sum)
-                s2++;
-            sum = s2;
-        }
-    if (cb == cl) {
+    for (i = 0; i < size; i += 4) {
+        ULONG l = *(volatile ULONG *)(base + i), s2 = sum + l;
+        if (s2 < sum)
+            s2++;
+        sum = s2;
+        if (!(i & 0xffffUL))
+            amt_watchdog_kick();
+    }
+    crc_ok = cb == cl;
+    sum_ok = sum == 0xffffffffUL;
+    if (crc_ok && sum_ok) {
         amt_case_open("rom_read", AMT_ST_PASS);
         json_obj("ctx");
         json_hex("base", base);
         json_hex("bytes", n);
+        json_hex("rom_size", size);
         json_hex("crc32", cl);
-        if (n == size)
-            json_hex("kick_sum", sum);
+        json_hex("kick_sum", sum);
         json_obj_end();
         amt_case_close();
     } else {
@@ -755,17 +771,26 @@ static void t_rom_read(void)
         json_obj("in");
         json_hex("base", base);
         json_hex("bytes", n);
+        json_hex("rom_size", size);
+        json_hexn("rom_magic", *(volatile UWORD *)base, 4);
         json_obj_end();
         json_obj("expect");
         json_hex("crc32_bytes", cl);
-        json_str("rule", "byte and long reads of the ROM give the same bytes");
+        json_hex("kick_sum", 0xffffffffUL);
+        json_str("rule", "byte and long reads of the ROM give the same bytes; the longword sum of the "
+                         "whole ROM with end-around carry is $FFFFFFFF");
         json_obj_end();
         json_obj("got");
         json_hex("crc32_bytes", cb);
         json_hex("crc32_longs", cl);
+        json_hex("kick_sum", sum);
         json_obj_end();
-        json_str("why", "reading the Kickstart ROM with MOVE.B and with MOVE.L gives different data (PRM 2.2 "
-                        "big-endian byte order: they must agree)");
+        json_str("why", !crc_ok ? "reading the Kickstart ROM with MOVE.B and with MOVE.L gives different data "
+                                  "(PRM 2.2 big-endian byte order: they must agree)"
+                                : "the Kickstart checksum does not hold: the ROM the CPU sees at this base "
+                                  "is not an intact Kickstart image of rom_size bytes (a ROM word read "
+                                  "wrong, the mapping/mirroring wrong, or a patched ROM whose checksum "
+                                  "was not fixed)");
         amt_case_close();
     }
 }

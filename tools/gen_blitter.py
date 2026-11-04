@@ -136,8 +136,7 @@ class Case:
         self.group = k.get("group", "")
         self.note = k.get("note", "")
         self.seed_base = k.get("seed", 0)
-        if self.flags & BF_LINE:
-            self.flags |= BF_NOZERO
+        self.zero_alt = None      # BZERO under the other readings of the HRM (run_*)
 
     # --- size encoding -------------------------------------------------
     def size_regs(self):
@@ -172,6 +171,7 @@ class Case:
         adat, bdat, cdat = self.adat, self.bdat, self.cdat
         aold = bold = 0
         zero = True
+        zero_pre_fill = True
         for _row in range(self.h):
             fc = 1 if con1 & FCI else 0
             for col in range(self.w):
@@ -197,6 +197,8 @@ class Case:
                     bh = (((bold << 16) | bdat) >> bsh) & 0xffff
                 aold, bold = (adat if "aold_unmasked" in MUTATE else a), bdat
                 d = minterm(lf, ah, bh, cdat)
+                if d:
+                    zero_pre_fill = False
                 if ife or efe:
                     out = 0
                     for bit in range(16):
@@ -218,6 +220,12 @@ class Case:
                 cpt += sg * s16(self.cmod & ~1)
             if con0 & USED:
                 dpt += sg * s16(self.dmod & ~1)
+        # HRM 6: BZERO is set when every word the blit produced was zero. The
+        # block diagram puts the zero detector on the D output, after the fill
+        # circuit; the other reading (minterm output, before the fill) is
+        # recorded so that evaluate() checks BZERO only where both agree.
+        if ife or efe:
+            self.zero_alt = [zero_pre_fill]
         return zero
 
     def run_line(self, mem):
@@ -234,14 +242,26 @@ class Case:
         ptr = self.cpt
         assert self.dpt == self.cpt
         onedot = False
+        # BZERO (HRM 6: every D word the blit produced was zero). Which words a
+        # SING step that draws no dot "produces" is not documented: the D words
+        # written (zero), the minterm with the dot also on suppressed steps
+        # (zero_dot), or C unchanged on them (zero_c). evaluate() checks BZERO
+        # only where all three agree.
+        zero = zero_dot = zero_c = True
         for _ in range(self.h):
             draw = not (con1 & SING and onedot)
             onedot = "sing_ignored" not in MUTATE
+            c = mem.rw(ptr, "C")
+            tbit = (self.bdat >> bsh) & 1
+            d = minterm(lf, 0x8000 >> ash, 0xffff if tbit else 0, c)
+            if d:
+                zero_dot = False
             if draw:
-                c = mem.rw(ptr, "C")
-                tbit = (self.bdat >> bsh) & 1
-                d = minterm(lf, 0x8000 >> ash, 0xffff if tbit else 0, c)
                 mem.ww(ptr, d, "D")
+                if d:
+                    zero = zero_c = False
+            elif c:
+                zero_c = False
             bsh = (bsh + (1 if "texture_up" in MUTATE else -1)) & 15
             # minor step when SIGN is clear, then the major step
             dx = dy = 0
@@ -268,7 +288,8 @@ class Case:
                 if ash < 0:
                     ash = 15
                     ptr -= 2
-        return None
+        self.zero_alt = [zero_dot, zero_c]
+        return zero
 
     # --- derived layout ------------------------------------------------
     def spans(self):
@@ -317,7 +338,8 @@ class Case:
             raise ValueError(f"{self.id}: undefined bytes in the CRC window")
         self.expect = bytes(mem.b[wo:wo + wl])
         self.crc = zlib.crc32(self.expect) & 0xffffffff
-        self.zero = 2 if (self.flags & BF_NOZERO or zero is None) else (1 if zero else 0)
+        ambiguous = self.zero_alt is not None and any(z != zero for z in self.zero_alt)
+        self.zero = 2 if (self.flags & BF_NOZERO or ambiguous) else (1 if zero else 0)
         return self
 
 
@@ -484,14 +506,14 @@ def build_cases():
         for fci in (0, 1):
             cases.append(area(f"fill_{kind}_fci{fci}", ABCD | 0x80, DESC | bit | (FCI if fci else 0),
                               w=4, h=8, amod=2, bmod=2, cmod=2, dmod=2, group="fill",
-                              flags=BF_NOZERO | (BF_HOT if (kind == "excl" and fci == 0) else 0)))
+                              flags=BF_HOT if (kind == "excl" and fci == 0) else 0))
         cases.append(area(f"fill_{kind}_shift", (6 << 12) | ABCD | 0x80, (3 << 12) | DESC | bit,
                           w=3, h=6, amod=0, bmod=2, cmod=4, dmod=4, afwm=0x3fff, alwm=0xfff8,
-                          group="fill", flags=BF_NOZERO))
+                          group="fill"))
         # in place, A only: D = fill(A) written over itself (the polygon idiom)
         pt = D_BASE + 64 + 10 * 12 - 2
         cases.append(Case(f"fill_{kind}_inplace", con0=USEA | USED | 0xf0, con1=DESC | bit,
-                          w=6, h=10, apt=pt, dpt=pt, group="fill", flags=BF_NOZERO,
+                          w=6, h=10, apt=pt, dpt=pt, group="fill",
                           window=(D_BASE + 64 - GUARD, 120 + 2 * GUARD),
                           fills=[(D_BASE + 64 - GUARD, (120 + 2 * GUARD) // 2, None)]))
         cases[-1].sparse = True

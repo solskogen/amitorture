@@ -299,7 +299,8 @@ static void report(const char *id, const struct blt_case *c, const struct result
     json_obj_end();
     if (r->crc == c->crc)
         json_str("why", "destination correct but DMACONR BZERO wrong: it must be 1 exactly when "
-                        "every D word the blit produced was zero, D enabled or not (HRM 6)");
+                        "every D word the blit produced was zero, D enabled or not; in fill mode "
+                        "the words after the fill, in line mode the words written (HRM 6)");
     else
         json_str("why", why ? why : why_for(id));
     emit_inputs(c);

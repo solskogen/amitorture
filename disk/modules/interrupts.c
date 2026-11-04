@@ -1166,9 +1166,24 @@ static void chain_tests(void)
 }
 
 /* ------------------------------------------------------------ latency */
+/* Upper bound for request -> handler entry: 2 raster lines (454 colour
+ * clocks; 1 E clock = 5 cck, both derived from the same 7.09/7.16 MHz
+ * clock on every model). Worst case on the slowest machine, a 68000 at
+ * 7 MHz (1 cck = 2 CPU clocks), by MC68000UM instruction and exception
+ * timings: the runtime's VERTB handler (rt/bare.s, level 3, VERTB stays
+ * enabled) may have just started, ~590 clocks with its exception and RTE;
+ * then the level 2/3 exception (44) and the handler up to its first
+ * counter read (~32, plus up to ~20 of E-clock sync for the CIA read): about
+ * 690 clocks = 345 cck = 1.5 lines. Without a VERTB in the way the latency
+ * is the current instruction plus ~100 clocks, well under a line. Faster
+ * CPUs only shorten it. A handler entered after 2 lines means the
+ * interrupt was held back by something other than the CPU finishing its
+ * work (interrupt sampling, IPL or INTREQ propagation delayed). */
+#define LAT_MAX_CCK (2UL * 227UL)
+
 static void latency_cia(void)
 {
-    int n = AMT_QUICK() ? 8 : 32, i, got = 0, torn = 0, lost_first = -1;
+    int n = AMT_QUICK() ? 8 : 32, i, got = 0, torn = 0, lost_first = -1, late;
     ULONG hist[16], mn = 0xffff, mx = 0, sum = 0;
     amt_vec_fn old;
     const UWORD L = 4095;
@@ -1223,17 +1238,25 @@ static void latency_cia(void)
     amt_vec_set(26, old);
     if (got != n && late_stuck("latency_cia_ta_to_handler"))
         return;
-    amt_case_open("latency_cia_ta_to_handler", got == n ? AMT_ST_PASS : AMT_ST_FAIL);
-    if (got != n) {
+    late = got - torn > 0 && mx * 5 > LAT_MAX_CCK;
+    amt_case_open("latency_cia_ta_to_handler", got == n && !late ? AMT_ST_PASS : AMT_ST_FAIL);
+    if (got != n || late) {
         json_obj("expect");
         json_int("samples", n);
+        json_int("max_cck", (long)LAT_MAX_CCK);
         json_obj_end();
         json_obj("got");
         json_int("samples", got);
         json_int("first_lost", lost_first);
+        json_int("max_cck", (long)(mx * 5));
         json_obj_end();
-        json_str("why", "CIA-A timer A interrupts (level 2) were lost: not every underflow reached "
-                 "the handler within 20 ms");
+        json_str("why", got != n
+                 ? "CIA-A timer A interrupts (level 2) were lost: not every underflow reached "
+                   "the handler within 20 ms"
+                 : "a CIA-A timer A interrupt (level 2) reached the handler more than 2 raster "
+                   "lines (454 cck = 90.8 E clocks) after the underflow; the worst case on a "
+                   "7 MHz 68000 (a VERTB handler in the way, the exception, the handler's "
+                   "prologue) is about 1.5 lines (HRM 7 interrupts, MC68000UM exception timing)");
     }
     json_obj("timing");
     json_str("unit", "E clocks from TA underflow to the handler's first counter read");
@@ -1260,7 +1283,7 @@ static void *find_lib(const char *name)
 
 static void latency_coper(void)
 {
-    int n = AMT_QUICK() ? 4 : 16, i, got;
+    int n = AMT_QUICK() ? 4 : 16, i, got, late;
     volatile UWORD *cl = (volatile UWORD *)amt_chip_pool();
     ULONG mn = 0xffffffffUL, mx = 0, sum = 0, t0;
     amt_vec_fn old = amt_vec_set(27, ir_lat3);
@@ -1296,19 +1319,28 @@ static void latency_coper(void)
     }
     env_end();
     amt_vec_set(27, old);
-    amt_case_open("latency_coper_to_handler", got >= n ? AMT_ST_PASS : AMT_ST_FAIL);
-    if (got < n) {
+    late = got > 0 && mx > LAT_MAX_CCK;
+    amt_case_open("latency_coper_to_handler", got >= n && !late ? AMT_ST_PASS : AMT_ST_FAIL);
+    if (got < n || late) {
         json_obj("expect");
         json_int("samples", n);
+        json_int("max_cck", (long)LAT_MAX_CCK);
         json_obj_end();
         json_obj("got");
         json_int("samples", got);
+        json_int("max_cck", (long)mx);
         json_obj_end();
         json_obj("in");
         json_str("copper", "WAIT $8001,$FFFE; MOVE #$8010,INTREQ; END");
         json_obj_end();
-        json_str("why", "a copper MOVE to INTREQ (COPER, level 3) once per frame did not reach the "
-                 "handler every frame");
+        json_str("why", got < n
+                 ? "a copper MOVE to INTREQ (COPER, level 3) once per frame did not reach the "
+                   "handler every frame"
+                 : "a copper COPER interrupt (level 3) reached the handler more than 2 raster "
+                   "lines (454 cck) after the copper WAIT position (line $80, h 0), or before "
+                   "it (a huge value); the copper MOVE follows the WAIT within a few cck and "
+                   "the CPU side takes well under a line on a 7 MHz 68000 (HRM 2 copper, "
+                   "7 interrupts, MC68000UM exception timing)");
     }
     json_obj("timing");
     json_str("unit", "colour clocks from the copper WAIT position (line $80, h 0) to VHPOSR read "

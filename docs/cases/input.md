@@ -13,8 +13,7 @@ request of a kind, later requests of that kind are not sent either (`ctx.sent` =
 After an acknowledged request the module waits for the event (1 s for key bytes and button levels, up to
 3 s for mouse counters until they are stable), then reports exact values; latencies go to `timing`.
 
-Safety and restore: CIA-A through `modules/cia_hw.h` (CRA/CRB, latches, ICR mask; TB is used for one timing
-measurement). CIA-A DDRA bit 7 (/FIR1 output as the CD32 clock) is only set inside a CD32 read the host
+Safety and restore: CIA-A through `modules/cia_hw.h` (CRA/CRB, latches, ICR mask). CIA-A DDRA bit 7 (/FIR1 output as the CD32 clock) is only set inside a CD32 read the host
 acknowledged; DDRA is restored; PRA writes keep the LED bit and write OVL = 0. POTGO is left at $FF00 (all pot
 pins outputs, high), which is what Kickstart 2.04+ and AROS write at boot (POTGO is write-only). JOY0DAT is
 restored through JOYTEST, so the OS pointer does not jump. Keys injected are pressed one at a time (plus one
@@ -43,8 +42,6 @@ never $68-$7F (reset warning $78, CDTV keys). Keyboard lost-sync recovery is out
 | `potinp_out_readback_single` | no | each pot pin alone as output (OUTxx=1) with DATxx 1 then 0, the others inputs: POTINP reads the driven level | HRM A POTGO/POTINP: OUTxx = output enable, DATxx = the pin's data, POTINP reads the pins | output enable ignored, or POTINP returns the written POTGO bits / the input state |
 | `potinp_out_readback_multi` | no | all pins outputs with both pin 5s high and the pin 9s in all combinations; then pin 5s in all combinations with pin 9s as inputs | as above (a pin 5 driven low selects CD32 pad shift mode, so pin 9 is never an output then) | pins not independent |
 | `pot_counters_start` | no | POTGO=$0001 (all inputs, START); POT0DAT/POT1DAT sampled 0, 2, 10, 313, 626 lines later. Always passes: the values are in `timing` only | HRM A POTGO START: dump the capacitors, start the counters; the counts with nothing connected depend on the hardware | (timing only: compare across emulators / CE vs fast) |
-| `kbd_handshake_pulse` | no | the keyboard handshake (CRA SPMODE=1 for 3 raster lines, then 0) lasts >= 61 E clocks on CIA-A timer B (85 us), and CRA reads SPMODE back during/after | HRM ch. 8 keyboard: KDAT low for at least 85 us, made with the CIA serial port in output mode | E clock vs beam rate wrong, or CRA bit 6 not readable |
-| `host_request_wait` | wait | the host acknowledges a `wait` request (round trip in `timing`) | CONTRACT §13 | no host request support: every host case below is untestable |
 | `kbd_key_down_up` | key | A ($20) down then up: SDR = $BF, then $BE | HRM ch. 8: the code is sent rotated left (bits 6..0, then the up flag) and inverted: SDR = ~((code<<1)\|(code>>7)) | wrong bit order or polarity of the keyboard serial data |
 | `kbd_keycode_set` | key | 62 keys (every row, keypad, cursor, F-keys, help, modifiers; every 4th in quick), each down and up, exact SDR | as above | a key code mapped wrong, or bytes lost; `got.bad` lists [code, SDR down, SDR up] |
 | `kbd_no_spurious_bytes` | key | no further byte within 3 frames after each key's up code | HRM ch. 8: one code per transition; no typematic repeat in the keyboard | duplicated codes, auto-repeat, or lost-sync codes because a handshake was not seen |

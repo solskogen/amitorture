@@ -1,7 +1,7 @@
 # display (module 12, AMT_PH_BARE, disk "chip")
 
 Denise/Lisa: bitplane modes, fetch and window edges, scrolling, modulos, sprites, collisions,
-beam counter, IDs, AGA FMODE/palette/sprite extensions. References: Amiga Hardware Reference
+IDs, AGA FMODE/palette/sprite extensions. References: Amiga Hardware Reference
 Manual (HRM) chapters 3 (playfields), 4 (sprites), 6 (DMA time slots), 7 (collisions, beam
 counters), appendix C (ECS: DIWHIGH, DENISEID, BPLCON3); AGA register documentation (FMODE,
 BPLCON1 fine scroll, BPLCON2 RDRAM, BPLCON3 LOCT/BANK/SPRES, BPLCON4, CLXCON2, LISAID).
@@ -17,8 +17,8 @@ two frames later, so the value is the OR of two complete, fully set-up frames. A
 measures one group of up to 4 probes for one bitplane; enabling one plane at a time makes the
 read-out independent of how the odd/even groups combine (see `clx_spf_odd_independent`). Scenes
 are set up by a copper list (registers, BPLxPT, SPRxPT, palette) that the copper reloads every
-frame. Frame lengths (`beam_*`) are observed by the copper (markers on the last two lines), not by
-polling the beam.
+frame. Frame length, LOF and the H counter range are checked by timing (`lines_per_frame_*`,
+`cck_per_line`), not here.
 
 Playfield patterns: *cells* are 16 lores pixels wide (1/2/4 words in lores/hires/shres), one row
 repeated with modulo -rowbytes. *Address-encoded* (AE) planes have plane p word w = $FFFF if bit p
@@ -62,9 +62,6 @@ sent.
 | spr_aga_spres_0..3 | sprite pixel width from BPLCON3 SPRES | AGA docs BPLCON3 | sprite resolution ignored |
 | pal_aga_rdram_24bit | 256 colours written high/low nibble per bank, read back with RDRAM | AGA docs BPLCON2 RDRAM, BPLCON3 LOCT/BANK | palette banks/LOCT wrong |
 | pal_aga_loct_copy | LOCT=0 write copies nibbles into the low half | AGA docs | 12-bit compatibility write wrong |
-| beam_frame_lines | 4 frames without LACE: LOF constant, last line 312/311 (PAL) or 262/261 (NTSC) by LOF; the copper sets INTREQ DSKBLK on line L-1 and SOFT on line L, read at the next VBL | HRM 7 beam counters | frame length / LOF wrong |
-| beam_lace_lof | 6 frames with LACE: LOF alternates, length follows it | HRM 3 interlace | LOF not toggling |
-| beam_hpos_max | no sampled H above $E2 PAL / $E3 NTSC (the maximum seen is in timing) | HRM 7 | horizontal counter range wrong |
 | deniseid | 16 reads, checked against the Agnus ID read from VPOSR (not the probe): Alice => $F8 and stable; no Alice => not $F8; $FC must be stable; bits 15-8 ignored | HRM appendix C, AGA docs | wrong/unstable ID, Lisa without Alice or vice versa |
 | dma_cpu_* | timing only: CPU chip reads in 64 lines per mode | HRM 6 DMA slots | (informational) |
 | shot_dpf_priorities / shot_ecs_border / shot_aga_bplcon4 | screenshot-only patterns: BPLCON2 priorities with sprites; BRDRBLNK/BRDSPRT; BPLCON4 XOR and sprite banks | pass = host acked | untestable without a host |

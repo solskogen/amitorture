@@ -509,6 +509,7 @@ _xs_mis:
 	move.l	4(a0),d3
 	move.w	d4,10(a0)		; pool+11..12
 	move.l	8(a0),d5		; pool+9..12
+	addq.w	#1,12(a0)		; pool+13..14, read-modify-write
 	rts
 
 ; ---------------------------------------------------- trace

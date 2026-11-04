@@ -705,7 +705,8 @@ static void t_chk(void)
 
 /* ------------------------------------------------------------ CHK2/CMP2 */
 struct c2 {
-    const char *id, *id060;
+    const char *id, *id060;     /* id 0: 68060 trap case only (the CMP2 compares,
+                                 * which never trap, are cpu_basic cmp2_chk2) */
     UBYTE *fn, *at, *nx;
     UBYTE size, areg, chk;
     ULONG lo, hi;
@@ -715,11 +716,11 @@ struct c2 {
 static const struct c2 c2_tab[] = {
     { "chk2_l", "unimpl060_chk2_l", xs_chk2l, xs_chk2l_at, xs_chk2l_nx, 4, 0, 1, 0x100, 0x200,
       { 0xff, 0x100, 0x150, 0x200, 0x201, 0x80000000UL, 0x7fffffffUL, 0 }, 8 },
-    { "cmp2_l", "unimpl060_cmp2_l", xs_cmp2l, xs_cmp2l_at, xs_cmp2l_nx, 4, 0, 0, 0x100, 0x200,
+    { 0, "unimpl060_cmp2_l", xs_cmp2l, xs_cmp2l_at, xs_cmp2l_nx, 4, 0, 0, 0x100, 0x200,
       { 0xff, 0x100, 0x150, 0x200, 0x201, 0x80000000UL, 0x7fffffffUL, 0 }, 8 },
     { "chk2_b", "unimpl060_chk2_b", xs_chk2b, xs_chk2b_at, xs_chk2b_nx, 1, 0, 1, 0x10, 0x20,
       { 0xffffff15UL, 0x0f, 0x21, 0x10, 0x20, 0x180, 0x1234ff18UL }, 7 },
-    { "cmp2_w", "unimpl060_cmp2_w", xs_cmp2w, xs_cmp2w_at, xs_cmp2w_nx, 2, 0, 0, 0x10, 0x100,
+    { 0, "unimpl060_cmp2_w", xs_cmp2w, xs_cmp2w_at, xs_cmp2w_nx, 2, 0, 0, 0x10, 0x100,
       { 0x00010050UL, 0x50, 0x0f, 0x100, 0x8000, 0x10, 0xffff0101UL }, 7 },
     { "chk2_w_areg", "unimpl060_chk2_w_areg", xs_chk2wa, xs_chk2wa_at, xs_chk2wa_nx, 2, 1, 1,
       0x10, 0x100, { 0x50, 0x00010050UL, 0x10, 0x101, 0x100, 0xffff0050UL }, 6 },
@@ -747,14 +748,16 @@ static void t_chk2(void)
     for (i = 0; i < sizeof(c2_tab) / sizeof(c2_tab[0]); i++) {
         const struct c2 *t = &c2_tab[i];
         if (!GE020) {
-            skip(t->id, "CHK2/CMP2 are 68020+ (illegal on 68000/010, see illegal_chk2_000_010)");
+            if (t->id)
+                skip(t->id, "CHK2/CMP2 are 68020+ (illegal on 68000/010, see illegal_chk2_000_010)");
             skip(t->id060, "68060 only");
             continue;
         }
         c2_bounds(t);
         if (IS060) {
             UWORD sr = 0x2715;
-            skip(t->id, "68060: CHK2/CMP2 are unimplemented integer instructions (see unimpl060_*)");
+            if (t->id)
+                skip(t->id, "68060: CHK2/CMP2 are unimplemented integer instructions (see unimpl060_*)");
             kbegin(W_UNIMPL060);
             xset(sr);
             xr_ina0 = A(pool + P_BND);
@@ -772,6 +775,8 @@ static void t_chk2(void)
             continue;
         }
         skip(t->id060, "68060 only");
+        if (!t->id)
+            continue;
         kbegin(W_CHK2);
         for (k = 0; k < t->nv; k++) {
             ULONG m = t->size == 4 ? 0xffffffffUL : t->size == 2 ? 0xffffUL : 0xffUL;
@@ -1218,14 +1223,17 @@ static void t_misaligned(void)
     rin("a0_off", 1);
     xrun(A(xs_mis));
     /* model: d0 = [1..4], d1 = [3..4], [5..8] = d2, d3 = [5..8],
-     * [11..12] = d4.w, d5 = [9..12] */
+     * [11..12] = d4.w, d5 = [9..12], [13..14] += 1 (word) */
     {
         ULONG e0 = rd32(model + 1), e1 = ((ULONG)model[3] << 8) | model[4], e3, e5;
+        UWORD w13;
         model[5] = (UBYTE)(d2 >> 24); model[6] = (UBYTE)(d2 >> 16);
         model[7] = (UBYTE)(d2 >> 8);  model[8] = (UBYTE)d2;
         e3 = rd32(model + 5);
         model[11] = (UBYTE)(d4 >> 8); model[12] = (UBYTE)d4;
         e5 = rd32(model + 9);
+        w13 = (UWORD)((((UWORD)model[13] << 8) | model[14]) + 1);
+        model[13] = (UBYTE)(w13 >> 8); model[14] = (UBYTE)w13;
         if (rcmp("vec", 0, xr_vec, T_INT)) {
             rcmp("d0", e0, xr_out[0], T_H8);
             rcmp("d1_w", e1, xr_out[1] & 0xffff, T_H4);

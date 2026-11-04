@@ -1,8 +1,7 @@
-/* display: Denise/Lisa playfields, sprites, collisions, beam counter and
- * AGA extensions (CONTRACT.md section 10, module id 12, disk "chip").
+/* display: Denise/Lisa playfields, sprites, collisions and AGA extensions (CONTRACT.md section 10, module id 12, disk "chip").
  *
  * Expectations: Amiga Hardware Reference Manual (HRM) chapters 3
- * (playfields), 4 (sprites), 7 (collisions, beam counter) and appendix C
+ * (playfields), 4 (sprites), 7 (collisions) and appendix C
  * (ECS), and the AGA register documentation (FMODE, BPLCON3/4, CLXCON2,
  * LISAID, RDRAM). See docs/cases/display.md.
  *
@@ -17,8 +16,8 @@
  * group (4 sprites) and one plane per measurement; the colour index under
  * each probe is assembled from one measurement per plane. Fetch widths,
  * modulos, scrolling, window edges and sprite widths are all turned into
- * "which colour is under this probe". Frame lengths are observed by the
- * copper (markers on the last lines), not by polling the beam.
+ * "which colour is under this probe". Frame length, LOF and the H counter
+ * range are timing's lines_per_frame_* and cck_per_line.
  *
  * Screenshots (CONTRACT section 13) are requested for each display mode
  * pattern; the result is informational, the case status comes only from
@@ -2015,153 +2014,6 @@ static void pal_tests(void)
     amt_case_close();
 }
 
-/* ------------------------------------------------------------ beam counter */
-/* Frame length without beam polling: the copper (restarted every VBL)
- * waits for line L-1 and sets INTREQ DSKBLK, then for line L and sets SOFT
- * (L = 312 PAL / 262 NTSC, reached through the $FFDF line-255 wait). Both
- * bits stay set until the CPU reads and clears them at the next VBL, so a
- * long frame shows SOFT|DSKBLK and a short one DSKBLK only. */
-static UWORD beam_ex[16];
-static void beam_scene(UWORD con0)
-{
-    int L = pal ? 312 : 262, n = 0;
-    reset_scene();
-    sc.con0 = con0;
-    sc.flags |= SF_CUSTSPR;
-    spr_all_empty();
-    beam_ex[n++] = 0xffdf; beam_ex[n++] = 0xfffe;
-    beam_ex[n++] = (UWORD)(((L - 1 - 256) << 8) | 0x01); beam_ex[n++] = 0xfffe;
-    beam_ex[n++] = INTREQ; beam_ex[n++] = 0x8002;
-    beam_ex[n++] = (UWORD)(((L - 256) << 8) | 0x01); beam_ex[n++] = 0xfffe;
-    beam_ex[n++] = INTREQ; beam_ex[n++] = 0x8004;
-    sc.extra = beam_ex;
-    sc.nextra = n;
-    CU(INTREQ) = 0x0006;
-    apply();
-}
-
-/* n consecutive frames: lof[i] (VPOSR bit 15) and len[i] = last line */
-static void beam_frames(int n, UWORD *lof, int *len)
-{
-    int L = pal ? 312 : 262, i;
-    UWORD m;
-    wait_vbl();
-    CU(INTREQ) = 0x0006;
-    for (i = 0; i < n; i++) {
-        lof[i] = (UWORD)(CU(VPOSR) >> 15);
-        wait_vbl();
-        m = CU(INTREQR) & 0x0006;
-        CU(INTREQ) = 0x0006;
-        len[i] = m == 0x0006 ? L : m == 0x0002 ? L - 1 : -1;
-    }
-}
-
-static void beam_tests(void)
-{
-    int L = pal ? 312 : 262, i, ok = 1, n = 6;
-    int len[6];
-    UWORD lof[6];
-    UWORD hmax = 0;
-    /* non-interlaced: LOF constant, frame length matches it */
-    beam_scene(0x0200);
-    beam_frames(4, lof, len);
-    for (i = 0; i < 4; i++)
-        if (lof[i] != lof[0] || len[i] != (lof[i] ? L : L - 1))
-            ok = 0;
-    amt_case_open("beam_frame_lines", ok ? AMT_ST_PASS : AMT_ST_FAIL);
-    if (!ok) {
-        json_obj("expect");
-        json_int("last_line_long", L);
-        json_int("last_line_short", L - 1);
-        json_str("lof", "constant without LACE");
-        json_obj_end();
-        json_obj("got");
-        json_arr("last_line");
-        for (i = 0; i < 4; i++)
-            json_int(NULL, len[i]);
-        json_arr_end();
-        json_arr("lof");
-        for (i = 0; i < 4; i++)
-            json_int(NULL, lof[i]);
-        json_arr_end();
-        json_obj_end();
-        json_str("method", "copper sets INTREQ DSKBLK on line L-1 and SOFT on line L; read at the next VBL "
-                 "(-1 = neither)");
-        json_str("why", pal ? "PAL: a long frame (VPOSR LOF=1) has lines 0-312, a short one 0-311; "
-                 "without interlace LOF does not toggle (HRM 7: beam counters)"
-                 : "NTSC: a long frame (LOF=1) has lines 0-262, a short one 0-261; without interlace "
-                 "LOF does not toggle (HRM 7: beam counters)");
-    }
-    amt_case_close();
-    /* interlace: LOF toggles every frame */
-    beam_scene(0x0204);
-    beam_frames(n, lof, len);
-    ok = 1;
-    for (i = 0; i < n; i++)
-        if (len[i] != (lof[i] ? L : L - 1) || (i && lof[i] == lof[i - 1]))
-            ok = 0;
-    /* leave interlace in a long frame so LOF stays 1 */
-    {
-        int t;
-        for (t = 0; t < 4; t++) {
-            wait_vbl();
-            if (CU(VPOSR) & 0x8000)
-                break;
-        }
-        display_off();
-        CU(BPLCON0) = 0x0200;
-    }
-    amt_case_open("beam_lace_lof", ok ? AMT_ST_PASS : AMT_ST_FAIL);
-    if (!ok) {
-        json_obj("expect");
-        json_str("lof", "alternating 0/1 every frame");
-        json_int("last_line_long", L);
-        json_int("last_line_short", L - 1);
-        json_obj_end();
-        json_obj("got");
-        json_arr("last_line");
-        for (i = 0; i < n; i++)
-            json_int(NULL, len[i]);
-        json_arr_end();
-        json_arr("lof");
-        for (i = 0; i < n; i++)
-            json_int(NULL, lof[i]);
-        json_arr_end();
-        json_obj_end();
-        json_str("why", "with BPLCON0 LACE the LOF bit (VPOSR bit 15) toggles every frame and the "
-                 "frame has one line more when LOF=1 (HRM 3: interlace; 7: beam counters)");
-    }
-    amt_case_close();
-    /* horizontal counter range */
-    wait_vbl();
-    amt_set_sr(0x2700);
-    wait_line(0x60);
-    while (hw_vline() < 0x90) {
-        UWORD h = CU(VHPOSR) & 0xff;
-        if (h > hmax)
-            hmax = h;
-    }
-    amt_set_sr(0x2000);
-    ok = hmax <= (pal ? 0xe2 : 0xe3);
-    amt_case_open("beam_hpos_max", ok ? AMT_ST_PASS : AMT_ST_FAIL);
-    if (!ok) {
-        json_obj("expect");
-        json_hexn("max_h_at_most", pal ? 0xe2 : 0xe3, 2);
-        json_obj_end();
-        json_obj("got");
-        json_str("max_h", "above the limit (value in timing)");
-        json_obj_end();
-        json_str("why", "VHPOSR H counts colour clocks $00-$E2 per line (227; NTSC long lines 228, to "
-                 "$E3) (HRM 7: beam counters); no sample may exceed that");
-    }
-    json_obj("timing");
-    json_str("unit", "largest H sampled in lines $60-$8F (how close it gets to the end depends on "
-             "the polling speed)");
-    json_hexn("max_h", hmax, 2);
-    json_obj_end();
-    amt_case_close();
-}
-
 /* ------------------------------------------------------------ IDs */
 /* DENISEID/LISAID checked against an independent source: the Agnus ID in
  * VPOSR bits 14-8 (read here, not taken from the probe). Rules from the
@@ -2405,7 +2257,6 @@ static void body(void)
     fmode_tests();
     spr_aga_tests();
     pal_tests();
-    beam_tests();
     id_tests();
     dma_tests();
     shot_tests();

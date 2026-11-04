@@ -1642,14 +1642,6 @@ def gen_ea():
         lambda d: {'d0': 0x80000000, 'd1': setlo(d['d1'], 0, 2), 'd2': setlo(d['d2'], 0x7F, 1),
                    'ccr': ccr_out(d['ccr'] & X)}, [(0xFFFFFFFF, 0xFFFFFFFF, 0x1F), (0, 0, 0x00)])
 
-    case('ea_misaligned', "Word/long data accesses at odd addresses (68020+ allow them)",
-         "MC68020UM 1.x/PRM: from the 68020 on, word and long operands may be at any byte address")
-    tpl("\tmove.l\t1(a0),d0\n\tmove.l\td0,5(a0)\n\tmove.w\t3(a0),d1\n\taddq.w\t#1,9(a0)",
-        ['m0.l', 'm4.l', 'm8.l', 'd1', 'a0@', 'ccr'], ['d0', 'd1', 'm4.l', 'm8.l', 'ccr'],
-        lambda d: _misal(d), [(0x00112233, 0x44556677, 0x8899AABB, 0xFFFFFFFF, 0, 0x1F),
-                              (0x01FFFF02, 0x03040506, 0x07FFFF08, 0, 0, 0x00)], cpu=C020,
-        text="move.l 1(a0),d0 / move.l d0,5(a0) / move.w 3(a0),d1 / addq.w #1,9(a0)")
-
     case('ea_scale', "Brief extension word with scale x1/x2/x4/x8 (68020+), Dn.W and An.L index, negative d8",
          "MC68020UM 2.x: d8(An,Xn.SIZE*SCALE): index sign-extended if .W, multiplied by the scale")
     for scale in range(4):
@@ -1673,17 +1665,6 @@ def gen_ea():
          "MC68020UM 2.x full format: EA = bd + base + index (no indirect); pre-indexed: ([bd+base+index]) + od; "
          "post-indexed: ([bd+base]) + index + od; IS=1 suppresses the index, BS=1 the base register")
     gen_ea_full()
-
-
-def _misal(d):
-    mem = Mem(d)
-    d0 = mem.rd(1, 4)
-    mem.wr(5, 4, d0)
-    d1 = setlo(d['d1'], mem.rd(3, 2), 2)
-    w = mem.rd(9, 2)
-    r, f = f_add(2, w, 1)
-    mem.wr(9, 2, r)
-    return {'d0': d0, 'd1': d1, 'm4.l': mem.rd(4, 4), 'm8.l': mem.rd(8, 4), 'ccr': ccr_out(f)}
 
 
 def gen_ea_full():
@@ -1922,7 +1903,6 @@ FAIL = {
     'lea_pea': "effective address arithmetic (sign extension of d16/d8/abs.W/index.W)",
     'cas': "CAS compare direction (ea - Dc), or the update/load selection", 'cas2': "CAS2 dual compare order, flags source, or load-back of both Dc registers",
     'ea_data': "an addressing mode computing the wrong address or the wrong register update (A7 byte step, same-register source/destination)",
-    'ea_misaligned': "68020+ misaligned word/long access split wrongly",
     'ea_scale': "the 68020 index scale factor or index sign extension",
     'ea_full': "68020 full-format extension word decoding: BS/IS, bd/od size, pre- vs post-indexing, PC base",
 }

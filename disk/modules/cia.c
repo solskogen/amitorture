@@ -1174,47 +1174,93 @@ static void tod_tests(int b)
 }
 
 /* ------------------------------------------------------------ SDR */
+/* Output mode: the serial port is clocked by timer A, one bit per two TA
+ * underflows (MOS 8520 data sheet, serial port; HRM appendix F), so 8 bits
+ * take 16 underflows of (latch + 1) E clocks each: 64 E clocks (320 colour
+ * clocks, ~90 us) for latch 3. ICR SP must come within a small multiple
+ * of that (4x: covers the wait for the first underflow, at most one TA
+ * period, and the polling), and not before half of it (most of the 8 bits
+ * must have gone out). The time is taken with CIA-A timer B (E clocks,
+ * free-running from $FFFF) read right after the SDR write and right after
+ * SP is seen, with interrupts masked; the loop in between reads ICR (and
+ * TB every 16th time for the bound). On a 7 MHz 68000 one ICR poll is ~8 E
+ * and one TB read ~40 E (1 E = 10 CPU clocks), so the measurement adds
+ * ~20 E there; a cia_now() call would add ~100 E.
+ * CRA must read SPMODE back while it is set and after it is cleared. */
+#define SDR_LATCH   3
+#define SDR_SHIFT_E (16UL * (SDR_LATCH + 1))
+#define SDR_POLLS   200000UL
 static void sdr_test(void)
 {
-    const struct tm *ta = &tms[0];
-    UBYTE v = 0, acc = 0;
-    ULONG t0, t1;
+    const struct tm *ta = &tms[0], *tb = &tms[1];
+    UBYTE acc = 0, cra_on, cra_off;
+    UWORD e0, sr;
+    ULONG de = 0, polls = 0;
+    int ok;
     tstop(ta);
+    tstop(tb);
     (void)cia_icr(CIAA_BASE);      /* acknowledges a pending keyboard byte */
-    tload(ta, 3);
+    tload(ta, SDR_LATCH);
+    tload(tb, 0xffff);
+    cia_wr(CIAA_BASE, C_CRB, CR_START);              /* TB: continuous, E clock */
     cia_wr(CIAA_BASE, C_CRA, CR_SPMODE | CR_START);
-    t0 = cia_now();
+    cra_on = cia_rd(CIAA_BASE, C_CRA);
+    sr = amt_get_sr();
+    amt_set_sr(0x2700);               /* < 1 ms: no handler time in the measurement */
     cia_wr(CIAA_BASE, C_SDR, 0xff);   /* $FF: KDAT stays high (idle) */
+    e0 = tread(tb);                   /* its first (TBHI) read: a few E after the write */
     do {
-        v = cia_rd(CIAA_BASE, C_ICR);
-        acc |= v;
-    } while (!(acc & ICR_SP) && cia_now() - t0 < MS(20));
-    t1 = cia_now();
+        acc |= cia_rd(CIAA_BASE, C_ICR);
+        if (!(++polls & 15))          /* the time bound, checked now and then */
+            de = (UWORD)(e0 - tread(tb));
+    } while (!(acc & ICR_SP) && de < 4 * SDR_SHIFT_E && polls < SDR_POLLS);
+    de = (UWORD)(e0 - tread(tb));
+    amt_set_sr(sr);
     cia_wr(CIAA_BASE, C_CRA, 0);      /* back to input: keyboard listens again */
-    if (acc & ICR_SP) {
-        amt_case_open("ciaa_sdr_output_shift", AMT_ST_PASS);
-        json_obj("timing");
-        json_int("cc", (long)(t1 - t0));
-        json_int("expect_e", 16 * 4);
-        json_obj_end();
-        amt_case_close();
-    } else {
-        amt_case_open("ciaa_sdr_output_shift", AMT_ST_FAIL);
+    cra_off = cia_rd(CIAA_BASE, C_CRA);
+    tstop(tb);
+    ok = (acc & ICR_SP) && de >= SDR_SHIFT_E / 2 && de <= 4 * SDR_SHIFT_E &&
+         (cra_on & CR_SPMODE) && !(cra_off & CR_SPMODE);
+    amt_case_open("ciaa_sdr_output_shift", ok ? AMT_ST_PASS : AMT_ST_FAIL);
+    if (!ok) {
         json_obj("expect");
         json_hexn("icr_sp", ICR_SP, 2);
+        json_int("e_min", (long)(SDR_SHIFT_E / 2));
+        json_int("e_max", (long)(4 * SDR_SHIFT_E));
+        json_hexn("cra_during_and_40", CR_SPMODE, 2);
+        json_hexn("cra_after_and_40", 0, 2);
         json_obj_end();
         json_obj("got");
         json_hexn("icr", acc, 2);
+        json_int("e", (long)de);
+        json_int("polls", (long)polls);
+        json_hexn("cra_during", cra_on, 2);
+        json_hexn("cra_after", cra_off, 2);
         json_obj_end();
         json_obj("in");
         json_hexn("cra", CR_SPMODE | CR_START, 2);
-        json_int("ta_latch", 3);
+        json_int("ta_latch", SDR_LATCH);
         json_hexn("sdr", 0xff, 2);
+        json_str("clock", "CIA-A timer B, continuous from $FFFF: E clocks from the SDR write to SP seen");
         json_obj_end();
-        json_str("why", "serial port in output mode, clocked by timer A underflows (CNT = TA/2): "
-                 "8 bits shift out in 16 TA underflows (64 E clocks) and set ICR SP; not seen in 20 ms");
-        amt_case_close();
+        json_str("why", !(cra_on & CR_SPMODE) || (cra_off & CR_SPMODE)
+                 ? "CRA bit 6 (SPMODE) must read back as written (MOS 8520 data sheet: CRA)"
+                 : !(acc & ICR_SP)
+                 ? (de == 0 ? "ICR SP never set, and CIA-A timer B did not count either"
+                            : "serial port in output mode, clocked by timer A (one bit per two TA "
+                              "underflows): 8 bits shift out in 16 TA underflows (64 E clocks) and set "
+                              "ICR SP; not seen within 4x that (MOS 8520 data sheet: serial port)")
+                 : de < SDR_SHIFT_E / 2
+                 ? "ICR SP set after less than half the 8-bit shift time (64 E clocks for TA latch 3, "
+                   "one bit per two TA underflows): the byte cannot have shifted out yet"
+                 : "ICR SP set later than 4x the 8-bit shift time (64 E clocks for TA latch 3)");
     }
+    json_obj("timing");
+    json_int("e", (long)de);
+    json_int("expect_e", (long)SDR_SHIFT_E);
+    json_int("polls", (long)polls);
+    json_obj_end();
+    amt_case_close();
 }
 
 /* ------------------------------------------------------------ E clock */
