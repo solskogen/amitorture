@@ -105,12 +105,14 @@ class HostRequests(unittest.TestCase):
         self.rq.new_boot()        # after a reboot the same id/seq is a new request
         self.assertTrue(self.rq.offer(req(5, 1, "wait"), "serial"))
 
-    def test_unknown_and_joystick_are_never_acked(self):
+    def test_unknown_and_joystick_are_refused_not_acked(self):
         self.rq.offer(req(1, 1, "teleport"), "serial")
         self.rq.offer(req(2, 2, "joy", args={"port": 1, "dirs": "u", "fire": 1}), "serial")
         self.rq.offer(req(3, 3, "cd32pad", args={"buttons": 1}), "serial")
         made = self.rq.service(self.MBOX)
-        self.assertEqual(self.acks(), [])
+        # refused: id | $80000000 at mailbox+44, so the guest stops waiting (CONTRACT §13)
+        self.assertEqual(self.acks(), [f"WRITE_MEM\t{self.MBOX + 44:#x}\t4\t{0x80000000 | i:#x}" for i in (1, 2, 3)])
+        self.assertTrue(all(h["result"]["refused"] for h in made))
         self.assertEqual([h["acked"] for h in made], [False, False, False])
         self.assertIn("unknown", made[0]["result"]["error"])
         self.assertIn("no joystick", made[1]["result"]["error"])
@@ -144,7 +146,7 @@ class HostRequests(unittest.TestCase):
         self.rq.offer(req(1, 1, "screenshot"), "serial")
         h = self.rq.service(self.MBOX)[0]
         self.assertFalse(h["acked"])
-        self.assertEqual(self.acks(), [])
+        self.assertEqual(self.acks(), [f"WRITE_MEM\t{self.MBOX + 44:#x}\t4\t0x80000001"])   # refused
 
     def test_audio_mark_without_capture(self):
         self.rq.offer(req(1, 1, "audio_mark", args={"edge": "start"}), "serial")
@@ -522,7 +524,7 @@ class Cd32Pad(unittest.TestCase):
         rq.offer(req(2, 2, "cd32pad", args={"buttons": 4}), "serial")
         made = rq.service(0x100)
         self.assertEqual([h["acked"] for h in made], [True, False])
-        self.assertEqual(ipc.mem, {0x100 + 44: 1})
+        self.assertEqual(ipc.mem, {0x100 + 44: 0x80000002})   # 1 acked, then 2 refused (CONTRACT §13)
         rq2 = hostreq.Requests(FakeIPC(), WORK_TMP, options={})
         rq2.offer(req(1, 1, "cd32pad", args={"buttons": 0}), "serial")
         self.assertFalse(rq2.service(0x100)[0]["acked"])

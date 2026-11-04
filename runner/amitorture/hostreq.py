@@ -148,7 +148,7 @@ class Requests:
         rid = obj.get("id") if is_req else None
         tag = obj.get("tag") or ""
         t_start = self.clock()
-        acked, result = False, {}
+        acked, result, ipc_trouble = False, {}, False
         if is_req:
             self.stats["requests"] += 1
         else:
@@ -160,12 +160,17 @@ class Requests:
             else:
                 ok, result = fn(obj, args, rid, tag)
         except OSError as e:     # IPC trouble: no ack, the guest times out
-            ok, result = False, {"error": f"{type(e).__name__}: {e}"}
+            ok, result, ipc_trouble = False, {"error": f"{type(e).__name__}: {e}"}, True
         if ok and is_req:
             reply = self._ack(mbox_addr, rid)
             acked = reply == "OK"
             if not acked:
                 result["ack_error"] = reply
+        elif is_req and not ipc_trouble and rid is not None:
+            # cannot serve it (unknown request, no joystick injection, ...):
+            # refuse, so the guest stops waiting at once (CONTRACT §13)
+            reply = self._ack(mbox_addr, int(rid) | 0x80000000)
+            result["refused"] = reply == "OK"
         elif not is_req:
             acked = None          # a capture record wants no ack
         if is_req:

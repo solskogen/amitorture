@@ -70,6 +70,8 @@ class EntryRun:
     """Observes one emulator instance; collects transports and decides when it ended."""
 
     POLL = 0.25
+    POLL_BUSY = 0.01        # while host requests are coming in (they arrive in bursts: keys, mouse, marks)
+    BUSY_WINDOW = 1.0       # seconds after the last request
     SCAN_INTERVAL = 0.5     # until the mailbox is found (quick low-chip scans, every 2nd one full)
     URGENT_SCAN = 0.25      # full scans this often while a request waits for the mailbox
     DONE_GRACE = 5.0
@@ -1006,6 +1008,10 @@ def observe(opts, entry, run, proc, serial, ipc, res):
     last_scan = 0.0
     n_scans = 0
     done_at = None
+    # Host requests wait for the runner's next poll: at POLL (0.25 s) each
+    # key event of input.kbd_keycode_set cost ~0.2 s of waiting. Right
+    # after a request, poll fast, so a burst is served at once.
+    last_req_n, last_req_t = 0, -1e9
     if opts.selftest:
         time.sleep(2.0)   # let Kickstart get going first
         res["_selftest"] = run.selftest(ipc)
@@ -1081,7 +1087,11 @@ def observe(opts, entry, run, proc, serial, ipc, res):
             return "hang"
         if now > deadline:
             return "timeout"
-        time.sleep(run.POLL)
+        if run.requests is not None:
+            n = run.requests.stats.get("requests", 0)
+            if n != last_req_n:
+                last_req_n, last_req_t = n, now
+        time.sleep(run.POLL_BUSY if now - last_req_t < run.BUSY_WINDOW else run.POLL)
 
 
 def summarize_records(merged, run):

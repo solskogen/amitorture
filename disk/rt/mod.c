@@ -281,6 +281,10 @@ int amt_request(const char *what, const char *tag, const char *args_json, ULONG 
     if (!amt_mbox)
         return 0;
     while (amt_mbox->host_ack != id) {
+        /* the host says it cannot do this (CONTRACT §13: id | $80000000):
+         * give up at once instead of waiting out the timeout */
+        if (amt_mbox->host_ack == (id | 0x80000000UL))
+            return 0;
         frames += beam_frames_wait_step(&lastv);
         if (frames > timeout_frames)
             return 0;

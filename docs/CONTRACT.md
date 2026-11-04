@@ -345,6 +345,7 @@ Used for things the guest can't do or observe itself: screenshots, audio capture
    It then polls mailbox offset 44 (`host_ack`) until it equals N, or the timeout runs out.
 2. The host (runner) acts on the request, then writes N to `host_ack` with IPC WRITE_MEM (4 bytes at mailbox+44), and writes a `host` record to its own results: `{"t":"host","id":N,"what":…,"result":{…}}` (file names, hashes, injected events).
 3. On timeout the guest reports the dependent case as `untestable` ("host did not act on request <what>"). On real hardware / serial-only targets every request times out, so a timeout is never a fail.
+4. A host that cannot do a request (an unknown `what`, or no joystick/CD32-pad/PCMCIA injection in Amiberry's IPC) writes N | $80000000 to `host_ack`: the guest stops waiting at once and reports the case as on a timeout. Request ids are small counters, so the high bit is free.
 
 | what | args | host action / result |
 |---|---|---|
