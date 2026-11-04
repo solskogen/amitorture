@@ -290,6 +290,8 @@ def differences(wrote, resolved, notes=()):
         else:
             continue
         if _norm(got) != _norm(v):
+            if k.endswith("rom_file") and v and got and os.path.basename(str(v)) == os.path.basename(str(got)):
+                continue    # Amiberry writes a board ROM back as its file name: the same file
             hints = FIXUP_HINTS.get(k, ())
             because = [n for n in notes if any(h in n for h in hints)]
             diffs.append({"option": k, "wrote": v, "resolved": got if k in resolved else f"{got} (absent: default)",

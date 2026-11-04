@@ -636,5 +636,29 @@
   "when": {},
   "tbd": false,
   "seen": "amitorture standard run 20261104-001719Z and triage rerun 20261104-054658Z; see docs/findings/amiberry-2026-11-03.md"
+ },
+ "devio.*_rw*_w2": {
+  "ref": "finding D1 (check-on-hw)",
+  "why": "A590/A2091 DMAC-01: word-aligned (2 mod 4) buffers corrupted, the transfer starts at addr&~3",
+  "configs": "*a2091*",
+  "when": {},
+  "tbd": false,
+  "seen": "amitorture audit 2026-11-04 (first matrix runs that reach these controllers); see docs/findings/amiberry-2026-11-03.md"
+ },
+ "devio.*_async4": {
+  "ref": "finding D1 (check-on-hw)",
+  "why": "A590/A2091 DMAC-01: the same corruption at the end of a block with four requests in flight (a word-aligned request buffer)",
+  "configs": "*a2091*",
+  "when": {},
+  "tbd": false,
+  "seen": "amitorture audit 2026-11-04 (first matrix runs that reach these controllers); see docs/findings/amiberry-2026-11-03.md"
+ },
+ "devio.*_geometry_td": {
+  "ref": "finding D4 (ROM driver, not Amiberry)",
+  "why": "the A4091 ROM driver and the A4000T ROM scsi.device report TD_GETGEOMETRY one sector fewer than READ CAPACITY",
+  "configs": "*a4091* a4000t*",
+  "when": {},
+  "tbd": false,
+  "seen": "amitorture audit 2026-11-04 (first matrix runs that reach these controllers); see docs/findings/amiberry-2026-11-03.md"
  }
 }
