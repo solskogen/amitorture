@@ -95,6 +95,8 @@ class EntryRun:
         self.watch = mailbox.Watch()
         self.last_progress = time.monotonic()
         self.events = []
+        self.pid = None             # the emulator's pid (thread CPU times for hostspeed)
+        self.speed_samples = []     # hostspeed: [t, heartbeat, case, cpu_main_ns, cpu_total_ns, cpu_top_ns]
 
     def event(self, what, **kw):
         e = {"t": round(time.monotonic() - self.t0, 3), "event": what, **kw}
@@ -140,7 +142,21 @@ class EntryRun:
         self.mb["candidates"] = [f"{a:08x}" for a in found]
         return best
 
+    def speed_sample(self, h):
+        """RingFollower callback, right after a mailbox header read: while a
+        hostspeed block runs (module 26, case HS_POS0 + block), keep the
+        heartbeat (one per frame: the block sends no records), the host
+        clock and the emulator's thread CPU times of this instant
+        (cases.speed_cases turns them into frame rate and CPU cost)."""
+        if h.mod != SPEED_MOD_ID or not SPEED_POS0 <= h.case < SPEED_POS0 + 1000:
+            return
+        t = time.monotonic() - self.t0
+        cpu = thread_cpu(self.pid) if self.pid else None
+        self.speed_samples.append([round(t, 6), h.heartbeat, h.case] + (list(cpu) if cpu else [None, None, None]))
+
     def poll_mailbox(self, ipc):
+        if self.follower.on_header is None:
+            self.follower.on_header = self.speed_sample
         res = self.follower.poll()
         self.mb["polls"] += 1
         if res is None:
@@ -269,6 +285,36 @@ class EntryRun:
         self.mbox_log.close()
 
 
+# hostspeed (disk/modules/hostspeed.c): its module id and the mailbox case
+# number of its block 0 while a timed block runs
+SPEED_MOD_ID = 26
+SPEED_POS0 = 1000
+
+
+def thread_cpu(pid):
+    """(main thread ns, all threads ns, busiest other thread ns) of CPU time
+    so far, from /proc/<pid>/task/*/schedstat (first field: ns on the CPU),
+    or None. The main thread (tid = pid) runs Amiberry's emulation."""
+    base = f"/proc/{pid}/task"
+    try:
+        tids = os.listdir(base)
+    except OSError:
+        return None
+    main = total = top = 0
+    for tid in tids:
+        try:
+            with open(f"{base}/{tid}/schedstat", "rb") as fh:
+                ns = int(fh.read().split()[0])
+        except (OSError, ValueError, IndexError):
+            continue
+        total += ns
+        if tid == str(pid):
+            main = ns
+        elif ns > top:
+            top = ns
+    return main, total, top
+
+
 def selftest_records():
     seq = iter(range(1000))
 
@@ -294,6 +340,7 @@ LAUNCH_ATTEMPTS = 3
 
 def _launch_once(opts, entry, run, argv, env, home, rawdir, port, res):
     proc = emulator.Process(opts.binary, argv, env, os.path.join(rawdir, "amiberry.log"), cwd=home)
+    run.pid = proc.proc.pid
     serial = emulator.SerialClient(port, os.path.join(rawdir, "serial.bin"), on_data=run.on_serial)
     ipc = None
     ended = None
@@ -647,6 +694,7 @@ def _run_disk(opts, ctx, entry, binary=None, extra_options=None, disk=None):
     res["emulator_slot"] = slot.__enter__()     # held until this emulator has exited
     res["slot_wait_s"] = round(time.time() - t_wait, 2)
     t_start = time.time()
+    load_start = _loadavg()
     try:
         for attempt in range(1, LAUNCH_ATTEMPTS + 1):
             cap = None
@@ -706,6 +754,11 @@ def _run_disk(opts, ctx, entry, binary=None, extra_options=None, disk=None):
                      "accepted_in_log": bool(m_acc), "bytes": serial.bytes, "closed_by_peer": serial.closed_by_peer,
                      "error": serial.error, "raw": f"{rel}serial.bin"}
     res["mailbox"] = dict(run.mb, raw=f"{rel}mailbox.jsonl")
+    if run.speed_samples:
+        res["hostspeed"] = {"fields": ["t", "heartbeat", "case", "cpu_main_ns", "cpu_total_ns", "cpu_top_ns"],
+                            "samples": run.speed_samples, "poll_s": run.POLL, "pos0": SPEED_POS0}
+    res["host_context"] = dict(envinfo.host_brief(), jobs=opts.jobs, loadavg_start=load_start,
+                               loadavg_end=_loadavg(), slot_wait_s=res.get("slot_wait_s"))
     if selftest_info is not None:
         res["selftest"] = selftest_info
     if ipc:
@@ -739,6 +792,13 @@ def _run_disk(opts, ctx, entry, binary=None, extra_options=None, disk=None):
         f"{len(merged.records)} records, stopped by {stop}"
         + (f"; CONFIG ADJUSTED BY EMULATOR: {', '.join(d['option'] for d in adj)}" if adj else ""))
     return res
+
+
+def _loadavg():
+    try:
+        return [round(x, 2) for x in os.getloadavg()]
+    except OSError:
+        return None
 
 
 def audio_wanted(opts, entry, disk_path):

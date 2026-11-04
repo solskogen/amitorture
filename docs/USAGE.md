@@ -32,7 +32,7 @@ Times below were measured on a Raspberry Pi 500 with 4 emulators in parallel (`-
 ```
 python3 -m amitorture run --amiberry ./amiberry --kickstarts ~/Amiberry/ROMs --matrix smoke --jobs 4
 ```
-`smoke` covers 10 machines (68000 to 68060, OCS/ECS/AGA, PAL/NTSC, AROS) with JIT twins, each running every disk of the set. It takes about 25 minutes, plus up to the narrowing budget if something fails (see 3.3).
+`smoke` covers 12 machines (68000 to 68060, OCS/ECS/AGA, PAL/NTSC, AROS) with JIT twins, plus a 68020 at real CPU speed with JIT on and off for the hostspeed test, each running every disk of the set. It takes about 25 minutes, plus up to the narrowing budget if something fails (see 3.3).
 
 Exit code: 0 means no problems, 1 means problems found (read the report), 2 is a host-side error, 3 means the isolation check failed, 130 means the run was stopped with Ctrl+C (see "Stopping a run" below).
 
@@ -40,8 +40,8 @@ Exit code: 0 means no problems, 1 means problems found (read the report), 2 is a
 | Matrix | Entries | Time | What it adds |
 |---|---|---|---|
 | `smoke` | 10 | ~25 min + narrowing | one machine per CPU class and chipset |
-| `standard` | 135 | ~6 h, including a 2 h narrowing budget | every CPU/FPU variant, every RTG, sound and network board, Gayle/PCMCIA, RTC boards, SCSI controllers, MMU configs, CD32, CDTV |
-| `full` | 533 | not measured yet (about 4× `standard`) | every JIT sub-option, threaded and softfloat twins |
+| `standard` | 142 | ~6 h, including a 2 h narrowing budget | every CPU/FPU variant, every RTG, sound and network board, Gayle/PCMCIA, RTC boards, SCSI controllers, MMU configs, CD32, CDTV |
+| `full` | 540 | not measured yet (about 4× `standard`) | every JIT sub-option, threaded and softfloat twins |
 
 `python3 -m amitorture matrix --matrix standard` lists the entries.
 
@@ -191,6 +191,8 @@ Failures that share a cause are grouped into one problem: same module, same narr
 - **Repro pack:** `repro/<problem>/`. See 4.
 
 **Narrowing.** When a case fails, the runner reruns only that case on neighbouring configs: JIT off/on and each `comp_*` option, core mode, `mmu_model=0`, 24-bit addressing, `gfx_resolution`, FPU native/softfloat, threaded off, and so on. It records which setting flips the result. The default budget is 2 hours (`--narrow-budget S`, or `--no-narrow`). "Budget exhausted" means some variants were not tried; the report lists them.
+
+**Host speed (`host.speed_<insn>`).** The hostspeed module runs costly CPU/FPU instructions (MULx.L, DIVx.L, bit fields, CAS, TRAP/RTE, the FPU transcendentals, packed decimal, FMOVEM ...) for 1 s of emulated time each, and the runner reads the guest's frame counter with its own clock meanwhile. The "Host speed per instruction" table gives, per entry, each block's real-time factor rtf (host seconds per emulated second, +- 3 sigma of the measured noise), the emulation thread's host CPU per emulated second, and the host CPU per instruction (also relative to ADD.L/FADD). A block fails when the emulator ran more than 1 % slower than real time (rtf > 1.01 + 3 sigma); it is untestable when the noise is too large to tell. The rtf matters at cpu_speed=real: the `*-fast-real` entries (with JIT twins), the compatible and cycle-exact ones; at cpu_speed=max the frames stay on time by design and only the CPU cost tells. **The verdict depends on the host:** a slower machine, or more emulators in parallel (`--jobs`), may fail where a faster one passes. Each failure names the host (CPU model, cores, `--jobs`, load); baselines and checks of these cases are only meaningful on the same host. See [cases/hostspeed.md](cases/hostspeed.md).
 
 ### 3.4 Machine-readable copies
 | File | Contents |

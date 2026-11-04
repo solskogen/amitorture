@@ -38,7 +38,7 @@ make -C disk clean
 | `amitorture-3-fpu.adf` | fpu |
 | `amitorture-4-chip.adf` | display copper paula input |
 | `amitorture-5-exp.adf` | rtg expsound network misc_hw misc_hw_os devio |
-| `amitorture-6-cpux.adf` | memory memory_os dispatch dmacontention |
+| `amitorture-6-cpux.adf` | memory memory_os dispatch dmacontention hostspeed |
 | `amitorture-7-mmu.adf` | mmu |
 
 The build prints each disk's size in memory. Every disk must stay under about 300 KB so that it runs on a 512 KB Kickstart 1.x machine. All the modules together are too big for one 880 KB ADF, which is why the set exists.

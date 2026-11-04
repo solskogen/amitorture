@@ -421,7 +421,8 @@ HW_DISKS = ["core", "exp"]
 MODULE_IDS = {"takeover": 0, "rt": 1, "cpu_basic": 2, "flags": 3, "exceptions": 4, "smc": 5, "interrupts": 6,
               "cia": 7, "blitter": 8, "fpu": 9, "timing": 10, "devio": 11, "display": 12, "copper": 13,
               "paula": 14, "input": 15, "rtg": 16, "expsound": 17, "network": 18, "misc_hw": 19, "mmu": 20,
-              "memory": 21, "dispatch": 22, "dmacontention": 23, "misc_hw_os": 24, "memory_os": 25}
+              "memory": 21, "dispatch": 22, "dmacontention": 23, "misc_hw_os": 24, "memory_os": 25,
+              "hostspeed": 26}
 
 
 def module_mask(names):
@@ -600,6 +601,45 @@ def hardware_entries(full=False):
     return out
 
 
+# hostspeed (docs/cases/hostspeed.md) at cpu_speed=real. On the fast/JIT
+# entries above cpu_speed=max: Amiberry then gives the CPU whatever host time
+# a frame leaves, so the frames stay on time and a slow instruction only
+# lowers the emulated CPU's throughput. At cpu_speed=real the emulated CPU
+# has a fixed speed, and an instruction the host cannot emulate fast enough
+# makes the emulation fall behind real time, which the runner measures. These
+# entries run only the cpux disk with only hostspeed; the 020+ ones have a
+# JIT twin (Amiberry keeps the JIT on at cpu_speed=real: fixup_cpu has no
+# rule against it, and the run's log says "JIT: ..."). The cycle-exact and
+# compatible entries run at real speed anyway and run hostspeed with the rest
+# of the cpux disk.
+# (model, cpu variant, fpu, JIT twin, matrices)
+SPEED_SPECS = [
+    ("A1200", "68020", "68882", True, ("smoke", "standard")),
+    ("A4000", "68040nommu", "internal", True, ("standard",)),
+    ("A4000", "68060nommu", "internal", True, ("standard",)),
+    ("A500", "68000", "none", False, ("standard",)),
+]
+
+
+def speed_entries(name):
+    """The cpu_speed=real hostspeed entries of matrix `name` (and their JIT twins)."""
+    out = []
+    for model, cpu_key, fpu, jit, mats in SPEED_SPECS:
+        if name not in mats and name != "full":
+            continue
+        parts = [model.lower(), cpu_key.lower()] + ([fpu[-3:]] if fpu in ("68881", "68882") else []) + ["fast", "real"]
+        e = make_entry(model, cpu_key, fpu, "fast", extra={"cpu_speed": "real"}, eid="-".join(parts),
+                       title_extra=", cpu_speed=real (hostspeed only)")
+        e["disk_groups"] = ["cpux"]
+        e.setdefault("params", {})["modules"] = module_mask(["hostspeed"])
+        out.append(e)
+        if jit and e["jit_capable"]:
+            out.append(make_twin(e, "jit"))
+    for e in out:
+        e["matrices"] = {name}
+    return out
+
+
 # MMU configurations (mmu_model = the CPU's own MMU, or the EC variant's TTRs
 # only). JIT does not support the MMU, so these have no JIT twin (the
 # generator never makes one for mmu != 0); every disk runs (the mmu module
@@ -679,15 +719,35 @@ def _full():
 _CACHE = {}
 
 
+ALL_MODULES = 0xFFFFFFFFFFFFFFFF
+
+
+def _hostspeed_only_at_real_speed(ents):
+    """hostspeed's verdict (does the emulator keep real time?) only means
+    something at cpu_speed=real: at max, Amiberry keeps the frames on time
+    and gives the CPU whatever is left, so rtf stays about 1 and nothing can
+    fail. Its blocks take ~40-120 s per entry, so the max-speed entries leave
+    it out (their module mask, ANDed with --param modules=)."""
+    bit = 1 << MODULE_IDS["hostspeed"]
+    for e in ents:
+        if str(e["options"].get("cpu_speed", "")).lower() != "max":
+            continue
+        p = e.setdefault("params", {})
+        cur = int(str(p.get("modules", ALL_MODULES)), 0) if str(p.get("modules", "")).lower() != "all" else ALL_MODULES
+        if cur & bit:
+            p["modules"] = f"{cur & ~bit:#x}"
+    return ents
+
+
 def expand(name="standard"):
     """The entries of a named matrix, each twin right after its reference."""
     if name not in MATRICES:
         raise ValueError(f"unknown matrix {name!r}; known: {', '.join(MATRICES)}")
     if name not in _CACHE:
         if name == "smoke":
-            _CACHE[name] = _from_specs(SMOKE, "smoke")
+            _CACHE[name] = _dedupe(_from_specs(SMOKE, "smoke") + speed_entries("smoke"))
         elif name == "standard":
-            ents = _from_specs(STANDARD + MMU_SPECS, "standard") + hardware_entries()
+            ents = _from_specs(STANDARD + MMU_SPECS, "standard") + hardware_entries() + speed_entries("standard")
             ents = _dedupe(ents)
             for e in ents:
                 e["matrices"].add("standard")
@@ -697,7 +757,8 @@ def expand(name="standard"):
             ents = _full()
             have = {e["id"] for e in ents}
             keys = {machine_key(e) for e in ents}
-            for extra in (_from_specs(SMOKE, "smoke"), _from_specs(STANDARD, "standard"), hardware_entries()):
+            for extra in (_from_specs(SMOKE, "smoke"), _from_specs(STANDARD, "standard"), hardware_entries(),
+                          speed_entries("full")):
                 for e in extra:
                     k = machine_key(e)
                     if e["id"] not in have and k not in keys:
@@ -706,6 +767,7 @@ def expand(name="standard"):
                         have.add(e["id"])
                         keys.add(k)
             _CACHE[name] = ents
+        _hostspeed_only_at_real_speed(_CACHE[name])
     return copy.deepcopy(_CACHE[name])
 
 

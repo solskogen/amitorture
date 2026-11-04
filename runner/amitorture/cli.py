@@ -347,8 +347,8 @@ def _common(p, kick_required=True, param_defaults=True):
                                                             "else $AMT_KICKSTARTS or ~/Amiberry/ROMs)")
     p.add_argument("--workdir", default=DEFAULT_WORKDIR, metavar="DIR", help=WORKDIR_HELP)
     p.add_argument("--matrix", default="smoke", choices=matrix.MATRICES,
-                   help="which machines to run (default smoke): smoke = 10 machines, one per CPU class and chipset; "
-                        "standard = 135, every CPU/FPU variant, board and controller; full = 533, also every JIT "
+                   help="which machines to run (default smoke): smoke = 12 machines, one per CPU class and chipset; "
+                        "standard = 142, every CPU/FPU variant, board and controller; full = 540, also every JIT "
                         "sub-option, threaded and softfloat twin. `amitorture matrix --matrix NAME` lists them")
     p.add_argument("--config", action="append", metavar="NAME",
                    help="run only these entries: an entry id or a glob such as 'a1200*', from any matrix "

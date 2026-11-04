@@ -165,6 +165,31 @@ Example (abbreviated):
 {"v":1,"seq":4,"t":"done","pass":1,"fail":0,"skip":0,"untestable":0,"aborted":0,"records":5} *7b717812
 ```
 
+### 1.10 `speed`: a hostspeed timed block (not a case)
+
+The hostspeed module (docs/cases/hostspeed.md) runs one block per instruction class for about 1 s of
+emulated time and brackets it with two records; the runner's verdict on it is the pseudo case
+`host.speed_<insn>` (5.1). Skipped classes get one `skip` record.
+
+| Field | Type | Meaning |
+|---|---|---|
+| `mod` | string | `hostspeed` |
+| `ev` | `begin` / `end` / `skip` | before the block, after it, or not run on this CPU/FPU |
+| `insn` | string | the block: `add_l`, `fsin`, ... (`stop`, `empty`, `empty_end` are the references) |
+| `cls` | `int` / `fpu` | the class (its cost reference: `add_l` or `fadd`) |
+| `pos` | int | the mailbox case number (offset 40) while the block runs: 1000 + block index; module (offset 36) is 26 |
+| `n` | int | `end`: instructions executed (`stop`: STOPs = frames; `empty`: DBF iterations) |
+| `timing` | object | `end`: `cck` emulated colour clocks of the block, `empty_cck` the loop alone for the same units, `frames` VBLs counted, `units` outer loop count |
+| `why` | string | `skip`: why it does not run here |
+
+```
+{"v":1,"seq":2,"t":"speed","mod":"hostspeed","ev":"begin","insn":"fsin","cls":"fpu","pos":1031} *xxxxxxxx
+{"v":1,"seq":3,"t":"speed","mod":"hostspeed","ev":"end","insn":"fsin","cls":"fpu","pos":1031,"n":3465216,"timing":{"cck":3537250,"empty_cck":69522,"frames":50,"units":3384}} *xxxxxxxx
+```
+
+`n` and `timing` depend on the engine's emulated timing (the JIT charges cycles per block), so they
+differ between a JIT twin and its reference. No fingerprint or parity check looks at `speed` records.
+
 ---------------------------------------------------------------------------
 ## 2. Mailbox (how the host reads the records out of memory)
 
@@ -509,7 +534,7 @@ Host records go to `raw/<entry>/<disk>/host.jsonl`, and into `records.jsonl` rig
 - Not done: `{"error":"..."}`, plus `ack_error` if the WRITE_MEM failed.
 
 Host records are not guest records. `done.records`, the seq gap check and fingerprints all ignore them, with
-two exceptions (runner/amitorture/cases.py), both pseudo cases, which are not counted in the per-entry and
+these exceptions (runner/amitorture/cases.py), all pseudo cases, which are not counted in the per-entry and
 per-module case totals:
 - on cycle-exact entries every acknowledged screenshot becomes the pseudo case `host.shot_<tag>`,
   fingerprinted as `{"mod":"host","case":"shot_<tag>","st":"pass","sha256":...}`, so baselines compare the picture.
@@ -537,6 +562,30 @@ per-module case totals:
     `freq_fft_hz`, `freq_zc_hz`, `channel`, `active_s`, `dropout_fraction`, the per-channel frequencies and
     `side_ok`; `why` says both frequencies, the channel, the tolerance and the offset in %; `ctx.wav` is the
     segment. The host requests section of REPORT.md shows each tone's verdict under its audio line.
+
+- on **every** entry whose launch ran the hostspeed module, each timed block becomes the pseudo case
+  `host.speed_<insn>` (docs/cases/hostspeed.md). Fingerprint: `{"mod":"host","case":"speed_<insn>","st"}`
+  only, because the measurement depends on the host. Its `timing` holds `rtf` (host seconds per emulated
+  second), `sigma`, `fps`, `cpu_per_emu_s`, `cpu_total_per_emu_s`, `ns_per_op`, `gross_ns_per_op`,
+  `ratio_ref` (banded like any timing value).
+  - Measurement: the runner keeps, at every mailbox poll while a block runs (mailbox module 26, case
+    1000 + block), `[t, heartbeat, case, cpu_main_ns, cpu_total_ns, cpu_top_ns]`: host seconds since
+    launch, the guest's frame count, and /proc/<pid>/task/*/schedstat CPU times. They are in the disk's
+    `result.json` as `hostspeed: {"fields","samples","poll_s","pos0"}`, with `host_context:
+    {"cpu_model","cpus","board","jobs","loadavg_start","loadavg_end","slot_wait_s"}`.
+  - `st`: `fail` when rtf > 1.01 + 3 sigma (`cases.SPEED_RTF_LIMIT`); `pass` when not, and either rtf + 3
+    sigma <= 1.01 or 3 sigma <= 0.5 %; `untestable` without samples, with fewer than 3 in the block, or
+    when the noise is too large to tell. A `skip` record makes no case.
+  - Parity skips these cases (`engine_dependent`): the JIT and the interpreter run at different speeds by
+    design.
+  - A failed `host.speed_<insn>` is a `case_fail` item (`mod` `host`): `expect` `{"rtf_max","limit"}`,
+    `got` `{"rtf","sigma","fps","frame_hz","samples","span_s","cpu_per_emu_s","ns_per_op","ratio_ref",
+    "ipc_bound"}`, `ctx.host` the host context, `ctx.block` the guest's block; `why` reads like "FSIN: the
+    emulator ran at 0.75x real time while executing it (rtf 1.337, ...); 250 ns host per instruction,
+    3.5x FADD. Measured on Cortex-A76 x4 (Raspberry Pi 500 Rev 1.0), --jobs 1, ...".
+  - `summary.json` `hostspeed`: `[{"entry","disk","jit","cpu_speed","host","blocks":[{"insn","cls","st",
+    "rtf","sigma","fps","frame_hz","samples","cpu_per_emu_s","cpu_total_per_emu_s","ns_per_op",
+    "ns_per_iter","ratio_ref","ref","why"}]}]`; REPORT.md shows it as "Host speed per instruction".
 
 ### 5.2 `raw/<entry>/<disk>/` (added files)
 | File | Content |

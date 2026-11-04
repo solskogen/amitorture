@@ -98,6 +98,7 @@ long amt_entry(struct ExecBase *SysBase /* A6 */, const struct amt_header *hdr /
 | `case` | `mod`, `case`, `st` ("pass"/"fail"/"skip"/"untestable"); on fail: `expect`, `got`, `why`; optional `ctx`, `in` | one test case result |
 | `capture` | `what` ("screen"/"audio_start"/"audio_stop"), `tag` | asks the host to capture now (best effort) |
 | `perf` | `mod`, `ops`, `ticks` (CIA E-clock ticks) | throughput |
+| `speed` | `mod`, `ev` ("begin"/"end"/"skip"), `insn`; begin/end also `cls`, `pos`; end also `n` and `timing` (`cck`, `empty_cck`, `frames`, `units`); skip also `why` | a hostspeed timed block (docs/schema.md 1.10); not a case |
 | `done` | `pass`, `fail`, `skip`, `untestable`, `aborted`, `records` (count of all records sent this boot, including `done`) | last record |
 
 ---------------------------------------------------------------------------
@@ -219,7 +220,8 @@ The API is in `disk/rt/mod.h`, which is authoritative; read it. In short:
 | 23 | dmacontention | BARE | CPU vs blitter/copper/bitplane/audio DMA (disk: cpux) |
 | 24 | misc_hw_os | OS | Zorro autoconfig consistency: ConfigDev ExpansionRom, sizes, address ranges, overlaps with boards and memory (OS-phase half of misc_hw; disk: exp) |
 | 25 | memory_os | OS | allocates the per-region test blocks of memory (21) while exec is alive (OS-phase half of memory; disk: cpux) |
-| 26-63 | reserved | | later |
+| 26 | hostspeed | BARE | timed blocks of costly CPU/FPU instructions for the runner's real-time check; `speed` records, no cases (disk: cpux) |
+| 27-63 | reserved | | later |
 
 Disk groups are in disk/Makefile (`DISK_SET_*`). `make check-groups` fails if a module is in no group or in two.
 

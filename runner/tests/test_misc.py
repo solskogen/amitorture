@@ -108,7 +108,7 @@ class RomDB(unittest.TestCase):
 class Matrix(unittest.TestCase):
     def test_sizes(self):
         self.assertTrue(8 <= len(matrix.expand("smoke")) <= 14)
-        self.assertTrue(100 <= len(matrix.expand("standard")) <= 140)
+        self.assertTrue(100 <= len(matrix.expand("standard")) <= 150)
         self.assertGreater(len(matrix.expand("full")), 300)
 
     def test_twins_differ_only_by_their_options(self):
@@ -500,10 +500,20 @@ class SpeedTrims(unittest.TestCase):
         rtg = es["a4000-rtg-a2410"]
         self.assertEqual(rtg["disk_groups"], ["exp"])
         self.assertEqual(int(rtg["params"]["modules"], 16), (1 << 16) | (1 << 24))
-        self.assertNotIn("modules", es["a4000-rtg-cv64z3"].get("params", {}))
+        # a full board entry runs every module (only hostspeed is left out at cpu_speed=max)
+        full = int(es["a4000-rtg-cv64z3"].get("params", {}).get("modules", "0xffffffffffffffff"), 16)
+        self.assertEqual(full | (1 << matrix.MODULE_IDS["hostspeed"]), 0xFFFFFFFFFFFFFFFF)
         zz = es["a4000-rtg-zz9000z2"]
         self.assertTrue(int(zz["params"]["modules"], 16) & (1 << 18))      # network too
         self.assertIn("cpux", es["a4000-z2z3-rtg"]["disk_groups"])          # the memory modules
+
+    def test_hostspeed_only_at_real_speed(self):
+        from amitorture import matrix
+        bit = 1 << matrix.MODULE_IDS["hostspeed"]
+        for e in matrix.expand("standard"):
+            mask = int(str(e.get("params", {}).get("modules", "0xffffffffffffffff")), 0)
+            if e["options"].get("cpu_speed") == "max":
+                self.assertFalse(mask & bit, e["id"])
 
     def test_floppy_speed_per_disk(self):
         from amitorture.runner import disk_floppy_speed as f

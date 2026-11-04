@@ -7,7 +7,10 @@ For every (reference, twin) pair that both ran:
   * every case record must be equal after removing timing fields
     (cases.strip_timing): a difference is an `engine_mismatch` with both
     values, the differing paths and the options the twins differ in;
-  * perf records and timing fields are never compared here.
+  * perf records and timing fields are never compared here, nor are the
+    pseudo cases marked engine_dependent (host.speed_*, cases.py): how fast
+    the host runs an instruction is what tells the JIT and the interpreter
+    apart, so their verdicts may differ by design.
 Softfloat twins are compared the same way but reported as
 `fpu_mode_difference` (informational): native FPU on this host is 64-bit,
 softfloat is 80-bit extended, so differences there are expected.
@@ -43,7 +46,8 @@ def compare(ref_res, twin_res, ref_fp=None, twin_fp=None):
     opt_diff = matrix.option_diff(ref_res.get("options") or {}, twin_res.get("options") or {})
     differing = [{"option": k, "ref": a, "twin": b} for k, a, b in opt_diff]
     items = []
-    rc, tc = ref_fp["cases"], twin_fp["cases"]
+    rc = {k: v for k, v in ref_fp["cases"].items() if not v.get("engine_dependent")}
+    tc = {k: v for k, v in twin_fp["cases"].items() if not v.get("engine_dependent")}
     for key in sorted(set(rc) | set(tc)):
         a, b = rc.get(key), tc.get(key)
         base = {"kind": out_kind, "entry": twin_res["id"], "ref_entry": ref_res["id"], "twin_kind": kind,

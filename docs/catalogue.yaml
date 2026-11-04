@@ -28,6 +28,12 @@
   what: FPU 68881/68882/68040/68060 (conversions, arithmetic, transcendental, FSAVE/FRESTORE, exceptions)
   cases: [fpu.*]
 
+- id: cpu.realtime
+  area: CPU
+  what: the emulator keeps real time while executing costly CPU/FPU instructions (hostspeed, host-relative)
+  cases: [host.speed_*]
+  partial: the verdict depends on the host it ran on; meaningful at cpu_speed=real (the *-fast-real entries, compatible, cycle-exact)
+
 - id: cpu.mmu
   area: CPU
   what: MMU 68030/68040/68060 (translation tables, TTRs, ATC, PTEST/PFLUSH, bus errors)

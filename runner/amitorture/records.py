@@ -22,6 +22,7 @@ REQUIRED = {
     "perf": ("mod", "ops", "ticks"),
     "done": ("pass", "fail", "skip", "untestable", "aborted", "records"),
     "request": ("id", "what", "tag"),      # host request channel (CONTRACT §13)
+    "speed": ("mod", "ev", "insn"),        # hostspeed timed blocks (docs/schema.md 1.10)
 }
 MOD_END_REQUIRED = ("pass", "fail", "skip")
 CASE_FAIL_REQUIRED = ("expect", "got", "why")

@@ -42,7 +42,7 @@ From `runner/`:
 ```
 python3 -m amitorture roms     --kickstarts ~/Amiberry/ROMs          # what was found, what can run
 python3 -m amitorture run      --amiberry /path/to/amiberry --kickstarts ~/Amiberry/ROMs \
-                               --matrix smoke --jobs 4               # 10 machines, ~25 min; also: standard, full
+                               --matrix smoke --jobs 4               # 12 machines; also: standard, full
 python3 -m amitorture baseline --amiberry /path/to/amiberry --kickstarts ~/Amiberry/ROMs \
                                --matrix smoke --name mybase --repeat 3
 python3 -m amitorture check    --amiberry /path/to/new/amiberry --kickstarts ~/Amiberry/ROMs \

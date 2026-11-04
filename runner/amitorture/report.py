@@ -100,6 +100,26 @@ def _tone_failure(items, dref, m, hello_sum):
     })
 
 
+def _speed_failures(items, dref, sub, merged, hello_sum):
+    """Each failed host.speed_<insn> pseudo case (cases.speed_case) as a
+    case_fail item: the real-time factor with its noise, the frame rates,
+    the host CPU cost per instruction, and the host it was measured on."""
+    from . import cases as casemod
+    for b in casemod.speed_blocks(sub, merged):
+        v = casemod.speed_case(b, sub)
+        if v is None or v["st"] != "fail":
+            continue
+        items.append({
+            "kind": "case_fail", **dref, "mod": "host", "case": casemod.speed_name(b["insn"]),
+            "expect": v["expect"], "got": v["got"], "why": v["why"],
+            "ctx": {"host": sub.get("host_context"), "block": {k: b.get(k) for k in ("insn", "cls", "pos", "n",
+                                                                                   "timing", "dropped")},
+                    "samples": "raw result.json hostspeed.samples"},
+            "in": {"insn": b["insn"], "pos": b.get("pos")}, "seq": None, "boot": None,
+            "sources": ["host"], "record": None, "preceding": [], "hello": hello_sum,
+        })
+
+
 def collect_failures(results):
     """One item per failed case or infra problem, each self-contained. With
     a disk set, cases, record integrity and crash/hang/timeout are per disk
@@ -140,6 +160,7 @@ def collect_failures(results):
                         })
                     elif m.get("host"):
                         _tone_failure(items, dref, m, hello_sum)
+                _speed_failures(items, dref, sub, merged, hello_sum)
                 if hello and not probe_done:
                     probe_done = True
                     probe_src = dict(r, _merged=merged)
@@ -465,6 +486,56 @@ def host_summary(results):
     return out
 
 
+SPEED_KEYS = ("insn", "cls", "st", "rtf", "sigma", "fps", "frame_hz", "samples", "cpu_per_emu_s",
+              "cpu_total_per_emu_s", "ns_per_op", "ns_per_iter", "ratio_ref", "ref", "why")
+
+
+def speed_summary(results):
+    """Per entry and disk: the hostspeed blocks (cases.speed_blocks) with
+    their verdicts, real-time factors and host cost per instruction."""
+    from . import cases as casemod
+    out = []
+    for r in results:
+        for sub in r.get("disks") or [r]:
+            bl = casemod.speed_blocks(sub, sub.get("_merged"))
+            if not bl:
+                continue
+            out.append({"entry": r["id"], "disk": sub.get("disk_name"), "jit": r.get("jit"),
+                        "cpu_speed": (r.get("options") or {}).get("cpu_speed"), "host": sub.get("host_context"),
+                        "blocks": [{k: b.get(k) for k in SPEED_KEYS if b.get(k) is not None} for b in bl]})
+    return out
+
+
+def _speed_lines(speeds):
+    L = ["### Host speed per instruction (hostspeed, docs/cases/hostspeed.md)", "",
+         "Each block runs one instruction for about 1 s of emulated time. **rtf** = host seconds per emulated "
+         "second (from the frame counter the runner reads with the host clock; > 1: the emulator fell behind "
+         "real time), +- 3 sigma. **CPU/s**: host CPU seconds of the emulation thread per emulated second (1.0 "
+         "= no headroom left). **ns/op**: host CPU per instruction, net of the emulator's own cost (the STOP "
+         "block) and of the loop (the empty block); **x ref**: that cost relative to ADD.L / FADD. The verdict "
+         "depends on the host: compare it only with runs on the same host.", ""]
+    for e in speeds:
+        h = e.get("host") or {}
+        from . import cases as casemod
+        L.append(f"- `{e['entry']}`" + (f" [{e['disk']}]" if e.get("disk") else "")
+                 + f", cpu_speed={e.get('cpu_speed')}, JIT {'on' if e.get('jit') else 'off'}; "
+                 + f"host {casemod.host_desc(h)}")
+        L.append("")
+        L.append("  | insn | verdict | rtf (+-3 sigma) | CPU/s | ns/op | x ref |")
+        L.append("  |---|---|---|---|---|---|")
+        for b in e["blocks"]:
+            if b.get("st") == "skip":
+                L.append(f"  | {b['insn']} | skip | {b.get('why') or ''} | | | |")
+                continue
+            rtf = f"{b['rtf']:.4f} +- {3 * b.get('sigma', 0):.4f}" if b.get("rtf") is not None else "-"
+            ns = b.get("ns_per_op", b.get("ns_per_iter"))
+            L.append(f"  | {b['insn']} | {'**FAIL**' if b['st'] == 'fail' else b['st']} | {rtf} | "
+                     f"{b.get('cpu_per_emu_s', '-')} | {'-' if ns is None else f'{ns:.1f}'} | "
+                     f"{b.get('ratio_ref', '')} |")
+        L.append("")
+    return L
+
+
 def write_all(outdir, environment, results, source="run", analysis=None):
     an = analysis if analysis is not None else _minimal_analysis(
         results, (environment.get("amiberry") or {}).get("path"))
@@ -505,6 +576,7 @@ def write_all(outdir, environment, results, source="run", analysis=None):
                       "user_amiberry_seen": iso.get("user_amiberry_seen", [])},
         "catalogue": catalogue_summary(results, fps),
         "host_requests": host_summary(results),
+        "hostspeed": speed_summary(results),
         "files": {"report": "REPORT.md", "failures": "failures.jsonl", "environment": "environment.json",
                   "configs": "configs/", "raw": "raw/", "narrowing": "narrowing.json", "repro": "repro/"},
     }
@@ -701,6 +773,8 @@ def render_markdown(summ, env, results, items, problems, an):
                 if t:
                     L.append(f"    - `{t['case']}` **{t['st']}**: {t['why']}")
         L.append("")
+    if summ.get("hostspeed"):
+        L.extend(_speed_lines(summ["hostspeed"]))
     if an.get("xfail") or an.get("fixed"):
         L.append("### Known bugs (xfail registry)")
         L.append("")

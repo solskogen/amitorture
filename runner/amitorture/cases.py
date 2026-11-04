@@ -166,6 +166,7 @@ def extract(result):
         out.update(_extract_merged(result.get("_merged")))
         _screenshot_cases(out, result, [(None, result.get("_merged"))])
         _tone_cases(out, [(None, result.get("_merged"))])
+        _speed_cases(out, [(None, result, result.get("_merged"))])
         return out
     for sub in subs:
         e = _extract_merged(sub.get("_merged"))
@@ -180,6 +181,7 @@ def extract(result):
         out["modules"].update(e["modules"])
     _screenshot_cases(out, result, [(sub.get("disk_name"), sub.get("_merged")) for sub in subs])
     _tone_cases(out, [(sub.get("disk_name"), sub.get("_merged")) for sub in subs])
+    _speed_cases(out, [(sub.get("disk_name"), sub, sub.get("_merged")) for sub in subs])
     return out
 
 
@@ -325,6 +327,301 @@ def _tone_cases(out, merged_by_disk):
             body = dict({"mod": "host", "case": key[len("host."):]}, **v["fp"])
             out["cases"][key] = {"mod": "host", "case": body["case"], "st": v["st"], "fp": canonical(body),
                                  "rec": body, "timing": {}, "seq": r.get("req_seq"), "pseudo": True, "disk": dn}
+
+
+SPEED_PREFIX = "host.speed_"
+# The verdict of host.speed_<insn> (docs/cases/hostspeed.md). rtf (real-time
+# factor) = host seconds per emulated second while the block ran: the
+# emulated frame rate divided by the frame rate the host saw. A block fails
+# when the emulator ran more than 1 % slower than real time, beyond the
+# measurement noise: rtf > SPEED_RTF_LIMIT + 3 sigma. When 3 sigma itself is
+# above SPEED_MAX_NOISE the block is untestable (never fail on noise).
+SPEED_RTF_LIMIT = 1.01
+SPEED_MAX_NOISE = 0.005
+# A real slowdown keeps the emulation thread busy: it fell behind because the
+# instruction costs too much host time. If the thread was mostly idle while
+# the emulator still lagged (host scheduling, another process), the lag is not
+# the instruction's: fail only when busy = CPU s per host s >= SPEED_CPU_BOUND.
+SPEED_CPU_BOUND = 0.9
+SPEED_MIN_SAMPLES = 3          # samples inside one block (outliers are only seen from 3 on)
+SPEED_MIN_SPAN_S = 0.1         # host seconds between the first and the last sample
+SPEED_SIGMA_FLOOR_S = 20e-6    # per-sample host clock noise floor
+# Amiberry serves IPC between frames and then waits up to 2 ms for a follow-
+# up request (osdep/amiberry_ipc_socket.cpp IPC_FOLLOWUP_WAIT) on the
+# emulation thread, whose next frame deadline is already set: each sample
+# read can add up to that much to a frame that is already at its limit.
+SPEED_IPC_WAIT_S = 0.002
+# the emulated frame rate: colour clock / (lines x colour clocks per line),
+# long frames (PAL 313 x 227, NTSC 263 x 227.5): Amiberry custom.cpp vblank_hz_lof
+CCK_HZ = {"PAL": 3546895, "NTSC": 3579545}
+FRAME_HZ = {"PAL": 3546895 / (313 * 227), "NTSC": 3579545 / (263 * 227.5)}
+SPEED_REFS = {"int": "add_l", "fpu": "fadd"}
+
+
+def _fit(pts):
+    """Least squares t = a + b * frame over [(frame, t)]: (b, residuals, Sxx)."""
+    n = len(pts)
+    mf = sum(f for f, _ in pts) / n
+    mt = sum(t for _, t in pts) / n
+    sxx = sum((f - mf) ** 2 for f, _ in pts)
+    if sxx <= 0:
+        return None, [], 0.0
+    b = sum((f - mf) * (t - mt) for f, t in pts) / sxx
+    return b, [t - (mt + b * (f - mf)) for f, t in pts], sxx
+
+
+def _rms(res, dof):
+    return (sum(x * x for x in res) / dof) ** 0.5 if dof > 0 else None
+
+
+def _outlier(pts):
+    """(index, residual ms) of one sample far off the line through the others
+    (a late IPC reply or a descheduled runner), or None. Leave-one-out: the
+    sample whose residual against the fit of the rest is largest, if that is
+    over 1 ms and over 8x the RMS residual of the rest."""
+    best = None
+    for i in range(len(pts)):
+        rest = pts[:i] + pts[i + 1:]
+        fit, res, sxx = _fit([(d["heartbeat"], d["t"]) for d in rest])
+        if fit is None:
+            continue
+        mf = sum(d["heartbeat"] for d in rest) / len(rest)
+        mt = sum(d["t"] for d in rest) / len(rest)
+        r = pts[i]["t"] - (mt + fit * (pts[i]["heartbeat"] - mf))
+        spread = max(_rms(res, len(rest) - 2) or 0.0, SPEED_SIGMA_FLOOR_S)
+        if abs(r) > 0.001 and abs(r) > 8 * spread and (best is None or abs(r) / spread > best[2]):
+            best = (i, round(r * 1e3, 3), abs(r) / spread)
+    return None if best is None else best[:2]
+
+
+def speed_blocks(sub, merged):
+    """The hostspeed blocks of one disk launch: [{insn, cls, pos, n, timing,
+    samples, fps, rtf, sigma, st, why, cpu_*}], in the guest's order, or []
+    when the launch ran no hostspeed.
+
+    Per block the runner's samples (runner.EntryRun.speed_sample: host time,
+    mailbox heartbeat = frame count, thread CPU ns) taken while the mailbox
+    said the block was running are fitted with host time = a + b * frame;
+    rtf = b * the emulated frame rate. One sample far off the line (a late
+    IPC reply or a descheduled runner) is dropped when 4 or more are left.
+    sigma = the per-sample noise (the larger of the block's own residual RMS
+    and the run's reference noise, the median residual RMS of the empty,
+    add_l and fadd blocks) / sqrt(Sxx) x the frame rate."""
+    if merged is None:
+        return []
+    recs = [x.get("rec") or {} for x in merged.records if not x.get("host")]
+    hello = next((r for r in recs if r.get("t") == "hello"), {})
+    video = (hello.get("probe") or {}).get("video") or "PAL"
+    fhz, cck_hz = FRAME_HZ.get(video, FRAME_HZ["PAL"]), CCK_HZ.get(video, CCK_HZ["PAL"])
+    blocks, by_pos = [], {}
+    for r in recs:
+        if r.get("t") != "speed":
+            continue
+        ev = r.get("ev")
+        if ev == "skip":
+            blocks.append({"insn": r.get("insn"), "cls": r.get("cls"), "pos": r.get("pos"), "st": "skip",
+                           "why": r.get("why")})
+        elif ev == "begin":
+            b = {"insn": r.get("insn"), "cls": r.get("cls"), "pos": r.get("pos"), "st": None, "ended": False}
+            blocks.append(b)
+            by_pos[r.get("pos")] = b
+        elif ev == "end" and r.get("pos") in by_pos:
+            b = by_pos[r.get("pos")]
+            b.update(ended=True, n=r.get("n"), timing=r.get("timing") or {})
+    if not blocks:
+        return []
+    hs = (sub or {}).get("hostspeed") or {}
+    fields = hs.get("fields") or ["t", "heartbeat", "case", "cpu_main_ns", "cpu_total_ns", "cpu_top_ns"]
+    samples = {}
+    for s in hs.get("samples") or []:
+        d = dict(zip(fields, s))
+        lst = samples.setdefault(d.get("case"), [])
+        if not lst or lst[-1]["heartbeat"] != d.get("heartbeat"):   # one per frame
+            lst.append(d)
+    opts = (sub or {}).get("options") or {}
+    threaded = str(opts.get("cpu_threaded", "false")).lower() == "true"
+
+    def emu_cpu(d):
+        if d.get("cpu_main_ns") is None:
+            return None
+        return d["cpu_main_ns"] + ((d.get("cpu_top_ns") or 0) if threaded else 0)
+
+    # 1. per block: fit, own residual noise
+    for b in blocks:
+        if b["st"] == "skip":
+            continue
+        pts = [d for d in samples.get(b["pos"], []) if isinstance(d.get("t"), (int, float))]
+        b["samples"] = len(pts)
+        b["_pts"] = pts
+        if len(pts) >= 2:
+            fit, res, sxx = _fit([(d["heartbeat"], d["t"]) for d in pts])
+            drop = _outlier(pts) if fit is not None and len(pts) >= 4 else None
+            if drop is not None:
+                i, r_ms = drop
+                b["dropped"] = {"t": pts[i]["t"], "heartbeat": pts[i]["heartbeat"], "residual_ms": r_ms}
+                pts = pts[:i] + pts[i + 1:]
+                b["_pts"] = pts
+                fit, res, sxx = _fit([(d["heartbeat"], d["t"]) for d in pts])
+            b["_fit"], b["_sxx"] = fit, sxx
+            b["_own"] = _rms(res, len(pts) - 2)
+    refs = sorted(b["_own"] for b in blocks if b.get("_own") is not None
+                  and (b["insn"] in SPEED_REFS.values() or str(b["insn"]).startswith("empty")))
+    ref_noise = max(refs[len(refs) // 2], SPEED_SIGMA_FLOOR_S) if refs else None
+    # 2. rates and verdicts
+    for b in blocks:
+        if b["st"] == "skip":
+            continue
+        pts, fit = b.pop("_pts", []), b.pop("_fit", None)
+        sxx, own = b.pop("_sxx", 0.0), b.pop("_own", None)
+        b["ref_noise_ms"] = None if ref_noise is None else round(ref_noise * 1e3, 4)
+        if not b.get("ended"):
+            b.update(st="untestable", why="the block did not finish (no end record)")
+            continue
+        if not hs.get("samples"):
+            b.update(st="untestable", why="no host samples of the frame counter: the runner did not read the "
+                                          "mailbox during the module (mailbox off or not found, or not this runner)")
+            continue
+        span = (pts[-1]["t"] - pts[0]["t"]) if len(pts) >= 2 else 0.0
+        b["span_s"] = round(span, 3)
+        if fit is None or len(pts) < SPEED_MIN_SAMPLES or span < SPEED_MIN_SPAN_S:
+            b.update(st="untestable", why=f"{len(pts)} host sample(s) over {span:.3f} s inside the block: need "
+                                          f"{SPEED_MIN_SAMPLES} over {SPEED_MIN_SPAN_S} s")
+            continue
+        noise = max(x for x in (own, ref_noise, SPEED_SIGMA_FLOOR_S) if x is not None)
+        sigma = noise / sxx ** 0.5 * fhz
+        rtf = fit * fhz
+        polls = len(pts) - 1
+        b.update(fps=round(1.0 / fit, 4), frame_hz=round(fhz, 4), rtf=round(rtf, 5), sigma=round(sigma, 6),
+                 own_noise_ms=None if own is None else round(own * 1e3, 4),
+                 ipc_bound=round(polls * SPEED_IPC_WAIT_S / span, 5) if span else None)
+        if rtf > SPEED_RTF_LIMIT + 3 * sigma:
+            b.update(st="fail", why=f"the emulator ran at {1 / rtf:.2f}x real time (rtf {rtf:.3f})")
+        elif rtf + 3 * sigma <= SPEED_RTF_LIMIT or 3 * sigma <= SPEED_MAX_NOISE:
+            b.update(st="pass", why=f"rtf {rtf:.4f} +- {3 * sigma:.3%} (3 sigma): not above {SPEED_RTF_LIMIT} "
+                                    f"+ 3 sigma")
+        else:
+            b.update(st="untestable", why=f"timing noise too large to tell: rtf {rtf:.4f} +- {3 * sigma:.2%} "
+                                          f"(3 sigma, limit {SPEED_MAX_NOISE:.1%}; per-sample noise "
+                                          f"{noise * 1e3:.2f} ms, {len(pts)} samples over {span:.2f} s)")
+        # host CPU of the emulation thread(s) per emulated second
+        c0, c1 = emu_cpu(pts[0]), emu_cpu(pts[-1])
+        df = pts[-1]["heartbeat"] - pts[0]["heartbeat"]
+        if c0 is not None and c1 is not None and df > 0:
+            emu_s = df / fhz
+            b["cpu_per_emu_s"] = round((c1 - c0) / 1e9 / emu_s, 4)
+            if pts[0].get("cpu_total_ns") is not None:
+                b["cpu_total_per_emu_s"] = round((pts[-1]["cpu_total_ns"] - pts[0]["cpu_total_ns"]) / 1e9 / emu_s, 4)
+            b["busy"] = round(b["cpu_per_emu_s"] / rtf, 4) if rtf else None
+            if b["st"] == "fail" and b["busy"] is not None and b["busy"] < SPEED_CPU_BOUND:
+                b.update(st="untestable",
+                         why=f"the emulator lagged (rtf {rtf:.3f}) while its emulation thread was only "
+                             f"{b['busy']:.0%} busy: the lag came from the host (scheduling, another process), "
+                             f"not from the instruction's cost (a real slowdown keeps the thread at least "
+                             f"{SPEED_CPU_BOUND:.0%} busy)")
+        t = b.get("timing") or {}
+        if b.get("n") and t.get("cck"):
+            b["ops_per_emu_s"] = b["n"] * cck_hz / t["cck"]
+    # 3. host cost per instruction: CPU per emulated second minus the
+    # emulator's own (the STOP block: chipset, display, frame pacing), per
+    # instruction, minus the share of the loop (the empty block's cost per
+    # DBF iteration, 16 iterations per unit)
+    def mean(xs):
+        xs = [x for x in xs if x is not None]
+        return sum(xs) / len(xs) if xs else None
+    idle = mean([b.get("cpu_per_emu_s") for b in blocks if b.get("insn") == "stop"])
+    loop_ns = mean([(b["cpu_per_emu_s"] - idle) * 1e9 / b["ops_per_emu_s"] for b in blocks
+                    if str(b.get("insn")).startswith("empty") and b.get("cpu_per_emu_s") is not None
+                    and b.get("ops_per_emu_s")] if idle is not None else [])
+    for b in blocks:
+        if b.get("cpu_per_emu_s") is None or not b.get("ops_per_emu_s") or idle is None:
+            continue
+        ns = (b["cpu_per_emu_s"] - idle) * 1e9 / b["ops_per_emu_s"]
+        if b["insn"] == "stop":
+            continue
+        if str(b["insn"]).startswith("empty"):
+            b["ns_per_iter"] = round(ns, 3)
+            continue
+        units = (b.get("timing") or {}).get("units")
+        b["gross_ns_per_op"] = round(ns, 3)
+        net = ns - (loop_ns * 16 * units / b["n"] if loop_ns is not None and units else 0)
+        if net < 0:     # cheaper than the loop it sits in, within the resolution (JIT: compiled together)
+            b["ns_note"] = f"below the measurement resolution (net {net:.1f} ns)"
+            net = 0.0
+        b["ns_per_op"] = round(net, 3)
+    refs = {b["insn"]: b for b in blocks if b.get("insn") in SPEED_REFS.values()}
+    for b in blocks:
+        ref = refs.get(SPEED_REFS.get(b.get("cls")))
+        if b.get("ns_per_op") is None or ref is None or ref is b:
+            continue
+        rn = ref.get("ns_per_op")
+        b["ref"] = ref["insn"]
+        if rn and rn > 0 and b["ns_per_op"] > 0:
+            b["ratio_ref"] = round(b["ns_per_op"] / rn, 2)
+    for b in blocks:
+        b.pop("ended", None)
+    return blocks
+
+
+def speed_name(insn):
+    return "speed_" + str(insn)
+
+
+def host_desc(ctx):
+    """'Cortex-A76 x4 (Raspberry Pi 500), --jobs 1, load 0.97': the host a
+    host.speed_* verdict was measured on (the verdict is host-relative)."""
+    ctx = ctx or {}
+    cpu = ctx.get("cpu_model") or "unknown CPU"
+    s = f"{cpu} x{ctx.get('cpus') or '?'}" + (f" ({ctx['board']})" if ctx.get("board") else "")
+    s += f", --jobs {ctx.get('jobs') or 1}"
+    la = ctx.get("loadavg_start")
+    if la:
+        s += f", load average {la[0]} at the start of the launch"
+    return s
+
+
+def speed_case(b, sub):
+    """One block -> {"st", "fp", "expect", "got", "why", "timing"} (None for
+    a skipped block): the host.speed_<insn> pseudo case."""
+    if b.get("st") in (None, "skip"):
+        return None
+    st = b["st"]
+    timing = {k: b[k] for k in ("rtf", "sigma", "fps", "cpu_per_emu_s", "cpu_total_per_emu_s", "ns_per_op",
+                                "gross_ns_per_op", "ns_per_iter", "ratio_ref") if b.get(k) is not None}
+    why = b.get("why") or ""
+    if st == "fail":
+        ctx = (sub or {}).get("host_context")
+        cost = ""
+        if b.get("ns_per_op") is not None:
+            ns = b["ns_per_op"]
+            cost = f"; {ns / 1000:.3g} us host per instruction" if ns >= 1000 else f"; {ns:.3g} ns host per instruction"
+            if b.get("ratio_ref"):
+                cost += f", {b['ratio_ref']:g}x {str(b['ref']).upper().replace('_', '.')}"
+        why = (f"{str(b['insn']).upper()}: the emulator ran at {1 / b['rtf']:.2f}x real time while executing it "
+               f"(rtf {b['rtf']:.3f}, limit {SPEED_RTF_LIMIT} + 3 sigma = {SPEED_RTF_LIMIT + 3 * b['sigma']:.4f})"
+               f"{cost}. Measured on {host_desc(ctx)}: the verdict is relative to this host")
+    expect = {"rtf_max": round(SPEED_RTF_LIMIT + 3 * (b.get("sigma") or 0), 5), "limit": SPEED_RTF_LIMIT}
+    got = {k: b.get(k) for k in ("rtf", "sigma", "fps", "frame_hz", "samples", "span_s", "cpu_per_emu_s",
+                                 "ns_per_op", "ratio_ref", "ipc_bound") if b.get(k) is not None}
+    return {"st": st, "fp": {"st": st}, "expect": expect, "got": got, "why": why, "timing": timing}
+
+
+def _speed_cases(out, subs):
+    """docs/cases/hostspeed.md: every timed hostspeed block becomes the
+    pseudo case host.speed_<insn>, fingerprinted {st} only (the real-time
+    factor depends on the host); rtf, CPU time and ns per instruction are
+    its timing values."""
+    for dn, sub, m in subs:
+        for b in speed_blocks(sub, m):
+            v = speed_case(b, sub)
+            if v is None:
+                continue
+            key = SPEED_PREFIX + str(b["insn"])
+            if key in out["cases"]:
+                key = f"{key}@{dn}" if dn else f"{key}#{b.get('pos')}"
+            body = dict({"mod": "host", "case": key[len("host."):]}, **v["fp"])
+            out["cases"][key] = {"mod": "host", "case": body["case"], "st": v["st"], "fp": canonical(body),
+                                 "rec": body, "timing": v["timing"], "seq": None, "pseudo": True, "disk": dn,
+                                 "engine_dependent": True}
 
 
 def diff_paths(a, b, path=""):

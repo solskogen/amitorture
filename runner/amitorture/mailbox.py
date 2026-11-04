@@ -109,18 +109,27 @@ class RingFollower:
     as lost instead of being trusted.
     """
 
-    def __init__(self, reader, addr):
+    def __init__(self, reader, addr, on_header=None):
         self.reader = reader
         self.addr = addr
         self.pos = 0          # total bytes consumed
         self.header = None
         self.lost = 0
+        # called with each Header right after its read returned (the
+        # hostspeed sampler stamps it with the host clock there)
+        self.on_header = on_header
 
     def poll(self):
-        """Returns dict(header=Header, data=bytes, lost=int, lost_at=int) or None if the mailbox vanished."""
+        """Returns dict(header=Header, data=bytes, lost=int, lost_at=int) or None if the mailbox vanished.
+
+        With no new bytes the header is read once: the second read only
+        guards ring bytes read in between, and every read costs the
+        emulation thread time (Amiberry serves IPC between frames)."""
         h1 = read_header(self.reader, self.addr)
         if h1 is None:
             return None
+        if self.on_header is not None:
+            self.on_header(h1)
         if h1.total < self.pos:
             # total went backwards: the mailbox was re-initialised at the same address.
             self.pos = 0
@@ -131,6 +140,9 @@ class RingFollower:
             self.pos += lost
             avail = h1.ring_size
         data = b""
+        if not avail and not lost:
+            self.header = h1
+            return {"header": h1, "data": data, "lost": 0, "lost_at": lost_at}
         if avail:
             data = read_ring_bytes(self.reader, self.addr, h1.ring_size, self.pos, avail)
         h2 = read_header(self.reader, self.addr)
