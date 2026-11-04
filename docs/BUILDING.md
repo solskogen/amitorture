@@ -82,7 +82,7 @@ cd runner && python3 -m unittest discover -s tests       # runner unit tests, no
 make -C disk check check-gen check-groups                # disks, generated tables, disk groups
 ```
 
-GitHub Actions (`.github/workflows/ci.yml`) runs the unit tests on Python 3.10, 3.12 and 3.13, and `tools/check_generated.sh`, on every push and pull request. It can't build the disks (no Amiga toolchain there) or run them.
+Run both before a commit or push; there is no hosted CI (it could neither build the disks, without the Amiga toolchain, nor run them, without an emulator).
 
 To try a disk on an emulator without the runner, see [USAGE.md](USAGE.md#boot-one-disk-quickly-without-the-runner) (`tests/smoke_disk.py`).
 
