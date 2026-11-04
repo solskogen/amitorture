@@ -381,14 +381,14 @@
 - id: zorro.autoconfig
   area: Gary/Gayle/Ramsey/Buster
   what: Zorro II/III autoconfig (the full chain, shut-up, Z3 sizes)
-  cases: [misc_hw.*autoconfig*, misc_hw.*zorro*, misc_hw.*z2*, misc_hw.*z3*, probe.hello]
+  cases: [misc_hw_os.zorro_*, misc_hw.*autoconfig*, misc_hw.*z2*, misc_hw.*z3*, probe.hello]
 
 # ----------------------------------------------------------------- Clocks/NVRAM
 - id: rtc.msm6242b
   area: Clocks/NVRAM
   what: RTC MSM6242B (read, set, alarm, leap year)
   cases: [misc_hw.*rtc*, misc_hw.*clock*]
-  entries: [a500plus-*, a500-rtc-*, a2000-*, cdtv-*]
+  entries: [a500plus-*, a500-rtc-*, a2000-*, cdtv-*, a1200-*, cd32-*]   # A1200/CD32 with fast RAM get one (Amiberry cfgfile.cpp built_in_chipset_prefs)
 
 - id: rtc.rf5c01
   area: Clocks/NVRAM

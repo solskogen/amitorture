@@ -395,7 +395,8 @@ def default_controller(entry=None, options=None):
     if ide.startswith("a600"):
         return "gayle"
     cs = str(options.get("chipset_compatible") or entry.get("model") or "").upper()
-    return {"A600": "gayle", "A1200": "gayle", "A4000": "a4000ide", "A3000": "a3000"}.get(cs)
+    # the A4000T has the A4000's motherboard IDE (Amiberry cfgfile.cpp CP_A4000T: cs_ide = IDE_A4000)
+    return {"A600": "gayle", "A1200": "gayle", "A4000": "a4000ide", "A4000T": "a4000ide", "A3000": "a3000"}.get(cs)
 
 
 def make_set(media_dir, controller=None, size_mb=8, rdb=True, adf=True, unit=0, rom_path=None,

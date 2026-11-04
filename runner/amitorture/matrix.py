@@ -420,8 +420,10 @@ PIV_ROM = {"ids": [91], "what": "Picasso IV flash ROM (picasso_iv_flash.rom)", "
 PCI_BRIDGE = {"prometheus_rom_file": ":ENABLED"}      # Matay Prometheus, Zorro III PCI bridge
 # (gfxcard_type config name, bus, VRAM MB); every hardware RTG board of
 # gfxboard.cpp except those needing a host board the matrix cannot give
-# (x86 VGA: bridgeboard + BIOS; Altais: DraCo; EGS_110_24: GVP local bus;
-# Pixel64: AteoBus) and the driver-only uaegfx (ZorroII/ZorroIII).
+# (x86 VGA: bridgeboard + BIOS; Altais: DraCo; EGS_110_24: GVP local bus)
+# and the driver-only uaegfx (ZorroII/ZorroIII). The Pixel64 is on an
+# AteoBus on real hardware; Amiberry emulates it as an autoconfig board of
+# its own (gfxboard.cpp GFXBOARD_ID_PIXEL64, 2026/255+254, map_banks_z2).
 RTG_CARDS = [
     ("A2410", "z2", 1), ("Spectrum28/24_Z2", "z2", 2), ("Spectrum28/24_Z3", "z3", 2),
     ("Piccolo_Z2", "z2", 2), ("Piccolo_Z3", "z3", 2), ("PiccoloSD64_Z2", "z2", 4), ("PiccoloSD64_Z3", "z3", 4),
@@ -430,7 +432,7 @@ RTG_CARDS = [
     ("Retina_Z2", "z2", 4), ("Retina_Z3", "z3", 4), ("MerlinZ2", "z2", 2), ("MerlinZ3", "z3", 4),
     ("GraffityZ2", "z2", 2), ("GraffityZ3", "z3", 2), ("Visiona", "z2", 4), ("RainbowIII", "z3", 4),
     ("Domino", "z2", 1), ("OmnibusET4000", "z2", 1), ("OmnibusET4000W32", "z2", 1), ("Harlequin_PAL", "z2", 2),
-    ("RainbowII", "z2", 2), ("ZZ9000_Z2", "z2", 4), ("ZZ9000_Z3", "z3", 128),
+    ("RainbowII", "z2", 2), ("ZZ9000_Z2", "z2", 4), ("ZZ9000_Z3", "z3", 128), ("Pixel64", "z2", 2),
     ("PERMEDIA2_PCI", "pci", 8), ("V3_3000", "pci", 16), ("S3VIRGE_PCI", "pci", 4), ("S3TRIO64_PCI", "pci", 4),
     ("Matrox_Millennium", "pci", 4), ("Matrox_Millennium_II", "pci", 8), ("Matrox_Mystique", "pci", 8),
     ("Matrox_Mystique220", "pci", 8),
@@ -494,6 +496,10 @@ def hardware_entries(full=False):
                 o.update(PCI_BRIDGE)
             e = _hw_entry(model, f"{model.lower()}-snd-{_slug(name)}", f"sound card {name} ({bus})", o,
                           cpu_key=SOUND_CPU[model], disk_groups=["core", "exp"])
+            if name == "prelude1200":
+                # expsound probes the clockport only with the unsafe flag (on a
+                # real A1200 nothing may be there); this entry configures the card
+                e["flags"] = ["unsafe"]
             out.append(e)
             if model != "A500" and bus != "pci":
                 e["jit_capable"] = True
@@ -519,14 +525,17 @@ def hardware_entries(full=False):
                              cpu_key="68030" if model == "A3000" else None,
                              fpu="68882" if model == "A3000" else None))
     # SCSI controllers with their boot ROMs (media.py attaches a test-owned
-    # RDB hardfile to them; the devio module on the core disk tests it)
+    # RDB hardfile to them; the devio module on the exp disk tests it)
     for model, ctl, cpu in (("A2000", "a2091", None), ("A4000", "a4091", None)):
         e = _hw_entry(model, f"{model.lower()}-scsi-{ctl}", f"SCSI {ctl.upper()} (test-owned hardfile)", {},
-                      disk_groups=["core"], cpu_key=cpu)
+                      disk_groups=["core", "exp"], cpu_key=cpu)
         e["media"] = {"controller": ctl}
         out.append(e)
     # RTCs: the A500+ (MSM6242B, from chipset_compatible) and an A500 with an
     # A501-style clock; the A3000/A4000 RF5C01 comes with their presets.
+    # Amiberry ignores rtc= on preset machines (docs/findings, "Config facts"):
+    # for now these are the same machines as the A500 (slow RAM) and A500+
+    # presets; they test the option once Amiberry honours it.
     out.append(_hw_entry("A500+", "a500plus-rtc", "RTC MSM6242B (A500+ built in)", {"rtc": "MSM6242B"},
                          disk_groups=["core", "exp"]))
     out.append(_hw_entry("A500", "a500-rtc-a501", "RTC MSM6242B (A501 trapdoor)", {"rtc": "MSM6242B"},
@@ -543,7 +552,7 @@ def hardware_entries(full=False):
             model = "A1200" if cb.startswith("Blizzard") else "A4000"
             out.append(_hw_entry(model, f"{model.lower()}-cpu-{_slug(cb)}", f"accelerator {cb}", o,
                                  board_roms=[rom], cpu_key="68060nommu", fpu="internal",
-                                 disk_groups=["core", "exp", "cpux"]))
+                                 disk_groups=["core", "exp", "cpux", "mmu"]))
     for e in out:
         e["matrices"] = set()
     return out
@@ -552,7 +561,7 @@ def hardware_entries(full=False):
 # MMU configurations (mmu_model = the CPU's own MMU, or the EC variant's TTRs
 # only). JIT does not support the MMU, so these have no JIT twin (the
 # generator never makes one for mmu != 0); every disk runs (the mmu module
-# is on cpux, the exceptions/smc modules on core see the MMU too).
+# has its own disk, the exceptions/smc modules on core see the MMU too).
 MMU_SPECS = [
     ("A3000", "68030", "68882", "compat", False, ()),
     ("A4000", "68030", "68882", "ce", False, ()),

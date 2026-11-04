@@ -418,18 +418,36 @@ def _rom_info(rom):
 _EMU_NET_KEYS = ("a2065", "zz9000_net", "ne2000_pci", "ne2000_pcmcia")
 
 
-def _with_net_flag(params, options):
-    if not any(str(options.get(k, "")).strip().lower() == "slirp" for k in _EMU_NET_KEYS):
-        return params
+FLAG_BITS = {"unsafe": 1, "noserial": 2, "nombox": 4, "net": 8, "noscreen": 16}   # tools/mkadf.py
+
+
+def _add_flag(params, name):
+    """OR one run-parameter flag into params["flags"], whether that is a
+    number or a list of names (so a user's --param flags=... is kept)."""
     fl = params.get("flags", 0)
     try:
-        params["flags"] = str((int(fl, 0) if isinstance(fl, str) else int(fl)) | 8)
+        params["flags"] = str((int(fl, 0) if isinstance(fl, str) else int(fl)) | FLAG_BITS[name])
     except ValueError:
         names = [x for x in str(fl).replace("+", ",").split(",") if x.strip()]
-        if "net" not in names:
-            names.append("net")
+        if name not in names:
+            names.append(name)
         params["flags"] = ",".join(names)
     return params
+
+
+def _with_net_flag(params, options):
+    if any(str(options.get(k, "")).strip().lower() == "slirp" for k in _EMU_NET_KEYS):
+        _add_flag(params, "net")
+    return params
+
+
+def _with_entry_flags(params, entry):
+    """Flags an entry needs on top of the run's (matrix.py "flags": e.g.
+    "unsafe" where the board under test is known to be configured), plus the
+    net flag for an emulator-only network backend."""
+    for name in entry.get("flags") or ():
+        _add_flag(params, name)
+    return _with_net_flag(params, entry["options"])
 
 
 def base_result(entry):
@@ -501,7 +519,7 @@ def _run_disk(opts, ctx, entry, binary=None, extra_options=None, disk=None):
         # board media the entry needs (e.g. a PCMCIA SRAM card image), zero-filled
         with open(os.path.join(media_dir, mf["name"]), "wb") as fh:
             fh.truncate(int(mf["size"]))
-    params = _with_net_flag(dict(opts.params, **entry.get("params", {})), entry["options"])
+    params = _with_entry_flags(dict(opts.params, **entry.get("params", {})), entry)
     # Disk
     if opts.no_disk:
         floppy = ""
