@@ -74,7 +74,7 @@ long amt_entry(struct ExecBase *SysBase /* A6 */, const struct amt_header *hdr /
 | Off | Type | Field |
 |---|---|---|
 | 0 | char[4] | `"PARM"` (absent means defaults; mkadf always writes the block, with defaults for keys not given) |
-| 4 | u32 | mode: 0 = full (default), 1 = quick, 2 = soak |
+| 4 | u32 | mode: 0 = full (default), 1 = quick (fewer inputs per case, same case ids), 2 = soak (reserved: not implemented, runs like full) |
 | 8 | u32 | seed (default 1) |
 | 12 | u32 | end_action: 0 = **halt** (default: restore OS, set mailbox state=done, then Wait(0) forever, so the system stays alive and the host kills the emulator), 1 = ColdReboot, 2 = return D0=-1 to the bootblock |
 | 16 | u32 | flags: bit0 = unsafe tests allowed, bit1 = serial output off, bit2 = mailbox off, bit3 = net: the network cards are on an emulator-only backend (user-mode NAT), so the network module may transmit (the runner sets it for entries with a `slirp` network option), bit4 = noscreen: no status screen (`rt/screen.c`, §10), so every bare module starts with all DMA off. mkadf names: `unsafe`, `noserial`, `nombox`, `net`, `noscreen`. |

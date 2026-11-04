@@ -9,7 +9,40 @@ import sys
 from . import matrix, romid
 from .emulator import RunnerError
 
-DEFAULT_WORKDIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "work"))
+CHECKOUT_WORKDIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "work"))
+# $AMT_WORKDIR, else work/ in the checkout the runner runs from
+DEFAULT_WORKDIR = os.path.abspath(os.path.expanduser(os.environ.get("AMT_WORKDIR") or CHECKOUT_WORKDIR))
+WORKDIR_HELP = ("where everything amitorture writes goes: results/, baselines/, tmp/ (default: $AMT_WORKDIR, "
+                f"else work/ in this checkout, now {DEFAULT_WORKDIR})")
+
+
+def _default_kickstarts():
+    """$AMT_KICKSTARTS, else Amiberry's usual ROM directory ~/Amiberry/ROMs when it exists (read only)."""
+    env = os.environ.get("AMT_KICKSTARTS")
+    if env:
+        return os.path.abspath(os.path.expanduser(env))
+    d = os.path.expanduser("~/Amiberry/ROMs")
+    return d if os.path.isdir(d) else None
+
+
+DEFAULT_KICKSTARTS = _default_kickstarts()
+KICK_HELP = ("directory of Kickstart and board ROM files, read only; files are identified by checksum, not name "
+             f"(default: $AMT_KICKSTARTS, else ~/Amiberry/ROMs if it exists{', now ' + DEFAULT_KICKSTARTS if DEFAULT_KICKSTARTS else ': not found'})")
+MODE_HELP = ("how much each module does (default full): full = every case with all its inputs; quick = the same "
+             "case ids with fewer inputs and iterations, faster but less thorough (meant for developing the disks). "
+             "A baseline and its checks must use the same mode; check takes the baseline's")
+SEED_HELP = ("seed of the random inputs the modules draw (CIA timer values, display colours and probe "
+             "positions, devio data patterns, ...); the same seed gives the same records, so baselines and "
+             "checks must use the same one (check takes the baseline's). Default 1")
+END_HELP = ("what the disk does after its last module (default halt: the machine stays on the final status "
+            "screen; the runner stops the emulator itself). reboot = ColdReboot; return = back to the "
+            "Kickstart boot code")
+PARAM_HELP = ("an extra run parameter baked into the disks (repeatable): flags=unsafe,noserial,nombox,net,noscreen "
+              "(comma-separated), baud=N (serial rate, default 115200), modules=MASK (bit n = module id n, "
+              "docs/CONTRACT.md section 10; e.g. modules=0x1000 runs only display)")
+REPRO_HELP = ("do not write repro packs. A repro pack is repro/<problem>/ in the results: a one-module disk with "
+              "the case's parameters, the minimal Amiberry config, run.sh and gdb command files, so "
+              "`amitorture repro <pack>` reruns just that failure in seconds (e.g. after a fix in Amiberry)")
 EXIT_OK, EXIT_PROBLEMS, EXIT_ERROR, EXIT_ISOLATION = 0, 1, 2, 3
 EXIT_INTERRUPTED = 130          # 128 + SIGINT, as shells report Ctrl+C
 
@@ -45,6 +78,8 @@ def _setup_tmp(workdir):
 
 
 def cmd_roms(a):
+    if not a.kickstarts:
+        raise RunnerError("no ROM directory: pass --kickstarts DIR or set AMT_KICKSTARTS (~/Amiberry/ROMs does not exist)")
     found = romid.scan_dir(a.kickstarts, recursive=a.recursive)
     if a.json:
         print(json.dumps(found, indent=1))
@@ -178,7 +213,9 @@ def parse_sets(a):
 
 def make_options(a, binary):
     from . import runner
-    if not a.kickstarts or not os.path.isdir(a.kickstarts):
+    if not a.kickstarts:
+        raise RunnerError("no ROM directory: pass --kickstarts DIR or set AMT_KICKSTARTS (~/Amiberry/ROMs does not exist)")
+    if not os.path.isdir(a.kickstarts):
         raise RunnerError(f"--kickstarts {a.kickstarts}: not a directory")
     return runner.Options(
         binary=binary, kickstarts=a.kickstarts, workdir=a.workdir, configs=a.config, matrix=a.matrix,
@@ -253,7 +290,7 @@ def cmd_check(a):
         raise RunnerError(f"no baseline {a.baseline!r} in {B.baseline_dir(a.workdir, a.baseline)}")
     meta = base["meta"]
     if not a.kickstarts:
-        a.kickstarts = meta.get("kickstarts")
+        a.kickstarts = meta.get("kickstarts") or DEFAULT_KICKSTARTS
     md = meta.get("disk") or {}
     if a.adf is None and a.disk_set is None and md.get("path"):
         if md.get("set") and os.path.isdir(md["path"]):
@@ -303,12 +340,22 @@ def cmd_import(a):
 
 
 def _common(p, kick_required=True, param_defaults=True):
-    p.add_argument("--kickstarts", required=kick_required, metavar="DIR", help="ROM directory (read only)")
-    p.add_argument("--workdir", default=DEFAULT_WORKDIR, metavar="DIR", help=f"default {DEFAULT_WORKDIR}")
-    p.add_argument("--matrix", default="smoke", choices=matrix.MATRICES, help="named matrix (default smoke)")
-    p.add_argument("--config", action="append", metavar="NAME", help="entry id or glob, any matrix (repeatable)")
+    if kick_required:
+        p.add_argument("--kickstarts", default=DEFAULT_KICKSTARTS, metavar="DIR", help=KICK_HELP)
+    else:   # check: the baseline's ROM directory first
+        p.add_argument("--kickstarts", metavar="DIR", help="ROM directory, read only (default: the baseline's, "
+                                                            "else $AMT_KICKSTARTS or ~/Amiberry/ROMs)")
+    p.add_argument("--workdir", default=DEFAULT_WORKDIR, metavar="DIR", help=WORKDIR_HELP)
+    p.add_argument("--matrix", default="smoke", choices=matrix.MATRICES,
+                   help="which machines to run (default smoke): smoke = 10 machines, one per CPU class and chipset; "
+                        "standard = 135, every CPU/FPU variant, board and controller; full = 533, also every JIT "
+                        "sub-option, threaded and softfloat twin. `amitorture matrix --matrix NAME` lists them")
+    p.add_argument("--config", action="append", metavar="NAME",
+                   help="run only these entries: an entry id or a glob such as 'a1200*', from any matrix "
+                        "(repeatable; replaces --matrix)")
     p.add_argument("--set", action="append", metavar="OPTION=VALUE",
-                   help="override an Amiberry option on every selected entry (repeatable)")
+                   help="override an Amiberry config option on every selected entry, e.g. --set cpu_threaded=true "
+                        "(repeatable)")
     p.add_argument("--timeout", type=float, default=600.0, metavar="S",
                    help="per disk launch (default 600: the slowest launch, the core disk of a cycle-exact A500 at "
                         "floppy_speed=100, took 243 s; the CDTV core disk 225 s)")
@@ -320,23 +367,32 @@ def _common(p, kick_required=True, param_defaults=True):
                         "it exists and --adf is not given)")
     p.add_argument("--adf", metavar="PATH", help="a single test disk instead of the set "
                                                  "(default disk/build/amitorture.adf when there is no set)")
-    p.add_argument("--mode", default="full" if param_defaults else None, choices=["full", "quick", "soak"])
-    p.add_argument("--seed", type=int, default=1 if param_defaults else None)
-    p.add_argument("--end-action", default="halt" if param_defaults else None, choices=["halt", "reboot", "return"])
-    p.add_argument("--param", action="append", metavar="KEY=VALUE", help="extra mkadf.py --param")
-    p.add_argument("--jobs", type=int, default=1, metavar="N", help="entries run in parallel (default 1)")
-    p.add_argument("--keep", action="store_true", help="keep the per-run temp dir under WORKDIR/tmp")
+    p.add_argument("--mode", default="full" if param_defaults else None, choices=["full", "quick"], help=MODE_HELP)
+    p.add_argument("--seed", type=int, default=1 if param_defaults else None, help=SEED_HELP)
+    p.add_argument("--end-action", default="halt" if param_defaults else None, choices=["halt", "reboot", "return"],
+                   help=END_HELP)
+    p.add_argument("--param", action="append", metavar="KEY=VALUE", help=PARAM_HELP)
+    p.add_argument("--jobs", type=int, default=1, metavar="N",
+                   help="entries run in parallel (default 1), capped at the machine-wide emulator limit "
+                        "(nproc, or $AMT_MAX_EMU)")
+    p.add_argument("--keep", action="store_true",
+                   help="keep the per-run temp dir under WORKDIR/tmp (emulator homes, generated configs and media) "
+                        "for debugging; normally removed at the end")
     p.add_argument("--show", action="store_true",
                    help="show the emulator windows on your desktop (one per running emulator, --jobs N gives N); "
                         "isolation is kept, timing values may differ from a headless run")
-    p.add_argument("--amiberry-src", metavar="DIR", help="Amiberry src/ for code pointers (default: next to the binary)")
-    p.add_argument("--xfail", metavar="FILE", help="xfail registry (default runner/amitorture/xfail.json)")
+    p.add_argument("--amiberry-src", metavar="DIR",
+                   help="Amiberry's source tree, so the report can name the emulator files and functions behind a "
+                        "failure (default: found next to the binary, or $AMIBERRY_SRC)")
+    p.add_argument("--xfail", metavar="FILE",
+                   help="registry of known emulator bugs: matching failures show as xfail, not as new problems "
+                        "(default runner/amitorture/xfail.json)")
     p.add_argument("--audio", default="auto", choices=["auto", "on", "off"],
                    help="capture the emulator's audio with SDL's disk driver (auto: only disks that send "
                         "audio_mark requests)")
     p.add_argument("--ports", metavar="LO-HI",
                    help="serial port range for the emulators (default $AMT_PORTS or 23540-23599)")
-    p.add_argument("-q", "--quiet", action="store_true")
+    p.add_argument("-q", "--quiet", action="store_true", help="no progress lines, only the final verdict")
 
 
 def build_parser():
@@ -344,52 +400,68 @@ def build_parser():
     sub = ap.add_subparsers(dest="cmd", required=True)
 
     p = sub.add_parser("roms", help="identify ROM files by CRC32/SHA1 and show which matrix entries can run")
-    p.add_argument("--kickstarts", required=True, metavar="DIR")
-    p.add_argument("--matrix", default="smoke", choices=matrix.MATRICES)
-    p.add_argument("--recursive", action="store_true")
-    p.add_argument("--json", action="store_true")
+    p.add_argument("--kickstarts", default=DEFAULT_KICKSTARTS, metavar="DIR", help=KICK_HELP)
+    p.add_argument("--matrix", default="smoke", choices=matrix.MATRICES,
+                   help="show which ROM each entry of this matrix would use (default smoke)")
+    p.add_argument("--recursive", action="store_true", help="also scan subdirectories")
+    p.add_argument("--json", action="store_true", help="machine-readable output")
     p.set_defaults(fn=cmd_roms)
 
     p = sub.add_parser("matrix", help="list a matrix; --validate checks every config with --dump-config")
-    p.add_argument("--matrix", default="smoke", choices=matrix.MATRICES)
-    p.add_argument("--config", action="append", metavar="NAME")
-    p.add_argument("--validate", action="store_true", help="run amiberry --dump-config on every entry")
-    p.add_argument("--amiberry", metavar="PATH")
-    p.add_argument("--kickstarts", metavar="DIR")
-    p.add_argument("--workdir", default=DEFAULT_WORKDIR, metavar="DIR")
-    p.add_argument("--keep", action="store_true")
-    p.add_argument("--json", action="store_true")
-    p.add_argument("-v", "--verbose", action="store_true")
+    p.add_argument("--matrix", default="smoke", choices=matrix.MATRICES, help="which matrix to list (default smoke)")
+    p.add_argument("--config", action="append", metavar="NAME", help="only entries matching this id or glob (repeatable)")
+    p.add_argument("--validate", action="store_true",
+                   help="write each entry's config and run `amiberry --dump-config` on it: shows options Amiberry "
+                        "changes or ignores (needs --amiberry and a ROM directory)")
+    p.add_argument("--amiberry", metavar="PATH", help="Amiberry binary for --validate (default: 'amiberry' on PATH)")
+    p.add_argument("--kickstarts", default=DEFAULT_KICKSTARTS, metavar="DIR", help=KICK_HELP)
+    p.add_argument("--workdir", default=DEFAULT_WORKDIR, metavar="DIR", help=WORKDIR_HELP)
+    p.add_argument("--keep", action="store_true", help="keep the generated configs under WORKDIR/tmp")
+    p.add_argument("--json", action="store_true", help="machine-readable output")
+    p.add_argument("-v", "--verbose", action="store_true", help="every entry's options, or every validation result")
     p.set_defaults(fn=cmd_matrix)
 
     p = sub.add_parser("run", help="run the test disk on every entry, then parity, narrowing, report")
     p.add_argument("--amiberry", metavar="PATH", help="Amiberry binary (default: 'amiberry' on PATH; never built)")
     _common(p)
-    p.add_argument("--no-disk", action="store_true", help="no disk in DF0: checks launch/IPC/serial/scan only")
+    p.add_argument("--no-disk", action="store_true",
+                   help="boot without a test disk: only checks that Amiberry starts isolated, and its IPC socket, "
+                        "serial port and memory reads work")
     p.add_argument("--selftest", action="store_true",
-                   help="--no-disk plus a synthetic mailbox written over IPC to check scan + ring reading")
-    p.add_argument("--no-narrow", action="store_true", help="do not rerun failures on neighbouring configs")
+                   help="--no-disk plus a synthetic mailbox written over IPC, to check the runner reads the "
+                        "guest's results correctly (about 30 s)")
+    p.add_argument("--no-narrow", action="store_true",
+                   help="skip narrowing. Narrowing reruns each failing module on neighbouring configs (JIT on/off, "
+                        "each comp_* option, core mode, FPU mode, ...) to find the setting that flips the result")
     p.add_argument("--narrow-budget", type=float, default=7200.0, metavar="S",
-                   help="wall-time cap for all narrowing launches (default 7200; 0 = off)")
+                   help="wall-time cap for all narrowing reruns together (default 7200 s; 0 = no narrowing)")
     p.add_argument("--narrow-reruns", type=int, default=3, metavar="N",
-                   help="reruns of each failing config for the deterministic/intermittent label (default 3)")
+                   help="reruns of each failing config, to tell a deterministic failure from an intermittent one "
+                        "(default 3)")
     p.add_argument("--narrow-binary", action="append", metavar="PATH",
-                   help="other Amiberry binary to try a failure on (repeatable)")
-    p.add_argument("--baseline", metavar="NAME", help="annotate problems with this baseline's history")
-    p.add_argument("--no-repro", action="store_true", help="do not write repro packs")
+                   help="another Amiberry binary to try each failure on during narrowing, e.g. an older build "
+                        "(repeatable)")
+    p.add_argument("--baseline", metavar="NAME",
+                   help="say in the report, per problem, whether the case passed in this baseline (no diff; "
+                        "use `check` for that)")
+    p.add_argument("--no-repro", action="store_true", help=REPRO_HELP)
     p.set_defaults(fn=cmd_run)
 
     p = sub.add_parser("baseline", help="run each entry N times and store fingerprints, timing and perf bands")
-    p.add_argument("--amiberry", metavar="PATH")
+    p.add_argument("--amiberry", metavar="PATH", help="the Amiberry build you trust (default: 'amiberry' on PATH)")
     _common(p)
-    p.add_argument("--name", required=True, metavar="BASELINE")
-    p.add_argument("--repeat", type=int, default=3, metavar="N", help="runs per entry (default 3)")
+    p.add_argument("--name", required=True, metavar="BASELINE",
+                   help="stored as WORKDIR/baselines/BASELINE; an existing one is replaced only when the new one "
+                        "is complete")
+    p.add_argument("--repeat", type=int, default=3, metavar="N",
+                   help="runs per entry (default 3): cases that differ between identical runs are marked "
+                        "unstable and not compared by check")
     p.set_defaults(fn=cmd_baseline)
 
     p = sub.add_parser("check", help="rerun a baseline's entries on one or more binaries and diff fingerprints")
     p.add_argument("--amiberry", nargs="+", metavar="BIN",
                    help="binaries, in order (the first one where each fingerprint changed is reported)")
-    p.add_argument("--baseline", metavar="NAME")
+    p.add_argument("--baseline", metavar="NAME", help="the baseline to compare with (WORKDIR/baselines/NAME)")
     p.add_argument("--rediff", metavar="CHECK_DIR",
                    help="recompute an earlier check's diff from its saved runs (no emulator)")
     _common(p, kick_required=False, param_defaults=False)
@@ -402,24 +474,27 @@ def build_parser():
     p.add_argument("--amiberry", metavar="PATH", help="binary (default $AMIBERRY or the one recorded in pack.json)")
     p.add_argument("--gdb", action="store_true", help="enable Amiberry's GDB server (see gdb.cmd)")
     p.add_argument("--show", action="store_true", help="show the emulator window on your desktop")
-    p.add_argument("--keep", action="store_true")
-    p.add_argument("--timeout", type=float, default=300.0)
-    p.add_argument("-v", "--verbose", action="store_true")
+    p.add_argument("--keep", action="store_true", help="keep the pack's work/ dir (emulator home, log)")
+    p.add_argument("--timeout", type=float, default=300.0, metavar="S", help="limit for the launch (default 300 s)")
+    p.add_argument("-v", "--verbose", action="store_true", help="progress lines and the emulator log path")
     p.set_defaults(fn=cmd_repro)
 
     p = sub.add_parser("report", help="rebuild REPORT.md (parity, xfail, problems, pointers, repro packs) of a "
                                       "results dir from its saved files, without the emulator")
-    p.add_argument("results", metavar="RESULTS_DIR")
+    p.add_argument("results", metavar="RESULTS_DIR", help="a results dir written by run (work/results/<run-id>)")
     p.add_argument("--no-repro", action="store_true", help="keep the existing repro packs untouched")
-    p.add_argument("--xfail", metavar="FILE", help="xfail registry (default runner/amitorture/xfail.json)")
-    p.add_argument("--workdir", default=DEFAULT_WORKDIR, metavar="DIR")
+    p.add_argument("--xfail", metavar="FILE",
+                   help="registry of known emulator bugs (default runner/amitorture/xfail.json)")
+    p.add_argument("--workdir", default=DEFAULT_WORKDIR, metavar="DIR", help=WORKDIR_HELP)
     p.set_defaults(fn=cmd_report)
 
     p = sub.add_parser("import", help="build a report from serial captures / mailbox dumps made elsewhere")
-    p.add_argument("files", nargs="+")
+    p.add_argument("files", nargs="+",
+                   help="serial captures (one per disk, or one long capture across all disks) and/or mailbox "
+                        "dumps, all from one machine")
     p.add_argument("--out", metavar="DIR", help="results dir (default WORKDIR/results/<label>)")
-    p.add_argument("--workdir", default=DEFAULT_WORKDIR, metavar="DIR")
-    p.add_argument("--label")
+    p.add_argument("--workdir", default=DEFAULT_WORKDIR, metavar="DIR", help=WORKDIR_HELP)
+    p.add_argument("--label", help="name of the results dir (default import-<time>)")
     p.set_defaults(fn=cmd_import)
     return ap
 

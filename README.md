@@ -35,7 +35,7 @@ All the modules together don't fit on one 880 KB disk, so the test is a set of s
 
 ## Use it
 
-You need the built disks, Python 3.10+ (standard library only), an Amiberry binary (`--amiberry PATH`, or `amiberry` on `PATH`; amitorture never builds it) and a directory of Kickstart ROMs. ROMs are identified by checksum, not by file name.
+You need the built disks, Python 3.10+ (standard library only), an Amiberry binary (`--amiberry PATH`, or `amiberry` on `PATH`; amitorture never builds it) and a directory of Kickstart ROMs: `~/Amiberry/ROMs` by default, or `--kickstarts DIR` / `$AMT_KICKSTARTS`. ROMs are identified by checksum, not by file name.
 
 From `runner/`:
 

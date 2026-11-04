@@ -37,7 +37,7 @@ One record per line:
 | Field | Type | Meaning |
 |---|---|---|
 | `build` | string | build id of the disk (git rev + date) |
-| `mode` | int | 0 full, 1 quick, 2 soak (run parameter, CONTRACT §4) |
+| `mode` | int | 0 full, 1 quick (run parameter, CONTRACT §4; 2 soak is reserved, not implemented) |
 | `seed` | int | random seed used by the tests |
 | `exec` | "ver.rev" | exec.library version.revision as the OS reports it |
 | `cpu` | string | CPU found by the probe (same as `probe.cpu`) |

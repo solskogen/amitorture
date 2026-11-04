@@ -11,7 +11,7 @@ Re-bake the run parameters of an existing disk (the runner does this per run):
 Inspect a disk (checks the bootblock checksum, the blob CRC and the relocs):
     mkadf.py --dump build/amitorture.adf
 
-Parameters (section 4): mode=full|quick|soak|<n>, seed=<n>, end_action=halt|reboot|return|<n>,
+Parameters (section 4): mode=full|quick|<n> (soak = 2 is reserved, runs like full), seed=<n>, end_action=halt|reboot|return|<n>,
 flags=<n>|unsafe,noserial,nombox,net,noscreen (comma or '+' separated), baud=<n>, modules=all|<64-bit mask>.
 Numbers accept 0x prefixes. Any error exits with status 1 and a message on stderr.
 """

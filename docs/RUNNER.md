@@ -154,7 +154,7 @@ The matrices (runner/amitorture/matrix.py):
 ### run
 ```
 amitorture run --amiberry BIN --kickstarts DIR [--matrix smoke] [--config GLOB ...] [--set OPT=VAL ...]
-               [--adf disk/build/amitorture.adf] [--mode full|quick|soak] [--seed N] [--param KEY=VAL]
+               [--adf disk/build/amitorture.adf] [--mode full|quick] [--seed N] [--param KEY=VAL]
                [--disk-set DIR] [--jobs N] [--keep] [--timeout S per disk (600)] [--hang S (120)]
                [--narrow-budget S (7200)] [--narrow-reruns N (3)] [--narrow-binary BIN ...] [--no-narrow]
                [--baseline NAME] [--no-repro] [--amiberry-src DIR] [--xfail FILE]

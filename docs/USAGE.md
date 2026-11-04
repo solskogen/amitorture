@@ -10,7 +10,7 @@ All runner commands are run from `runner/` as `python3 -m amitorture <command> �
 1. **The test disks:** `disk/build/set/*.adf`. Build them once with `make -C disk` (see [BUILDING.md](BUILDING.md)). The runner finds them by itself.
 2. **Python 3.10+.** The runner uses the standard library only.
 3. **An emulator binary.** amitorture never builds Amiberry. Pass `--amiberry /path/to/amiberry`, or have `amiberry` on `PATH`.
-4. **Kickstarts.** Put your ROM files in one directory; file names don't matter. Check what was found:
+4. **Kickstarts.** Put your ROM files in one directory; file names don't matter. The runner uses `~/Amiberry/ROMs` when it exists; otherwise pass `--kickstarts DIR` or set `AMT_KICKSTARTS`. Check what was found:
    ```
    python3 -m amitorture roms --kickstarts ~/Amiberry/ROMs          # --recursive for subdirectories
    ```
@@ -261,7 +261,7 @@ mkdir -p hw
 for f in disk/build/set/*.adf; do python3 tools/mkadf.py --in "$f" -o "hw/$(basename "$f")" --param baud=38400; done
 ```
 - Always give `-o`: without it mkadf rewrites the input file. It doesn't create the output directory.
-- Keys: `mode=full|quick|soak`, `seed=N`, `end_action=halt|reboot|return`, `baud=N`, `modules=all|MASK`, and `flags=` with `unsafe`, `noserial`, `nombox`, `net`, `noscreen` (comma-separated, or a number). `flags=` replaces all flags at once.
+- Keys: `mode=full|quick`, `seed=N`, `end_action=halt|reboot|return`, `baud=N`, `modules=all|MASK`, and `flags=` with `unsafe`, `noserial`, `nombox`, `net`, `noscreen` (comma-separated, or a number). `flags=` replaces all flags at once.
 - Parameters not given keep the value already in the disk. `python3 tools/mkadf.py --dump FILE` shows them.
 
 ### Making the report
@@ -295,7 +295,8 @@ These boot from CD (CONTRACT §14): for an emulator run, the runner turns each b
 
 | Setting | Effect |
 |---|---|
-| `--workdir DIR` | everything amitorture writes goes here (default `<repo>/work`): `results/`, `baselines/`, `tmp/` |
+| `--workdir DIR` / `AMT_WORKDIR` | everything amitorture writes goes here (default `work/` in the checkout): `results/`, `baselines/`, `tmp/` |
+| `--kickstarts DIR` / `AMT_KICKSTARTS` | the ROM directory, read only (default `~/Amiberry/ROMs` when it exists) |
 | `AMT_MAX_EMU=N` | at most N emulators machine-wide (default and maximum: `nproc`). The limit is shared by every amitorture process and checkout (lock files in `$AMT_LOCK_DIR`, default `$XDG_CACHE_HOME/amitorture/locks`, else `~/.cache/amitorture/locks`). |
 | `--jobs N` | entries in parallel for one run (≤ the emulator slots) |
 | `--ports LO-HI` / `AMT_PORTS` | TCP port range for the emulators' serial ports (default 23540-23599) |
