@@ -576,9 +576,9 @@ def hardware_entries(full=False):
         out.append(e)
     # RTCs: the A500+ (MSM6242B, from chipset_compatible) and an A500 with an
     # A501-style clock; the A3000/A4000 RF5C01 comes with their presets.
-    # Amiberry ignores rtc= on preset machines (docs/findings, "Config facts"):
-    # for now these are the same machines as the A500 (slow RAM) and A500+
-    # presets; they test the option once Amiberry honours it.
+    # A preset decides the RTC by design (docs/findings, "Config facts"), so
+    # rtc= is ignored here: these are the A500 (slow RAM) and A500+ presets
+    # with their own clock. An RTC choice needs chipset_compatible=- (Custom).
     out.append(_board_only(_hw_entry("A500+", "a500plus-rtc", "RTC MSM6242B (A500+ built in)", {"rtc": "MSM6242B"}),
                            ["misc_hw"]))
     out.append(_board_only(_hw_entry("A500", "a500-rtc-a501", "RTC MSM6242B (A501 trapdoor)", {"rtc": "MSM6242B"}),

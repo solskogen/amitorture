@@ -660,5 +660,31 @@
   "when": {},
   "tbd": false,
   "seen": "amitorture audit 2026-11-04 (first matrix runs that reach these controllers); see docs/findings/amiberry-2026-11-03.md"
+ },
+ "host.tone_uaesnd_play": [
+  {
+   "ref": "finding S5",
+   "why": "uaesnd Z2: sample sets in the board's own RAM are rejected, the stream never plays (silent capture)",
+   "configs": "*uaesndz2*",
+   "when": {},
+   "tbd": false,
+   "seen": "amitorture fix verification 2026-11-04 (Amiberry branch amitorture-fixes); see docs/findings/amiberry-2026-11-03.md"
+  },
+  {
+   "ref": "finding S9",
+   "why": "uaesnd mono stream with 35.B = 0 plays on the left channel only (side both)",
+   "configs": "*uaesnd*",
+   "when": {},
+   "tbd": false,
+   "seen": "amitorture fix verification 2026-11-04 (Amiberry branch amitorture-fixes); see docs/findings/amiberry-2026-11-03.md"
+  }
+ ],
+ "host.tone_uaesnd_mono_paula": {
+  "ref": "finding S9",
+  "why": "a one-channel extra stream replaces the right output with the left mix: Paula's right channel goes silent while a mono uaesnd stream plays (audio.cpp do_extra_channels)",
+  "configs": "*uaesndz3*",
+  "when": {},
+  "tbd": false,
+  "seen": "amitorture fix verification 2026-11-04 (Amiberry branch amitorture-fixes); see docs/findings/amiberry-2026-11-03.md"
  }
 }
