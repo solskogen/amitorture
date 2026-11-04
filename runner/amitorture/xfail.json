@@ -534,17 +534,29 @@
   "tbd": false,
   "seen": "amitorture standard run 20261104-001719Z (chipset/board triage); see docs/findings/amiberry-2026-11-03.md"
  },
- "expsound.uaesnd_timer_irq": {
-  "ref": "finding S6",
-  "why": "uaesnd on a 68000 with the prefetch/CE core: .L registers arriving as two word writes are ignored or half-applied (uaesndboard_wput); the 68000 fast core does a single long access and passes",
-  "configs": "*uaesnd*",
-  "when": {
-   "cpu_model": "68000",
-   "cpu_compatible": "true"
+ "expsound.uaesnd_timer_irq": [
+  {
+   "ref": "finding S6",
+   "why": "uaesnd on a 68000 with the prefetch/CE core: .L registers arriving as two word writes are ignored or half-applied (uaesndboard_wput); the 68000 fast core does a single long access and passes",
+   "configs": "*uaesnd*",
+   "when": {
+    "cpu_model": "68000",
+    "cpu_compatible": "true"
+   },
+   "tbd": false,
+   "seen": "amitorture standard run 20261104-001719Z (chipset/board triage); see docs/findings/amiberry-2026-11-03.md"
   },
-  "tbd": false,
-  "seen": "amitorture standard run 20261104-001719Z (chipset/board triage); see docs/findings/amiberry-2026-11-03.md"
- },
+  {
+   "ref": "finding S8",
+   "why": "sound-board clock scaled by 313/312 on PAL: 399 instead of 400 interrupts from the 200 Hz timer",
+   "configs": "*-snd-uaesnd*",
+   "when": {
+    "ntsc": "!true"
+   },
+   "tbd": false,
+   "seen": "amitorture audit 2026-11-04; see docs/findings/amiberry-2026-11-03.md"
+  }
+ ],
  "expsound.uaesnd_setptr_cleared": {
   "ref": "finding S7",
   "why": "uaesnd: the sample set pointer $0180.L is not cleared at the end of a stream (sndboard.cpp)",

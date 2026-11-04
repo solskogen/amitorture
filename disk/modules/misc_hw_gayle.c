@@ -5,7 +5,8 @@
  * Register map (Gayle notes in the Linux/NetBSD drivers, A600/A1200
  * technical notes):
  *   $DE1000  ID: a write resets the sequence, then each read returns the next
- *            ID bit in bit 7, MSB first; the first four reads give 1101
+ *            ID bit in bit 7, MSB first; the first four reads give 1101, the
+ *            eight give $D0 (A600) or $D1 (A1200)
  *   $DA8000  card status: b7 IDE INTRQ (live), b6 CCDET card detect, b5 BVD1/
  *            SC, b4 BVD2/DA, b3 WR write enable, b2 BSY/IRQ; b1 DAEN, b0 DIS
  *   $DA9000  interrupt request latch, same bit layout; writing 0 clears a
@@ -82,20 +83,29 @@ static void rep8(const char *id, int ok, const char *k, UBYTE e, UBYTE g, const 
 }
 
 /* ------------------------------------------------------------ ID */
-static UBYTE gayle_id_read(void)
+/* A write to $DE1000 resets the sequence; then each read gives the next ID
+ * bit in bit 7, MSB first. The first four reads are 1101 on every Gayle:
+ * that nibble ($D) is what Kickstart 3.1 checks (the Gayle detection in
+ * scsi.device/card.resource: four reads, cmpi.b #$0D). Exec's ReadGayle()
+ * reads eight and returns the byte: the low nibble is the revision, 0 on
+ * the A600's Gayle (ECS) and 1 on the A1200's (AGA, "AA Gayle"), so the
+ * byte is $D0 on an A600 and $D1 on an A1200. */
+static UBYTE gayle_id_read(int n)
 {
     UBYTE id = 0;
     int i;
     hw_wr8(G_ID, 0);
-    for (i = 0; i < 8; i++)
+    for (i = 0; i < n; i++)
         id = (UBYTE)((id << 1) | ((hw_rd8(G_ID) >> 7) & 1));
     return id;
 }
 
 static void t_id(void)
 {
-    UBYTE a = gayle_id_read(), b = gayle_id_read();
-    if ((a >> 4) == 0xd && a == b) {
+    int aga = amt_probe_result.chipset && amt_probe_result.chipset[0] == 'A';
+    UBYTE exp = aga ? 0xd1 : 0xd0;
+    UBYTE a = gayle_id_read(8), n4 = gayle_id_read(4), b = gayle_id_read(8);
+    if (a == exp && n4 == 0xd && b == exp) {
         amt_case_open("gayle_id", AMT_ST_PASS);
         json_obj("ctx");
         json_hexn("id8", a, 2);
@@ -105,13 +115,25 @@ static void t_id(void)
     }
     amt_case_open("gayle_id", AMT_ST_FAIL);
     json_obj("expect");
-    json_str("id_first4", "1101 ($D0 in the high nibble), same on every sequence");
+    json_hexn("id8_first", exp, 2);
+    json_hexn("id4", 0xd, 1);
+    json_hexn("id8_after_4", exp, 2);
     json_obj_end();
     json_obj("got");
     json_hexn("id8_first", a, 2);
-    json_hexn("id8_second", b, 2);
+    json_hexn("id4", n4, 1);
+    json_hexn("id8_after_4", b, 2);
     json_obj_end();
-    json_str("why", "Gayle ID: after a write to $DE1000, reads of bit 7 return the ID MSB first ($D0)");
+    json_str("why", aga ? "Gayle ID: after a write to $DE1000, reads of bit 7 return the ID MSB first: "
+                          "1101 on every Gayle (what Kickstart checks), then 0001: the A1200 (AGA) Gayle is $D1; "
+                          "a write restarts the sequence"
+                        : "Gayle ID: after a write to $DE1000, reads of bit 7 return the ID MSB first: "
+                          "1101 on every Gayle (what Kickstart checks), then 0000: the A600 (ECS) Gayle is $D0; "
+                          "a write restarts the sequence");
+    json_obj("in");
+    json_str("seq", "write $DE1000, 8 reads; write, 4 reads; write, 8 reads");
+    json_str("chipset", aga ? "AGA (A1200 Gayle)" : "OCS/ECS (A600 Gayle)");
+    json_obj_end();
     amt_case_close();
 }
 

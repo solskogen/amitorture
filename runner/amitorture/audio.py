@@ -35,6 +35,8 @@ RATE = 44100
 CHANNELS = 2
 STOP_SETTLE = 0.35        # s: let SDL's buffered audio reach the file before a stop mark
 FFT_MAX = 16384
+MIN_HZ = 20.0             # the FFT peak is searched from here up (see fft_peak_hz)
+BLOCK_S = 0.01            # active-part detection: 10 ms blocks of AC level
 
 
 def env_for(path):
@@ -103,9 +105,11 @@ def fft(x):
     return a
 
 
-def fft_peak_hz(x, rate):
+def fft_peak_hz(x, rate, min_hz=None):
     """Dominant frequency of x by FFT (Hann window, parabolic interpolation
-    on the log magnitude). None for silence or too few samples."""
+    on the log magnitude), searched from `min_hz` (default MIN_HZ) up: below
+    that only level changes live (a step in the held output level puts a
+    1/f spectrum there). None for silence or too few samples."""
     n = 1
     while n * 2 <= min(len(x), FFT_MAX):
         n *= 2
@@ -117,7 +121,10 @@ def fft_peak_hz(x, rate):
     win = [(seg[i] - mean) * (0.5 - 0.5 * math.cos(2 * math.pi * i / (n - 1))) for i in range(n)]
     spec = fft(win)
     mags = [abs(c) for c in spec[:n // 2]]
-    k = max(range(1, len(mags)), key=lambda i: mags[i])
+    k0 = max(1, int(math.ceil((MIN_HZ if min_hz is None else min_hz) * n / rate)))
+    if k0 >= len(mags):
+        return None
+    k = max(range(k0, len(mags)), key=lambda i: mags[i])
     if mags[k] <= 1e-9:
         return None
     delta = 0.0
@@ -166,6 +173,22 @@ def analyse_channel(x, rate):
         out.update({"silent": True, "active_s": 0.0})
         return out
     last = n - 1 - next(i for i, v in enumerate(reversed(x)) if abs(v - dc) > thr)
+    # A held output level is not sound: Paula keeps the last sample after its
+    # DMA stops, so a segment can end (or start) on a DC step. Trim the head
+    # and tail to the 10 ms blocks whose own AC level (block mean removed)
+    # reaches 10 % of the loudest block's.
+    blk = max(1, int(rate * BLOCK_S))
+    acl = []
+    for i in range(first, last + 1, blk):
+        b = x[i:min(i + blk, last + 1)]
+        bm = sum(b) / len(b)
+        acl.append(math.sqrt(sum((v - bm) ** 2 for v in b) / len(b)))
+    top = max(acl)
+    if top < 1.0 / 32768 * 4:
+        out.update({"silent": True, "active_s": 0.0})
+        return out
+    on = [j for j, a in enumerate(acl) if a >= 0.1 * top]
+    first, last = first + on[0] * blk, min(last, first + (on[-1] + 1) * blk - 1)
     seg = x[first:last + 1]
     m = sum(seg) / len(seg)
     seg = [v - m for v in seg]
@@ -373,6 +396,15 @@ class Capture:
         chans = decode_s16(data, self.channels) if self.fmt == "s16" else decode_f32(data, self.channels)
         res = analyse(chans, self.rate, args.get("expect_hz"), args.get("tol_pct", 3.0))
         side_check(res, args.get("side"), chans)
+        # what the guest says it played, for the host.tone_<tag> pseudo case
+        # (cases.tone_case): how long, and from which of its channels
+        try:
+            if args.get("ms"):
+                res["expect_ms"] = float(args["ms"])
+        except (TypeError, ValueError):
+            pass
+        if args.get("ch") is not None:
+            res["source_ch"] = args["ch"]
         from .hostreq import _safe_tag
         name = f"audio-{rid}-{_safe_tag(tag)}.wav"
         try:

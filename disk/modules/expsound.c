@@ -592,11 +592,32 @@ static void board_reset(void)
     mce = 0;
 }
 
-static int audio_mark(const char *tag, int start)
+/* The start mark describes the tone for the host's analysis (CONTRACT
+ * section 13; the runner's host.tone_<tag> pseudo case): frequency in mHz,
+ * tolerance 2 %, and how long it plays (ms of samples). */
+static char am_args[96];
+static char *am_cat(char *p, const char *s)
 {
+    while (*s)
+        *p++ = *s++;
+    *p = 0;
+    return p;
+}
+
+static int audio_mark(const char *tag, int start, ULONG freq_mhz, ULONG ms)
+{
+    char *p = am_args;
     if (!host_audio)
         return 0;
-    if (!amt_request("audio_mark", tag, start ? "{\"edge\":\"start\"}" : "{\"edge\":\"stop\"}",
+    if (start) {
+        p = am_cat(p, "{\"edge\":\"start\",\"freq_mhz\":");
+        p = amt_utoa(p, freq_mhz);
+        p = am_cat(p, ",\"tol_pct\":2,\"ms\":");
+        p = amt_utoa(p, ms);
+        am_cat(p, "}");
+    } else
+        am_cat(p, "{\"edge\":\"stop\"}");
+    if (!amt_request("audio_mark", tag, am_args,
                      /* the host answers "stop" after a 0.35 s settle and the
                       * analysis (~0.8 s host time); 1 s timed out on a loaded
                       * host. 10 s like the other modules' audio marks. */
@@ -655,7 +676,9 @@ static void play(int fi, int intena, int mark)
         *d = 0;
     }
     if (mark)
-        marked = audio_mark(tag, 1);
+        /* u8m: a square wave of 32 frames per cycle (pb_gen); s16s: 100 */
+        marked = audio_mark(tag, 1, f->rate2 * 500UL / (f->bps == 1 ? 32UL : 100UL),
+                            (total / f->bps) * 2000UL / f->rate2);
 
     cw(9, 0x01);                       /* PEN: on the fly, no MCE needed */
     t0 = frames();
@@ -685,7 +708,7 @@ static void play(int fi, int intena, int mark)
     CREG(R_INTENA) = INT_EXTER;
     amt_irq_hook[6] = 0;
     if (mark && marked)
-        marked = audio_mark(tag, 0);
+        marked = audio_mark(tag, 0, 0, 0);
     cw(6, 0x80);
     cw(7, 0x80);
     board_reset();
@@ -1173,19 +1196,46 @@ static void uaesnd_board(const struct amt_probe_board *bd)
 
     cia_save(&cia_b, CIAB_BASE, 0);
 
-    /* ---- timer interrupt: 200 Hz, status $90 (bit 7 + bit 4) */
+    /* ---- timer interrupt: 200 Hz, status $90 (bit 7 + bit 4)
+     * The timer value is a frequency in Hz*256 of emulated time: the period
+     * is (colour clock rate)/200 colour clocks (Amiberry sndboard.cpp
+     * uaesnd_timer_period(): base_event_clock*CYCLE_UNIT*256/v, with
+     * base_event_clock = the colour clocks per second). The first interrupt
+     * comes one period after the write. The window is a whole number of
+     * frames (100 PAL, 120 NTSC, ~2 s), started and stopped right after a
+     * VBL, so the count is floor(window/period): PAL 100*71051 cck /
+     * (3546895/200) = 400.6 -> 400; NTSC 120*59832.5 cck / (3579545/200) =
+     * 401.2 -> 401 (227.5 cck per line on average, HRM). No margin: the
+     * count only changes if an edge moves by the distance to the nearest
+     * interrupt, >= 0.37 period (~29 lines) PAL and >= 0.16 period (~12
+     * lines) NTSC, while each edge lands within a line of its VBL (the
+     * busy-wait sees the VBL counter change, then writes). A +-1 margin
+     * would hide a rate error of up to 0.25 %. */
     {
-        ULONG t0;
+        ULONG t0, wf, fr, ex;
         int sok = 1, n;
+        if (amt_probe_result.pal) {
+            wf = 100;
+            fr = 71051UL * 2;                 /* half colour clocks per frame */
+        } else {
+            wf = 120;
+            fr = 59833UL * 2 - 1;             /* 263 * 227.5 * 2 */
+        }
+        /* floor(wf * frame * 200 / cck_hz), in half colour clocks
+         * (< 2^32: 2.84e9 PAL, 2.87e9 NTSC) */
+        ex = (wf * fr * 200UL) / (amt_cck_hz() * 2UL);
         u_irq = u_spur = 0;
         irq_entries = irq_storm = 0;
         es_wb(UB(S0 + 0x8f), 0x10);           /* stream master int enable: timer */
         CREG(R_INTREQ) = INT_EXTER;
         amt_irq_hook[6] = hook_uae;
         CREG(R_INTENA) = 0x8000 | INT_EXTER;
-        es_wl(UL(S0 + 0x94), 200UL << 8);
         t0 = frames();
-        while (u_irq < 10 && frames() - t0 < 100)
+        while (frames() == t0)
+            ;
+        t0 = frames();
+        es_wl(UL(S0 + 0x94), 200UL << 8);
+        while (frames() - t0 < wf)
             ;
         es_wl(UL(S0 + 0x94), 0);
         n = (int)u_irq;
@@ -1196,12 +1246,15 @@ static void uaesnd_board(const struct amt_probe_board *bd)
         for (k = 0; k < 8 && k < (ULONG)n; k++)
             if (u_seq[k] != 0x90)
                 sok = 0;
-        if (n >= 10 && (int)u_irq == n && sok && u_spur == 0)
+        if (n == (int)ex && (int)u_irq == n && sok && u_spur == 0)
             amt_case("uaesnd_timer_irq", AMT_ST_PASS, 0);
         else {
             amt_case_open("uaesnd_timer_irq", AMT_ST_FAIL);
             json_obj("expect");
-            json_str("irqs", ">= 10 within 2 s, none after the timer is set to 0");
+            json_int("irqs_running", (long)ex);
+            json_int("period_cck", (long)(amt_cck_hz() / 200UL));
+            json_str("irqs_total", "= irqs_running");
+            json_str("rule", "floor(window / period) interrupts while the timer runs, none after it is set to 0");
             json_hexn("status", 0x90, 2);
             json_obj_end();
             json_obj("got");
@@ -1214,7 +1267,20 @@ static void uaesnd_board(const struct amt_probe_board *bd)
                      "with $018F.B bit 4 and $00F4.L bit 0 set it reaches INT6, $0187.B reads $90 "
                      "(bit 7 active + bit 4); 0 disables the timer (uaesnd spec)");
             json_obj("in");
-            json_str("seq", "$E0.L=1, $F4.L=1, $018F.B=$10, $0194.L=200<<8");
+            json_str("seq", "$E0.L=1, $F4.L=1, $018F.B=$10, $0194.L=200<<8 right after a VBL, "
+                     "$0194.L=0 right after the window's last VBL");
+            json_int("window_frames", (long)wf);
+            json_int("frame_half_cck", (long)fr);
+            json_int("cck_hz", (long)amt_cck_hz());
+            json_obj_end();
+            /* mean interval first..last interrupt, beam-based colour clocks
+             * (cia_now: exact PAL, 227 cck lines assumed NTSC); timing, so
+             * not fingerprinted */
+            json_obj("ctx");
+            json_obj("timing");
+            if (u_irq > 1)
+                json_int("period_cck", (long)((u_t1 - u_t0) / (u_irq - 1)));
+            json_obj_end();
             json_obj_end();
             amt_case_close();
         }
@@ -1238,10 +1304,11 @@ static void uaesnd_board(const struct amt_probe_board *bd)
         int marked = 0;
         setaddr = u_set(0x100, UR + 0x1000, 4410, 22050UL << 8, 0, 0, 0, 0, 0x03);
         es_wb(UB(S0 + 0x8f), 0x03);
-        marked = audio_mark("uaesnd_play", 1);
+        /* 4410 frames at 22050 Hz (200 ms), 50 frames per cycle: 441 Hz */
+        marked = audio_mark("uaesnd_play", 1, 441000UL, 200);
         u_play_and_wait(setaddr, 0x82, 150);
         if (marked)
-            marked = audio_mark("uaesnd_play", 0);
+            marked = audio_mark("uaesnd_play", 0, 0, 0);
         u_seq_case("uaesnd_play_irqs", exp2, 2, 0x87,
                    "a one-shot sample set (34.B = start|end) gives exactly two interrupts: $0187.B "
                    "bits 7+0 when the set starts, bits 7+1 when it ends (status masked with $87; uaesnd spec)",

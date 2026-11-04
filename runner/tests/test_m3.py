@@ -595,6 +595,98 @@ class ScreenshotFingerprint(unittest.TestCase):
         self.assertNotIn("host.shot_bars", fast["cases"])
 
 
+def tone_host(rid, tag, chans, expect_hz, tol_pct=2, side=None, ms=None, ch=None, seq=1):
+    """A stop audio_mark host record analysed like Capture.analyse_range."""
+    an = audio.analyse(chans, 44100, expect_hz, tol_pct)
+    audio.side_check(an, side, chans)
+    if ms:
+        an["expect_ms"] = float(ms)
+    if ch is not None:
+        an["source_ch"] = ch
+    return {"t": "host", "id": rid, "what": "audio_mark", "tag": tag, "acked": True, "req_seq": seq,
+            "req_t": "request", "source": "mailbox",
+            "result": {"edge": "stop", "analysis": an, "wav": f"raw/e/4-chip/audio-{rid}-{tag}.wav"}}
+
+
+class ToneCases(unittest.TestCase):
+    """host.tone_<tag> pseudo cases (cases.tone_case) from audio analyses."""
+
+    def extract(self, hosts, cycle_exact="false"):
+        from amitorture import cases
+        guest = [req(h["req_seq"], h["id"], "audio_mark", tag=h["tag"], args={"edge": "stop"}) for h in hosts]
+        m = records.merge({"serial": [records.parse_line(records.encode(r)) for r in guest]})
+        hostreq.attach(m, hosts)
+        return cases.extract({"options": {"cycle_exact": cycle_exact}, "_merged": m}), m
+
+    def test_held_level_after_the_tone_is_not_sound(self):
+        # Paula holds its last sample after DMA stops: 0.5 s tone, then a DC step
+        x = tone(494.959, 0.5, amp=0.28) + [-0.234] * int(0.6 * 44100)
+        c = audio.analyse_channel(x, 44100)
+        self.assertAlmostEqual(c["freq_fft_hz"], 494.959, delta=0.5)
+        self.assertAlmostEqual(c["active_s"], 0.5, delta=0.02)
+        self.assertGreaterEqual(audio.fft_peak_hz([0.0] * 100 + [1.0] * 8000, 44100) or 99, audio.MIN_HZ)
+
+    def test_pass_on_every_entry_and_stable_fingerprint(self):
+        l1 = tone(436.38, 0.5, square=True)
+        h1 = tone_host(2, "tone_aud0", [l1, [0.0] * len(l1)], 436.379, side="left", ms=500, ch=0)
+        fast, _ = self.extract([h1])
+        c = fast["cases"]["host.tone_aud0"]                 # no doubled "tone_"
+        self.assertEqual(c["st"], "pass")
+        self.assertTrue(c["pseudo"])
+        self.assertEqual(c["rec"]["freq_hz"], 436.379)       # within the tolerance: the expected value
+        self.assertEqual(c["rec"]["channel"], "L")
+        ce, _ = self.extract([h1], cycle_exact="true")
+        self.assertEqual(ce["cases"]["host.tone_aud0"]["fp"], c["fp"])
+        l2 = tone(437.9, 0.5, square=True)                    # +0.35 %: same fingerprint
+        h2 = tone_host(2, "tone_aud0", [l2, [0.0] * len(l2)], 436.379, side="left", ms=500, ch=0)
+        self.assertEqual(self.extract([h2])[0]["cases"]["host.tone_aud0"]["fp"], c["fp"])
+
+    def test_wrong_frequency_fails_readably(self):
+        from amitorture import report
+        x = tone(460.0, 0.5)
+        h = tone_host(4, "tone_aud1", [[0.0] * len(x), x], 440.0, side="right", ms=500, ch=1)
+        fp, m = self.extract([h])
+        c = fp["cases"]["host.tone_aud1"]
+        self.assertEqual(c["st"], "fail")
+        self.assertEqual(c["rec"]["freq_hz"], 457.6)         # 440 + 1 * 2 * 8.8
+        items = [i for i in report.collect_failures([{"id": "e", "status": "pass", "_merged": m}])
+                 if i["kind"] == "case_fail"]
+        self.assertEqual(len(items), 1)
+        it = items[0]
+        self.assertEqual((it["mod"], it["case"]), ("host", "tone_aud1"))
+        self.assertEqual(it["expect"]["freq_hz"], 440.0)
+        self.assertEqual(it["expect"]["tol_pct"], 2.0)
+        self.assertEqual(it["expect"]["channel"], "R")
+        self.assertEqual(it["expect"]["source_ch"], 1)
+        self.assertAlmostEqual(it["got"]["freq_hz"], 460.0, delta=0.5)
+        it.update(id="F001", case_key="host.tone_aud1")
+        text = "\n".join(report._render_case_item(it, {}))
+        for s_ in ("expected 440 Hz +-2 %", "measured 459.9", "output R, source channel 1", '"tol_hz":8.8'):
+            self.assertIn(s_, text)
+        hs = report.host_summary([{"id": "e", "_merged": m}])
+        self.assertEqual(hs[0]["audio"][0]["tone"]["st"], "fail")
+
+    def test_silent_channel_fails_and_stretched_mismatch_is_untestable(self):
+        x = tone(440.0, 0.5)
+        h = tone_host(2, "tone_aud2", [x, [0.0] * len(x)], 440.0, side="right", ms=500, ch=2, seq=1)
+        y = tone(470.0, 1.0)                                  # 1 s of sound for 0.5 s played, off
+        h2 = tone_host(4, "tone_aud3", [y, [0.0] * len(y)], 440.0, side="left", ms=500, ch=3, seq=3)
+        z = tone(440.0, 1.0)                                  # stretched, but the right tone
+        h3 = tone_host(6, "tone_aud0", [z, [0.0] * len(z)], 440.0, side="left", ms=500, ch=0, seq=5)
+        fp, _ = self.extract([h, h2, h3])
+        self.assertEqual(fp["cases"]["host.tone_aud2"]["st"], "fail")
+        self.assertNotIn("freq_hz", fp["cases"]["host.tone_aud2"]["rec"])
+        self.assertEqual(fp["cases"]["host.tone_aud3"]["st"], "untestable")
+        self.assertNotIn("freq_hz", fp["cases"]["host.tone_aud3"]["rec"])
+        self.assertEqual(fp["cases"]["host.tone_aud0"]["st"], "pass")
+
+    def test_no_expectation_no_case(self):
+        x = tone(440.0, 0.3)
+        h = tone_host(2, "uaesnd_play", [x, x], None)
+        fp, _ = self.extract([h])
+        self.assertFalse([k for k in fp["cases"] if k.startswith("host.tone_")])
+
+
 class HrmTiming(unittest.TestCase):
     def test_only_cycle_exact_and_only_differences(self):
         from amitorture import analysis

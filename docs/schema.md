@@ -236,7 +236,7 @@ Problem `kind` / failure `kind`:
 
 | kind | meaning |
 |---|---|
-| `case_fail` | a failed case (the guest's own verdict) |
+| `case_fail` | a failed case (the guest's own verdict), or a failed host pseudo case `host.tone_<tag>` (`mod` `host`, section 5.1) |
 | `probe_mismatch` | the probe saw a different CPU/FPU/chipset than the config asked for (`confidence` low when the probe only assumed it, or the config explains it) |
 | `crash`, `hang`, `timeout`, `incomplete`, `error` | the entry did not finish cleanly |
 | `records_missing` | seq range that arrived on no transport |
@@ -497,15 +497,46 @@ Host records go to `raw/<entry>/<disk>/host.jsonl`, and into `records.jsonl` rig
 - `audio_mark`, edge start: `{"edge":"start","offset":<byte offset in the stream>,"t_s","stream_s"}`.
 - `audio_mark`, edge stop: `{"edge":"stop","offset","start":{"id","offset","t_s"},"bytes","settle_s","wav":"raw/.../audio-<id>-<tag>.wav","analysis":{...}}`, where the analysis is:
   - `rate`, `frames`, `seconds`, `dominant_hz`, `loudest` ("L"/"R"), `silent`;
-  - with `expect_hz` in the args, also `expect_hz`, `tol_pct`, `freq_ok`;
+  - with `expect_hz` in the args, also `expect_hz`, `tol_pct`, `freq_ok` (judged on `dominant_hz`, the loudest
+    channel), and `expect_side`, `side_amp`, `side_ok` with `side`;
+  - `expect_ms` (the args' `ms`: how long the guest played the tone) and `source_ch` (the args' `ch`: the guest's
+    channel, e.g. Paula 0-3), when the marks give them;
   - `channels.L` / `channels.R`: `samples`, `rms`, `peak`, `dc` (full scale = 1.0), `clipped`, `silent`, `onset_s`,
-    `active_s`, `active_rms`, `freq_zc_hz` (zero crossings), `freq_fft_hz` (FFT peak), `dropout_fraction`.
+    `active_s`, `active_rms`, `freq_zc_hz` (zero crossings), `freq_fft_hz` (FFT peak, searched from 20 Hz up),
+    `dropout_fraction`. The active part ends where the sound does: a held output level (Paula keeps its last
+    sample after its DMA stops) is trimmed off in 10 ms blocks whose own AC level is below 10 % of the loudest.
 - `key`: `{"injected":{"key","up"},"ipc":"SEND_KEY 69 1"}`; `mouse`: `{"injected":{"dx","dy","buttons","port"}}`; `wait`: `{}`.
 - Not done: `{"error":"..."}`, plus `ack_error` if the WRITE_MEM failed.
 
 Host records are not guest records. `done.records`, the seq gap check and fingerprints all ignore them, with
-one exception: on cycle-exact entries every acknowledged screenshot becomes the pseudo case `host.shot_<tag>`,
-fingerprinted as `{"mod":"host","case":"shot_<tag>","st":"pass","sha256":...}`, so baselines compare the picture.
+two exceptions (runner/amitorture/cases.py), both pseudo cases, which are not counted in the per-entry and
+per-module case totals:
+- on cycle-exact entries every acknowledged screenshot becomes the pseudo case `host.shot_<tag>`,
+  fingerprinted as `{"mod":"host","case":"shot_<tag>","st":"pass","sha256":...}`, so baselines compare the picture.
+- on **every** entry that captured audio, each analysed stop mark with an expected frequency (`expect_hz`,
+  `freq_mhz` or `clock`+`period`+`samples` in either mark) becomes the pseudo case `host.tone_<tag>` (a leading
+  `tone_` in the tag is not doubled: tag `tone_aud0` gives `host.tone_aud0`). Fingerprint:
+  `{"mod":"host","case":"tone_<tag>","st","expect_hz","tol_pct","channel","freq_hz"}`.
+  - `channel`: the output channel measured, `L`/`R`: the mark's `side`, else the loudest one. The frequency is
+    that channel's `freq_fft_hz` (`freq_zc_hz` if there is no FFT peak).
+  - `st`: `pass` when the frequency is within `tol_pct` of `expect_hz` and, with a `side`, `side_ok` holds.
+    `fail` when it is not, or when that channel is silent. `untestable` when the segment has no audio, or when a
+    mismatch comes from a capture whose tone does not last what the guest played (`expect_ms` +-20 %): SDL
+    records in real time, so an emulator slower than real time on a loaded host stretches the sound, leaves gaps
+    or repeats old buffers.
+  - `freq_hz`: the measured frequency rounded to the tolerance band, anchored at the expected one:
+    `expect_hz + k * 2 * tol_hz` with `k = round((measured - expect_hz) / (2 * tol_hz))`, `tol_hz = expect_hz *
+    tol_pct / 100`. So it is `expect_hz` itself on a pass, and a baseline, a check or a JIT twin compares it
+    stably; a fail shows how far off it is. Absent when the tone was not measured (silent, untestable).
+  - Why every entry, not only cycle-exact ones: the rates come from the emulated clocks (Paula's period counter,
+    the sound cards' sample rates), not from CPU timing, and measured within 0.02 % of the expected frequency on
+    fast, JIT, compatible and cycle-exact cores alike, against a 2 % tolerance (the guest's `tol_pct`; 3 % by
+    default).
+  - A failed `host.tone_<tag>` is a `case_fail` item (`mod` `host`) in `failures.jsonl` and REPORT.md: `expect`
+    has `freq_hz`, `tol_pct`, `tol_hz`, `channel`, `source_ch` and `active_s`; `got` has the measured `freq_hz`,
+    `freq_fft_hz`, `freq_zc_hz`, `channel`, `active_s`, `dropout_fraction`, the per-channel frequencies and
+    `side_ok`; `why` says both frequencies, the channel, the tolerance and the offset in %; `ctx.wav` is the
+    segment. The host requests section of REPORT.md shows each tone's verdict under its audio line.
 
 ### 5.2 `raw/<entry>/<disk>/` (added files)
 | File | Content |
@@ -533,7 +564,7 @@ Matrix entries (`summary.json` → `configs/`, and `matrix --json`) may have the
 
 ### 5.4 `summary.json` (added fields)
 - `catalogue`: `{"file":"docs/catalogue.yaml","totals":{"covered","partial","not_covered"},"rows":[{"id","area","what","status","why","pass","fail","skip","untestable","entries":[...],"cases":<distinct case keys matched>}]}`. It is null when the file is missing, or `{"error"}` when it can't be parsed. Statuses are explained in docs/RUNNER.md, Coverage catalogue.
-- `host_requests`: `[{"entry","requests","acked","not_acked":[{"id","what","tag","disk","why"}],"screenshots":[{"id","tag","path","sha256","disk"}],"audio":[{"id","tag","disk","seconds","dominant_hz","expect_hz","freq_ok","rms":{"L","R"},"freq":{"L","R"},"wav"}]}]`, one item per entry that made requests.
+- `host_requests`: `[{"entry","requests","acked","not_acked":[{"id","what","tag","disk","why"}],"screenshots":[{"id","tag","path","sha256","disk"}],"audio":[{"id","tag","disk","seconds","dominant_hz","expect_hz","freq_ok","expect_side","side_ok","rms":{"L","R"},"freq":{"L","R"},"wav","tone":{"case","st","expect","measured_hz","why"}}]}]`, one item per entry that made requests (`tone`: the `host.tone_<tag>` verdict, when the mark had an expected frequency).
 
 ### 5.5 check: finding kind `fail_detail_changed`
 This is a case that failed in the baseline and still fails, and one of these is true:

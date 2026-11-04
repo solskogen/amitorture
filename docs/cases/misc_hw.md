@@ -60,7 +60,7 @@ are restored too. When the counters ignore writes (Amiberry), every write-depend
 | case | intent | rule (reference) | a failure usually means |
 |---|---|---|---|
 | `gayle_present` | card.resource present; ctx CCDET/WR | - | - |
-| `gayle_id` | write $DE1000, 8 reads of bit 7; the first four are 1101 ($D0), the same twice (ctx: 8-bit value, $D0 A600, $D1 seen on A1200) | Gayle ID sequence | ID counter not reset by the write / wrong ID |
+| `gayle_id` | write $DE1000, then reads of bit 7, MSB first: 8 reads give exactly $D0 on the A600 Gayle (OCS/ECS machine) and $D1 on the A1200 Gayle (AGA); 4 reads after a new write give 1101; 8 more after another write give the byte again (a write restarts the sequence, also mid-way) | Gayle ID register: the high nibble $D is what Kickstart 3.1 checks (its Gayle detection reads 4 bits, `cmpi.b #$0D`); exec ReadGayle() reads 8 bits and returns the byte ($FF = no Gayle); low nibble = revision (check on real hardware: the $D0/$D1 revision values come from the usual Gayle notes and WinUAE's own comment, not from a Commodore document, and no ROM code compares them), 0 A600, 1 A1200 ("AA Gayle") | ID counter not reset by the write / wrong ID or revision for the machine |
 | `gayle_int_enable_rw` | $DAA000 keeps 00 FF 55 AA 80 01 7E; restored | Gayle interrupt enable (r/w) | - |
 | `gayle_irq_write1_keeps` | writing 1 to $DA9000 bits 7-2 (bits 1-0 as read) changes nothing | Gayle IRQ: write 0 clears, 1 keeps | write semantics wrong |
 | `gayle_irq_write0_clears` | writing 0 clears bit 7 (IDE; allowed back while INTRQ is live) and leaves the other latched bits, written 1, so a pending card change stays for card.resource | as above | - |

@@ -81,6 +81,25 @@ def probe_mismatches(r, merged):
     return out
 
 
+def _tone_failure(items, dref, m, hello_sum):
+    """A failed host.tone_<tag> pseudo case (cases.tone_case) as a case_fail
+    item: expected and measured frequency, output channel and the Paula/
+    board channel, the tolerance, and the WAV to listen to."""
+    from . import cases as casemod
+    hr = m["rec"]
+    v = casemod.tone_case(hr)
+    if v is None or v["st"] != "fail":
+        return
+    res = hr.get("result") or {}
+    items.append({
+        "kind": "case_fail", **dref, "mod": "host", "case": casemod.tone_name(hr.get("tag") or hr.get("id")),
+        "expect": v["expect"], "got": v["got"], "why": v["why"],
+        "ctx": {"wav": res.get("wav"), "segment_s": (res.get("analysis") or {}).get("seconds")},
+        "in": {"request": hr.get("id"), "tag": hr.get("tag")}, "seq": hr.get("req_seq"), "boot": m["boot"],
+        "sources": ["host"], "record": hr, "preceding": [], "hello": hello_sum,
+    })
+
+
 def collect_failures(results):
     """One item per failed case or infra problem, each self-contained. With
     a disk set, cases, record integrity and crash/hang/timeout are per disk
@@ -119,6 +138,8 @@ def collect_failures(results):
                             "ctx": rec.get("ctx"), "in": rec.get("in"), "seq": rec.get("seq"), "boot": m["boot"],
                             "sources": m["sources"], "record": rec, "preceding": before, "hello": hello_sum,
                         })
+                    elif m.get("host"):
+                        _tone_failure(items, dref, m, hello_sum)
                 if hello and not probe_done:
                     probe_done = True
                     probe_src = dict(r, _merged=merged)
@@ -434,6 +455,12 @@ def host_summary(results):
                                            (an.get("channels") or {}).items()},
                                    "freq": {k: c.get("freq_fft_hz") for k, c in (an.get("channels") or {}).items()},
                                    "wav": res.get("wav")})
+                from . import cases as casemod
+                v = casemod.tone_case(h)
+                if v is not None:
+                    e["audio"][-1]["tone"] = {"case": "host." + casemod.tone_name(h.get("tag") or h.get("id")),
+                                              "st": v["st"], "expect": v["expect"],
+                                              "measured_hz": v["got"]["freq_hz"], "why": v["why"]}
         out.append(e)
     return out
 
@@ -670,6 +697,9 @@ def render_markdown(summ, env, results, items, problems, an):
                          + (f", side {x['expect_side']} {'ok' if x.get('side_ok') else '**WRONG**'}"
                             if x.get("expect_side") else "")
                          + f", per channel Hz {_j(x.get('freq'))} RMS {_j(x.get('rms'))}, `{x.get('wav')}`")
+                t = x.get("tone")
+                if t:
+                    L.append(f"    - `{t['case']}` **{t['st']}**: {t['why']}")
         L.append("")
     if an.get("xfail") or an.get("fixed"):
         L.append("### Known bugs (xfail registry)")

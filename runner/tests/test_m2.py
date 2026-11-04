@@ -287,7 +287,8 @@ class Xfail(unittest.TestCase):
         reg = xfail.load()
         self.assertIn("fpu.frestore_null_nan", reg)
         self.assertIn("fpu.inf_roundtrip", reg)
-        self.assertTrue(all(v.get("ref") for v in reg.values()))
+        entries = [x for v in reg.values() for x in (v if isinstance(v, list) else [v])]
+        self.assertTrue(entries and all(x.get("ref") for x in entries))
 
 
 class Baselines(unittest.TestCase):

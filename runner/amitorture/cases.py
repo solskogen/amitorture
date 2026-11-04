@@ -165,6 +165,7 @@ def extract(result):
     if not subs:
         out.update(_extract_merged(result.get("_merged")))
         _screenshot_cases(out, result, [(None, result.get("_merged"))])
+        _tone_cases(out, [(None, result.get("_merged"))])
         return out
     for sub in subs:
         e = _extract_merged(sub.get("_merged"))
@@ -178,6 +179,7 @@ def extract(result):
             out["perf"][k if k not in out["perf"] else f"{k}@{dn}"] = dict(p, disk=dn)
         out["modules"].update(e["modules"])
     _screenshot_cases(out, result, [(sub.get("disk_name"), sub.get("_merged")) for sub in subs])
+    _tone_cases(out, [(sub.get("disk_name"), sub.get("_merged")) for sub in subs])
     return out
 
 
@@ -206,6 +208,122 @@ def _screenshot_cases(out, result, merged_by_disk):
                 key = f"{key}@{dn}" if dn else f"{key}#{r.get('id')}"
             body = {"mod": "host", "case": key[len("host."):], "st": "pass", "sha256": sha}
             out["cases"][key] = {"mod": "host", "case": body["case"], "st": "pass", "fp": canonical(body),
+                                 "rec": body, "timing": {}, "seq": r.get("req_seq"), "pseudo": True, "disk": dn}
+
+
+TONE_PREFIX = "host.tone_"
+TONE_DUR_TOL = 0.2        # the tone's active length may differ this much (fraction) from what the guest played
+
+
+def tone_name(tag):
+    """host.tone_<tag> without a doubled prefix: tag "tone_aud0" -> "tone_aud0"."""
+    t = str(tag)
+    return "tone_" + (t[5:] if t.startswith("tone_") else t)
+
+
+def tone_case(h):
+    """One host record -> the host.tone_<tag> verdict, or None.
+
+    Only the stop mark of an acknowledged audio_mark whose analysis has an
+    expected frequency (the guest described the tone: expect_hz, freq_mhz
+    or clock/period/samples) makes one. The tone is measured on the channel
+    the guest named (`side`), else on the loudest one: its FFT peak (zero
+    crossings if the FFT has none).
+
+    st: "pass" when the measured frequency is within the tolerance (and the
+    tone is on the named side); "fail" when it is not, or when that channel
+    is silent; "untestable" when there is no audio in the segment, or when a
+    mismatch comes from a capture that cannot be trusted: the tone's active
+    length is not what the guest played (`ms`, +-20 %). The capture is SDL's
+    real-time output, so an emulator slower than real time on a loaded host
+    stretches the sound, leaves gaps or repeats old buffers.
+
+    Returns {"st", "fp": fingerprint body, "expect", "got", "why"}; the
+    fingerprint holds the measured frequency rounded to the tolerance band:
+    expect_hz itself while the tone is within the tolerance, else
+    expect_hz + k * 2 * tol_hz, so a baseline compares it stably."""
+    if h.get("what") != "audio_mark" or not h.get("acked"):
+        return None
+    res = h.get("result") or {}
+    an = res.get("analysis")
+    if not isinstance(an, dict) or not an.get("expect_hz"):
+        return None
+    try:
+        e = float(an["expect_hz"])
+        tol_pct = float(an.get("tol_pct") or 3.0)
+    except (TypeError, ValueError):
+        return None
+    tol_hz = e * tol_pct / 100.0
+    chans = an.get("channels") or {}
+    side = an.get("expect_side")
+    ch = side or an.get("loudest") or (sorted(chans)[0] if chans else None)
+    c = chans.get(ch) or {}
+    src = an.get("source_ch")
+    where = f"output {ch}" + (f", source channel {src}" if src is not None else "")
+    expect = {"freq_hz": round(e, 3), "tol_pct": tol_pct, "tol_hz": round(tol_hz, 3), "channel": ch}
+    if src is not None:
+        expect["source_ch"] = src
+    if an.get("expect_ms"):
+        expect["active_s"] = round(float(an["expect_ms"]) / 1000.0, 3)
+    m = c.get("freq_fft_hz") or c.get("freq_zc_hz")
+    got = {"freq_hz": m, "freq_fft_hz": c.get("freq_fft_hz"), "freq_zc_hz": c.get("freq_zc_hz"),
+           "channel": ch, "active_s": c.get("active_s"), "dropout_fraction": c.get("dropout_fraction"),
+           "loudest": an.get("loudest"), "per_channel_hz": {k: (v or {}).get("freq_fft_hz") for k, v in chans.items()}}
+    if side:
+        got["side_ok"] = an.get("side_ok")
+    fp = {"expect_hz": round(e, 3), "tol_pct": tol_pct, "channel": ch}
+    if an.get("error") or not chans:
+        st, why = "untestable", f"no audio in the capture segment ({an.get('error') or 'no channels'})"
+    elif c.get("silent", True) or m is None:
+        st, why = "fail", (f"no tone on {where}: the guest played {e:.6g} Hz there"
+                           + (" (it came out on the other channel)" if side and not an.get("silent") else ""))
+    else:
+        dur, want = c.get("active_s"), expect.get("active_s")
+        k = int(round((m - e) / (2 * tol_hz))) if tol_hz else 0
+        off = (m - e) / e * 100.0
+        freq_ok = abs(m - e) <= tol_hz
+        side_ok = an.get("side_ok") is not False
+        # (side_ok compares the expected frequency's level on both sides:
+        # meaningless when the tone is not at that frequency)
+        why = (f"{where}: measured {m} Hz, expected {e:.6g} Hz +-{tol_pct:g} % (+-{tol_hz:.3g} Hz), "
+               f"off by {off:+.2f} %" + ("" if side_ok or not freq_ok else
+                                         f"; the tone is not on {side} alone (side_amp {an.get('side_amp')})"))
+        if freq_ok and side_ok:
+            st = "pass"
+            fp["freq_hz"] = round(e, 3)
+        elif want and isinstance(dur, (int, float)) and abs(dur - want) > TONE_DUR_TOL * want:
+            st = "untestable"
+            why = (f"the capture does not hold the tone as played: {dur} s of sound on {where} for {want} s "
+                   f"played (+-{TONE_DUR_TOL:.0%}); SDL records in real time, so an emulator slower than "
+                   f"real time stretches or repeats the sound. Not judged: " + why)
+        else:
+            st = "fail"
+            fp["freq_hz"] = round(e + k * 2 * tol_hz, 3)
+    fp["st"] = st
+    return {"st": st, "fp": fp, "expect": expect, "got": got, "why": why}
+
+
+def _tone_cases(out, merged_by_disk):
+    """CONTRACT §13: every analysed tone with an expected frequency becomes
+    the pseudo case host.tone_<tag> on every entry that captured audio (not
+    only cycle-exact ones: Paula's and the sound cards' rates come from the
+    emulated clocks, measured within 0.02 % on fast, JIT and cycle-exact
+    cores, against a 2-3 % tolerance)."""
+    for dn, m in merged_by_disk:
+        if m is None:
+            continue
+        for x in m.records:
+            r = x.get("rec") or {}
+            if not x.get("host"):
+                continue
+            v = tone_case(r)
+            if v is None:
+                continue
+            key = "host." + tone_name(r.get("tag") or r.get("id"))
+            if key in out["cases"]:
+                key = f"{key}@{dn}" if dn else f"{key}#{r.get('id')}"
+            body = dict({"mod": "host", "case": key[len("host."):]}, **v["fp"])
+            out["cases"][key] = {"mod": "host", "case": body["case"], "st": v["st"], "fp": canonical(body),
                                  "rec": body, "timing": {}, "seq": r.get("req_seq"), "pseudo": True, "disk": dn}
 
 

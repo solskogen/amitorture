@@ -69,7 +69,7 @@ fails amt_board_ok() and is not touched (review H1).
 |---|---|---|---|
 | `mac_rw` | MAC registers $84/$86/$88 <- 02:00:5A:22:90:00 read back (restored at the end) | MAC registers are R/W | |
 | `ext_arp` | ARP request through the TX window + ETH_TX; the reply appears in the RX window (length, serial, frame) addressed to the set MAC; untestable without a backend | host backend (zz9000_net=slirp) | TX/RX windows or MAC filter broken |
-| `rx_accept` | writing the frame serial to ETH_RX lowers the RX status count by one | ETH_RX release | frame not released |
+| `rx_accept` | the RX queue is drained before the test, one ARP request is sent, frames ahead of the reply are released in the poll loop, so the one reply is the only queued frame: RX status count ($8C low byte) exactly 1 before and 0 after writing the reply's serial to ETH_RX ($82); `in.other_frames_released` counts what came before the reply | ETH_RX release (one frame per write) | frame not released, more than one released, or extra frames queued (a backend sending unsolicited frames) |
 | `rx_irq` | with CONFIG bit 0 set the received frame gives exactly one interrupt (level 6, or 2 with the INT2 option), CONFIG reads bit 0; the handler acknowledges (bit 3|4) and disables it | card interrupt | no interrupt, wrong level, or not acknowledgeable |
 
 `no_board`: skip when no known board is present.

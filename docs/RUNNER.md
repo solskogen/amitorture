@@ -365,6 +365,10 @@ a duplicate) and serves them in order (`hostreq.py`):
   - per channel (L/R): RMS, peak, DC, onset, active duration, dropout fraction;
   - the dominant frequency, by zero crossings and by FFT (16384 points, Hann window, interpolated);
   - with `"expect_hz"` (and `"tol_pct"`, default 3) in the stop mark's args, `freq_ok`.
+- **Verdict.** Each analysed tone with an expected frequency becomes the pseudo case `host.tone_<tag>` (pass/fail,
+  on every entry that captured audio, docs/cases/host.md, schema §5.1), so a wrong pitch or a silent channel is a
+  failure, not just a line in the report. A tone whose length is not what the guest played (an emulator slower
+  than real time stretches the capture) is untestable rather than failed.
   
   The result is in the stop mark's host record. The raw stream stays in the temp dir and is removed with it.
 

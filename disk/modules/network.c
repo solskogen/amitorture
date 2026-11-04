@@ -865,7 +865,7 @@ static void zz9000_board(const struct amt_probe_board *bd)
     static const UBYTE spa[4] = { 10, 0, 2, 15 }, tpa[4] = { 10, 0, 2, 2 };
     UWORD m0, m1, m2, g0, g1, g2, st, len = 0, ser = 0, st2;
     UBYTE f[64];
-    int i, got = 0, ok;
+    int i, got = 0, ok, others = 0;
     ULONG t0;
 
     Z = bd->addr;
@@ -950,6 +950,7 @@ static void zz9000_board(const struct amt_probe_board *bd)
                 break;
             }
             es_ww(ZW(0x82), ser);       /* not ours: release it */
+            others++;
         }
     }
     wait_frames(3);
@@ -996,11 +997,34 @@ static void zz9000_board(const struct amt_probe_board *bd)
         st = es_rw(ZW(0x8c)) & 0xff;
         es_ww(ZW(0x82), ser);
         st2 = es_rw(ZW(0x8c)) & 0xff;
-        /* another frame may arrive in between: a drop of at least one (review L23) */
-        rep("zz9000_rx_accept", st >= 1 && st2 < st,
-            "writing the frame's serial to ETH_RX ($82) releases it: the RX status frame count ($8C low byte) "
-            "drops (by one, unless another frame arrived)", "count_before_after", (ULONG)st << 8 | (st - 1),
-            (ULONG)st << 8 | st2, 4, 0);
+        /* Exact: the queue was drained before the request, every frame
+         * ahead of the reply was released in the poll loop, and the one ARP
+         * request sent gets one reply (slirp sends nothing unsolicited), so
+         * the reply is the only queued frame: 1 before the release, 0 after. */
+        if (st == 1 && st2 == 0)
+            amt_case("zz9000_rx_accept", AMT_ST_PASS, 0);
+        else {
+            amt_case_open("zz9000_rx_accept", AMT_ST_FAIL);
+            json_obj("expect");
+            json_int("count_before", 1);
+            json_int("count_after", 0);
+            json_obj_end();
+            json_obj("got");
+            json_int("count_before", st);
+            json_int("count_after", st2);
+            json_obj_end();
+            json_str("why", "writing the frame's serial to ETH_RX ($82) releases the head frame: the RX status "
+                     "frame count ($8C low byte) drops by exactly one. One frame was sent (an ARP request) "
+                     "and its one reply is the only frame queued, so the count goes 1 -> 0");
+            json_obj("in");
+            json_str("seq", "drain RX, send 1 ARP request (60 bytes), release non-ARP-reply frames, "
+                     "read $8C, write the reply's serial to $82, read $8C");
+            json_hexn("serial", ser, 4);
+            json_int("other_frames_released", others);
+            json_obj_end();
+            z_ctx();
+            amt_case_close();
+        }
         if (z_l2 + z_l6 == 1 && (z_cfg & 1) && !irq_storm)
             amt_case("zz9000_rx_irq", AMT_ST_PASS, 0);
         else {

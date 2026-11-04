@@ -9,6 +9,10 @@ Format: {"<mod>.<case>": {"ref": "...", "why": "...", "configs": "glob",
            the entry's config (e.g. {"fpu_softfloat": "false"})
   tbd      the case id is a placeholder until the module lands
 
+A key may hold a list of such entries when one case has several independent
+known causes (e.g. one bug on 68000 machines, another on PAL): the first
+entry whose configs/when match is the one that applies.
+
 Keys starting with "_" are comments. A failing case that matches is
 `xfail` (expected, reported but not a problem); a passing case that matches
 is `fixed` (the bug seems gone: remove the entry after confirming).
@@ -28,7 +32,7 @@ def load(path=None):
         return {}
     with open(path, encoding="utf-8") as fh:
         doc = json.load(fh)
-    return {k: v for k, v in doc.items() if not k.startswith("_") and isinstance(v, dict)}
+    return {k: v for k, v in doc.items() if not k.startswith("_") and isinstance(v, (dict, list))}
 
 
 def _globs(v):
@@ -43,20 +47,22 @@ def match(registry, key, entry_id, options=None):
     """The registry entry (with its key as "key") for this case, or None."""
     options = options or {}
     base_key = key.split("#", 1)[0]
-    for k, x in registry.items():
+    def ok(o, v):
+        have, want = str(options.get(o, "")).lower(), str(v).lower()
+        if want.startswith("!"):           # "!0": any value except 0
+            return have != want[1:] and not (want[1:] == "0" and have in ("", "false"))
+        return have == want
+    for k, xs in registry.items():
         if not (k == base_key or fnmatch.fnmatchcase(base_key, k)):
             continue
-        if not any(fnmatch.fnmatchcase(entry_id, g) for g in _globs(x.get("configs"))):
-            continue
-        when = x.get("when") or {}
-        def ok(o, v):
-            have, want = str(options.get(o, "")).lower(), str(v).lower()
-            if want.startswith("!"):           # "!0": any value except 0
-                return have != want[1:] and not (want[1:] == "0" and have in ("", "false"))
-            return have == want
-        if not all(ok(o, v) for o, v in when.items()):
-            continue
-        return dict(x, key=k)
+        for x in (xs if isinstance(xs, list) else [xs]):
+            if not isinstance(x, dict):
+                continue
+            if not any(fnmatch.fnmatchcase(entry_id, g) for g in _globs(x.get("configs"))):
+                continue
+            if not all(ok(o, v) for o, v in (x.get("when") or {}).items()):
+                continue
+            return dict(x, key=k)
     return None
 
 

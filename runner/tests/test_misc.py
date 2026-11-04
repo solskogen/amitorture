@@ -514,5 +514,23 @@ class SpeedTrims(unittest.TestCase):
         self.assertIsNone(f(None, {"options": {}}))           # a single ADF: unknown modules
 
 
+class XfailLists(unittest.TestCase):
+    def test_several_causes_per_case(self):
+        from amitorture import xfail
+        reg = {"m.c": [{"ref": "A", "configs": "*", "when": {"cpu_model": "68000"}},
+                       {"ref": "B", "configs": "*-snd-*", "when": {"ntsc": "!true"}}]}
+        self.assertEqual(xfail.match(reg, "m.c", "a500-snd-x", {"cpu_model": "68000"})["ref"], "A")
+        self.assertEqual(xfail.match(reg, "m.c", "a1200-snd-x", {"cpu_model": "68020"})["ref"], "B")
+        self.assertIsNone(xfail.match(reg, "m.c", "a1200-snd-x", {"cpu_model": "68020", "ntsc": "true"}))
+        self.assertIsNone(xfail.match(reg, "m.c", "a1200-x", {"cpu_model": "68020"}))
+
+    def test_registry_loads(self):
+        from amitorture import xfail
+        reg = xfail.load()
+        self.assertIsInstance(reg["expsound.uaesnd_timer_irq"], list)
+        m = xfail.match(reg, "expsound.uaesnd_timer_irq", "a1200-snd-uaesndz2", {"ntsc": "false", "cpu_model": "68020"})
+        self.assertEqual(m["ref"], "finding S8")
+
+
 if __name__ == "__main__":
     unittest.main()

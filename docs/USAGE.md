@@ -215,7 +215,7 @@ Failures that share a cause are grouped into one problem: same module, same narr
    ```
    Each pack also has `run.sh` and `host-gdb.cmd`, with breakpoints on the suggested emulator functions.
 3. **After a fix,** rerun the pack, then `check` against your baseline. The case should come out `fixed` and nothing else should change.
-4. **Known bugs** live in `runner/amitorture/xfail.json` (key `<module>.<case>`, globs allowed, optional `configs` glob and `when` option conditions, `ref`/`why` text). Add an entry when a finding is confirmed, so it shows as `xfail` instead of a new problem; the runner reports it as `fixed` once it passes. The findings themselves are documented in `docs/findings/`.
+4. **Known bugs** live in `runner/amitorture/xfail.json` (key `<module>.<case>`, globs allowed, optional `configs` glob and `when` option conditions, `ref`/`why` text; a key may hold a list of entries when one case has several independent known causes). Add an entry when a finding is confirmed, so it shows as `xfail` instead of a new problem; the runner reports it as `fixed` once it passes. The findings themselves are documented in `docs/findings/`.
 
 ---------------------------------------------------------------------------
 ## 5. Real hardware and FPGA (not tested yet)
