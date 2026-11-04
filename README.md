@@ -77,4 +77,4 @@ Known emulator bugs are registered in `runner/amitorture/xfail.json`, with the e
 
 ## Licence
 
-GPL-3.0-or-later, see [COPYING.md](COPYING.md) and [LICENSE](LICENSE). No ROM images are included.
+MIT, see [LICENSE](LICENSE); [COPYING.md](COPYING.md) notes the one derived data file. No ROM images are included.
