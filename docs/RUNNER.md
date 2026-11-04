@@ -73,10 +73,13 @@ How the runner uses it:
   first disk.
 - **Narrowing and repro packs.** Narrowing reruns only the disk that holds the failing module (`disk_only`). A repro
   pack carries just that disk, with the module mask baked in.
-- **Floppy speed.** Generated configs set `floppy_speed=100`, the real drive speed. Turbo (`--set floppy_speed=800`,
-  or in an entry's options) breaks raw disk-controller DMA: in disk.cpp's doreaddma turbo path DSKBLK comes 8x too
-  early and raw MFM reads get bad checksums, which the paula module reports as failures. Use it only where the disk
-  controller is not under test. `--timeout` is per disk launch (default 600 s). Measured at floppy_speed=100: the core
+- **Floppy speed.** Set disks that don't test the floppy hardware load at turbo (`floppy_speed=0`); the chip disk
+  (paula: raw disk DMA, DSKSYNC, motor timing) and the cpux disk (dmacontention: disk DMA under load) run at
+  `floppy_speed=100`, the real drive speed (runner.py `REAL_SPEED_GROUPS`). A set disk passed alone with `--adf` is
+  recognised by its header (build id `... <n>/<m> <group>`) and gets the same speed; the all-in-one ADF and unknown
+  disks run at real speed. An explicit `floppy_speed` (`--set` or an entry's options) always wins. Turbo breaks raw
+  disk-controller DMA: in disk.cpp's doreaddma turbo path DSKBLK comes early and raw MFM reads get bad checksums,
+  which the paula module reports as failures. `--timeout` is per disk launch (default 600 s). Measured at floppy_speed=100: the core
   disk takes 243 s on a cycle-exact A500 (cpu 125 s, chip 127 s, cpux 101 s, fpu/exp about 35 s) and 225 s on the
   CDTV, the slowest launches.
 

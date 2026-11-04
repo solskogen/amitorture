@@ -523,6 +523,20 @@ class SpeedTrims(unittest.TestCase):
         self.assertIsNone(f("5-exp", {"options": {"floppy_speed": "100"}}))   # an explicit setting wins
         self.assertIsNone(f(None, {"options": {}}))           # a single ADF: unknown modules
 
+    def test_floppy_speed_single_set_disk(self):
+        # a set disk passed with --adf gets the speed it has in the set
+        import tempfile
+        from unittest import mock
+        from amitorture import runner as R
+        with mock.patch.object(R.adfmod, "header_info", return_value={"build_id": "6809d17 2026-11-04 5/7 exp"}):
+            self.assertEqual(R.disk_floppy_speed(None, {"options": {}}, adf="x.adf"), "0")
+        with mock.patch.object(R.adfmod, "header_info", return_value={"build_id": "6809d17 2026-11-04 4/7 chip"}):
+            self.assertIsNone(R.disk_floppy_speed(None, {"options": {}}, adf="x.adf"))
+        with mock.patch.object(R.adfmod, "header_info", return_value={"build_id": "6809d17 2026-11-04"}):
+            self.assertIsNone(R.disk_floppy_speed(None, {"options": {}}, adf="x.adf"))   # all-in-one
+        with tempfile.NamedTemporaryFile(suffix=".adf") as fh:                          # not a disk
+            self.assertIsNone(R.disk_floppy_speed(None, {"options": {}}, adf=fh.name))
+
 
 class XfailLists(unittest.TestCase):
     def test_several_causes_per_case(self):

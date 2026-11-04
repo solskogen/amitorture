@@ -532,14 +532,36 @@ def base_result(entry):
 REAL_SPEED_GROUPS = ("chip", "cpux")
 
 
-def disk_floppy_speed(dname, entry):
+def adf_set_group(path):
+    """The set group ("core", "exp", ...) a disk was built as, from its header
+    build id ("<commit> <date> <n>/<m> <group>"), or None (the all-in-one
+    ADF, an unreadable header, no file)."""
+    try:
+        bid = (adfmod.header_info(path) or {}).get("build_id") or ""
+    except Exception:   # not an amitorture disk: real speed, as before
+        return None
+    parts = bid.split()
+    if len(parts) >= 2 and "/" in parts[-2] and parts[-2].replace("/", "").isdigit():
+        return parts[-1]
+    return None
+
+
+def disk_floppy_speed(dname, entry, adf=None):
     """floppy_speed for one disk launch: "0" (turbo) for a set disk that does
     not test the floppy hardware, None (the entry's own setting, real speed)
-    otherwise. An explicit floppy_speed (matrix entry or --set) always wins;
-    narrowing's paula variant still forces 100 through extra_options."""
-    if not dname or "floppy_speed" in (entry.get("options") or {}):
+    otherwise. A set disk run on its own (--adf, no dname) is recognised by
+    its header, so it gets the same speed as in the set; the all-in-one ADF
+    holds the floppy tests too and stays at real speed. An explicit
+    floppy_speed (matrix entry or --set) always wins; narrowing's paula
+    variant still forces 100 through extra_options."""
+    if "floppy_speed" in (entry.get("options") or {}):
         return None
-    group = dname.split("-", 1)[1] if "-" in dname else dname
+    if dname:
+        group = dname.split("-", 1)[1] if "-" in dname else dname
+    else:
+        group = adf_set_group(adf) if adf else None
+        if group is None:
+            return None
     return None if group in REAL_SPEED_GROUPS else "0"
 
 
@@ -639,7 +661,7 @@ def _run_disk(opts, ctx, entry, binary=None, extra_options=None, disk=None):
     extra = dict(media_opts)
     extra.update(cd_opts)
     extra.update(board_opts)
-    fs = disk_floppy_speed(dname, entry)
+    fs = disk_floppy_speed(dname, entry, adf=None if disk or opts.no_disk else ctx.get("adf_src"))
     if fs is not None:
         extra["floppy_speed"] = fs
         res["floppy_speed"] = fs
