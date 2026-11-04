@@ -11,7 +11,7 @@
  * bit 1+n (odd plane) / 5+n (even plane) tells whether any playfield pixel
  * under sprite 2n has that plane bit set. Reads are timing-independent:
  * the scene is static from frame to frame, the CPU changes CLXCON/sprite
- * lists at a vertical blank, throws away CLXDAT at the next three and reads
+ * lists at a vertical blank, throws away CLXDAT at the next one and reads
  * it two frames later (clean_clx): the OR of two complete frames. One probe
  * group (4 sprites) and one plane per measurement; the colour index under
  * each probe is assembled from one measurement per plane. Fetch widths,
@@ -246,12 +246,20 @@ static void wait_line(UWORD y)
 }
 
 /* Timing-independent collision read. The scene is static from frame to
- * frame, so: set CLXCON (and whatever the caller changed) at a VBL; CLXDAT
- * reads at the next three VBLs throw away the partly-set-up frame and
- * anything a core still delivers late; the read two VBLs later returns the
+ * frame, so: set CLXCON (and whatever the caller changed) at a VBL; the
+ * CLXDAT read at the next DISP_DISCARD VBL(s) throws away the partly-set-up
+ * frame and anything a core still delivers late; the read two VBLs later returns the
  * OR of two complete, fully set up frames. A CPU that reads late only adds
  * collisions of identical frames. */
 #define FC_REVERSE 1                  /* write CLXCON2 before CLXCON */
+/* Frames thrown away after a change. 3 were used first, against cores that
+ * deliver a frame's collisions late; an A/B on 4 machines (a1200, a4000
+ * fast, AROS, a500 cycle-exact), 3 rounds each, gave the same results with
+ * 1 (952 pass / 32 fail / 27 xfail both, the intermittents at the same
+ * rate) and the module 30 % faster (193 s -> 135 s). */
+#ifndef DISP_DISCARD
+#define DISP_DISCARD 1
+#endif
 static UWORD clean_clx(UWORD clx, UWORD clx2, int flags)
 {
     UWORD r;
@@ -265,9 +273,9 @@ static UWORD clean_clx(UWORD clx, UWORD clx2, int flags)
         if (aga)
             CU(CLXCON2) = clx2;
     }
-    /* three frames thrown away (a core may draw, and so collide, a frame
-     * well after the beam passed it), then two frames accumulated */
-    for (r = 0; r < 3; r++) {
+    /* DISP_DISCARD frames thrown away (a core may draw, and so collide, a
+     * frame well after the beam passed it), then two frames accumulated */
+    for (r = 0; r < DISP_DISCARD; r++) {
         wait_vbl();
         (void)CU(CLXDAT);
     }

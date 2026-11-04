@@ -12,7 +12,7 @@ sprites point to an empty list unless a case needs them) over the playfield. CLX
 bitplane with match value 1, so CLXDAT bit 1+n (odd plane) or 5+n (even plane) says whether any
 playfield pixel under sprite 2n has that plane bit set. All reads are timing-independent: scenes
 are static from frame to frame; the CPU changes CLXCON (and sprite lists) at a vertical blank,
-throws away CLXDAT at the next three (a core may deliver a frame's collisions late) and reads it
+throws away CLXDAT at the next one (a core may deliver a frame's collisions late; 3 gave the same results in an A/B, 30 % slower) and reads it
 two frames later, so the value is the OR of two complete, fully set-up frames. A late CPU only adds collisions of an identical frame. Each frame
 measures one group of up to 4 probes for one bitplane; enabling one plane at a time makes the
 read-out independent of how the odd/even groups combine (see `clx_spf_odd_independent`). Scenes
