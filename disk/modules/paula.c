@@ -973,10 +973,12 @@ static void t_host_tones(void)
  * output as host.tone_uaesnd_mono_paula. Amiberry's mixer replaced the
  * right side with the left mix while a one-channel stream played. Needs a
  * uaesnd board in amt_probe_result.boards (claimed); skip without one.
- * Note: here the stream takes a mixer path on which the old bug does not
- * show (it passes on Amiberry bcea436dd too); in expsound's sequence it
- * failed. The case still checks that Paula keeps its side next to a mono
- * stream. */
+ * A silent one-shot set plays to its end first: in Amiberry up to
+ * 07708117f the end of a uaesnd stream left its mixer stream behind as a
+ * one-channel stream, and with one of those in the mixer the right output
+ * lost Paula (fixed in the mixer by #2612; the stale stream itself in
+ * sndboard.cpp's stream callback). The stream must be allocated ($E0)
+ * and is checked to play, so the case cannot pass without it. */
 #define UMONO_ID "uaesnd_mono_keeps_right"
 static ULONG umono_base;             /* claimed board while the stream may run, else 0 */
 
@@ -987,6 +989,7 @@ static void umono_stop(void)
         return;
     es_wl((volatile ULONG *)(umono_base + UAESND_STREAM0 + UAESND_S_SETPTR), 0);
     es_wl((volatile ULONG *)(umono_base + UAESND_ENABLE), 0);
+    es_wl((volatile ULONG *)(umono_base + UAESND_ALLOC), 0);
     t0 = amt_frames_now();
     while ((es_rb((volatile UBYTE *)(umono_base + UAESND_STREAM0 + UAESND_S_STATUS)) & 1) &&
            amt_frames_now() - t0 < 25)
@@ -1030,11 +1033,25 @@ static void t_uaesnd_mono_mix(void)
     ram = bd->addr + roff;
     for (k = 0; k < 2205; k++)
         es_wb((volatile UBYTE *)(ram + 0x3000 + k), 0);
-    set = uaesnd_set_write(ram, 0x400, ram + 0x3000, 2205, 22050UL << 8, ram + 0x3000, 2205, 0xffff, 0, 0);
     umono_base = bd->addr;
+    es_wl((volatile ULONG *)(bd->addr + UAESND_ALLOC), 1);     /* stream 1 */
+    /* a silent one-shot set (0.1 s) played to its end */
+    set = uaesnd_set_write(ram, 0x500, ram + 0x3000, 2205, 22050UL << 8, 0, 0, 0, 0, 0);
     es_wl((volatile ULONG *)(bd->addr + UAESND_ENABLE), 1);
     es_wl((volatile ULONG *)(bd->addr + UAESND_STREAM0 + UAESND_S_SETPTR), set);
+    pa_wait_cc(PA_MS(40));
+    for (k = 0; k < 50 && (es_rb((volatile UBYTE *)(bd->addr + UAESND_STREAM0 + UAESND_S_STATUS)) & 1); k++)
+        pa_wait_cc(PA_MS(20));
+    pa_wait_cc(PA_MS(40));
+    set = uaesnd_set_write(ram, 0x400, ram + 0x3000, 2205, 22050UL << 8, ram + 0x3000, 2205, 0xffff, 0, 0);
+    es_wl((volatile ULONG *)(bd->addr + UAESND_ENABLE), 1);   /* the end of a stream may clear it */
+    es_wl((volatile ULONG *)(bd->addr + UAESND_STREAM0 + UAESND_S_SETPTR), set);
     pa_wait_cc(PA_MS(100));
+    if (!(es_rb((volatile UBYTE *)(bd->addr + UAESND_STREAM0 + UAESND_S_STATUS)) & 1)) {
+        umono_stop();
+        amt_case(UMONO_ID, AMT_ST_UNTESTABLE, "the uaesnd mono stream did not start ($0193 bit 0 = 0)");
+        return;
+    }
 
     for (k = 0; k < 32; k++)
         tb[k] = (UBYTE)(k < 16 ? 96 : -96);

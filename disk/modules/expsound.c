@@ -1488,6 +1488,35 @@ static void uaesnd_board(const struct amt_probe_board *bd)
         es_wl(UL(S0 + 0x80), 0);
         u_wait_frames(2);
     }
+
+    /* ---- sets played one after another: every one starts. The board plays
+     * up to 8 streams at a time, not 8 in total: an ended stream must give
+     * its mixer stream back. (Amiberry up to 07708117f revived each ended
+     * stream's mixer stream as an ownerless one-channel stream, so after a
+     * few ended streams a new one got none: $00A4 alloc failures.) */
+    {
+        ULONG af0 = (ucaps & 4) ? es_rl(UL(0xa4)) : 0, daf = 0, t0;
+        int n, started = 0;
+        for (n = 0; n < 12; n++) {
+            setaddr = u_set(0x500, UR + 0x3000, 1102, 22050UL << 8, 0, 0, 0, 0, 0);
+            es_wl(UL(0xf0), 0x00000001);
+            es_wl(UL(S0 + 0x80), setaddr);
+            u_wait_frames(1);
+            if (es_rb(UB(S0 + 0x93)) & 1)
+                started++;
+            t0 = frames();
+            while ((es_rb(UB(S0 + 0x93)) & 1) && frames() - t0 < 25)
+                ;
+            es_wl(UL(S0 + 0x80), 0);
+        }
+        if (ucaps & 4)
+            daf = es_rl(UL(0xa4)) - af0;
+        urep("uaesnd_stream_reuse", started == 12 && daf == 0,
+             "12 one-shot sets played one after another all start: a stream that ended frees its mixer "
+             "stream (up to 8 streams at a time, not 8 in total; with diagnostics $00A4 alloc failures "
+             "stay unchanged)", "started_allocfail", 12 << 8, ((ULONG)started << 8) | (daf & 0xff),
+             "12 times: $180 = set (1102 frames, 22050 Hz, silent), wait for the end");
+    }
 }
 
 static void u_cleanup(void)

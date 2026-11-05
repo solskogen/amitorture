@@ -626,5 +626,21 @@
    "tbd": false,
    "seen": "amitorture fix verification 2026-11-04 (Amiberry branch amitorture-fixes); see docs/findings/amiberry-2026-11-03.md"
   }
- ]
+ ],
+ "expsound.uaesnd_stream_reuse": {
+  "ref": "finding S5",
+  "why": "uaesnd Zorro II: sample sets in the board's own RAM rejected (default_check instead of sub_bank_check, sndboard.cpp ~1574): no stream starts",
+  "configs": "*uaesndz2*",
+  "when": {},
+  "tbd": false,
+  "seen": "amitorture standard run 20261104-001719Z (chipset/board triage); see docs/findings/amiberry-2026-11-03.md"
+ },
+ "expsound.uaesnd_mono_active": {
+  "ref": "finding S5",
+  "why": "uaesnd Zorro II: sample sets in the board's own RAM rejected (default_check instead of sub_bank_check, sndboard.cpp ~1574): no stream starts",
+  "configs": "*uaesndz2*",
+  "when": {},
+  "tbd": false,
+  "seen": "amitorture standard run 20261104-001719Z (chipset/board triage); see docs/findings/amiberry-2026-11-03.md"
+ }
 }

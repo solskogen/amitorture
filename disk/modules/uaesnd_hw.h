@@ -13,6 +13,7 @@
 
 #define UAESND_RAM_OFFSET 0x0090   /* .L board RAM offset */
 #define UAESND_RAM_SIZE   0x0094   /* .L board RAM size */
+#define UAESND_ALLOC      0x00e0   /* .L allocated streams mask: a stream plays only once allocated */
 #define UAESND_ENABLE     0x00f0   /* .L stream enable mask */
 #define UAESND_STREAM0    0x0100   /* stream 1 register block */
 #define UAESND_S_SETPTR   0x0080   /* .L sample set pointer: non-zero starts, 0 stops */
