@@ -82,6 +82,13 @@ static UWORD os_dma;                /* DMACONR & (DMAEN|BPLEN|COPEN) at start */
  * in the vertical blank, before the display window: the frame after the
  * bare phase, which started from the OS's copinit, then shows our screen,
  * not one frame of stale pointers), DMACON SET DMAEN | BPLEN | COPEN.
+ * The strobe only while the blitter is idle (DMACONR BBUSY = 0): a COPJMP
+ * written by the CPU makes the copper's first fetch without allocating the
+ * bus, so a running blit (trackdisk decodes MFM with the blitter) can take
+ * the same DMA slot, and both pointers become old OR new: the copper then
+ * runs from the blit's data and the blitter writes elsewhere. Real Agnus
+ * does it, and Amiberry emulates it (custom.cpp, "RGA conflict"). During a
+ * blit the copper starts our list at the next vertical blank by itself.
  * Returns with D0 = 0 (Z set) so the chain goes on. */
 __asm__(
 "	.text\n"
@@ -90,8 +97,10 @@ __asm__(
 "	move.l	(a1),d0\n"
 "	beq.s	1f\n"
 "	move.l	d0,0xdff080\n"
+"	btst	#6,0xdff002\n"          /* DMACONR bit 14 BBUSY */
+"	bne.s	2f\n"
 "	move.w	d0,0xdff088\n"
-"	move.w	#0x8380,0xdff096\n"
+"2:	move.w	#0x8380,0xdff096\n"
 "1:	moveq	#0,d0\n"
 "	rts\n");
 extern void amt_scr_vbserver(void);
@@ -529,6 +538,11 @@ void screen_bare(int display_on)
     if (display_on) {
         CREG(0x080) = (UWORD)((ULONG)cop >> 16);    /* COP1LC */
         CREG(0x082) = (UWORD)(ULONG)cop;
+        /* no CPU COPJMP1 while a blit runs (see amt_scr_vbserver); the
+         * first read after BLTSIZE can miss BBUSY on old Agnus: read twice */
+        (void)CREG(R_DMACONR);
+        while (CREG(R_DMACONR) & 0x4000)
+            ;
         CREG(0x088) = 0;                            /* COPJMP1 */
         CREG(R_DMACON) = 0x8380;                    /* SET | DMAEN | BPLEN | COPEN */
     } else {
