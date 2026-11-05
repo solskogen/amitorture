@@ -1,11 +1,14 @@
 """hostspeed: the host.speed_<insn> pseudo cases (cases.speed_blocks), the
 sampler, the matrix entries at cpu_speed=real and parity."""
 import os
+import json
+import shutil
 import sys
 import unittest
+import uuid
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from amitorture import cases, mailbox, matrix, parity, records, report, runner  # noqa: E402
+from amitorture import analysis, cases, mailbox, matrix, parity, records, report, runner  # noqa: E402
 
 PAL_FPS = cases.FRAME_HZ["PAL"]
 FIELDS = ["t", "heartbeat", "case", "cpu_main_ns", "cpu_total_ns", "cpu_top_ns"]
@@ -151,6 +154,63 @@ class SpeedVerdict(unittest.TestCase):
         self.assertIn("FSIN: the emulator ran at 0.62x real time", why)
         self.assertIn("Cortex-A76 x4", why)
         self.assertIn("--jobs 2", why)
+
+    def test_host_failures_drive_live_and_historical_entry_verdicts(self):
+        _, sub = self.blocks([("fadd", 1.0), ("ftwotox", 1.18168), ("ftentox", 1.21644)])
+        status, why = runner.classify(sub, sub["_merged"], "done")
+        self.assertEqual(status, "fail")
+        self.assertIn("2 failed host case(s)", why)
+        self.assertIn("host.speed_ftentox", why)
+        sub.update(status="pass", reason="done, no failures", disk_name="6-cpux")
+        result = {"id": "real", "status": "pass", "disks": [sub]}
+        runner.integrate_host_verdicts(result)
+        self.assertEqual(result["status"], "fail")
+        self.assertEqual(sub["status"], "fail")
+        self.assertEqual(len([i for i in report.collect_failures([result]) if i["kind"] == "case_fail"]), 2)
+        # A host verdict must never disguise a crash or other infrastructure failure.
+        sub.update(status="crash", reason="signal")
+        runner.integrate_host_verdicts(sub)
+        self.assertEqual(sub["status"], "crash")
+        self.assertEqual(runner.classify(dict(sub, process={}), sub["_merged"], "crash")[0], "crash")
+        sub.update(status="pass")
+        result.update(status="error", reason="parent configuration error")
+        runner.integrate_host_verdicts(result)
+        self.assertEqual(result["status"], "error")
+        self.assertEqual(sub["status"], "fail")
+
+    def test_report_and_saved_reanalysis_do_not_restore_a_false_pass(self):
+        _, sub = self.blocks([("ftentox", 1.21644)])
+        sub.update(status="pass", reason="done, no failures", disk_name="6-cpux", raw="raw/real/6-cpux/",
+                   records=records.summarize(sub["_merged"]))
+        result = {"id": "real", "status": "pass", "disks": [sub], "raw": "raw/real/",
+                  "records": records.summarize(sub["_merged"])}
+        path = os.path.join("work", "runner-verdict-" + uuid.uuid4().hex)
+        try:
+            os.makedirs(os.path.join(path, sub["raw"]))
+            with open(os.path.join(path, sub["raw"], "records.jsonl"), "w", encoding="utf-8") as fh:
+                for r in sub["_merged"].records:
+                    fh.write(json.dumps(r) + "\n")
+            summ = report.write_all(path, {"run_id": "test"}, [result])
+            self.assertEqual(summ["entries"][0]["status"], "fail")
+            self.assertEqual(summ["status_counts"], {"fail": 1})
+            saved_path = os.path.join(path, result["raw"], "result.json")
+            with open(saved_path, encoding="utf-8") as fh:
+                saved = json.load(fh)
+            saved["status"] = saved["disks"][0]["status"] = "pass"
+            with open(saved_path, "w", encoding="utf-8") as fh:
+                json.dump(saved, fh)
+            loaded = analysis.load_results(path)
+            self.assertEqual(loaded[0]["status"], "fail")
+        finally:
+            shutil.rmtree(path, ignore_errors=True)
+
+    def test_untestable_measurements_are_not_failed_or_passed_by_promotion(self):
+        _, sub = self.blocks([("ftentox", 1.2)], cpu_per_s=0.4)
+        sub.update(status="pass", reason="guest finished")
+        self.assertEqual(runner.host_failed_cases(sub, sub["_merged"]), [])
+        runner.integrate_host_verdicts(sub)
+        self.assertEqual(sub["status"], "pass")
+        self.assertEqual(cases.speed_blocks(sub, sub["_merged"])[0]["st"], "untestable")
 
 
 class SpeedParity(unittest.TestCase):

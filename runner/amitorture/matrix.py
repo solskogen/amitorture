@@ -5,7 +5,7 @@ Motorola CPU variant, an FPU, a core mode (fast / compatible / cycle-exact),
 a video standard, the ROM(s) it needs and the exact Amiberry options.
 
 Three named matrices:
-  smoke     about 10 entries, one per big code path (68000 CE, MMU, JIT, ...)
+  smoke     one per big code path, plus hostspeed and strict instruction policies
   standard  about 60: every model preset, every CPU variant, the core modes,
             JIT twins, the JIT sub-options on one machine, threaded CPU,
             softfloat
@@ -644,6 +644,26 @@ def speed_entries(name):
     return out
 
 
+def strict_policy_entries(name):
+    """Hardware-only traps need an interpreter lane without compatibility emulation."""
+    out = []
+    specs = [("A3000", "68030", "68882", "compat", "a3000-68030-882-compat"),
+             ("A4000", "68040nommu", "internal", "fast", "a4000-68040nommu-fast"),
+             ("A4000", "68060nommu", "internal", "fast", "a4000-68060nommu-fast")]
+    for model, cpu, fpu, core, base_id in specs:
+        e = make_entry(model, cpu, fpu, core,
+                       extra={"cpu_no_unimplemented": "true", "fpu_no_unimplemented": "true",
+                              "fpu_strict": "true"},
+                       eid=f"{base_id}-strict",
+                       title_extra=", hardware instruction/operand policy")
+        e["disk_groups"] = ["core", "fpu"]
+        e["params"] = {"modules": module_mask(["exceptions", "fpu"])}
+        e["jit_capable"] = e["threaded_capable"] = False
+        e["matrices"] = {name}
+        out.append(e)
+    return out
+
+
 # MMU configurations (mmu_model = the CPU's own MMU, or the EC variant's TTRs
 # only). JIT does not support the MMU, so these have no JIT twin (the
 # generator never makes one for mmu != 0); every disk runs (the mmu module
@@ -771,6 +791,7 @@ def expand(name="standard"):
                         have.add(e["id"])
                         keys.add(k)
             _CACHE[name] = ents
+        _CACHE[name].extend(strict_policy_entries(name))
         _hostspeed_only_at_real_speed(_CACHE[name])
     return copy.deepcopy(_CACHE[name])
 

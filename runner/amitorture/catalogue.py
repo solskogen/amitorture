@@ -158,8 +158,10 @@ def coverage(items, results, fps, parity_info=None):
                     continue
                 rc = (fps.get(p["ref"]) or {}).get("cases", {})
                 tc = (fps.get(p["twin"]) or {}).get("cases", {})
+                unobserved = {x["case_key"] for x in p.get("not_comparable", [])}
                 paired[p["twin"]] = {k for k in rc.keys() & tc.keys()
-                                     if not rc[k].get("engine_dependent") and not tc[k].get("engine_dependent")}
+                                     if k not in unobserved and not rc[k].get("engine_dependent")
+                                     and not tc[k].get("engine_dependent")}
         keys = set()
         for r in ents:
             fp = fps.get(r["id"]) or {"cases": {}}

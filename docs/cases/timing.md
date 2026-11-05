@@ -38,7 +38,7 @@ newcpu.cpp update_68k_cycles misses an `else`).
 |---|---|---|---|
 | lines_per_frame_lace | with BPLCON0 LACE set, 8 frames alternate long/short; each frame's length follows the LOF bit read in it (PAL 313/312, NTSC 263/262). The length comes from a copper list (WAIT line 311/261 sets INTREQ DSKBLK, WAIT line 312/262 sets SOFT; read and cleared at each V wrap), not from the highest line a CPU poll saw: a 68000 poll takes ~0.75 line and a non-cycle-exact core may skip lines, so polling missed the last line | HRM ch.3 (interlace), VPOSR LOF; ch.6 beam counter | LOF not toggling, wrong vertical total, V8-V10 read glitch |
 | lines_per_frame_nolace | LACE clear: LOF stays constant and every frame has the length LOF says (the test enters with LOF=1, so 313/263); same copper marks | HRM VPOSR/VPOSW LOF | LOF toggling in non-interlace, wrong line count |
-| cck_per_line | VHPOSR H counter, sampled in blocks of 1000 with a pseudo-random period over at least 8 frames and 100 blocks. Pass requires minimum $00 and maximum $E2/$E1 (PAL) or $E3/$E2 (NTSC). Values above the architectural line end fail. Missing endpoints is `untestable`: instruction/block timing can quantize reads to a subset of H positions despite whole-frame coverage, so polling cannot prove the endpoints were absent. This does not relax the independent E-clock/beam-rate checks | HRM ch.6 beam position, VHPOSR; NTSC LOL | out-of-range H counter; missing endpoints means insufficient polling coverage, not a proven short line; "beam stuck" still fails when V never advances (`timing.bound`) |
+| cck_per_line | CIA E-clock brackets around beam-line endpoints over at least 8 frames and 100032 H samples. Require the entire inferred period interval, including up to one line of unknown endpoint H phase and one E tick of counter quantization, within 227 (PAL) or 227.5 (NTSC) +/- 0.25 cck. Sample H in short 64-read blocks to avoid losing complete frames on a 68000; out-of-range H still fails | HRM ch.6 beam position, VHPOSR; E clock = cck/5; NTSC LOL | wrong line duration, out-of-range H, insufficient timing precision, or a stalled beam/CIA; no endpoint-coverage exemptions |
 | eclock_cck_ratio | CIA E-clock ticks over 10 whole frames (V wrap to V wrap) x 5 equals the frames' colour clocks (lines from each frame's LOF bit, x 227 PAL, x 227.5 NTSC) within 0.1%; the CPU's delay in noticing each wrap is read from the beam position next to the E-counter read and taken off (`timing.lead0/1_cck_x2`), so the result does not depend on the polling rate. A "beam stuck" verdict names the bound that expired (`timing.bound`); the both-clocks-frozen poll bound is 32M polls (68000/010) or 512M (020+), because a fast emulated CPU keeps running while chipset time is frozen at host sync points. The E counter (TB counting TA underflows) is re-read while TA is within 16 E clocks of its reload, since TB counts the underflow a little later | HRM appendix F (8520 timers count E = CCK/5) | CIA clocked at the wrong rate relative to the beam |
 | vbl_per_cia_second | VERTB edges in one CIA second (709379 / 715909 E ticks): 50 +-1 PAL, 60 +-1 NTSC (49.92 / 59.83 Hz) | HRM (frame rate from 227(.5) x 313/263 cck) | VBL rate or CIA rate wrong |
 | loop_result_mulu | the perf MULU loop result = $1110EEEF, same on 100 hot repetitions | PRM MULU | MULU.W result bug (interpreter/JIT divergence) |
@@ -49,9 +49,10 @@ newcpu.cpp update_68k_cycles misses an `else`).
 
 Focused native regressions (no emulator):
 `cd runner && python3 -m unittest tests.test_guest_display_timing -v`.
-These execute the guest's verdict helper, including incomplete PAL observations
-`$02..$DF`, `$00..$E0` and `$01..$E2`, as well as valid endpoints and illegal
-PAL/NTSC maxima. They do not establish which counter positions an emulator
-actually visits. The polling loop's LFSR restarts at each 1000-sample block;
-its variable instruction delays are not a guarantee of complete bus-phase
-coverage. A missing endpoint remains inconclusive, not a pass.
+These execute the guest's verdict helper with quantified E-clock intervals,
+including polling phases that miss H endpoints, wrong PAL/NTSC line periods,
+overly wide reference intervals and illegal H maxima. The production loop
+and short/long-frame rollover accounting are also exercised by
+`tests.test_hardware_audit_regressions`; oversized blocks that alias complete
+frames cannot pass. Sampled H extrema remain diagnostics, not substitutes for
+the independently measured line period.

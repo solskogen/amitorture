@@ -475,20 +475,26 @@ def _rom_info(rom):
 _EMU_NET_KEYS = ("a2065", "zz9000_net", "ne2000_pci", "ne2000_pcmcia")
 
 
-FLAG_BITS = {"unsafe": 1, "noserial": 2, "nombox": 4, "net": 8, "noscreen": 16}   # tools/mkadf.py
+FLAG_BITS = {"unsafe": 1, "noserial": 2, "nombox": 4, "net": 8, "noscreen": 16,
+             "intcompat": 32, "fpucompat": 64}   # tools/mkadf.py
 
 
 def _add_flag(params, name):
     """OR one run-parameter flag into params["flags"], whether that is a
     number or a list of names (so a user's --param flags=... is kept)."""
+    return _set_flag(params, name, True)
+
+
+def _set_flag(params, name, enabled):
     fl = params.get("flags", 0)
     try:
-        params["flags"] = str((int(fl, 0) if isinstance(fl, str) else int(fl)) | FLAG_BITS[name])
+        value = int(fl, 0) if isinstance(fl, str) else int(fl)
+        params["flags"] = str(value | FLAG_BITS[name] if enabled else value & ~FLAG_BITS[name])
     except ValueError:
-        names = [x for x in str(fl).replace("+", ",").split(",") if x.strip()]
-        if name not in names:
+        names = [x.strip() for x in str(fl).replace("+", ",").split(",") if x.strip() and x.strip() != name]
+        if enabled:
             names.append(name)
-        params["flags"] = ",".join(names)
+        params["flags"] = ",".join(names) if names else "0"
     return params
 
 
@@ -515,13 +521,26 @@ def _with_net_flag(params, options):
     return params
 
 
-def _with_entry_flags(params, entry):
+def _with_entry_flags(params, entry, extra_options=None):
     """Flags an entry needs on top of the run's (matrix.py "flags": e.g.
-    "unsafe" where the board under test is known to be configured), plus the
-    net flag for an emulator-only network backend."""
+    "unsafe" where the board under test is known to be configured).
+
+    Instruction-policy flags follow the configured options, not user flags.
+    Amiberry's JIT fixup makes both instruction policies compatibility-mode.
+    """
     for name in entry.get("flags") or ():
         _add_flag(params, name)
-    return _with_net_flag(params, entry["options"])
+    options = amiberry_cfg.COMMON | entry["options"] | (extra_options or {})
+    try:
+        jit = int(str(options.get("cachesize", 0)), 0) > 0
+    except ValueError:
+        raise RunnerError(f"invalid cachesize for instruction policy: {options.get('cachesize')!r}")
+    for flag, option in (("intcompat", "cpu_no_unimplemented"), ("fpucompat", "fpu_no_unimplemented")):
+        value = str(options[option]).strip().lower()
+        if value not in ("true", "yes", "1", "false", "no", "0"):
+            raise RunnerError(f"invalid instruction policy option {option}={options[option]!r}")
+        _set_flag(params, flag, jit or value in ("false", "no", "0"))
+    return _with_net_flag(params, options)
 
 
 def base_result(entry):
@@ -677,7 +696,7 @@ def _run_disk(opts, ctx, entry, binary=None, extra_options=None, disk=None):
         # board media the entry needs (e.g. a PCMCIA SRAM card image), zero-filled
         with open(os.path.join(media_dir, mf["name"]), "wb") as fh:
             fh.truncate(int(mf["size"]))
-    params = _with_entry_flags(merge_params(opts.params, entry.get("params", {})), entry)
+    params = _with_entry_flags(merge_params(opts.params, entry.get("params", {})), entry, extra_options)
     # Disk
     if opts.no_disk:
         floppy = ""
@@ -1250,6 +1269,45 @@ def summarize_records(merged, run):
     }
 
 
+def host_failed_cases(res, merged):
+    """Runner-owned verdicts count just as guest verdicts do."""
+    from . import cases as casemod
+    names = []
+    for m in merged.records:
+        if m.get("host"):
+            v = casemod.tone_case(m["rec"])
+            if v and v["st"] == "fail":
+                names.append("host." + casemod.tone_name(m["rec"].get("tag") or m["rec"].get("id")))
+    for b in casemod.speed_blocks(res, merged):
+        if b.get("st") == "fail":
+            names.append("host." + casemod.speed_name(b["insn"]))
+    return names
+
+
+def integrate_host_verdicts(res):
+    """Upgrade historical guest-only passes, without hiding infrastructure errors.
+
+    Live launches already use classify(); saved results from older runners
+    can nevertheless say pass while their host pseudo cases failed.
+    """
+    subs = res.get("disks") or [res]
+    changed = False
+    for sub in subs:
+        m = sub.get("_merged")
+        if sub.get("status") != "pass" or m is None:
+            continue
+        failed = host_failed_cases(sub, m)
+        if failed:
+            sub["status"] = "fail"
+            sub["reason"] = f"{len(failed)} failed host case(s): " + ", ".join(failed)
+            changed = True
+    if changed and res.get("disks") and res.get("status") in ("pass", "fail"):
+        worst = min(subs, key=lambda s: STATUS_RANK.get(s["status"], 3))
+        res["status"] = worst["status"]
+        res["reason"] = "; ".join(f"{s['disk_name']}: {s['status']} ({s.get('reason')})"
+                                  for s in subs if s["status"] != "pass")
+
+
 def classify(res, merged, ended):
     """Entry status from how it ended and what it said.
 
@@ -1263,6 +1321,7 @@ def classify(res, merged, ended):
     """
     cases = merged.by_type("case")
     failed = [c for c in cases if c.get("st") == "fail"]
+    host_failed = host_failed_cases(res, merged)
     done = merged.by_type("done")
     integrity = []
     if merged.gaps:
@@ -1290,8 +1349,11 @@ def classify(res, merged, ended):
         return "crash", f"Amiberry exited by itself ({how})"
     if ended == "error":
         return "error", res.get("reason") or "host-side error"
-    if failed or (done and done[-1].get("fail", 0) > 0):
-        return "fail", f"{len(failed)} failed case(s)" + ("; " + "; ".join(integrity) if integrity else "")
+    if failed or host_failed or (done and done[-1].get("fail", 0) > 0):
+        why = f"{len(failed)} failed guest case(s)"
+        if host_failed:
+            why += f"; {len(host_failed)} failed host case(s): " + ", ".join(host_failed)
+        return "fail", why + ("; " + "; ".join(integrity) if integrity else "")
     if ended == "hang":
         return "hang", f"no progress for {res['hang']['unchanged_s']} s ({res['hang']['via']}) before done"
     if ended == "timeout":

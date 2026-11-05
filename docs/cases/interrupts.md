@@ -5,9 +5,16 @@ coherent and usable. CIA-B's independent 32-bit E-clock bounds each acquisition
 to less than two CIA-A periods; a possible extra reload or torn sample is
 untestable, not a short-latency PASS. Both latency producers guard their 64-slot
 buffers before writing; saturation disables the source and records overflow.
-VBL storm expectations require the terminal raster line/wrap to be bracketed
-within a sub-line CIA-B interval. Insufficient endpoint coverage makes only
-`storm_vertb` untestable; CIA and software-interrupt coverage remains active.
+VBL storm calibration measures sixty-four complete beam periods with CIA-B
+brackets around the first and last wraps, at SR=$2700 so the normal runtime
+VBL handler cannot hide the boundary; it does not require polling the
+terminal line. The period interval includes one E tick of counter quantization
+at either end and must have relative width at most 1/512.
+Its midpoint keeps expected-count uncertainty below half an IRQ over the
+maximum five-second storm, before rounding to nearest and applying the
+one-interrupt boundary tolerance. Failed calibration fails `storm_vertb`;
+CIA and software-interrupt coverage remains active. Calibration bounds and
+the number of measured periods are recorded under `timing`.
 
 Paula interrupt logic and the 680x0 interrupt model. References: Amiga Hardware Reference Manual (HRM)
 chapter 7 "System Control Hardware" (INTENA/INTREQ, table of levels), M68000 Family Programmer's
@@ -95,4 +102,4 @@ orders only.
 | `storm_cia_timer` | 1 s (quick) / 5 s: CIA-A TA every 142 E + back-to-back SOFTINT + VERTB; CIA-A count = elapsed/142 +-1 (elapsed from CIA-B E-clock counter). A fail shows only `got.count` "too few"/"too many"; the numbers are in `got.timing` and `timing` (they depend on the elapsed time) | no lost or doubled interrupts | interrupts dropped/doubled under load (e.g. requests queued from other threads) |
 | `storm_reference_clock` | every coherent CIA-B timestamp during the storm is nondecreasing, including SOFT waits and the final elapsed sample | HRM appendix F: TA counts E clocks, TB counts TA underflows, no reload while running | invalid CIA reference (e.g. synthetic timer-read decrements), not evidence of lost interrupts |
 | `storm_softint` | in the same storm every SOFTINT issued is taken exactly once (each waited for, 3000 E timeout) | as above | lost software interrupts |
-| `storm_vertb` | in the same storm VERTB count = elapsed/frame length +-1 (lines per frame measured from the beam) | as above | lost/extra VBL interrupts |
+| `storm_vertb` | in the same storm VERTB count = rounded elapsed/calibrated frame period +-1; CIA-bracketed sixty-four-period beam calibration, independent of interrupt counts | as above | lost/extra VBL interrupts or failed/insufficiently precise beam calibration |

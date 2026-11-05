@@ -532,7 +532,7 @@ _fpu_exc_tab:
 	XENT	snan,54,$4000,$4000,15,e_snan
 	XENT	bsun,48,$8000,$8000,15,e_bsun
 	XENT	inex1,49,$0100,$0100,3,e_inex1
-	XENT	operr_int,52,$2000,$2000,3,e_operr_int
+	XENT	operr_int,52,$2000,$2000,$8003,e_operr_int	; EXC_MID_6888X: move-out uses format 9
 	XENT	ovfl_dis,53,$0000,$1000,12,e_ovfl
 	XENT	unfl_dis,51,$0000,$0800,12,e_unfl
 _fpu_exc_tab_end:

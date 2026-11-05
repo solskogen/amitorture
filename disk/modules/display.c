@@ -118,13 +118,13 @@ static void cptr(UWORD reg, const void *p) { cm(reg, (UWORD)((ULONG)p >> 16)); c
 
 /* sprite lists for probe group i only: sprite 2s shows slot s on line
  * PY(i)+dy; empty lists for slots without a probe */
-static void build_group(int i)
+static void build_group(int i, int first, int count)
 {
     int s;
     for (s = 0; s < 4; s++) {
         UWORD *sl = spr_list[s * 2];
-        struct probe *p = &pr[i][s];
-        if (p->data) {
+        struct probe *p = &pr[i][first + (s % count)];
+        if (s < count && p->data) {
             UWORD y = (UWORD)(PY(i) + p->dy);
             *sl++ = (UWORD)((y << 8) | ((p->h >> 1) & 0xff));
             *sl++ = (UWORD)(((y + 1) << 8) | (p->h & 1) | ((p->fine & 2) << 3) |
@@ -306,27 +306,30 @@ static UWORD clx_plane(int p) { return (UWORD)((0x40 << p) | (1 << p)); }
  * depend on how odd/even matches combine (see clx_spf_odd_independent). */
 static void scan_mask(UBYTE mask)
 {
-    int p, i, s;
+    int p, i, s, first;
+    int slots = !aga && (sc.con0 & 0x40) && !(sc.flags & SF_CUSTSPR) ? 2 : 4;
     memset(pr_col, 0, sizeof(pr_col));
     memset(pr_clx, 0, sizeof(pr_clx));
     for (i = 0; i < pr_n; i++) {
         if (!(pr[i][0].data | pr[i][1].data | pr[i][2].data | pr[i][3].data))
             continue;
-        if (!(sc.flags & SF_CUSTSPR))
-            build_group(i);
-        for (p = 0; p < 8; p++) {
-            UWORD clx = 0, clx2 = 0, bit = (p & 1) ? 0x20 : 0x02, r;
-            if (!((mask >> p) & 1))
-                continue;
-            if (p < 6)
-                clx = clx_plane(p);
-            else
-                clx2 = (p == 6) ? 0x41 : 0x82;
-            r = clean_clx(clx, clx2, 0);
-            pr_clx[i][p] = r;
-            for (s = 0; s < 4; s++)
-                if (pr[i][s].data && (r & (bit << s)))
-                    pr_col[i][s] |= (UBYTE)(1 << p);
+        for (first = 0; first < 4; first += slots) {
+            if (!(sc.flags & SF_CUSTSPR))
+                build_group(i, first, slots);
+            for (p = 0; p < 8; p++) {
+                UWORD clx = 0, clx2 = 0, bit = (p & 1) ? 0x20 : 0x02, r;
+                if (!((mask >> p) & 1))
+                    continue;
+                if (p < 6)
+                    clx = clx_plane(p);
+                else
+                    clx2 = (p == 6) ? 0x41 : 0x82;
+                r = clean_clx(clx, clx2, 0);
+                pr_clx[i][p] |= r;
+                for (s = 0; s < slots; s++)
+                    if (pr[i][first + s].data && (r & (bit << s)))
+                        pr_col[i][first + s] |= (UBYTE)(1 << p);
+            }
         }
     }
 }
@@ -801,7 +804,7 @@ static void clx_sprpf_case(const char *id, int dpf, int combos)
             pr[0][s].h = (UWORD)(origin[0] + 16 * cell[s]);
             pr[0][s].data = 0x0180;
         }
-        build_group(0);
+        build_group(0, 0, 4);
         g = clean_clx(clx, clx2, 0) & 0x7ffe;
         clx_unpack(clx, clx2, &en, &mv);
         for (s = 0; s < 4; s++) {
@@ -899,7 +902,7 @@ static void clx_spf_odd(void)
         pr[0][1].h = (UWORD)(origin[0] + 16);
         pr[0][1].data = 0x0180;
         apply();
-        build_group(0);
+        build_group(0, 0, 4);
         {
             UWORD v = clean_clx(0x00c3, 0, 0);   /* planes 1+2 enabled, match 1,1 */
             r[m][0] = v & 0x0022;                /* sprite 0: odd / even */
@@ -1725,7 +1728,7 @@ static void fmode_tests(void)
     int k;
     for (k = 0; k < 3; k++) {
         UBYTE g[8], e[8];
-        int W, ok, i;
+        int W, ok, i, edge = fm[k] == 2 ? 32 : 16;
         if (!aga) {
             amt_case(ids[k], AMT_ST_SKIP, "FMODE needs AGA");
             continue;
@@ -1737,12 +1740,12 @@ static void fmode_tests(void)
         sc.fmode = fm[k];
         sc.diwstrt = (UWORD)((PY0 << 8) | 0x81);
         ae_setup(8);
-        /* this FMODE's own pixel origin: edge between words 0 and 1 of row 0
-         * (all probe groups on line PY0) */
+        /* BPAGEM without BPL32 repeats the aligned 16-bit word: its first
+         * nonzero AE word is word 2, not word 1. */
         pstep = 0;
-        edge_measure((UWORD)(origin[0] + 16 - 12), 24, 0, 8, &ff, &fl, 0);
+        edge_measure((UWORD)(origin[0] + edge - 12), 24, fm[k] == 2 ? 1 : 0, 8, &ff, &fl, 0);
         pstep = 3;
-        of = ff >= 0 ? (UWORD)(origin[0] + 16 - 12 + ff - 16) : origin[0];
+        of = ff >= 0 ? (UWORD)(origin[0] + edge - 12 + ff - edge) : origin[0];
         reset_probes();
         pr_n = 2;
         for (i = 0; i < 2; i++) {
@@ -1769,7 +1772,10 @@ static void fmode_tests(void)
         e[5] = (UBYTE)(4 * W);
         e[6] = (UBYTE)(3 * W + 6);
         e[7] = (UBYTE)(4 * W + 5);
-        ok = W >= 20 && (W % unit[k]) == 0;
+        if (fm[k] == 2)
+            for (i = 0; i < 8; i++)
+                e[i] &= 0xfe;
+        ok = ff >= 0 && W >= 20 && (W % unit[k]) == 0;
         for (i = 0; i < 8; i++)
             if (g[i] != e[i])
                 ok = 0;
@@ -1787,8 +1793,9 @@ static void fmode_tests(void)
                      "address-encoded 8-plane playfield (plane p word w = bit p of w)");
             json_int("fetch_unit_words", unit[k]);
             json_obj_end();
-            json_str("why", "AGA FMODE 1/2 (32-bit) and 3 (64-bit) fetches: row 0 shows the plane words "
-                     "in memory order, every row starts W words after the previous one with modulo 0, "
+            json_str("why", "AGA FMODE 1 (32-bit), 2 (16-bit page mode) and 3 (64-bit) fetches: "
+                     "mode 2 repeats the aligned even word; modes 1/3 preserve memory order. "
+                     "Every row starts W words after the previous one with modulo 0, "
                      "and W is a whole number of fetch units (AGA documentation: FMODE)");
         }
         json_obj("ctx");

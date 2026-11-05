@@ -11,6 +11,10 @@ For every (reference, twin) pair that both ran:
     pseudo cases marked engine_dependent (host.speed_*, cases.py): how fast
     the host runs an instruction is what tells the JIT and the interpreter
     apart, so their verdicts may differ by design.
+Bounded Paula/H-counter sampling that was explicitly inconclusive is listed
+as not comparable, not a match and not parity coverage. RTC wall-clock dates
+are compared through their architectural assertions and relationships; raw
+records remain intact. parity_observations documents the exact scoped rules.
 Softfloat twins are compared the same way but reported as
 `fpu_mode_difference` (informational): native FPU on this host is 64-bit,
 softfloat is 80-bit extended, so differences there are expected.
@@ -18,7 +22,7 @@ softfloat is 80-bit extended, so differences there are expected.
 from __future__ import annotations
 
 from . import cases as casemod
-from . import amiberry_cfg, matrix
+from . import amiberry_cfg, matrix, parity_observations
 
 ENFORCED = {"jit", "threaded"}
 RAN = {"pass", "fail", "incomplete"}
@@ -91,6 +95,8 @@ def compare(ref_res, twin_res, ref_fp=None, twin_fp=None):
     items = []
     rc = {k: v for k, v in ref_fp["cases"].items() if not v.get("engine_dependent")}
     tc = {k: v for k, v in twin_fp["cases"].items() if not v.get("engine_dependent")}
+    not_comparable, observations = [], []
+    compared = 0
     for key in sorted(set(rc) | set(tc)):
         a, b = rc.get(key), tc.get(key)
         base = {"kind": out_kind, "entry": twin_res["id"], "ref_entry": ref_res["id"], "twin_kind": kind,
@@ -102,17 +108,26 @@ def compare(ref_res, twin_res, ref_fp=None, twin_fp=None):
                               ref=None if a is None else a["rec"], twin=None if b is None else b["rec"],
                               why=f"case {key} reported on {have} but missing on {lack}"))
             continue
-        if a["fp"] != b["fp"]:
-            paths = casemod.diff_paths(a["rec"], b["rec"])
+        compared += 1
+        ar, ap = parity_observations.normalize(a, rc)
+        br, bp = parity_observations.normalize(b, tc)
+        if ap or bp:
+            observations.append({"case_key": key, "ref_fields": ap, "twin_fields": bp,
+                                 "why": "compare RTC assertions and clock relationships, not launch wall time"})
+        if casemod.canonical(ar) != casemod.canonical(br):
+            paths = casemod.diff_paths(ar, br)
             what = ", ".join(p for p, _, _ in paths[:6]) + (" ..." if len(paths) > 6 else "")
             if a.get("excluded") or b.get("excluded"):
                 base["not_compared_fields"] = {"ref": a.get("excluded"), "twin": b.get("excluded"),
                                                "note": "allowed-result markers, excluded from the fingerprint"}
+            if ap or bp:
+                base.update(comparison_ref=ar, comparison_twin=br, observation_fields={"ref": ap, "twin": bp})
             items.append(dict(base, subkind="value", mod=a["mod"], case=a["case"], ref=a["rec"], twin=b["rec"],
                               paths=[{"path": p, "ref": x, "twin": y} for p, x, y in paths[:40]],
                               why=f"{key}: {twin_res['id']} differs from {ref_res['id']} in {what} "
                                   f"(the entries differ only in {', '.join(d['option'] for d in differing) or '?'})"))
-    info.update(status="compared", compared=len(set(rc) & set(tc)), mismatches=len(items))
+    info.update(status="compared", compared=compared, mismatches=len(items),
+                not_comparable=not_comparable, observations=observations)
     return items, info
 
 

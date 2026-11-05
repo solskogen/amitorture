@@ -44,11 +44,17 @@ One record per line:
 | `fpu` | string | FPU found by the probe (same as `probe.fpu`) |
 | `mmu` | 0/1 | MMU found by the probe |
 | `modules` | object | selected compiled modules, as name-to-id mappings (ids 0-63); absent on older v1 disks |
+| `policy` | object | declared instruction policy: `{"integer":"strict"|"compat","fpu":"strict"|"compat"}`, from `AMT_F_INTCOMPAT` (32) / `AMT_F_FPUCOMPAT` (64); absent on older v1 disks |
 | `probe` | object | everything the probe found, see 1.3 |
 
 Every declared module must emit a matching begin/end pair. Module ids must be unique.
 An empty manifest means this disk has no compiled module selected by the run mask; it is skipped, not passed.
 Older captures without a manifest can be checked for lifecycle completion, but not declared-module coverage.
+Instruction policy is declared separately from the hardware probe: a CPU/FPU
+model alone does not establish whether hardware-only trap assertions apply.
+Raw media defaults to strict policies (`flags=0`). The runner derives compatibility
+bits from the configured `*_no_unimplemented=false` options; JIT fixup declares
+both policies compatible. Numerical and enabled-exception assertions remain active.
 
 ### 1.3 `hello.probe`: what the hardware looks like from inside
 

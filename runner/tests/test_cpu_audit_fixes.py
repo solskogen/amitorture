@@ -57,6 +57,32 @@ class CPUAuditFixes(unittest.TestCase):
             else:
                 self.assertEqual(result.returncode, 0, result.stderr)
 
+    def test_unimplemented_integer_expectations_follow_declared_policy(self):
+        helper = function((MODULES / "exceptions.c").read_text(), "unimpl060_strict_policy")
+        code = """
+#define AMT_F_INTCOMPAT 32
+#define AMT_ST_UNTESTABLE 3
+static struct { ULONG flags; } amt_par;
+static int emitted;
+static void amt_case(const char *id, int status, const char *why) {
+    assert(!strcmp(id, "unimpl060_movep_w"));
+    assert(status == AMT_ST_UNTESTABLE);
+    assert(strstr(why, "strict-policy interpreter lane"));
+    emitted++;
+}
+""" + helper + """
+int main(void) {
+    for (unsigned flags = 0; flags < 128; flags++) {
+        amt_par.flags = flags;
+        emitted = 0;
+        int applicable = unimpl060_strict_policy("unimpl060_movep_w");
+        assert(applicable == !(flags & AMT_F_INTCOMPAT));
+        assert(emitted == !!(flags & AMT_F_INTCOMPAT));
+    }
+}
+"""
+        self.native(code, [code.replace("amt_par.flags & AMT_F_INTCOMPAT", "0")])
+
     def test_checked_hot_includes_first_call(self):
         helper = runtime_function("amt_hot_checked")
         source = """

@@ -458,21 +458,25 @@ static void lines_case(const char *id, const UWORD *lines, const UBYTE *lof,
     amt_case_close();
 }
 
-/* VHPOSR H sampling for cck_per_line: blocks of 1000 samples (tm_hscan)
+/* VHPOSR H sampling for cck_per_line: blocks of 64 samples (tm_hscan)
  * until at least TM_HS_LINES beam lines have passed (counted from V between
  * blocks; a block lasts far less than a frame) and at least TM_HS_MIN_BLOCKS
  * blocks were taken. Covering whole frames, not a fixed sample count, makes
  * the coverage independent of how fast the CPU polls compared to the beam.
  * Returns 0 if the beam stood still (bound: CIA E clock / poll count). */
 #define TM_HS_FRAMES     8
-#define TM_HS_MIN_BLOCKS 100
-static int hscan_frames(UWORD *hmax, UWORD *hmin, ULONG *blocks, ULONG *nlines)
+#define TM_HS_MIN_BLOCKS 1563
+#define TM_HS_SAMPLES 64
+static int hscan_frames(UWORD *hmax, UWORD *hmin, ULONG *blocks, ULONG *nlines,
+                        ULONG *emin, ULONG *emax)
 {
-    ULONG lpf = amt_probe_result.pal ? 313 : 263;
+    ULONG lpf = (amt_probe_result.pal ? 312 : 262) + ((CREG(R_VPOSR) >> 15) & 1);
     ULONG want = TM_HS_FRAMES * lpf, done = 0, nb = 0, v, pv, r, e0, still = 0;
+    ULONG start_before, start_after, end_before = 0, end_after = 0;
     UWORD mx = 0, mn = 0xff;
+    start_before = ec_read();
     pv = beam_v();
-    e0 = ec_read();
+    e0 = start_after = ec_read();
     for (;;) {
         r = tm_hscan(1);
         nb++;
@@ -480,16 +484,18 @@ static int hscan_frames(UWORD *hmax, UWORD *hmin, ULONG *blocks, ULONG *nlines)
             mx = (UWORD)((r >> 8) & 0xff);
         if ((r & 0xff) < mn)
             mn = (UWORD)(r & 0xff);
+        end_before = ec_read();
         v = beam_v();
+        end_after = ec_read();
         if (v != pv) {
             done += (v + lpf - pv) % lpf;
             still = 0;
-        } else if (++still > TM_STUCK_POLLS / 1000) {
+        } else if (++still > TM_STUCK_POLLS / TM_HS_SAMPLES) {
             /* no line change over the poll bound (in samples; see the
              * bounds comment: chipset time may stand still while a fast
              * CPU runs) */
             tm_why = 2;
-            tm_why_still = still * 1000;
+            tm_why_still = still * TM_HS_SAMPLES;
             tm_why_e = e0 - ec_read();
             break;
         }
@@ -499,7 +505,7 @@ static int hscan_frames(UWORD *hmax, UWORD *hmin, ULONG *blocks, ULONG *nlines)
         if (e0 - ec_read() > TM_FRAMES_E(150)) {
             tm_why = 1;                 /* 3 s: beam far slower than the CIA */
             tm_why_e = e0 - ec_read();
-            tm_why_still = still * 1000;
+            tm_why_still = still * TM_HS_SAMPLES;
             break;
         }
     }
@@ -507,16 +513,27 @@ static int hscan_frames(UWORD *hmax, UWORD *hmin, ULONG *blocks, ULONG *nlines)
     *hmin = mn;
     *blocks = nb;
     *nlines = done;
-    return done >= want;
+    *emin = start_after - end_before;
+    *emax = start_before - end_after;
+    return done >= want && nb >= TM_HS_MIN_BLOCKS && !tm_why;
 }
 
-static int hscan_status(UWORD hmax, UWORD hmin, UWORD expected_max)
+static int hscan_status(UWORD hmax, UWORD expected_max, ULONG lines,
+                        ULONG emin, ULONG emax, int pal)
 {
+    ULONG period4 = pal ? 908 : 910;
+    ULONG uncertainty4 = 4 * (228 + 5);
     if (hmax > expected_max)
         return AMT_ST_FAIL;
-    if (hmin == 0 && hmax >= expected_max - 1)
-        return AMT_ST_PASS;
-    return AMT_ST_UNTESTABLE;
+    /* E clocks bracket both endpoint reads. Unknown start/end H adds
+     * at most one line (228 cck), plus one E tick of quantization;
+     * require the entire resulting period
+     * interval to fit +/- 1/4 cck, not just intersect the expected rate. */
+    if (!lines || emin > emax || emin > 10000000UL || emax > 10000000UL ||
+        emin * 20 < uncertainty4 || emin * 20 - uncertainty4 < lines * (period4 - 1) ||
+        emax * 20 + uncertainty4 > lines * (period4 + 1))
+        return AMT_ST_FAIL;
+    return AMT_ST_PASS;
 }
 
 static void beam_tests(void)
@@ -525,7 +542,7 @@ static void beam_tests(void)
     UBYTE lof[NFR];
     int pal = amt_probe_result.pal;
     UWORD hmax, hmin;
-    ULONG n, blocks, nlines;
+    ULONG n, blocks, nlines, emin, emax;
     UWORD exp_hmax = pal ? 0xe2 : 0xe3;
     int ok, status;
 
@@ -560,24 +577,22 @@ static void beam_tests(void)
 
     /* colour clocks per line: the H counter runs 0..$E2 (227 cck, PAL) or
      * up to $E3 on NTSC long lines (227/228 alternating; HRM VHPOSR) */
-    ok = hscan_frames(&hmax, &hmin, &blocks, &nlines);
+    ok = hscan_frames(&hmax, &hmin, &blocks, &nlines, &emin, &emax);
     amt_set_sr(0x2000);
     if (!ok) {
         stuck_case("cck_per_line", "8 frames of beam lines while sampling VHPOSR", WHY_BEAM_STUCK);
         return;
     }
-    /* Polls need not visit every H position, even across whole frames:
-     * instruction/block timing can quantize every access to the same phases.
-     * An out-of-range value is a failure; missing endpoints is insufficient
-     * coverage, not evidence that the hardware counter missed them. */
-    status = hscan_status(hmax, hmin, exp_hmax);
+    status = hscan_status(hmax, exp_hmax, nlines, emin, emax, pal);
     if (status == AMT_ST_PASS) {
         amt_case_open("cck_per_line", AMT_ST_PASS);
         json_obj("timing");
         json_hexn("hmax_seen", hmax, 2);
         json_hexn("hmin_seen", hmin, 2);
-        json_int("samples", (long)(blocks * 1000));
+        json_int("samples", (long)(blocks * TM_HS_SAMPLES));
         json_int("lines", (long)nlines);
+        json_int("elapsed_e_min", (long)emin);
+        json_int("elapsed_e_max", (long)emax);
         json_obj_end();
         amt_case_close();
     } else {
@@ -585,6 +600,8 @@ static void beam_tests(void)
         json_obj("expect");
         json_hexn("hmax", exp_hmax, 2);
         json_hexn("hmin", 0, 2);
+        json_int("period_quarter_cck", pal ? 908 : 910);
+        json_int("tolerance_quarter_cck", 1);
         json_obj_end();
         json_obj("got");
         json_hexn("hmax", hmax, 2);
@@ -593,15 +610,17 @@ static void beam_tests(void)
         json_str("why", hmax > exp_hmax
                  ? (pal ? "VHPOSR H exceeds $E2 on a PAL line (227 colour clocks; HRM ch.6 beam position)"
                         : "VHPOSR H exceeds $E3 on an NTSC long line (228 colour clocks; HRM, LOL)")
-                 : "CPU polling did not cover both ends of the VHPOSR H range; access timing can "
-                   "skip these positions even over whole frames, so the line-end check is inconclusive");
+                 : "CIA-bracketed elapsed time per beam line, including endpoint phase uncertainty, "
+                   "does not establish the specified line period within a quarter colour clock");
         json_obj("ctx");
         json_int("pal", pal);
         json_int("frames", TM_HS_FRAMES);
         json_obj_end();
         json_obj("timing");
-        json_int("samples", (long)(blocks * 1000));
+        json_int("samples", (long)(blocks * TM_HS_SAMPLES));
         json_int("lines", (long)nlines);
+        json_int("elapsed_e_min", (long)emin);
+        json_int("elapsed_e_max", (long)emax);
         json_obj_end();
         amt_case_close();
     }

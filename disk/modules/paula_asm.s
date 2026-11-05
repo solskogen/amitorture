@@ -26,6 +26,7 @@
 	xdef	_pa_act,_pa_feed_left,_pa_feed_p,_pa_feed_a
 	xdef	_pa_stamp,_pa_stamp_write
 	xdef	_pa_sample_invalid
+	xdef	_pa_bad_beam
 	xref	_amt_frames
 
 PA_LOGN	equ	96
@@ -44,13 +45,13 @@ _pa_l4:
 	eor.w	d0,d2
 	and.w	#$0007,d2
 	bne.s	.retry
-	cmp.b	#3,d1			; near the line wrap V and H may not
-	bcs.s	.retry			; change together: read again
-	cmp.b	#224,d1
-	bhi.s	.retry
+	cmp.b	#2,d1			; V increments at H=2; only H=0/1
+	bcs.s	.retry			; combine the previous V with the new H
 	bra.s	.sample
 .retry:	dbf	d3,.t
 	move.w	#1,_pa_sample_invalid
+	move.w	d0,_pa_bad_beam
+	move.w	d1,_pa_bad_beam+2
 	move.w	#$0780,$dff09a
 	move.w	#$0780,$dff09c
 	movem.l	(sp)+,d0-d3/a0-a1
@@ -135,13 +136,13 @@ stamp:
 	eor.w	d0,d2
 	and.w	#$0007,d2
 	bne.s	.retry
-	cmp.b	#3,d1			; near the line wrap V and H may not
-	bcs.s	.retry			; change together: read again
-	cmp.b	#224,d1
-	bhi.s	.retry
+	cmp.b	#2,d1			; high/low/high already guards V8-V10;
+	bcs.s	.retry			; the final H positions are valid too
 	bra.s	.sample
 .retry:	dbf	d3,.t
 	move.w	#1,_pa_sample_invalid
+	move.w	d0,_pa_bad_beam
+	move.w	d1,_pa_bad_beam+2
 .sample:
 	move.l	_amt_frames,(a0)+
 	move.w	d0,(a0)+
@@ -159,6 +160,7 @@ _pa_log:	ds.b	12*PA_LOGN
 _pa_log_end:
 _pa_n:		ds.w	1
 _pa_sample_invalid: ds.w	1
+_pa_bad_beam:	ds.l	1
 _pa_stop_at:	ds.w	1
 _pa_feed_left:	ds.w	1
 		ds.w	1

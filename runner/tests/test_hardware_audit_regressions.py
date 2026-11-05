@@ -62,6 +62,294 @@ class HardwareAuditRegressions(unittest.TestCase):
                 self.assertNotEqual(
                     subprocess.run([self.compile(source.replace(before, after))]).returncode, 0)
 
+    def test_aga_page_mode_preserves_fetch_stride_and_repeated_word_oracle(self):
+        text = (MODULES / "display.c").read_text()
+        start = text.index("        /* row 0: words 1 and 6")
+        block = text[start:text.index("        amt_case_open(ids[k]", start)]
+        code = PREAMBLE + r"""
+static const UWORD fm[3] = {1, 2, 3};
+static const UBYTE unit[3] = {2, 2, 4};
+static int verdict(const UBYTE *input, int k, int ff) {
+    UBYTE g[8], e[8];
+    int W, i, ok;
+    memcpy(g, input, 8);
+""" + block + r"""
+    return ok;
+}
+int main(void) {
+    static const int rows[8] = {0, 1, 0, 1, 3, 4, 3, 4};
+    static const int cols[8] = {1, 0, 6, 5, 1, 0, 6, 5};
+    for (int k = 0; k < 3; k++) for (int stride = 20; stride <= 32; stride += 4) {
+        UBYTE input[8];
+        for (int i = 0; i < 8; i++) {
+            int address = rows[i] * stride + cols[i];
+            input[i] = k == 1 ? address & ~1 : address;
+        }
+        assert(verdict(input, k, 0));
+        assert(!verdict(input, k, -1));
+        for (int i = 0; i < 8; i++) {
+            input[i] ^= 1;
+            assert(!verdict(input, k, 0));
+            input[i] ^= 1;
+        }
+    }
+}
+"""
+        self.check(code, (("e[i] &= 0xfe;", "e[i] &= 0xff;"),
+                          ("ff >= 0 && W >= 20", "W >= 20")))
+
+    def test_aga_page_mode_calibration_uses_the_first_surviving_address_bit(self):
+        text = (MODULES / "display.c").read_text()
+        start = text.index("        pstep = 0;", text.index("static void fmode_tests"))
+        block = text[start:text.index("        reset_probes();", start)]
+        code = PREAMBLE + r"""
+static const UWORD fm[3] = {1, 2, 3};
+static const UWORD origin[1] = {128};
+static int pstep, mode;
+static void edge_measure(UWORD start, int count, int plane, int planes,
+                         int *first, int *last, int res) {
+    int edge = mode == 2 ? 32 : 16;
+    assert(start == origin[0] + edge - 12 && count == 24);
+    assert(plane == (mode == 2 ? 1 : 0));
+    assert(planes == 8 && res == 0 && pstep == 0);
+    *first = *last = 12;
+}
+int main(void) {
+    for (int k = 0; k < 3; k++) {
+        int edge = fm[k] == 2 ? 32 : 16, ff, fl;
+        UWORD of;
+        mode = fm[k];
+""" + block + r"""
+        assert(of == origin[0] && pstep == 3);
+    }
+}
+"""
+        self.check(code, (("fm[k] == 2 ? 1 : 0, 8", "0, 8"),))
+
+    def test_rtc_busy_requires_a_pulse_witness_and_reports_bounded_absence(self):
+        text = (MODULES / "misc_hw_rtc.c").read_text()
+        code = PREAMBLE + r"""
+enum { AMT_ST_PASS, AMT_ST_FAIL, AMT_ST_UNTESTABLE };
+enum { CD_BUSY = 2 };
+static struct { int running; } sv;
+static ULONG tick;
+static int observed, emit_pulse, polls;
+static ULONG amt_ticks(void) { return tick++; }
+static ULONG mh_cck_ms(int ms) { return ms; }
+static void rw(int reg, int value) { assert(reg == 13 && value == 0); }
+static int rr(int reg) { assert(reg == 13); return emit_pulse && polls++ == 20 ? CD_BUSY : 0; }
+static void amt_case(const char *id, int status, const char *why) { observed = status; }
+static void amt_case_open(const char *id, int status) { observed = status; }
+static void amt_case_close(void) {}
+static void json_obj(const char *key) {}
+static void json_obj_end(void) {}
+static void json_str(const char *key, const char *value) {}
+static void json_int(const char *key, long value) {}
+""" + function(text, "t_busy") + r"""
+int main(void) {
+    sv.running = 1;
+    emit_pulse = 1;
+    t_busy();
+    assert(observed == AMT_ST_PASS);
+    emit_pulse = 0;
+    tick = polls = 0;
+    t_busy();
+    assert(observed == AMT_ST_FAIL);
+    sv.running = 0;
+    t_busy();
+    assert(observed == AMT_ST_UNTESTABLE);
+}
+"""
+        self.check(code, (('amt_case_open("rtc_busy", AMT_ST_FAIL)',
+                           'amt_case_open("rtc_busy", AMT_ST_PASS)'),))
+
+    def test_bfd_observation_strobes_only_with_idle_blitter_and_checks_list_integrity(self):
+        text = (MODULES / "copper.c").read_text()
+        header = (MODULES / "hardware_audit.h").read_text()
+        code = PREAMBLE + r"""
+enum { AMT_ST_PASS, AMT_ST_FAIL, AMT_ST_UNTESTABLE };
+enum { OFF_L1 = 0,
+       INTREQ = 0x9c, INTREQR = 0x1e, DMACON = 0x96,
+       DMAF_SET = 0x8000, DMAF_DMAEN = 0x200, DMAF_COPEN = 0x80,
+       DMAF_BLTEN = 0x40, MK_A = 4, MK_B = 2 };
+static UWORD memory[4096], reg, irq, *cw;
+static UBYTE *pool = (UBYTE *)memory;
+static int busy, started, bfd, reads, damage, faulty_wait, passes, failures;
+static ULONG frame;
+static UWORD *regptr(int address) {
+    if (address != INTREQR) return &reg;
+    ++reads;
+    if (damage) memory[0] = 0xffff;
+    if (!bfd) busy = 0;
+    int release_busy = bfd || faulty_wait;
+    int skip = (memory[5] & 0x8000) || !release_busy;
+    irq = ((bfd || reads >= 3) ? MK_A : 0) | (skip ? 0 : MK_B);
+    return &irq;
+}
+#define CU(reg) (*regptr(reg))
+static void mk_clear(void) { reads = 0; }
+static void wait_vbl(void) { assert(!busy); started = 0; }
+static void cop_start(ULONG off) {
+    assert(!busy && off == 0);
+    assert(memory[0] == 0x5801 && memory[1] == 0xfffe);
+    assert(memory[4] == 0x4001 && (memory[5] & 1));
+    bfd = (memory[3] >> 15) & 1;
+    started = 1;
+}
+static void wait_line(UWORD y) { assert(started && y == 0x50); }
+static void blit_start_long(void) { assert(started); busy = 1; }
+static int blit_busy(void) { return busy; }
+static void blit_wait(void) { busy = 0; }
+static void cop_idle(void) { assert(!busy); }
+static ULONG amt_frames_now(void) { return frame++; }
+static UWORD hw_vline(void) { return frame; }
+static void wait_progress(ULONG v, ULONG last, ULONG *budget) {}
+static void amt_case(const char *id, int status, const char *why) { assert(0); }
+static void amt_case_open(const char *id, int status) {
+    if (status == AMT_ST_PASS) passes++; else if (status == AMT_ST_FAIL) failures++; else assert(0);
+}
+static void amt_case_close(void) {}
+static void json_obj(const char *key) {}
+static void json_obj_end(void) {}
+static void json_int(const char *key, long value) {}
+static void json_str(const char *key, const char *value) {}
+static void json_hexn(const char *key, ULONG value, int width) {}
+static void json_list(const char *key, ULONG off, int count) {}
+"""
+        code += "\n".join(function(text, name) for name in
+                          ("lst", "cmove", "cwaitx", "cwait", "cend", "cmark"))
+        code += function(text, "bfd_tests")
+        code += r"""
+int main(void) {
+    bfd_tests();
+    assert(passes == 2 && failures == 0);
+    passes = failures = 0;
+    damage = 1;
+    bfd_tests();
+    assert(passes == 0 && failures == 2);
+    damage = 0;
+    faulty_wait = 1;
+    passes = failures = 0;
+    bfd_tests();
+    assert(passes == 1 && failures == 1);
+}
+"""
+        self.check(code, (
+            ("cop_start(OFF_L1);\n        wait_line(0x50);",
+             "wait_line(0x50);\n        cop_start(OFF_L1);"),
+            ("blit_wait();\n        early = (CU(INTREQR) & MK_B) != 0;\n        cop_idle();",
+             "cop_idle();\n        early = (CU(INTREQR) & MK_B) != 0;\n        blit_wait();"),
+            ("ok = list_ok && busy0", "ok = busy0"),
+            ("cwaitx(0x40, 0x00, 0x7f, 0xfe, 0, 1);",
+             "cwaitx(0x40, 0x00, 0x7f, 0xfe, 1, 1);"),
+        ))
+
+    def test_storm_calibrates_complete_beam_periods_without_terminal_line_reads(self):
+        text = (MODULES / "interrupts.c").read_text()
+        constants = text[text.index("#define IR_FRAME_PERIODS"):text.index("static ULONG frame_period_e")]
+        code = PREAMBLE + constants + r"""
+enum { CIAB_BASE, C_CRA, C_CRB, C_TALO, C_TAHI, C_TBLO, C_TBHI,
+       CR_SPMODE = 0x40, CR_START = 1, CR_LOAD = 0x10 };
+static ULONG tick, step, period, lines;
+static UWORD sr = 0x2000;
+static UWORD amt_get_sr(void) { return sr; }
+static void amt_set_sr(UWORD value) { sr = value; }
+static int frozen_beam, frozen_clock;
+static void cia_wr(int a, int b, int c) {}
+static void wait_window(void) {}
+static ULONG eb_read(void) { return tick / 5; }
+static ULONG beam_v(void) {
+    assert(sr == 0x2700);
+    if (!frozen_clock) tick += step;
+    return frozen_beam ? 0 : (tick / period) % lines;
+}
+""" + function(text, "frame_period_e") + r"""
+int main(void) {
+    for (lines = 262; lines <= 313; lines++) {
+        if (lines != 262 && lines != 263 && lines != 312 && lines != 313) continue;
+        period = lines > 300 ? 227 : 228;
+        for (step = 100; step <= 400; step += 100) {
+            tick = 0;
+            ULONG actual = frame_period_e(), expected = IR_FRAME_PERIODS * lines * period / 5;
+            assert(actual + 80 >= expected && actual <= expected + 80);
+            assert(sr == 0x2000);
+        }
+        for (step = 300; step <= 5000; step += 10) {
+            tick = 0;
+            ULONG actual = frame_period_e();
+            assert(frame_periods_seen == IR_FRAME_PERIODS);
+            assert(!!actual == (frame_lo_e && frame_hi_e >= frame_lo_e &&
+                                frame_hi_e - frame_lo_e <= frame_lo_e / 512));
+        }
+    }
+    frozen_beam = 1;
+    tick = 0;
+    assert(!frame_period_e());
+    frozen_clock = 1;
+    tick = 0;
+    assert(!frame_period_e());
+    frozen_beam = 0;
+    frozen_clock = 0;
+    tick = 0;
+    step = 20000;
+    assert(!frame_period_e()); // endpoint uncertainty cannot justify the count
+}
+"""
+        self.check(code, (("wraps == IR_FRAME_PERIODS + 1", "wraps == 3"),
+                          ("amt_set_sr(0x2700)", "amt_set_sr(0x2000)"),
+                          ("hi - lo <= lo / 512", "hi - lo <= lo / 128")))
+
+    def test_skip_before_wait_checks_both_blocking_and_release(self):
+        text = (MODULES / "copper.c").read_text()
+        start = text.index("    /* A true SKIP suppresses MOVE")
+        block = text[start:text.index("\n}\n", start)]
+        code = PREAMBLE + r"""
+#define OFF_L1 64
+#define MK_C 16
+#define AMT_ST_PASS 0
+#define AMT_ST_FAIL 1
+#define json_obj(...) ((void)0)
+#define json_hexn(...) ((void)0)
+#define json_obj_end(...) ((void)0)
+#define json_str(...) ((void)0)
+#define json_list(...) ((void)0)
+static int status, calls, finite_wait;
+static UWORD early, late;
+static void lst(ULONG off) { assert(off == OFF_L1); finite_wait = 0; }
+static void cwait(UWORD v, UWORD h) {
+    assert((v == 0x60 && h == 0x10) || (v == 0x70 && h == 0));
+    if (v == 0x70) finite_wait++;
+}
+static void cskip(UWORD v, UWORD h) { assert(v == 0x50 && h == 0); }
+static void cmark(UWORD marker) { assert(marker == MK_C); }
+static void cend(void) {}
+static UWORD run_markers(ULONG off, UWORD start, UWORD lines,
+                         ULONG *lo, ULONG *hi, int *found, UWORD mask) {
+    assert(off == OFF_L1 && start == 0x40 && mask == 0 && finite_wait == 1);
+    assert(lines == (calls ? 0x40 : 0x28));
+    return calls++ ? late : early;
+}
+static void amt_case_open(const char *id, int value) {
+    assert(!strcmp(id, "skip_over_wait")); status = value;
+}
+static void amt_case_close(void) {}
+static void run(void) {
+    ULONG lo, hi;
+    int f;
+""" + block + r"""
+}
+int main(void) {
+    for (early = 0; early <= MK_C; early += MK_C)
+        for (late = 0; late <= MK_C; late += MK_C) {
+            calls = 0;
+            run();
+            assert(calls == 2);
+            assert(status == (!early && late == MK_C ? AMT_ST_PASS : AMT_ST_FAIL));
+        }
+}
+"""
+        self.check(code, [("before == 0 && after == MK_C", "before == 0")])
+
     def test_domains_disjoint_intervals_and_independent_observation_gates(self):
         source = PREAMBLE + (MODULES / "hardware_audit.h").read_text() + r"""
 int main(void) {
@@ -495,6 +783,139 @@ int main(void) { scenario(16); scenario(PA_MS(4)); return 0; }
             ("rs_disp += (prb & PRB_DIR) ? -1 : 1;", ""),
         ])
 
+    def test_line_period_measurement_counts_wraps_with_short_sampling_blocks(self):
+        text = (MODULES / "timing.c").read_text()
+        asm = (MODULES / "timing_asm.s").read_text()
+        self.assertIn(".o:\tmove.w\t#63,d3", asm[asm.index("_tm_hscan:"):])
+        code = PREAMBLE + r"""
+enum { AMT_ST_PASS, AMT_ST_FAIL, R_VPOSR };
+static struct { int pal; } amt_probe_result;
+static UWORD vposr;
+#define CREG(r) vposr
+static ULONG tick, step, period4;
+static ULONG tm_stuck_polls = 4000000;
+static int tm_why;
+static ULONG tm_why_still, tm_why_e;
+#define TM_STUCK_POLLS tm_stuck_polls
+#define TM_FRAMES_E(n) ((ULONG)(n) * 15000UL)
+#define TM_HS_FRAMES 8
+#define TM_HS_MIN_BLOCKS 1563
+#define TM_HS_SAMPLES 64
+static ULONG ec_read(void) { return 0xffffffffUL - tick; }
+static ULONG beam_v(void) {
+    ULONG lpf = (amt_probe_result.pal ? 312 : 262) + ((vposr >> 15) & 1);
+    return (tick * 20 / period4) % lpf;
+}
+static ULONG tm_hscan(int n) { assert(n == 1); tick += step; return 0xdf02; }
+""" + function(text, "hscan_frames") + function(text, "hscan_status") + r"""
+int main(void) {
+    for (amt_probe_result.pal = 0; amt_probe_result.pal <= 1; amt_probe_result.pal++)
+        for (int lof = 0; lof <= 1; lof++) {
+            UWORD mx, mn;
+            ULONG blocks, lines, emin, emax;
+            tick = tm_why = 0;
+            step = 950;
+            period4 = amt_probe_result.pal ? 908 : 910;
+            vposr = lof ? 0x8000 : 0;
+            assert(hscan_frames(&mx, &mn, &blocks, &lines, &emin, &emax));
+            assert(lines == tick * 20 / period4);
+            assert(emin == tick && emax == tick && mn == 2 && mx == 0xdf);
+            assert(hscan_status(mx, amt_probe_result.pal ? 0xe2 : 0xe3,
+                                lines, emin, emax, amt_probe_result.pal) == AMT_ST_PASS);
+            // A whole-frame block must not earn a pass from aliased line deltas.
+            tick = tm_why = 0;
+            step = 100000;
+            assert(!hscan_frames(&mx, &mn, &blocks, &lines, &emin, &emax));
+        }
+}
+"""
+        self.check(code, (("done += (v + lpf - pv) % lpf;", "done += v + lpf - pv;"),))
+
+    def test_paula_sample_failure_is_local_but_survives_aggregated_trials(self):
+        text = (MODULES / "paula.c").read_text()
+        header = (MODULES / "hardware_audit.h").read_text()
+        code = PREAMBLE + r"""
+enum { AMT_ST_PASS, AMT_ST_FAIL, AMT_ST_UNTESTABLE };
+static int observed;
+static UWORD pa_sample_invalid, pa_n, pa_stop_at, pa_feed_left, pa_act[16], pa_bad_beam[2];
+static int pa_log[96], *pa_logp;
+static void amt_case_open(const char *id, int status) { observed = status; }
+static void amt_case_close(void) {}
+static void json_obj(const char *key) {}
+static void json_obj_end(void) {}
+static void json_arr(const char *key) {}
+static void json_arr_end(void) {}
+static void json_int(const char *key, long value) {}
+static void json_str(const char *key, const char *value) {}
+static void json_hexn(const char *key, ULONG value, int width) {}
+"""
+        code += function(header, "hw_modulator_period")
+        code += text[text.index("struct chk {"):text.index("static void chk_modulator")]
+        code += "\n".join(function(text, name) for name in
+                          ("chk_fields", "chk_one", "chk_report", "log_reset"))
+        code += r"""
+struct pa_ent { int unused; };
+enum { R_DMACON, R_INTENA };
+static UWORD regs[2], test_len, test_per;
+static int trial;
+#define CREG(r) regs[r]
+#define AMT_QUICK() 0
+#define INT_AUD(c) (0x80 << (c))
+static void aud_quiet(void) {}
+static void tb_init(void) {}
+static ULONG zbuf(void) { return 0; }
+static ULONG ent_t2(const struct pa_ent *entry) { return 0; }
+static void ch_setup(int c, ULONG p, UWORD len, UWORD per, int v) { test_len = len; test_per = per; }
+static void pa_stamp_write(struct pa_ent *e, UWORD *reg, ULONG value) {
+    pa_sample_invalid = !trial++;
+}
+static ULONG fr_for(ULONG cc) { return 4; }
+static int wait_count(int c, int n, ULONG frames) { return 1; }
+static int ch_times(int c, ULONG *t, int n) {
+    for (int i = 0; i < n; i++) t[i] = 2UL * i * test_len * test_per;
+    return n;
+}
+"""
+        code += text[text.index("static const struct { UWORD len, per; } dma_sets"):
+                     text.index("static void t_dma_interval")]
+        code += function(text, "iv") + function(text, "t_dma_interval")
+        code += r"""
+int main(void) {
+    chk_begin(0, 0);
+    pa_sample_invalid = 1;
+    chk_add("first", 0, 0, 100, 50, 200);
+    assert(chks[0].got == -1);
+    log_reset();
+    assert(!pa_sample_invalid);
+    chk_add("second", 0, 0, 100, 50, 200);
+    assert(!chk_report("aggregated", "missing sample", 0));
+    assert(observed == AMT_ST_FAIL);
+    chk_begin(0, 0);
+    chk_add("fresh", 0, 0, 100, 50, 200);
+    assert(chk_report("fresh", "bounds", 0));
+    assert(observed == AMT_ST_PASS);
+    pa_sample_invalid = 1;
+    assert(!chk_report("invalid", "bounds", 0));
+    assert(observed == AMT_ST_FAIL);
+    {
+        struct chk start[6];
+        int n = 0;
+        chk_begin(0, 0);
+        t_dma_interval(0, start, &n);
+        assert(n == 6 && !pa_sample_invalid);
+        assert(start[0].got == -1 && start[1].got == -1);
+        assert(start[2].got >= 0 && start[3].got >= 0);
+        assert(!chk_report("aggregate intervals", "first trial invalid", 0));
+    }
+}
+"""
+        self.check(code, (("c->got = pa_sample_invalid ? -1 : got;", "c->got = got;"),
+                          ("pa_sample_invalid = 0;", ""),
+                          ("amt_case_open(id, AMT_ST_FAIL);", "amt_case_open(id, AMT_ST_PASS);"),
+                          ("!pa_sample_invalid && n > 0", "n > 0"),
+                          ("x->got = pa_sample_invalid ? -1 : iv(t, n, 0);",
+                           "x->got = iv(t, n, 0);")))
+
     def test_assembly_producers_bound_before_any_buffer_store(self):
         irq = (MODULES / "interrupts_asm.s").read_text()
         for label, store in (("_ir_lat2:", "move.b\tCIAA_TAHI,(a0)+"),
@@ -508,6 +929,8 @@ int main(void) { scenario(16); scenario(PA_MS(4)); return 0; }
         self.assertEqual(paula.count("move.w\t#$ffff,d3"), 2)
         self.assertEqual(paula.count(".retry:\tdbf\td3,.t"), 2)
         self.assertEqual(paula.count("move.w\t#1,_pa_sample_invalid"), 2)
+        self.assertEqual(paula.count("cmp.b\t#2,d1"), 2)
+        self.assertNotIn("cmp.b\t#224,d1", paula)
 
 
 if __name__ == "__main__":

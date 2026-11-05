@@ -744,6 +744,16 @@ static void c2_bounds(const struct c2 *t)
     }
 }
 
+static int unimpl060_strict_policy(const char *id)
+{
+    if (amt_par.flags & AMT_F_INTCOMPAT) {
+        amt_case(id, AMT_ST_UNTESTABLE,
+                 "integer compatibility emulation is enabled; vector 61 is checked in the strict-policy interpreter lane");
+        return 0;
+    }
+    return 1;
+}
+
 static void t_chk2(void)
 {
     unsigned i;
@@ -761,6 +771,8 @@ static void t_chk2(void)
             UWORD sr = 0x2715;
             if (t->id)
                 skip(t->id, "68060: CHK2/CMP2 are unimplemented integer instructions (see unimpl060_*)");
+            if (!unimpl060_strict_policy(t->id060))
+                continue;
             kbegin(W_UNIMPL060);
             xset(sr);
             xr_ina0 = A(pool + P_BND);
@@ -902,6 +914,8 @@ static void t_unimpl060(void)
             skip(t->id, "68060 only (implemented on the other CPUs)");
             continue;
         }
+        if (!unimpl060_strict_policy(t->id))
+            continue;
         kbegin(W_UNIMPL060);
         for (j = 0; j < 16; j++)
             pool[P_CAS + j] = (UBYTE)(0x40 + j);

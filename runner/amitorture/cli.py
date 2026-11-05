@@ -37,8 +37,11 @@ SEED_HELP = ("seed of the random inputs the modules draw (CIA timer values, disp
 END_HELP = ("what the disk does after its last module (default halt: the machine stays on the final status "
             "screen; the runner stops the emulator itself). reboot = ColdReboot; return = back to the "
             "Kickstart boot code")
-PARAM_HELP = ("an extra run parameter baked into the disks (repeatable): flags=unsafe,noserial,nombox,net,noscreen "
-              "(comma-separated), baud=N (serial rate, default 115200), modules=MASK (bit n = module id n, "
+PARAM_HELP = ("an extra run parameter baked into the disks (repeatable): "
+              "flags=unsafe,noserial,nombox,net,noscreen,intcompat,fpucompat "
+              "(comma-separated; intcompat=32, fpucompat=64 follow configured instruction policies, "
+              "strict options clear stale compatibility flags; JIT uses both compatibility policies), "
+              "baud=N (serial rate, default 115200), modules=MASK (bit n = module id n, "
               "docs/CONTRACT.md section 10; e.g. modules=0x1000 runs only display)")
 REPRO_HELP = ("do not write repro packs. A repro pack is repro/<problem>/ in the results: a one-module disk with "
               "the case's parameters, the minimal Amiberry config, run.sh and gdb command files, so "
@@ -354,8 +357,9 @@ def _common(p, kick_required=True, param_defaults=True):
                                                             "else $AMT_KICKSTARTS or ~/Amiberry/ROMs)")
     p.add_argument("--workdir", default=DEFAULT_WORKDIR, metavar="DIR", help=WORKDIR_HELP)
     p.add_argument("--matrix", default="smoke", choices=matrix.MATRICES,
-                   help="which machines to run (default smoke): smoke = 12 machines, one per CPU class and chipset; "
-                        "standard = 142, every CPU/FPU variant, board and controller; full = 540, also every JIT "
+                   help="which machines to run (default smoke): smoke = 15 machines, covering CPU classes, chipsets "
+                        "and strict instruction policies; standard = 145, every CPU/FPU variant, board and controller; "
+                        "full = 543, also every JIT "
                         "sub-option, threaded and softfloat twin. `amitorture matrix --matrix NAME` lists them")
     p.add_argument("--config", action="append", metavar="NAME",
                    help="run only these entries: an entry id or a glob such as 'a1200*', from any matrix "

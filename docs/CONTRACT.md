@@ -77,10 +77,26 @@ long amt_entry(struct ExecBase *SysBase /* A6 */, const struct amt_header *hdr /
 | 4 | u32 | mode: 0 = full (default), 1 = quick (fewer inputs per case, same case ids), 2 = soak (reserved: not implemented, runs like full) |
 | 8 | u32 | seed (default 1) |
 | 12 | u32 | end_action: 0 = **halt** (default: resume OS execution with best-effort CIA restoration, then Wait(0) forever, so the system stays alive and the host kills the emulator), 1 = ColdReboot, 2 = run OS modules only, skip bare takeover, then return D0=-1 to the bootblock |
-| 16 | u32 | flags: bit0 = unsafe tests allowed, bit1 = serial output off, bit2 = mailbox off, bit3 = net: the network cards are on an emulator-only backend (user-mode NAT), so the network module may transmit (the runner sets it for entries with a `slirp` network option), bit4 = noscreen: no status screen (`rt/screen.c`, §10), so every bare module starts with all DMA off. mkadf names: `unsafe`, `noserial`, `nombox`, `net`, `noscreen`. |
+| 16 | u32 | flags: bit0 = unsafe tests allowed, bit1 = serial output off, bit2 = mailbox off, bit3 = net: the network cards are on an emulator-only backend (user-mode NAT), so the network module may transmit (the runner sets it for entries with a `slirp` network option), bit4 = noscreen: no status screen (`rt/screen.c`, §10), so every bare module starts with all DMA off, bit5 = intcompat (32): integer compatibility instruction policy, bit6 = fpucompat (64): FPU compatibility instruction policy. mkadf names: `unsafe`, `noserial`, `nombox`, `net`, `noscreen`, `intcompat`, `fpucompat`. |
 | 20 | u32 | serial baud (default 115200) |
 | 24 | u32[2] | module enable mask (bit n means module id n; all ones means all) |
 | 32-63 | | reserved, zero |
+
+`AMT_F_INTCOMPAT` (32) and `AMT_F_FPUCOMPAT` (64) are independent policy
+declarations, not requests to change the CPU/FPU. An unset bit means
+hardware-strict assertions; raw media and bare-metal defaults remain `flags=0`.
+The runner derives each bit from the configured `cpu_no_unimplemented` /
+`fpu_no_unimplemented`: false declares compatibility, true declares strict.
+An enabled JIT (`cachesize>0`) declares both compatibility policies, matching
+Amiberry's JIT fixup. Other user flags are preserved, but stale explicit
+compatibility bits are cleared when the corresponding effective policy is strict.
+Late runner configuration overrides follow the same rule.
+
+Compatibility policy does not excuse numerical, register or enabled-exception
+errors. It only distinguishes hardware-only unimplemented-instruction trap
+assertions from an explicit emulator policy that implements those instructions.
+Separate strict interpreter lanes retain architectural trap coverage; declaring
+compatibility must not be reported as having tested those strict assertions.
 
 ---------------------------------------------------------------------------
 ## 5. Output records (wire format)
@@ -105,6 +121,9 @@ New disks also emit `hello.modules`, an object mapping every selected compiled m
 (0-63). This is additive to v1: readers accept older captures without it. It records the intersection of the
 compiled module table and the run mask, not all modules available in the source tree. Every declared module
 must have matching begin/end records before `done`; an empty selection is skipped rather than passed.
+They also emit `hello.policy`, `{"integer":"strict"|"compat","fpu":"strict"|"compat"}`,
+derived from the two run-parameter compatibility bits. This is additive to v1;
+older captures without it do not explicitly declare an instruction policy.
 
 ---------------------------------------------------------------------------
 ## 6. Serial transport

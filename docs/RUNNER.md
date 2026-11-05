@@ -226,6 +226,18 @@ amitorture run --amiberry BIN --kickstarts DIR [--matrix smoke] [--config GLOB .
    matching ids. A disk with an explicitly empty selection is `skip`, not PASS, and does not stop the remaining
    disks of a set. Older captures without the manifest receive lifecycle checks but cannot prove selected-module
    coverage. Synthetic host selftests are exempt from guest-module checks.
+   Runner-owned `host.tone_*` and `host.speed_*` failures also make the disk and
+   entry **fail**, even when the guest's `done.fail` is zero. Guest totals stay
+   guest-only; the host verdicts and measurements are listed separately.
+   Reanalysis upgrades historical guest-only passes using their saved host evidence.
+   The disk's `intcompat` (32) and `fpucompat` (64) flags declare the configured
+   instruction policies in `hello.policy`. They are derived independently from
+   `cpu_no_unimplemented` and `fpu_no_unimplemented` (false = compatibility,
+   true = hardware-strict); enabled JIT declares both compatible, matching its
+   emulator fixup. This preserves unrelated user flags but clears explicit stale
+   compatibility flags under strict options. Raw/default media remains hardware-strict.
+   Compatibility only disqualifies hardware-only trap expectations; it does not
+   suppress correctness failures or replace the required strict interpreter lanes.
 2. **Engine parity.** Every twin is compared with its reference entry, case by case (identified by
    `<mod>.<case>`):
    - a case missing on either side is an `engine_mismatch`;
@@ -237,6 +249,22 @@ amitorture run --amiberry BIN --kickstarts DIR [--matrix smoke] [--config GLOB .
    settings (including the combined JIT/threaded variant). Overrides that collapse both sides to one engine
    make the pair "not compared". The JIT parity catalogue row requires matching cases in a completed comparison;
    JIT-only runs cannot cover it.
+   There are no sampling-coverage exceptions: a pass/untestable difference for
+   audio timestamps, line-period measurements or RTC BUSY is an engine mismatch,
+   including when reading older reports. The guest uses coherent timestamps,
+   independent timing references and persistent ordering witnesses instead of
+   excusing missed observations. A failed acquisition or reference calibration
+   is a failure, not a pass or an untestable result.
+
+   For `misc_hw.rtc_stop` and `rtc_hold`, independent launches' calendar dates
+   are not equal inputs. Parity compares the unchanged/advanced and held/released
+   relationships, date/digit consistency, weekday validity, leap state, procedure
+   and status instead. `rtc_write_readback` always retains its deterministic
+   written target. Only a readback demonstrably matching the contemporaneous
+   running clock (within ten seconds of that launch's `rtc_stop` origin) is
+   normalized as ignored-write host time; other wrong readbacks remain exact.
+   The normalized field paths are reported under `parity[].observations`;
+   raw records and baseline fingerprints are unchanged. RTC failures still fail.
 3. **xfail.** Cases in `runner/amitorture/xfail.json` that fail are `xfail` and are not counted as problems. If
    they pass, they are reported as `fixed`. Guest-case xfails never suppress engine parity disagreements,
    even when the differing cases both pass.

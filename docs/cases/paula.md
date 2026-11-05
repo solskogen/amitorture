@@ -3,7 +3,9 @@
 Audit validity and restoration: modulator alternatives are the disjoint
 intervals 2800-3600 and 6000-6800 cck, not their convex hull (4800 is rejected).
 ISR/stamp beam sampling has a 256-attempt budget; exhausted samples invalidate
-dependent timing verdicts and the ISR disables the audio source before returning.
+dependent timing verdicts as failures and the ISR disables the audio source before returning.
+Invalidity resets per capture; a failed trial remains failed in an aggregate
+even after later captures succeed.
 DF1 marker pairs must agree on first-free, block size, kind, total and UUID
 before writes. A completed STEP edge and its displacement accounting are
 interrupt-atomic, before the settling delay; abort cleanup completes and
@@ -18,8 +20,10 @@ lines, CIA-A PRA status lines, drive ID), appendix F 8520 (CIA-A PRA bit 1 = LED
 AmigaDOS/trackdisk MFM track format.
 
 Timing: audio interrupt times are logged by `pa_l4` (vector 28) from VPOSR/VHPOSR plus the VBL count, in colour
-clocks (cck; PAL line 227, NTSC 227.5 average). The reads retry within 3 cck of the line wrap, where V and H
-may not change together. Measured values go in `timing` objects only; the bounds in `in.bounds` are fixed, so
+clocks (cck; PAL line 227, NTSC 227.5 average). High/low/high reads guard V8-V10.
+Only H=0/1 is rejected: V increments at H=2, which is already coherent,
+including when a fast core waits there for host pacing. Late-line positions
+are valid too. Measured values go in `timing` objects only; the bounds in `in.bounds` are fixed, so
 records match across JIT on/off, CE/fast and emulators. Audio runs with volume 0 (silent) except the host tones.
 
 Disk safety: DF0 (the boot disk) is only read. DF1 is written only when raw-read blocks 0 and 1759 carry the

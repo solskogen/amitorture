@@ -30,6 +30,8 @@ struct amt_params {
 #define AMT_F_NOSERIAL  2
 #define AMT_F_NOMBOX    4
 #define AMT_F_NOSCREEN  16   /* no status screen: bare modules start with all DMA off */
+#define AMT_F_INTCOMPAT 32   /* integer instructions use an emulator compatibility policy */
+#define AMT_F_FPUCOMPAT 64   /* FPU instructions use an emulator compatibility policy */
 #define AMT_F_NET       8    /* the host says the network cards are on an emulator-only
                                 backend (user-mode NAT): the network module may transmit */
 

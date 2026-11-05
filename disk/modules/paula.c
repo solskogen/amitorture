@@ -48,6 +48,7 @@ extern char pa_log_end[];
 extern struct pa_ent *volatile pa_logp;
 extern volatile UWORD pa_n, pa_stop_at, pa_feed_left;
 extern volatile UWORD pa_sample_invalid;
+extern volatile UWORD pa_bad_beam[2];
 extern const UWORD *volatile pa_feed_p;
 extern volatile UWORD *volatile pa_feed_a;
 extern volatile UWORD pa_act[16];
@@ -168,7 +169,7 @@ static void chk_add(const char *what, UWORD a, UWORD b, LONG got, LONG lo, LONG 
         c->what = what;
         c->a = a;
         c->b = b;
-        c->got = got;
+        c->got = pa_sample_invalid ? -1 : got;
         c->lo = lo;
         c->hi = hi;
         c->alternatives = 0;
@@ -210,7 +211,20 @@ static int chk_report(const char *id, const char *why, void (*extra)(void))
 {
     int i, bad = -1;
     if (pa_sample_invalid) {
-        amt_case(id, AMT_ST_UNTESTABLE, "bounded beam sampling could not obtain a coherent audio timestamp");
+        amt_case_open(id, AMT_ST_FAIL);
+        json_obj("expect");
+        json_str("timestamp", "coherent VPOSR/VHPOSR with H >= 2");
+        json_obj_end();
+        json_obj("got");
+        json_str("timestamp", "beam sampling exhausted its retry bound");
+        json_obj_end();
+        json_str("why", "bounded beam sampling could not obtain a coherent audio timestamp");
+        json_obj("timing");
+        json_hexn("vposr", pa_bad_beam[0], 4);
+        json_hexn("vhposr", pa_bad_beam[1], 4);
+        json_int("logged_interrupts", pa_n);
+        json_obj_end();
+        amt_case_close();
         return 0;
     }
     for (i = 0; i < nchk; i++)
@@ -273,6 +287,7 @@ static void log_reset(void)
     int i;
     pa_logp = pa_log;
     pa_n = 0;
+    pa_sample_invalid = 0;
     pa_stop_at = 0;
     pa_feed_left = 0;
     for (i = 0; i < 16; i++)
@@ -411,14 +426,14 @@ static void t_dma_interval(int c, struct chk *startc, int *nstart)
             x->what = "first_irq";
             x->a = L;
             x->b = P;
-            x->got = n > 0 ? (LONG)(t[0] - ent_t2(&on) / 2) : -1;
+            x->got = !pa_sample_invalid && n > 0 ? (LONG)(t[0] - ent_t2(&on) / 2) : -1;
             x->lo = 0;
             x->hi = 3 * 228;
             x = &startc[(*nstart)++];
             x->what = "iv1";
             x->a = L;
             x->b = P;
-            x->got = iv(t, n, 0);
+            x->got = pa_sample_invalid ? -1 : iv(t, n, 0);
             x->lo = (LONG)(2UL * (L - 1) * P - P);
             x->hi = (LONG)(blk + P);
         }

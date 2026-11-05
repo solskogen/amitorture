@@ -34,10 +34,13 @@ enum { CHIP_MSM = 1, CHIP_RIC = 2 };
 enum { S1, S10, MI1, MI10, H1, H10, D1, D10, MO1, MO10, Y1, Y10, WD, NDIG };
 enum { AMT_ST_PASS, AMT_ST_FAIL, AMT_ST_SKIP, AMT_ST_UNTESTABLE };
 #define CD_HOLD 1
+#define CF_24H 4
 struct rt { UBYTE s, mi, h, d, mo, y, w, leap; };
 static int chip, cur24 = 1, last_status;
 static UBYTE pm_bit, sampled_leap, digits[NDIG];
 static ULONG elapsed_ms;
+static UBYTE controls[16], ric_md;
+static int orig_md = -1;
 static struct rt written;
 static struct {
     UBYTE cd, ce, cf, md, sel, leap, ram[26];
@@ -47,14 +50,15 @@ static struct {
 } sv;
 static void read_digits(UBYTE *g) { memcpy(g, digits, NDIG); }
 static UBYTE ric_leap_read(void) { return sampled_leap; }
-static int wait_edge(int ms) { (void)ms; return 1; }
+static int wait_edge(int ms) { (void)ms; assert(!(controls[13] & CD_HOLD)); return 1; }
 static ULONG mh_ms_since(ULONG start) { (void)start; return elapsed_ms; }
 static ULONG amt_cck_hz(void) { return 3546895; }
 static ULONG amt_ticks(void) { return UINT32_MAX; }
 static void clk_stop(void) {}
 static void clk_start(void) {}
 static void set24(int mode) { cur24 = mode; }
-static void rw(int reg, UBYTE value) { (void)reg; (void)value; }
+static UBYTE rr(int reg) { return controls[reg]; }
+static void rw(int reg, UBYTE value) { controls[reg] = value; }
 static void ric_bank(int bank) { (void)bank; }
 static void ric_mode(UBYTE mode) { (void)mode; }
 static void write_time(const struct rt *t) { written = *t; }
@@ -71,7 +75,8 @@ static int wr_ok = 1;
 """
         source += "\n".join(function(guest, name) for name in
                             ("is_leap", "mdays", "add_secs", "encode", "decode", "same",
-                             "read_time", "restore_state", "case_edge_timeout", "t_restore_check"))
+                             "read_time", "msm_unlock", "save_state", "restore_state",
+                             "case_edge_timeout", "t_restore_check"))
         source += r"""
 static void sample(const struct rt *t)
 {
@@ -87,6 +92,21 @@ int main(int argc, char **argv)
     chip = CHIP_RIC;
     sv.have_t0 = sv.running = sv.is24 = 1;
     switch (argv[1][0]) {
+    case 'h':
+        chip = CHIP_MSM;
+        sample(&t);
+        for (int held = 0; held <= 1; held++) {
+            controls[13] = held;
+            controls[15] = CF_24H;
+            save_state();
+            assert(sv.cd == held && sv.running);
+            assert(!(controls[13] & CD_HOLD));
+            controls[13] = held;
+            t_restore_check();
+            assert(last_status == AMT_ST_PASS);
+            assert(!(controls[13] & CD_HOLD));
+        }
+        break;
     case 'd':
         t.d = 29;
         for (poison = 0; poison < 256; poison += 17)
@@ -166,6 +186,9 @@ int main(int argc, char **argv)
     def test_msm_february_still_uses_year_digits(self):
         subprocess.run([self.binary, "m"], check=True)
 
+    def test_initial_msm_hold_is_saved_and_released_before_observing_counting(self):
+        subprocess.run([self.binary, "h"], check=True)
+
     def test_common_february_restore_accepts_march_and_rejects_february_29(self):
         subprocess.run([self.binary, "c"], check=True)
 
@@ -177,6 +200,9 @@ int main(int argc, char **argv)
 
     def test_regressions_reject_the_original_read_and_restore_mutants(self):
         mutations = [
+            ("hold", "h", "rw(13, 0);", "rw(13, CD_HOLD);"),
+            ("restore_hold", "h", "if (chip == CHIP_MSM)\n        msm_unlock();",
+             "if (chip == CHIP_MSM)\n        rw(13, CD_HOLD);"),
             ("read", "d", "return decode(g, cur24, leap, t);",
              "int ok = decode(g, cur24, t->leap, t); t->leap = leap; return ok;"),
             ("restore", "c", "e0 = sv.t0;", "e0 = sv.t0; e0.leap = 0;"),

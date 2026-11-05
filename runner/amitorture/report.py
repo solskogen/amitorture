@@ -547,6 +547,9 @@ def _speed_lines(speeds):
 
 
 def write_all(outdir, environment, results, source="run", analysis=None):
+    from .runner import integrate_host_verdicts
+    for r in results:
+        integrate_host_verdicts(r)
     an = analysis if analysis is not None else _minimal_analysis(
         results, (environment.get("amiberry") or {}).get("path"))
     items, problems, fps = an["items"], an["problems"], an["fps"]
@@ -759,7 +762,18 @@ def render_markdown(summ, env, results, items, problems, an):
         for p in par:
             res = (f"{p.get('compared', 0)} cases compared, {p.get('mismatches', 0)} differ"
                    if p.get("status") == "compared" else f"not compared: {p.get('why')}")
+            if p.get("not_comparable"):
+                res += f"; {len(p['not_comparable'])} inconclusive observations (not parity coverage)"
             L.append(f"| {p['twin']} | {p['ref']} | {p.get('twin_kind')} | {_cell(res)} |")
+        L.append("")
+        for p in par:
+            for c in p.get("not_comparable", []):
+                L.append(f"- `{p['twin']}` / `{p['ref']}`, `{c['case_key']}`: "
+                         f"{c['ref_st']} / {c['twin_st']}; {c['why']} (not compared).")
+            for c in p.get("observations", []):
+                fields = ", ".join(sorted(set(c["ref_fields"] + c["twin_fields"])))
+                L.append(f"- `{p['twin']}` / `{p['ref']}`, `{c['case_key']}`: {c['why']}; "
+                         f"normalized fields: {fields}.")
         L.append("")
     hosts = summ.get("host_requests") or []
     if hosts:

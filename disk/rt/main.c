@@ -47,6 +47,10 @@ static void emit_hello(void)
     json_str("build", build);
     json_int("mode", (long)amt_par.mode);
     json_int("seed", (long)amt_par.seed);
+    json_obj("policy");
+    json_str("integer", (amt_par.flags & AMT_F_INTCOMPAT) ? "compat" : "strict");
+    json_str("fpu", (amt_par.flags & AMT_F_FPUCOMPAT) ? "compat" : "strict");
+    json_obj_end();
     amt_vstr(vs, SysBase->LibNode.lib_Version, SysBase->LibNode.lib_Revision);
     json_str("exec", vs);
     json_str("cpu", probe.cpu);

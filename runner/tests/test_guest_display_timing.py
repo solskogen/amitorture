@@ -42,13 +42,15 @@ class GuestDisplayTiming(unittest.TestCase):
 #include <string.h>
 typedef uint8_t UBYTE;
 typedef uint16_t UWORD;
+typedef uint32_t ULONG;
 enum { AMT_ST_PASS, AMT_ST_FAIL, AMT_ST_UNTESTABLE };
 #define NPL 48
 #define PY(i) (0x48 + pstep * (i))
 #define SF_CUSTSPR 0x20
 struct probe { UWORD h; UBYTE fine, dy; UWORD data; };
 static struct probe pr[NPL][4];
-static struct { UWORD sprctl_or, flags; } sc;
+static struct { UWORD sprctl_or, flags, con0; } sc;
+static int aga;
 static UWORD storage[8][512], *spr_list[8];
 static UWORD pixels[8][80], *plane[8], pr_clx[NPL][8];
 static UBYTE pr_col[NPL][4];
@@ -65,14 +67,26 @@ static UWORD clean_clx(UWORD clx, UWORD clx2, int flags);
         source += r"""
 static UWORD clean_clx(UWORD clx, UWORD clx2, int flags)
 {
-    int p = selecting++ % 7, s;
+    int p, s, first = 0, slots = 4;
     UWORD result = 0;
+    if (sc.con0 & 0x40) {
+        p = selecting % 2;
+        group = selecting / 4;
+        first = ((selecting / 2) % 2) * 2;
+        slots = 2;
+        selecting++;
+        assert(storage[4][0] == 0 && storage[6][0] == 0);
+        for (s = 0; s < slots; s++)
+            assert((storage[2*s][0] & 255) == ((pr[group][first+s].h >> 1) & 255));
+    } else {
+        p = selecting++ % 7;
+        if (!p) group++;
+    }
     assert(!flags);
-    if (!p) group++;
     assert(clx == (p < 6 ? ((0x40 << p) | (1 << p)) : 0));
     assert(clx2 == (p == 6 ? 0x41 : 0));
-    for (s = 0; s < 4; s++)
-        if (cells[4 * group + s] & (1 << p))
+    for (s = 0; s < slots; s++)
+        if (cells[4 * group + first + s] & (1 << p))
             result |= ((p & 1) ? 0x20 : 2) << s;
     return result;
 }
@@ -82,15 +96,25 @@ int main(int argc, char **argv)
     assert(argc == 2);
     switch (argv[1][0]) {
     case 'h':
-        assert(hscan_status(0xe1, 0, 0xe2) == AMT_ST_PASS);
-        assert(hscan_status(0xe2, 0, 0xe2) == AMT_ST_PASS);
-        assert(hscan_status(0xe2, 0, 0xe3) == AMT_ST_PASS);
-        assert(hscan_status(0xe3, 0, 0xe3) == AMT_ST_PASS);
-        assert(hscan_status(0xdf, 2, 0xe2) == AMT_ST_UNTESTABLE);
-        assert(hscan_status(0xe0, 0, 0xe2) == AMT_ST_UNTESTABLE);
-        assert(hscan_status(0xe2, 1, 0xe2) == AMT_ST_UNTESTABLE);
-        assert(hscan_status(0xe3, 0, 0xe2) == AMT_ST_FAIL);
-        assert(hscan_status(0xe4, 1, 0xe3) == AMT_ST_FAIL);
+        for (int pal = 0; pal < 2; pal++) {
+            ULONG lines = 5000, exact = pal ? 227000 : 227500;
+            UWORD mx = pal ? 0xe2 : 0xe3;
+            assert(hscan_status(0xdf, mx, lines, exact, exact, pal) == AMT_ST_PASS);
+            assert(hscan_status(mx, mx, lines, exact - 20, exact + 20, pal) == AMT_ST_PASS);
+            assert(hscan_status(mx + 1, mx, lines, exact, exact, pal) == AMT_ST_FAIL);
+            for (int delta = -2000; delta <= 2000; delta += 500)
+                if (delta)
+                    assert(hscan_status(mx, mx, lines, exact + delta,
+                                        exact + delta, pal) == AMT_ST_FAIL);
+            assert(hscan_status(mx, mx, lines, exact - 300, exact + 300, pal) == AMT_ST_FAIL);
+            for (int sign = -1; sign <= 1; sign += 2) {
+                ULONG inside = exact + sign * 203, outside = exact + sign * 204;
+                assert(hscan_status(mx, mx, lines, inside, inside, pal) == AMT_ST_PASS);
+                assert(hscan_status(mx, mx, lines, outside, outside, pal) == AMT_ST_FAIL);
+            }
+            assert(hscan_status(mx, mx, 0, exact, exact, pal) == AMT_ST_FAIL);
+            assert(hscan_status(mx, mx, lines, exact + 1, exact, pal) == AMT_ST_FAIL);
+        }
         break;
     case 'f':
         for (p = 0; p < 8; p++) plane[p] = pixels[p];
@@ -103,6 +127,9 @@ int main(int argc, char **argv)
                            ((p < 7 && (cells[c / slot] & (1 << p))) ? 0xffff : 0));
         }
         break;
+    case 'e':
+        sc.con0 = 0x2240;
+        /* fall through */
     case 's':
         memset(storage, 0xa5, sizeof(storage));
         for (p = 0; p < 8; p++) spr_list[p] = storage[p];
@@ -111,13 +138,15 @@ int main(int argc, char **argv)
             pr[c / 4][c % 4].data = 0x180;
         }
         group = -1;
-        scan_mask(0x7f);
-        assert(selecting == 35);
+        scan_mask(sc.con0 ? 3 : 0x7f);
+        assert(selecting == (sc.con0 ? 20 : 35));
         for (c = 0; c < 20; c++)
-            assert(pr_col[c / 4][c % 4] == cells[c]);
-        assert(pr_clx[1][5] == 0x80); /* only cell 6, not cells 4,5,7 */
-        assert(pr_clx[1][6] == 0x10); /* only cell 7 */
-        for (p = 0; p < 8; p += 2) {
+            assert(pr_col[c / 4][c % 4] == (cells[c] & (sc.con0 ? 3 : 0x7f)));
+        if (!sc.con0) {
+            assert(pr_clx[1][5] == 0x80); /* only cell 6, not cells 4,5,7 */
+            assert(pr_clx[1][6] == 0x10); /* only cell 7 */
+        }
+        for (p = 0; p < (sc.con0 ? 4 : 8); p += 2) {
             assert(storage[p][2] == 0x180 && storage[p][3] == 0);
             assert(storage[p][4] == 0 && storage[p][5] == 0);
         }
@@ -142,3 +171,6 @@ int main(int argc, char **argv)
 
     def test_seven_plane_collision_selectors_and_decode(self):
         subprocess.run([self.binary, "s"], check=True)
+
+    def test_ecs_shres_preserves_all_spatial_samples_on_available_sprites(self):
+        subprocess.run([self.binary, "e"], check=True)

@@ -160,7 +160,7 @@ _tm_branch:
 	movem.l	(sp)+,d2-d6
 	rts
 
-; ULONG tm_hscan(ULONG n): sample VHPOSR's H byte n*1000 times, returns
+; ULONG tm_hscan(ULONG n): sample VHPOSR's H byte n*64 times, returns
 ; max<<8 | min. An LFSR adds a pseudo-random delay after each sample so the
 ; loop cannot phase-lock to the line (refresh-slot collisions on the chip
 ; bus can otherwise make every line sample the same H values).
@@ -173,7 +173,7 @@ _tm_hscan:
 	moveq	#-1,d2
 	move.l	#$2545f491,d5
 	move.l	#$80200003,d6
-.o:	move.w	#999,d3
+.o:	move.w	#63,d3
 .i:	move.b	1(a0),d0
 	cmp.b	d1,d0
 	bls.s	.n

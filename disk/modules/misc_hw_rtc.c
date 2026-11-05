@@ -461,6 +461,7 @@ static void save_state(void)
         sv.ce = rr(14);
         sv.cf = rr(15);
         sv.is24 = (sv.cf & CF_24H) != 0;
+        msm_unlock();
     } else {
         sv.md = orig_md >= 0 ? (UBYTE)orig_md : rr(13);
         ric_md = rr(13);
@@ -696,7 +697,7 @@ static void t_busy(void)
         json_obj("got");
         json_int("busy_samples", (long)busy);
         json_obj_end();
-        json_str("why", "CD BUSY never read 1 across a second carry (it is 1 for some hundred us around each carry)");
+        json_str("why", "the running MSM6242B did not assert BUSY during a full 1 Hz carry period");
         json_obj("timing");
         json_int("polls", (long)n);
         json_obj_end();
@@ -996,6 +997,8 @@ static void t_restore_check(void)
                  "the counters ignore writes (see rtc_write_readback), so nothing was restored");
         return;
     }
+    if (chip == CHIP_MSM)
+        msm_unlock();
     if (!wait_edge(2500)) {
         case_edge_timeout("rtc_restored", "after restoring, the clock does not count");
         return;

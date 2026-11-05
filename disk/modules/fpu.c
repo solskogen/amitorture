@@ -63,6 +63,7 @@ extern volatile ULONG fpu_exc_idx;
 #define FM_040 4
 #define FM_060 8
 #define FM_6888X 3
+#define EXC_MID_6888X 0x8000
 
 static UWORD fm;                 /* this FPU's mask bit */
 
@@ -442,6 +443,11 @@ static void trap_ctx(ULONG start, ULONG next, int code)
         if (fmt == 2 || fmt == 3)
             json_int("frame_addr_off", (long)((((ULONG)amt_last_exc.frame[4] << 16) |
                                                amt_last_exc.frame[5]) - start));
+        if (fmt == 9) {
+            json_int("frame_insn_off", (long)((((ULONG)amt_last_exc.frame[4] << 16) |
+                                               amt_last_exc.frame[5]) - start));
+            json_hexn("frame_opword", amt_last_exc.frame[7], 4);
+        }
         json_int("fsave_bytes", (long)at[0]);
         json_hex("fsave0", at[1]);
         json_hex("fsave1", at[2]);
@@ -468,9 +474,19 @@ static int fmt_allowed(int fmt, const UBYTE *list)
 
 static const UBYTE f_0[] = { 0, 0xff };
 static const UBYTE f_2[] = { 2, 0xff };
+static const UBYTE f_9[] = { 9, 0xff };
 static const UBYTE f_02[] = { 0, 2, 0xff };
 static const UBYTE f_03[] = { 0, 3, 0xff };
 static const UBYTE f_023[] = { 0, 2, 3, 0xff };
+
+static int hardware_fpu_policy(const char *id)
+{
+    if (!(amt_par.flags & AMT_F_FPUCOMPAT))
+        return 0;
+    amt_case(id, AMT_ST_UNTESTABLE,
+             "configured FPU compatibility policy (fpu_no_unimplemented=false) emulates this hardware-unimplemented instruction/data type or disabled exception; hardware trap expectation requires the strict FPU-policy lane");
+    return 1;
+}
 
 static void run_traps(void)
 {
@@ -481,6 +497,8 @@ static void run_traps(void)
         const UBYTE *fl;
         const char *why = 0;
         if (!(e->mask & fm))
+            continue;
+        if (hardware_fpu_policy(e->name))
             continue;
         fpu_trap_idx = i;
         code = amt_try(fpu_trap_run);
@@ -536,17 +554,23 @@ static void run_excs(void)
         const UBYTE *fl;
         if (!(e->mask & fm))
             continue;
+        if (!e->enable && hardware_fpu_policy(e->name))
+            continue;
         fpu_exc_idx = i;
         code = amt_try(fpu_exc_run);
         fpu_after_trap(at);
         fmt = amt_last_exc.frame[3] >> 12;
-        fl = (fm & FM_6888X) ? f_0 : (e->vec == 48 ? f_023 : f_03);
+        fl = (fm & FM_6888X) ? ((e->mask & EXC_MID_6888X) ? f_9 : f_0) :
+             (e->vec == 48 ? f_023 : f_03);
         if (code != AMT_ABORT_UNEXPECTED || amt_last_exc.vector != e->vec)
             why = "enabled FPU exception (FPCR enable byte) must trap through its vector: 48 BSUN, 49 INEX, 50 DZ, 51 UNFL, 52 OPERR, 53 OVFL, 54 SNAN (MC68881 UM 6.1, MC68040 UM 9.?, MC68060 UM 6.?)";
         else if ((amt_last_exc.frame[3] & 0xfff) != e->vec * 4 || !fmt_allowed(fmt, fl))
             why = "wrong exception stack frame format/vector offset";
         else if (amt_last_exc.pc != e->start && amt_last_exc.pc != e->fnop)
             why = "stacked PC is neither the operation nor the following FNOP";
+        else if (fl == f_9 && (amt_last_exc.pc != e->fnop ||
+                 (((ULONG)amt_last_exc.frame[4] << 16) | amt_last_exc.frame[5]) != e->start))
+            why = "6888x move-out mid-instruction frame must contain the next instruction as ScanPC and the operation address at +$08 (MC68881/MC68882 UM 7.4.2.6, figure 7-16)";
         else if (!(at[4] & e->excbit))
             why = "the FPSR exception status bit of the trapped exception is not set";
         else if (e->vec != 48 && at[5] != e->start)
@@ -555,7 +579,7 @@ static void run_excs(void)
         if (why) {
             json_obj("expect");
             json_int("vector", e->vec);
-            json_str("format", fl == f_0 ? "0" : fl == f_03 ? "0|3" : "0|2|3");
+            json_str("format", fl == f_0 ? "0" : fl == f_9 ? "9" : fl == f_03 ? "0|3" : "0|2|3");
             json_hexn("fpsr_bit", e->excbit, 4);
             json_int("fpiar_off", 0);
             json_obj_end();
@@ -843,7 +867,7 @@ static void case_fmovem(void)
     fpu_dyn_buf[192] = 0xa5;
     fpu_dyn_buf[193] = 0x5a;
     code = amt_try(fpu_dyn_run);
-    if (fm & FM_060) {
+    if ((fm & FM_060) && !(amt_par.flags & AMT_F_FPUCOMPAT)) {
         fpu_after_trap(at);
         if (code == AMT_ABORT_UNEXPECTED && amt_last_exc.vector == 60)
             amt_case("fmovem_dynamic", AMT_ST_PASS, 0);
@@ -876,7 +900,7 @@ static void case_fmovem(void)
         for (i = 0; i < 24; i++)
             e[i] = all[i];
         if (code)
-            report_mem("fmovem_dynamic", st, st, 0, "dynamic FMOVEM.X trapped on a 6888x/68040", 0, 1);
+            report_mem("fmovem_dynamic", st, st, 0, "dynamic FMOVEM.X trapped on a 6888x/68040 or under the explicit 68060 FPU compatibility policy", 0, 1);
         else if (!eq(st, gs, 12) || gs[12] != 0x55555555UL)
             report_mem("fmovem_dynamic", st, gs, 12,
                        "FMOVEM.X D0,(An) with D0=$A5 (control mode, bit 7 = FP0) must store FP0, FP2, FP5, FP7 in that order and nothing more", 0, 0);
@@ -915,7 +939,7 @@ void amt_run_fpu(void)
     for (i = 0; i < fpu_n_groups; i++)
         run_group(&fpu_groups[i]);
     for (i = 0; i < 4; i++)
-        if (i == 0 || !is060)
+        if (i == 0 || !is060 || (amt_par.flags & AMT_F_FPUCOMPAT))
             run_pred((int)i);
     case_fmovem();
     run_traps();

@@ -24,7 +24,10 @@ are static from frame to frame; the CPU changes CLXCON (and sprite lists) at a v
 throws away CLXDAT at the next one (a core may deliver a frame's collisions late; 3 gave the same results in an A/B, 30 % slower) and reads it
 two frames later, so the value is the OR of two complete, fully set-up frames. A late CPU only adds collisions of an identical frame. Each frame
 measures one group of up to 4 probes for one bitplane; enabling one plane at a time makes the
-read-out independent of how the odd/even groups combine (see `clx_spf_odd_independent`). Scenes
+read-out independent of how the odd/even groups combine (see `clx_spf_odd_independent`).
+ECS superhires uses two sequential pairs of probes on sprites 0/2 instead:
+sprites 4-7 are not available in that mode. All original spatial samples
+remain checked; this is not a skip or a relaxed collision expectation. Scenes
 are set up by a copper list (registers, BPLxPT, SPRxPT, palette) that the copper reloads every
 frame. Frame length, LOF and the H counter range are checked by timing (`lines_per_frame_*`,
 `cck_per_line`), not here.
@@ -32,7 +35,9 @@ frame. Frame length, LOF and the H counter range are checked by timing (`lines_p
 On a mode failure, `got.clxdat_first_bad_group` records the raw CLXDAT value for each
 selected plane (plane 1 first) in the group containing `first_bad_cell`. Group slot
 `first_bad_cell % 4` uses sprite `2*slot`; odd-plane collision bits are `1+slot`,
-even-plane bits `5+slot`. These are the original reads, not a retry.
+even-plane bits `5+slot`. In ECS superhires each half-group uses slots 0/1
+and the diagnostic is the OR of the two reads. These are the original
+reads, not a retry.
 
 The variable `mode_lores_7bpl` failure in the 2026-11-04 JIT reports added
 `$20` to cells 4, 5 and 7 (one probe group); the repeated run passed.
@@ -50,6 +55,12 @@ of w is set: the index under a probe tells which memory word is displayed there,
 widths and modulos into exact numbers. Edges are measured with 1-pixel probes and compared
 relative to a reference scan, so the sprite/playfield alignment (reported as `ctx.origin`) is not
 assumed.
+
+BPAGEM-only mode (`FMODE=2`, BPL32 clear) is not equivalent to mode 1:
+an aligned fetch repeats its even 16-bit word in both halves. The oracle
+and origin calibration account for that distinction, as in the
+[hardware-oriented WinUAE fetch correction](https://github.com/tonioni/WinUAE/commit/e5a8d54fe1df74888c9a9376c3db28fab957c9ea).
+A missing calibration edge is a failure, not a successful fallback origin.
 
 `timing` objects (frame counts, CPU read counts, sampled H maximum) differ between runs and emulators;
 pass/fail uses only CPU-observable state. Screenshots (CONTRACT section 13) are requested for some
@@ -81,7 +92,7 @@ sent.
 | scroll_pf1_lores / scroll_pf2_lores / scroll_pf1_hires / scroll_pf2_hires | edge position for delays 0-15 (hires 0-7), other playfield given the opposite delay | delay in lores pixels per playfield (HRM 3) | scroll applied to wrong planes, wrong unit |
 | scroll_aga_fine | AGA BPLCON1 PF1H1-0 + PF1H5-2 (values in shres steps), probes placed with SH1/SH0 | AGA docs: 35 ns scroll steps | fine scroll bits ignored or truncated |
 | spr_aga_shres_position | shres-step and lores-step edge scans agree | AGA SPRxCTL SH1/SH0 | sprite fine position ignored |
-| fmode_1_lores / fmode_2_lores / fmode_3_lores | AGA 8-plane AE playfield; the pixel origin is first measured in that FMODE (edge between words 0 and 1 of row 0, `ctx.origin_fmode`); then row 0 words in order, row stride W a whole number of fetch units (W in ctx) | AGA docs FMODE | wide fetch reorders/duplicates words |
+| fmode_1_lores / fmode_2_lores / fmode_3_lores | AGA 8-plane AE playfield; calibrated pixel origin (word 1 for modes 1/3, word 2 for mode 2); modes 1/3 preserve word order, mode 2 repeats the aligned even word; row stride W a whole fetch unit | AGA FMODE, BPAGEM/BPL32 | fetch width, page-mode word selection, or stride wrong |
 | spr_aga_width_16/32/32_spagem/64 | sprite over 5 cells of distinct planes | FMODE SPR32/SPAGEM width 16/32/64 (AGA docs) | wide sprite format/width wrong |
 | spr_aga_spres_0..3 | sprite pixel width from BPLCON3 SPRES | AGA docs BPLCON3 | sprite resolution ignored |
 | pal_aga_rdram_24bit | 256 colours written high/low nibble per bank, read back with RDRAM | AGA docs BPLCON2 RDRAM, BPLCON3 LOCT/BANK | palette banks/LOCT wrong |

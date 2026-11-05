@@ -1,11 +1,13 @@
 # copper (module 13, AMT_PH_BARE, disk "chip")
 
 Audit observation gates: `copen_pause_resume` needs at least one valid
-disable-window trial; four missed windows are untestable. BFD ordering is
-accepted only when the sticky marker is witnessed while the sole blit remains
-busy, or is still absent after completion before subsequently appearing.
-Merely finding a marker and then reading BBUSY does not prove ordering:
-ambiguous completion crossings are untestable. Beam waits reset their
+disable-window trial; four missed windows are untestable. After the tested WAIT,
+a Copper SKIP with BFD=0 samples the blitter and suppresses marker B only when
+it has finished; marker A always follows. Sticky B distinguishes release
+while busy from release after completion even if the CPU reads both later.
+The BFD=1 control also detects a shared comparator that ignores blitter state.
+Neither CPU-side BBUSY sampling nor a narrow completion-crossing window
+determines the verdict. Beam waits reset their
 finite stalled-beam polling budget whenever the sampled beam advances:
 fast CPUs may legitimately poll more than a million times per frame.
 Unreachable line targets abort after four observed frame wraps, and the
@@ -18,6 +20,19 @@ Manual (HRM) chapter 2 "Coprocessor Hardware" (MOVE/WAIT/SKIP, comparison enable
 COP1LC/COP2LC/COPJMP, vertical blank restart, COPCON danger bit, waiting past line 255), chapter 7
 (INTREQ COPER), appendix C (ECS: with CDANG the copper may write every register); AGA docs
 (BPLCON2 RDRAM colour read-back).
+
+The HRM's "skip the next instruction" wording is broader than the hardware:
+SKIP suppresses a following MOVE write, but does not bypass a WAIT.
+Dirk Hoffmann's [vAmigaTS copskip3 hardware reference test](https://github.com/dirkwhoffmann/vAmigaTS/tree/master/Agnus/Copper/Skip)
+establishes this distinction. `skip_over_wait` observes a finite WAIT both
+before and after its target, rejecting both premature release and a stuck
+Copper; it does not merely accept the absence of a marker.
+
+The BFD cases avoid CPU COPJMP strobes while the blitter is active, including
+cleanup. The [real-A500 COPJMP/blitter bug report](https://www.pouet.net/topic.php?which=10568&page=1)
+describes the resulting DMA corruption. Prearming the list behind a beam WAIT
+isolates BFD behavior from that independent hardware bug; the test also checks
+that its eight list words remain unchanged.
 
 Every pass/fail observation is persistent state read at a safe point, so records do not depend
 on how closely the CPU core follows the beam:
@@ -47,14 +62,14 @@ Beam-polled latencies go to `timing` objects only. Beam reads re-read VPOSR arou
 | wait_line_256_wrap | WAIT $FFDF then WAIT $xx01 | lines 256+ via the line-255 wait (HRM 2) | 8-bit V compare / wrap wrong |
 | wait_after_255_8bit_compare | WAIT $FF07 then WAIT $0801 | compared on line 255, $FF >= $08: immediate (HRM 2) | V8 compared |
 | skip_compare | 5 SKIP variants (true/false, masked V, H only, equal position) before MOVE A; MOVE B | SKIP skips next instruction when >= (HRM 2) | SKIP compare wrong |
-| skip_over_wait | true SKIP before WAIT $FFFF,$FFFE, then MOVE C | the skipped instruction may be a WAIT (HRM 2: "skip the next instruction") | SKIP only suppresses MOVE writes |
+| skip_over_wait | true SKIP before WAIT $7001,$FFFE, then MOVE C; observe at $68 and $80 | WAIT still executes; only MOVE writes are suppressible (vAmigaTS copskip3) | WAIT incorrectly bypassed or Copper fails to resume |
 | copjmp2_by_copper | MOVE to COPJMP2 inside a list | jump at once, rest of list1 not run (HRM 2) | strobe ignored/late |
 | copjmp2_by_cpu | CPU writes COPJMP2 while the copper waits at END | restart at COP2LC (HRM 2) | strobe ignored |
 | cop1lc_write_no_jump | copper writes COP1LC | no jump until vertical blank (HRM 2) | COP1LC write jumps |
 | vbl_restart_cop1lc | the stored COP1LC list runs at line 0 (SKIP $0031 guards "early") | restart at vertical blank (HRM 2) | no/late restart |
 | skip_copjmp2_loop | SKIP/COPJMP2 loop until line $90 | HRM 2 SKIP loop example | loop exit wrong |
 | copen_pause_resume | COPEN off during a WAIT, on later | copper does not run while off, resumes its WAIT (HRM 2) | copper runs without DMA / restarts |
-| wait_bfd0_waits_blitter / wait_bfd1_ignores_blitter | WAIT already true with BFD=0/1 during a ~2-frame blit (64 x 1024, modulo -128) | BFD=0 also waits for the blitter (HRM 2) | blitter wait ignored / always applied |
+| wait_bfd0_waits_blitter / wait_bfd1_ignores_blitter | start the list while the blitter is idle; a BFD=1 WAIT at $58 gates the tested already-true WAIT after the blit starts at $50 (64 x 1024, modulo -128); a subsequent BFD=0 SKIP latches busy/not-busy into sticky marker B; marker A confirms completion of the list; verify all 12 list words unchanged | BFD=0 also waits for the blitter (HRM 2); a CPU COPJMP during a blit can corrupt both DMA pointers on Agnus | blitter wait ignored / always applied, incorrect SKIP blitter condition, or corrupted test list |
 | danger_off_blitter_stops | CDANG=0, MOVE to BLTCON0 | copper stops; restarts at VBL (HRM 2) | protected write executed |
 | danger_on_blitter_runs | CDANG=1, copper programs a 1-word blit | $040-$07E allowed with CDANG (HRM 2) | danger bit ignored |
 | danger_off_below_40 | CDANG=0, MOVE to JOYTEST | stops (HRM 2) | protected write executed |

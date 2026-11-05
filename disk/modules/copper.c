@@ -605,30 +605,33 @@ static void skip_tests(void)
     }
     amt_case_close();
 
-    /* SKIP over a WAIT that would block for the rest of the frame */
+    /* A true SKIP suppresses MOVE writes, not WAITs (vAmigaTS copskip3). */
     {
-        UWORD g;
+        UWORD before, after;
         lst(OFF_L1);
         cwait(0x60, 0x10);
         cskip(0x50, 0x00);
-        cwait(0xff, 0xfe);
+        cwait(0x70, 0x00);
         cmark(MK_C);
         cend();
-        g = run_markers(OFF_L1, 0x40, 0x30, &lo, &hi, &f, 0);
-        amt_case_open("skip_over_wait", g == MK_C ? AMT_ST_PASS : AMT_ST_FAIL);
-        if (g != MK_C) {
+        before = run_markers(OFF_L1, 0x40, 0x28, &lo, &hi, &f, 0);
+        after = run_markers(OFF_L1, 0x40, 0x40, &lo, &hi, &f, 0);
+        amt_case_open("skip_over_wait", before == 0 && after == MK_C ? AMT_ST_PASS : AMT_ST_FAIL);
+        if (before != 0 || after != MK_C) {
             json_obj("expect");
-            json_hexn("markers", MK_C, 4);
+            json_hexn("before_wait", 0, 4);
+            json_hexn("after_wait", MK_C, 4);
             json_obj_end();
             json_obj("got");
-            json_hexn("markers", g, 4);
+            json_hexn("before_wait", before, 4);
+            json_hexn("after_wait", after, 4);
             json_obj_end();
             json_obj("in");
             json_list("list", OFF_L1, list_words(OFF_L1));
-            json_str("read", "markers read on line $70");
+            json_str("read", "two runs: markers read on line $68, then line $80");
             json_obj_end();
-            json_str("why", "a true SKIP skips the following instruction whatever it is, here a "
-                     "WAIT $FFFF,$FFFE; the MOVE after it runs at once (HRM 2: SKIP)");
+            json_str("why", "a true SKIP only suppresses a MOVE write: the following WAIT $7001 "
+                     "still blocks until line $70, then MOVE C executes (hardware: vAmigaTS copskip3)");
         }
         amt_case_close();
     }
@@ -869,68 +872,84 @@ static void bfd_tests(void)
     int bfd;
     for (bfd = 0; bfd < 2; bfd++) {
         ULONG f0, frames;
-        int f = 0, busy0, busy_at = 0, ok, order = 0, saw_done_clear = 0;
-        ULONG budget = 2000000;
+        int f = 0, busy0, busy_at = 0, ok, early, i, list_ok = 1;
+        UWORD saved[12], previous, v;
+        volatile UWORD *list = (volatile UWORD *)(pool + OFF_L1);
+        ULONG budget = 1000000;
         lst(OFF_L1);
+        cwait(0x58, 0x00);
         cwaitx(0x40, 0x00, 0x7f, 0xfe, bfd, 0);
+        /* SKIP samples BBUSY in the Copper, not in a later CPU poll.
+         * B is sticky evidence that the tested WAIT released while busy.
+         * The BFD=1 control also catches a broken shared BFD comparator. */
+        cwaitx(0x40, 0x00, 0x7f, 0xfe, 0, 1);
+        cmark(MK_B);
         cmark(MK_A);
         cend();
+        for (i = 0; i < 12; i++)
+            saved[i] = list[i];
         mk_clear();
         wait_vbl();
+        /* A CPU COPJMP during a blit can corrupt both DMA pointers on Agnus. */
+        cop_start(OFF_L1);
         wait_line(0x50);
         blit_start_long();
         busy0 = blit_busy();
         f0 = amt_frames_now();
-        cop_start(OFF_L1);
-        while (--budget && amt_frames_now() - f0 < 20) {
-            int before = blit_busy();
+        previous = hw_vline();
+        while (amt_frames_now() - f0 < 20) {
             UWORD marker = CU(INTREQR) & MK_A;
             busy_at = blit_busy();
-            if (!before && !marker)
-                saw_done_clear = 1;
             if (marker) {
                 f = 1;
-                order = hw_bfd_order(marker, busy_at, saw_done_clear);
                 break;
             }
+            v = hw_vline();
+            wait_progress(v, previous, &budget);
+            previous = v;
         }
         frames = amt_frames_now() - f0;
-        cop_idle();
         blit_wait();
+        early = (CU(INTREQR) & MK_B) != 0;
+        cop_idle();
         CU(DMACON) = DMAF_BLTEN;
-        if (busy0 && f && !order) {
-            amt_case(bfd ? "wait_bfd1_ignores_blitter" : "wait_bfd0_waits_blitter",
-                     AMT_ST_UNTESTABLE, "CPU observation straddled completion: marker ordering was not witnessed");
-            continue;
-        }
-        ok = busy0 && f && (bfd ? order == -1 : order == 1);
+        for (i = 0; i < 12; i++)
+            if (list[i] != saved[i])
+                list_ok = 0;
+        ok = list_ok && busy0 && f && early == bfd;
         amt_case_open(bfd ? "wait_bfd1_ignores_blitter" : "wait_bfd0_waits_blitter",
                       ok ? AMT_ST_PASS : AMT_ST_FAIL);
         if (!ok) {
             json_obj("expect");
             json_int("blitter_busy_at_start", 1);
             json_int("found", 1);
-            json_int("blitter_busy_at_marker", bfd);
+            json_int("copper_saw_busy", bfd);
+            json_int("list_unchanged", 1);
             json_obj_end();
             json_obj("got");
             json_int("blitter_busy_at_start", busy0);
             json_int("found", f);
-            json_int("blitter_busy_at_marker", busy_at);
+            json_int("copper_saw_busy", early);
+            json_int("list_unchanged", list_ok);
+            json_obj_end();
+            json_obj("ctx");
+            json_list("list_after", OFF_L1, 12);
             json_obj_end();
             json_obj("in");
             json_str("blit", "D only, minterm $FF, 64 words x 1024 lines (modulo -128), about two "
                      "frames, started on line $50");
             json_hexn("wait_w2", bfd ? 0xfffe : 0x7ffe, 4);
-            json_str("list", "WAIT $4001 (already passed); MOVE A; END");
+            json_str("list", "WAIT $5801 (BFD=1); WAIT $4001; SKIP $4001 (BFD=0); MOVE B; MOVE A; END");
             json_obj_end();
             json_str("why", bfd ? "with BFD=1 the WAIT ignores the blitter: A is set while the blit "
-                     "still runs (HRM 2: blitter-finished disable)"
+                     "still runs, independently witnessed by SKIP BFD=0 (HRM 2: blitter-finished disable)"
                      : "with BFD=0 a WAIT also waits for the blitter to finish: A must not be set "
-                     "while DMACONR BBUSY is 1 (HRM 2: blitter-finished disable)");
+                     "while SKIP BFD=0 still sees BBUSY (HRM 2: blitter-finished disable)");
         }
         json_obj("timing");
         json_str("unit", "frames from copper start until the CPU saw the marker");
         json_int("frames", (long)frames);
+        json_int("blitter_busy_at_marker", busy_at);
         json_obj_end();
         amt_case_close();
     }

@@ -106,8 +106,25 @@ class RomDB(unittest.TestCase):
 
 
 class Matrix(unittest.TestCase):
+    def test_strict_policy_lanes_preserve_hardware_trap_coverage(self):
+        for name in matrix.MATRICES:
+            entries = {e["id"]: e for e in matrix.expand(name)}
+            for base_id in ("a3000-68030-882-compat", "a4000-68040nommu-fast", "a4000-68060nommu-fast"):
+                base = entries[base_id]
+                strict = entries[f"{base_id}-strict"]
+                self.assertEqual(strict["disk_groups"], ["core", "fpu"])
+                self.assertEqual(strict["params"]["modules"], matrix.module_mask(["exceptions", "fpu"]))
+                self.assertEqual(strict["options"]["cachesize"], "0")
+                self.assertEqual(strict["options"]["fpu_softfloat"], "false")
+                for key in ("cpu_no_unimplemented", "fpu_no_unimplemented", "fpu_strict"):
+                    self.assertEqual(strict["options"][key], "true")
+                    self.assertNotEqual(base["options"].get(key), "true")
+                self.assertFalse(strict["jit_capable"])
+                self.assertFalse(strict["threaded_capable"])
+                self.assertIsNone(strict["twin_of"])
+
     def test_sizes(self):
-        self.assertTrue(8 <= len(matrix.expand("smoke")) <= 14)
+        self.assertTrue(8 <= len(matrix.expand("smoke")) <= 15)
         self.assertTrue(100 <= len(matrix.expand("standard")) <= 150)
         self.assertGreater(len(matrix.expand("full")), 300)
 
@@ -171,7 +188,8 @@ class Matrix(unittest.TestCase):
     def test_select(self):
         e = matrix.expand("smoke")
         self.assertEqual([x["id"] for x in matrix.select(e, ["a4000-*"]) if not x["jit"]],
-                         ["a4000-68040nommu-fast", "a4000-68060nommu-fast"])
+                         ["a4000-68040nommu-fast", "a4000-68060nommu-fast",
+                          "a4000-68040nommu-fast-strict", "a4000-68060nommu-fast-strict"])
 
     def test_neighbours_change_one_axis(self):
         e = matrix.find("a4000-68040nommu-fast-jit")

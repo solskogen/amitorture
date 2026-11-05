@@ -1419,12 +1419,19 @@ static int storm_clock_rec(const struct ir_clock *clock)
     return !clock->invalid;
 }
 
-static ULONG fl_maxv, fl_prev, fl_v, fl_el, fl_budget;   /* last attempt, reported when untestable */
-
-static int frame_lines(void)
+/* Complete beam periods average away the CPU's wrap-observation
+ * latency; neither the terminal line nor a particular read phase is needed. */
+#define IR_FRAME_PERIODS 64
+static ULONG frame_lo_e, frame_hi_e;
+static int frame_periods_seen;
+static ULONG frame_period_e(void)
 {
-    ULONG maxv = 0, v, previous = 0, before = 0, now, begin, start, budget = 1000000;
-    int endpoint = 0;
+    ULONG v, previous, now, start, first = 0, duration = 0, budget = 4000000;
+    ULONG before, previous_before, first_before = 0, lo, hi;
+    UWORD sr;
+    int wraps = 0;
+    frame_lo_e = frame_hi_e = 0;
+    frame_periods_seen = 0;
     cia_wr(CIAB_BASE, C_CRA, 0);
     cia_wr(CIAB_BASE, C_CRB, 0);
     cia_wr(CIAB_BASE, C_TALO, 0xff);
@@ -1434,59 +1441,48 @@ static int frame_lines(void)
     cia_wr(CIAB_BASE, C_CRB, CR_SPMODE | CR_START);
     cia_wr(CIAB_BASE, C_CRA, CR_START | CR_LOAD);
     wait_window();
+    sr = amt_get_sr();
+    amt_set_sr(0x2700);
     start = eb_read();
-    before = cia_timer(CIAB_BASE, C_TALO, C_TAHI);
-    while (--budget) {
-        begin = cia_timer(CIAB_BASE, C_TALO, C_TAHI);
+    previous_before = start;
+    previous = beam_v();
+    while (budget) {
+        before = eb_read();
         v = beam_v();
-        now = cia_timer(CIAB_BASE, C_TALO, C_TAHI);
-        if (v < previous && maxv > 200) {
-            endpoint = hw_frame_endpoint(maxv, previous, v, (UWORD)(before - now));
-            fl_maxv = maxv;
-            fl_prev = previous;
-            fl_v = v;
-            fl_el = (UWORD)(before - now);
+        now = eb_read();
+        if (now - start > (IR_FRAME_PERIODS + 2UL) * 16000UL)
             break;
+        if (v < previous && previous > 200) {
+            frame_periods_seen = wraps;
+            if (!wraps++) {
+                first = now;
+                first_before = previous_before;
+            } else if (wraps == IR_FRAME_PERIODS + 1) {
+                lo = previous_before - first;
+                if (lo)
+                    lo--;
+                hi = now - first_before + 1;
+                frame_lo_e = lo;
+                frame_hi_e = hi;
+                /* At most 5 seconds of storm: this bounds the count
+                 * uncertainty below 1/2 IRQ before rounding to nearest. */
+                if (lo && hi >= lo && hi - lo <= lo / 512)
+                    duration = lo + (hi - lo) / 2;
+                break;
+            }
         }
-        if (v > maxv && v < 1000)
-            maxv = v;
+        if (before != previous_before || v != previous)
+            budget = 4000000;
+        else
+            budget--;
         previous = v;
-        before = begin;
+        previous_before = before;
     }
-    fl_budget = budget;
-    /* A complete 16-bit wrap must not alias the short per-pair bracket. */
-    if (eb_read() - start >= 65536UL)
-        endpoint = 0;
     cia_wr(CIAB_BASE, C_CRA, 0);
     cia_wr(CIAB_BASE, C_CRB, 0);
-    return endpoint ? (int)maxv + 1 : 0;
+    amt_set_sr(sr);
+    return duration;
 }
-
-/* frame_lines() only accepts a wrap seen right after the terminal line
- * (hw_frame_endpoint); a slow sampling iteration (two E-clock-synchronised
- * CIA reads per sample) can miss it, on any CPU. Each try takes about a
- * frame: try a few times before giving up. */
-static int frame_lines_retry(void)
-{
-    int i, n;
-    for (i = 0; i < 8; i++)
-        if ((n = frame_lines()) > 0)
-            return n;
-    return 0;
-}
-
-/* The length of the current frame from VPOSR LOF (long frame: 313 PAL /
- * 263 NTSC, short: one less), for CPUs too slow for frame_lines(): on a
- * 68000 one sampling iteration (two E-clock-synchronised CIA timer reads)
- * takes about 4 lines, so the wrap bracket never gets under 40 E. */
-static int lof_frame_lines(void)
-{
-    int lof;
-    wait_window();
-    lof = (CREG(R_VPOSR) & 0x8000) != 0;
-    return (amt_probe_result.pal ? 313 : 263) - (lof ? 0 : 1);
-}
-static const char *lines_source = "beam";
 
 static void storm_rec(const char *id, ULONG exp, ULONG got, ULONG tol, const char *why,
                       ULONG el, ULONG per, ULONG lines2, ULONG issued, ULONG tmo)
@@ -1518,7 +1514,9 @@ static void storm_rec(const char *id, ULONG exp, ULONG got, ULONG tol, const cha
     json_int("elapsed_e", (long)el);
     json_int("cia_period_e", (long)per);
     json_int("lines_2frames", (long)lines2);
-    json_str("lines_source", lines_source);   /* "beam" (measured) or "lof" (VPOSR LOF) */
+    json_int("calibration_periods", frame_periods_seen);
+    json_int("calibration_e_min", (long)frame_lo_e);
+    json_int("calibration_e_max", (long)frame_hi_e);
     json_int("soft_issued", (long)issued);
     json_int("soft_timeouts", (long)tmo);
     json_int("cia_entries", (long)ir_st_cia);
@@ -1536,7 +1534,7 @@ static void storm(void)
     ULONG secs = AMT_QUICK() ? 1 : 5;
     ULONG ehz = amt_probe_result.pal ? 709379UL : 715909UL;
     ULONG target = secs * ehz, el, issued = 0, tmo = 0;
-    ULONG cia_exp, vb_exp, lines2, cc4;
+    ULONG cia_exp, vb_exp, lines2, frame_e;
     struct ir_clock clock;
     amt_vec_fn o25, o26, o27;
 
@@ -1546,16 +1544,9 @@ static void storm(void)
         need("storm_vertb", PORTS);
         return;
     }
-    {
-        ULONG a = (ULONG)frame_lines_retry(), b = a ? (ULONG)frame_lines_retry() : 0;
-        lines_source = "beam";
-        if (!a || !b) {
-            a = (ULONG)lof_frame_lines();
-            b = (ULONG)lof_frame_lines();
-            lines_source = "lof";
-        }
-        lines2 = a && b ? a + b : 0;
-    }
+    frame_e = frame_period_e();
+    lines2 = (frame_e * 20 + IR_FRAME_PERIODS * (amt_probe_result.pal ? 227 : 228)) /
+        (IR_FRAME_PERIODS * (amt_probe_result.pal ? 454 : 455));
     env();
     /* reference clock */
     cia_wr(CIAB_BASE, C_ICR, 0x7f);
@@ -1627,9 +1618,7 @@ static void storm(void)
     }
     el = clock.elapsed;
     cia_exp = el / (P + 1);
-    /* frame length in colour clocks x4: lines x 227 (PAL) or 227.5 (NTSC) */
-    cc4 = lines2 * (amt_probe_result.pal ? 454UL : 455UL);
-    vb_exp = cc4 ? (el * 20UL) / cc4 : 0;
+    vb_exp = frame_e ? (el * IR_FRAME_PERIODS + frame_e / 2) / frame_e : 0;
     storm_rec("storm_cia_timer", cia_exp, ir_st_cia, 1,
               "CIA-A timer A interrupts counted by the level-2 handler differ by more than 1 from "
               "elapsed/period (elapsed from the CIA-B E-clock counter): interrupts lost or doubled",
@@ -1638,21 +1627,22 @@ static void storm(void)
               "every SOFTINT written to INTREQ (one at a time, each waited for) must be taken exactly "
               "once; a timeout means a lost request",
               el, P + 1, lines2, issued, tmo);
-    if (!lines2) {
-        amt_case_open("storm_vertb", AMT_ST_UNTESTABLE);
-        json_str("why", "beam sampling did not cover the terminal line and wrap within a sub-line E-clock interval");
-        json_obj("ctx");                 /* the last frame_lines() attempt */
-        json_int("maxv", (long)fl_maxv);
-        json_int("previous", (long)fl_prev);
-        json_int("after_wrap", (long)fl_v);
-        json_int("elapsed_e", (long)fl_el);
-        json_int("budget_left", (long)fl_budget);
+    if (!frame_e) {
+        amt_case_open("storm_vertb", AMT_ST_FAIL);
+        json_obj("expect");
+        json_int("calibration_beam_periods", IR_FRAME_PERIODS);
         json_obj_end();
+        json_obj("got");
+        json_int("calibration_beam_periods", frame_periods_seen);
+        json_int("elapsed_e_min", (long)frame_lo_e);
+        json_int("elapsed_e_max", (long)frame_hi_e);
+        json_obj_end();
+        json_str("why", "CIA-B timing could not establish sixty-four complete beam periods with "
+                 "endpoint uncertainty below 1/512 within the E-clock/stall bounds");
         amt_case_close();
-    }
-    else storm_rec("storm_vertb", vb_exp, ir_st_vb, 1,
-              "VERTB interrupts differ by more than 1 from elapsed time / frame length (lines measured "
-              "from the beam): lost or extra vertical-blank interrupts",
+    } else storm_rec("storm_vertb", vb_exp, ir_st_vb, 1,
+              "VERTB interrupts differ by more than 1 from elapsed time / calibrated beam-frame period: "
+              "lost or extra vertical-blank interrupts",
               el, P + 1, lines2, issued, tmo);
 }
 

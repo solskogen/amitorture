@@ -669,6 +669,9 @@ class ToneCases(unittest.TestCase):
             self.assertIn(s_, text)
         hs = report.host_summary([{"id": "e", "_merged": m}])
         self.assertEqual(hs[0]["audio"][0]["tone"]["st"], "fail")
+        status, why = R.classify({}, m, "done")
+        self.assertEqual(status, "fail")
+        self.assertIn("host.tone_aud1", why)
 
     def test_silent_channel_fails_and_stretched_mismatch_is_untestable(self):
         x = tone(440.0, 0.5)

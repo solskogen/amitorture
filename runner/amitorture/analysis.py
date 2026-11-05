@@ -262,6 +262,8 @@ def load_results(results_dir):
             m = merged_from(r, os.path.join(raw, name, "records.jsonl"))
             if m is not None:
                 r["_merged"] = m
+        from .runner import integrate_host_verdicts
+        integrate_host_verdicts(r)
         out.append(r)
     return out
 

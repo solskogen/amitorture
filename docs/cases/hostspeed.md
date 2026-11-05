@@ -4,6 +4,9 @@ How fast the emulator runs each costly CPU and FPU instruction, measured against
 cannot see host time, so the guest only runs the instructions and the **runner** judges them: the cases
 are the runner's pseudo cases `host.speed_<insn>` (docs/cases/host.md, runner/amitorture/cases.py). The
 module itself reports no `case` records, only `speed` records (docs/schema.md 1.10).
+Failed runner pseudo cases make the disk and entry fail, even though the guest
+has no failed `case` records and `done.fail` can be zero. Reanalysis applies the
+same rule to saved launches from runners that only used the guest verdict.
 
 **The verdict depends on the host.** A slow host may fail where a fast one passes, and that is accepted:
 the question is "does this emulator keep real time on this machine". Every failure names the host it was

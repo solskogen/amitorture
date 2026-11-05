@@ -53,6 +53,18 @@ FSUB of opposite infinities (dst - src = dst, an infinity of dst's sign) is chec
 
 ## 040/060 restrictions
 
+The parameter-block flag `AMT_F_FPUCOMPAT` explicitly declares that the host
+emulates hardware-unimplemented FPU operations (`fpu_no_unimplemented=false`).
+Only `unimp_*`, `unsupp_*`, `effadd_*`, the 6888x `fline_*` trap cases and
+040/060 **disabled** overflow/underflow trap expectations are untestable under
+that policy, with an explicit reason. They are not passes; strict FPU-policy
+lanes must execute those expectations, including a strict 6888x lane for the
+040-only opmodes. All enabled arithmetic exceptions and numeric/status checks
+remain active. On a compatibility-mode 060 the predicate families and dynamic
+FMOVEM computed results are checked, rather than expecting unimplemented traps.
+Standalone media with flags zero retain real-hardware expectations. Policy is
+never inferred from whether an instruction happens to trap.
+
 With no FPSP, the 68040/68060 trap on these, so the tables give such vectors to the 6888x only and separate trap cases test the 040/060:
 
 - denormal, unnormal and packed operands;
@@ -101,5 +113,5 @@ With no FPSP, the 68040/68060 trap on these, so the tables give such vectors to 
 | effadd_fmovem_dynamic_060 / effadd_fmove_imm_x_060 / effadd_fmovem_l_imm_060 | 060: FMOVEM with a dynamic register list (see fmovem_dynamic), an #imm .X source and FMOVEM.L #imm of 2 control registers take vector 60 (unimplemented effective address) | the emulator executes them instead of trapping |
 | unsupp_packed_in / unsupp_packed_out / unsupp_denormal_x / unsupp_denormal_s / unsupp_unnormal_x | 040/060: packed operands and denormal/unnormal operands take vector 55. FSAVE gives a non-idle frame on the 040 ($30/$60) and format byte $E0 or $60 on the 060. | the emulator converts the operand instead of trapping |
 | fline_fsadd_6888x / fline_fdmul_6888x / fline_fssqrt_6888x | 6888x: the 040-only opmodes are illegal coprocessor commands, so F-line (vector 11, format 0) | the emulator accepts 040 opmodes on a 6888x (Amiberry: fpu_no_unimplemented=false) |
-| exc_ovfl / exc_unfl / exc_dz / exc_operr / exc_inex2 / exc_snan / exc_bsun / exc_inex1 / exc_operr_int | with the FPCR enable set, the exception traps through vectors 48-54 (BSUN 48, INEX 49, DZ 50, UNFL 51, OPERR 52, OVFL 53, SNAN 54). Checked: format $0 (6888x) or $0/$3 (040/060, BSUN also $2); PC is the op or the following FNOP; the FPSR EXC bit is set; FPIAR is the op (not checked for BSUN). exc_inex1 (packed input) and exc_operr_int (FMOVE.L of inf) run on the 6888x only. | exception not raised, wrong vector or frame, or (020/030) state corrupted after the trap |
+| exc_ovfl / exc_unfl / exc_dz / exc_operr / exc_inex2 / exc_snan / exc_bsun / exc_inex1 / exc_operr_int | with the FPCR enable set, the exception traps through vectors 48-54 (BSUN 48, INEX 49, DZ 50, UNFL 51, OPERR 52, OVFL 53, SNAN 54). Checked: format $0 (6888x deferred/pre-instruction), $9 (6888x move-out `exc_operr_int`), or $0/$3 (040/060, BSUN also $2); PC is the op or the following FNOP; the FPSR EXC bit is set; FPIAR is the op (not checked for BSUN). The format-$9 frame must contain the following FNOP as ScanPC and the operation address at +$08 (MC68881/MC68882 UM 1st ed. §6.1.3, §7.4.2.6, Fig. 7-16); a format-$0 or $3 frame is not accepted for this move-out trap. `EXC_MID_6888X` is explicit exception-table metadata, independent of the configured compatibility policy. exc_inex1 (packed input) and exc_operr_int (FMOVE.L of inf) run on the 6888x only. | exception not raised, wrong vector or frame, or (020/030) state corrupted after the trap |
 | exc_ovfl_disabled_4060 / exc_unfl_disabled_4060 | 040/060 with no FPSP: overflow/underflow trap through 53/51 even when disabled (the FPSP builds the default result) | emulator returns the IEEE default without the trap |

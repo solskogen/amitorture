@@ -35,8 +35,12 @@ References:
 Register n is at $DC0000 + 4n + 3 (low nibble only). The time is saved at a second edge at the
 start and restored at the end: saved time + elapsed time, measured with the beam counter, written
 with the clock stopped and started on the exact second. The RP5C01 RAM and the mode-01 registers
-are restored too. When the counters ignore writes (Amiberry), every write-dependent case is
+are restored too. When the counters ignore writes, every write-dependent case is
 `untestable`, not `fail`.
+The MSM's original HOLD state is saved, then HOLD is released before
+observing the initial seconds edge; a previously latched readout does not
+mean its counters stopped. Restoration verification likewise releases HOLD
+while observing the counters; the saved control state is reapplied afterwards.
 RP5C01 dates are decoded using the sampled leap-year counter, not prior stack contents or the year digits.
 Restoration arithmetic preserves that counter through February and year rollover; only the final time
 comparison ignores the counter itself.
@@ -55,7 +59,7 @@ Amiberry's RTC follows host time, not warped emulated time.
 | `rtc_ce_rw` (MSM) | CE is read/write (patterns with MASK=1) | MSM CE register | control register not emulated |
 | `rtc_cf_test_clear` (MSM) | CF TEST bit is 0 | MSM CF: TEST must be 0 in normal use | chip left in test mode |
 | `rtc_hold` (MSM) | HOLD=1 at 450 ms after an edge; at 1300 ms the registers are unchanged; after HOLD=0 the held carry is applied once; the next carry keeps its phase (next edge 1850-2150 ms after the first) | MSM CD HOLD | HOLD not emulated (registers keep counting) |
-| `rtc_busy` (MSM) | CD BUSY reads 1 at least once in 1.2 s of polling | MSM CD BUSY (carry in progress) | BUSY not emulated |
+| `rtc_busy` (MSM) | CD BUSY reads 1 at least once in 1.2 s of continuous polling; absence fails | MSM CD BUSY (carry in progress) | missing carry/BUSY pulse; host-paced emulators must expose the sub-frame oscillator coherently to a running guest rather than swallow its entire pulse during a host frame wait |
 | `rtc_ram_rw` (RP5C01) | mode 10/11 RAM (2 x 13 nibbles) keeps two patterns; restored | RP5C01 RAM blocks | RAM not emulated / mode select wrong |
 | `rtc_leap_counter_rw` (RP5C01) | mode 01 reg B bits 1-0 read/write | RP5C01 leap-year counter | - |
 | `rtc_mode_select` (RP5C01) | MODE bits 1-0 read back | RP5C01 MODE register | - |

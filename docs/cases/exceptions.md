@@ -10,6 +10,15 @@ Sources: `disk/modules/exceptions.c` (cases, expectations) and `disk/modules/exc
 
 **Variant ids.** If a case does not apply to the detected CPU it reports `skip` with the reason, so every id is present on every run. Quick mode uses fewer random CHK inputs and fewer CCR values for TRAPcc, under the same ids.
 
+**Instruction policy.** With the runner-declared `intcompat` flag, the
+`unimpl060_*` hardware-only trap checks are untestable, not failures or passes:
+Amiberry intentionally implements these instructions when
+`cpu_no_unimplemented=false` (and with JIT). Every named matrix also includes
+`a4000-68060nommu-fast-strict`, with compatibility emulation disabled, to execute
+all fourteen checks against the unchanged architectural vector/frame/register
+expectations. No policy is inferred from whether an instruction happens to trap.
+Standalone disks without compatibility flags retain real-hardware expectations.
+
 | case | intent | rule (manual) | CPUs | a failure usually means |
 |---|---|---|---|---|
 | `trap_0` .. `trap_15` | TRAP #n with varying CCR | vector 32+n; SR = SR before; PC = next instruction; 010+ format $0, offset (32+n)*4 (PRM TRAP; 68020UM Table 6-5) | all | wrong vector, PC or frame format |
