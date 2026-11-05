@@ -10,9 +10,9 @@ ConfigDev list) with a known manufacturer/product are touched:
 | ACT Prelude 1200 (A1200 clock port, $D80000) | not autoconfig | CS4231A | R0 $01, R1 $05, FIFO $11, FIFO status / reset $15 | INT6 |
 | UAE uaesnd Z2/Z3 | 6502 / 2 | (UAE ABI) | see the specification comment in Amiberry sndboard.cpp | INT6 |
 
-The Prelude 1200 is not an autoconfig board: it is probed only when the run parameter `flags` bit 0
-(AMT_F_UNSAFE) is set, by writing index 12 to $D80001 and reading $D80001/$D80005 (index read-back and
-CS4231 ID $A).
+The Prelude 1200 is not an autoconfig board. `prelude1200_ownership` is untestable: there is no
+ConfigDev provenance or exclusive clock-port reservation. It is never probed or written,
+including with `unsafe`; its layout above is reference information, not exercised coverage.
 
 **Expectation sources.** The codec cases follow the Analog Devices AD1848K and Crystal CS4231A data
 sheets (index/data protocol, R0 INIT/MCE/TRD, the MCE protection of I8/I9/I28 with PEN/CEN as the
@@ -22,11 +22,41 @@ the Prelude FIFO flag bits) has no public documentation; its *layout* comes from
 sndboard.cpp, the flag polarity is the IDT720x FIFO convention (active-low /EF, /HF, /FF). uaesnd is
 a UAE-only device: its specification is the comment block in sndboard.cpp ("uaesnd spec").
 
-Codec cases are prefixed with the board: `toccata_`, `prelude_`, `prelude1200_`. The module restores
-the codec registers it found (I0-I15) and leaves PEN/CEN off; output registers are written with
-their mute bit set except during playback (-12 dB). CIA-B (also on INT6) is saved/masked/restored
-with `cia_hw.h` around the interrupt cases. Every interrupt hook has a storm guard (20000 entries),
-which reports `storm` instead of hanging the machine.
+**Ownership and selection.** Every destructive autoconfig test requires `amt_board_claim()`.
+Unclaimed boot-owned boards retain ordinary coverage without `unsafe` or `net`. The helper checks
+current BoardList membership before dereferencing retained ConfigDev provenance, revalidates
+manufacturer/product/type/serial/address/size, rejects a bound driver or unsafe live flags, and
+atomically clears current CDF_CONFIGME under bare-phase Forbid/Disable exclusion. Probe flags are
+not ownership. Neither `unsafe` nor `net` bypasses a refused claim. Claims remain reserved for
+later functions of the same board through the intentional HALT/REBOOT lifecycle; RETURN skips
+bare testing. The OS probe pins the list's library storage only for HALT/REBOOT, deriving the
+actual list-head sentinel from the first FindConfigDev result under configuration binding.
+No private ExpansionBase offset or semaphore-taking enumeration is used in bare mode.
+RAM, FIFOs, stream positions and pending events are not recoverable.
+Only the first ConfigDev entry of each family is selected; additional
+Toccata, Prelude and uaesnd cards (including a Z2/Z3 pair) are logged with address/probe index, not
+tested again under duplicate IDs. A selected undersized aperture is skipped as `board_span`.
+
+Codec cases are prefixed with the board: `toccata_`, `prelude_`, `prelude1200_`. Configuration
+cleanup saves I0-I15 and, on CS4231, writable MODE2 I16/I17/I18/I19/I20/I21/I26/I28/I30/I31 before
+resetting the board. It restores the clock under MCE, waits for INIT before further accesses,
+restores extended state while MODE2 is accessible, then restores I12's original mode. PEN/CEN,
+I10's interrupt enable and I16's timer enable remain off: this is **not full device/driver
+restoration**. An initially asserted MCE prevents a stable snapshot and makes the board untestable.
+All I8 writes wait for INIT; MCE exit also checks INIT/ACI. A failed readiness wait aborts rather
+than using ignored reads/writes as evidence.
+
+A nested `amt_try` scope runs phase-tracked device cleanup on normal completion, exceptions and
+watchdog aborts, before restoring CIA-B masks or propagating the abort to the runtime. Incomplete
+cleanup is a failure, never a successful restore. Cleanup readiness/quiescence failures or
+exceptions call `amt_abort_fatal`: permanent in-place halt, with no OS resumption, subsequent
+module, buffer release or normal completion. Nested abort catchers cannot swallow that halt.
+If fatal reporting itself traps, sticky quarantine stops outer bare recovery at SR=$2700 before
+restoration or further module execution.
+CIA-B (also on INT6) uses `cia_hw.h`; unrelated
+shared-line activity makes the IRQ-dependent verdict untestable rather than a card failure.
+Every interrupt hook has a 20000-entry storm guard. Board reset/quiescence still relies on the
+documented provenance limits of the glue model; it cannot reconstruct lost hardware state.
 
 ## Codec boards (`<board>_*`)
 
@@ -40,7 +70,7 @@ which reports `storm` instead of hanging the machine.
 | `no_mode2` (AD1848) | I12 bit 6 reads 0 after writing $40 | AD1848 has no MODE2 | AD1848 behaves like a CS4231 |
 | `i8_rates_formats` | with MCE: all 16 CSL/CFS rate selections and the format bits read back | I8 read/write in mode change | rate/format bits not stored |
 | `i8_needs_mce` | with MCE clear, a write to I8 is ignored | data sheet R0 MCE: "I8 and I9 CANNOT be changed unless this bit is set" | MCE protection not emulated |
-| `i9_needs_mce` | with MCE clear, writing SDC to I9 is ignored (bits $CC) | same; PEN/CEN are the only on-the-fly bits | MCE protection not emulated |
+| `i9_needs_mce` | explicitly establish I9=0 under MCE, then with MCE clear write SDC ($04), compare bits $CC (which includes $04) | same; PEN/CEN are the only on-the-fly bits | MCE protection not emulated |
 | `autocal_aci` | MCE=1, I9=ACAL, MCE=0: I11 ACI reads 1 within 0.2 s, then 0 within 3 s | I9 ACAL, I11 ACI (Linux snd_wss_mce_down waits the same way) | no autocalibration emulated, or ACI stuck |
 | `mode2_enable` (CS4231) | I12 <- $40 reads $CA (bit 7 = 1, MODE2, ID $A) | CS4231 I12; OSS detection `& 0xc0 == 0xc0` | MODE2 not supported |
 | `i25_version` (CS4231) | I25 & $E7 is $A0 (CS4231A) or $80 (CS4231) | CS4231 I25 | wrong chip/version |
@@ -51,15 +81,19 @@ which reports `storm` instead of hanging the machine.
 | `mode1_back` (CS4231) | I12 <- $00 clears MODE2 | I12 MODE2 is read/write | stuck in MODE2 |
 | `record_loopback` | skip: the codecs have no digital DAC-to-ADC loopback (only the analog post-mix input) | | |
 | `fifo_flags` (Prelude, Prelude 1200) | FIFO status nibble (/HF play, /EF play, /HF rec, /FF rec) after reset, 1, 600, 1024 bytes written to the idle play FIFO, and after another reset: $B,$F,$7,$7,$B | IDT720x flags, active low; layout from sndboard.cpp | FIFO levels or flag bits wrong, reset does not empty the FIFO |
-| `play_u8m_5512` | 8-bit unsigned mono, CSL=1 CFS=0 (5512.5 Hz), 4096 bytes (2048 quick): fill 1024, refill 512 at each half-empty interrupt; the last interrupt (no data left) masks the source. Exactly (N-1024)/512+1 interrupts, none spurious, everything delivered, FIFO drained | half-FIFO interrupt; I8 rate table | interrupt not raised at half level, raised twice, or the FIFO is not consumed at the selected rate |
-| `play_s16s_11025` | the same with 16-bit stereo little endian, CSL=1 CFS=1 (11025 Hz), 8192 bytes (4096 quick) | as above | as above, for 4-byte frames |
-| `play_intena_off` (Toccata) | 1024 bytes played with status bit 7 (PLAY_INTENA) clear: no interrupt | board status enable | interrupt not gated by the enable |
+| `play_u8m_5512` | configure 8-bit mono at nominal 5512.5 Hz, deliver 4096 bytes (2048 quick): fill 1024, refill 512 at each half-empty interrupt; exactly (N-1024)/512+1 attributable interrupts. Prelude empty is measured; Toccata empty and actual rate are not part of this verdict | half-FIFO delivery | missing/doubled interrupts, lost bytes or Prelude FIFO not empty |
+| `play_s16s_11025` | same delivery check, configured as 16-bit stereo little endian at nominal 11025 Hz, 8192 bytes (4096 quick); does not prove rate or stereo output | as above | as above, for 4-byte frames |
+| `drain_u8m_5512`, `drain_s16s_11025` (Toccata) | untestable: no documented play-empty indication; a timed delay is not empty evidence | hardware observability limitation | |
+| `rate_s16s_11025` | untestable: IRQ period is diagnostic only and there is no independent calibrated stereo-rate measurement | oracle limitation | |
+| `play_intena_off` (Toccata) | PLAY_INTENA clear: no attributable interrupt during the fixed playback observation interval; drain is not measured | board status enable | interrupt not gated by the enable |
 | `audio_capture` | `audio_mark` start/stop host requests around `play_u8m_5512`; untestable when the host does not acknowledge. Informational: the start mark describes the tone (square wave, 32 frames per cycle at 5512.5 Hz: `freq_mhz` 172265, `tol_pct` 2, `ms` = frames / rate, 743 or 372 quick), and the runner judges it as the pseudo case `host.tone_<board>_u8m_5512` | CONTRACT section 13; docs/schema.md 5.1 | (pseudo case) codec rate wrong, or the board's output not mixed |
 
 Perf records `<board>_<fmt>_irq_period`: ops = interrupt intervals, ticks = colour clocks between the
 first and the last interrupt. One interval is 512 bytes / bytes-per-frame / sample rate (329434 cck
 PAL for u8m_5512, 41179 cck for s16s_11025); the same value is in `ctx.timing.expect_period_cck` of a
-failing play case.
+failing play case. These performance records do not impose an unstated rate tolerance.
+The E02 audit allegation that `$CC` omitted SDC is withdrawn: `$CC & $04 == $04`.
+The explicit local I9 baseline is test self-containment strengthening, not a repaired mask bug.
 
 ## uaesnd (`uaesnd_*`)
 
@@ -82,11 +116,16 @@ cycles; the spec states that 68000/010 word accesses are supported.
 | `setptr_cleared` | after the end $0180.L reads 0 | spec: the set pointer "also clears automatically when stream ends" | pointer not cleared |
 | `diag_start_stop` | one playback adds 1 to $00A8 and 1 to $00AC (diagnostics capability only) | spec diagnostics block | counters wrong (or the playback never started) |
 | `audio_capture` | `audio_mark` around `play_irqs` (informational); the start mark describes the tone (square wave, 50 frames per cycle at 22050 Hz: `freq_mhz` 441000, `tol_pct` 2, `ms` 200), judged by the runner as the pseudo case `host.tone_uaesnd_play` | CONTRACT section 13; docs/schema.md 5.1 | (pseudo case) wrong playback rate, or the stream not mixed |
-| `mono_paula_capture` | a silent mono stream (repeat count -1) plays while Paula channel 1 plays a square tone (period 254, 32 samples: ~436 Hz PAL) for 0.5 s between `audio_mark` start/stop (side `right`), judged by the runner as the pseudo case `host.tone_uaesnd_mono_paula`; informational here | spec: 35.B = 0 sends a mono stream to left and right; Paula channels 1+2 are the right output (HRM) | (pseudo case) the right output loses Paula while a mono stream plays: the mixer replaced the right side with the left mix (Amiberry audio.cpp `do_extra_channels`, finding S9) |
+| `mono_active` | silent repeating mono must start and remain active ($0193 bit 0) at every poll through a 25-frame observation window | uaesnd play-active status | mono never started or stopped early |
+| `mono_paula_capture` | skip: the runtime does not obtain exclusive AUD1 ownership or provide genuine restoration/reinitialisation of its write-only registers. No Paula registers are changed and no host capture is claimed | ownership limitation; `mono_active` is readiness evidence, not the mixer oracle | |
 | `repeat_irqs` | 2205 frames + repeat count 2 (1102 frames), 34.B = repeat|end: status & $86 = $84, $84, $82 | spec: repeat count, 34.B bit 2; bits 0/3 are set whenever their condition occurs, so they are masked | repeat count off by one |
 | `invalid_set` | flags = 1 (must be 0): no start, $0193 bit 0 = 0, and with diagnostics $00A0 += 1, $00B8 = 1 | spec: validation, last error 1 = invalid set | invalid sets played |
 
 Perf: `uaesnd_timer_200hz_period` (interrupt intervals, cck), `uaesnd_play_4410_22050_start_to_end`.
+The timer handler counts status mismatches on **every** interrupt, not just its first eight
+diagnostic samples. uaesnd cleanup disables timer/interrupts/streams, verifies stream 1 stopped
+and enable masks clear, then releases the test allocation. It does not restore overwritten RAM
+or pre-existing driver allocations.
 
 `no_board`: skip when no known board is present. `<board>_board_rejected` (toccata, prelude, uaesnd):
 skip, the board fails amt_board_ok() (shut up / no valid Zorro address) and is not touched (review H1).
@@ -95,3 +134,6 @@ Failure ctx carries `glue_source`: the board glue is modelled on Amiberry sndboa
 Not covered: the ZZ9000AX audio interface (a firmware ring-buffer ABI with no chip data sheet behind
 it), the uaesnd capture registers ($00C0-$00DC, $0900-$090C; they need a host capture device), and
 recording on the codec boards (Amiberry takes it from a host capture device).
+
+Native/source-model regressions (no emulator):
+`cd runner && TMPDIR=/home/solskogen/source/amitorture/work/tmp PYTHONDONTWRITEBYTECODE=1 python3 -B -m unittest -v tests.test_guest_board_claim tests.test_guest_expansion tests.test_guest_expansion_fatal`.

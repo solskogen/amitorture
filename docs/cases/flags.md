@@ -1,6 +1,6 @@
 # flags (module id 3, AMT_PH_BARE)
 
-Condition codes as consumers see them. All sequences are in `disk/modules/flags_asm.s` (68000 ISA) and `flags_010.s` (MOVE from CCR). Expected values come from a C model of the M68000 Programmer's Reference Manual (PRM) rules in `flags.c`. Each table case runs once and is compared with the model. It then runs again under `amt_hot()`, so a later (possibly JIT-compiled) pass must give the same table. A failure names the first bad entry (inputs in `in`, expected/got words), the number of bad entries, and whether it failed on the first pass or a repetition (`ctx.pass`, `ctx.hot_iter`). CCR bits: X=$10 N=$08 Z=$04 V=$02 C=$01. `sr_hi` is SR & $FF00 in the bare phase ($2000).
+Condition codes as consumers see them. All sequences are in `disk/modules/flags_asm.s` (68000 ISA) and `flags_010.s` (MOVE from CCR). Expected values come from a C model of the M68000 Programmer's Reference Manual (PRM) rules in `flags.c`. Each table case runs once and is compared with the model. It then runs again under `amt_hot_checked()`: every pass, including the first hot callback, is independently compared with that model. A consistently wrong hot result cannot establish an unchecked baseline. A failure names the first bad entry (inputs in `in`, expected/got words), the number of bad entries, and whether it failed on the first pass or a repetition (`ctx.pass`, `ctx.hot_iter`). CCR bits: X=$10 N=$08 Z=$04 V=$02 C=$01. `sr_hi` is SR & $FF00 in the bare phase ($2000).
 
 | case | intent | rule (manual) | a failure usually means |
 |---|---|---|---|

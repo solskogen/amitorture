@@ -1,5 +1,12 @@
 # input (module 15, AMT_PH_BARE, disk group "chip")
 
+Audit timing gates: the keyboard hold test's deadline starts before the first
+host request, conservatively including both round trips. It needs enough
+remaining time for the complete 30 ms observation before the keyboard's
+143 ms handshake timeout; otherwise it acknowledges the byte and reports
+untestable. Button detection must complete two stable frames within its
+acquisition deadline; a first match at the deadline is not success.
+
 Keyboard, mouse/joystick counters, pot ports and the CD32 pad. References: Amiga Hardware Reference Manual
 (HRM) 3rd ed., chapter 8 "Interface Hardware" (controller ports, keyboard) and appendix A (JOY0DAT/JOY1DAT,
 JOYTEST, POTGO/POTINP, POT0DAT/POT1DAT); appendix F (8520). The CD32 pad protocol is not in the HRM: it is the

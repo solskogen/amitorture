@@ -18,10 +18,49 @@ softfloat is 80-bit extended, so differences there are expected.
 from __future__ import annotations
 
 from . import cases as casemod
-from . import matrix
+from . import amiberry_cfg, matrix
 
 ENFORCED = {"jit", "threaded"}
 RAN = {"pass", "fail", "incomplete"}
+
+
+def _pair_problem(ref_res, twin_res, kind):
+    for r in (ref_res, twin_res):
+        if any((s.get("config") or {}).get("dump_ok") is False for s in (r.get("disks") or [r])):
+            return "configuration verification failed"
+    pacing = []
+    for r in (ref_res, twin_res):
+        pacing.append({s.get("disk_name"): (s.get("warp") or {}).get(
+            "effective", str((s.get("resolved_options") or s.get("options") or {}).get(
+                "warp", "false")).lower() in ("true", "yes", "1"))
+            for s in (r.get("disks") or [r])})
+    if pacing[0] != pacing[1]:
+        return "entries have different per-disk warp modes"
+    opts = [amiberry_cfg.COMMON | (r.get("options") or {}) | (r.get("resolved_options") or {})
+            for r in (ref_res, twin_res)]
+    ref, twin = opts
+    allowed = {"jit": matrix.JIT_OPTION_KEYS, "threaded": {"cpu_threaded"},
+               "softfloat": {"fpu_softfloat"}}.get(kind)
+    if allowed is None:
+        return f"unknown twin kind {kind!r}"
+    if kind == "jit" and "cpu_threaded" in (twin_res.get("twin_options") or []):
+        allowed = allowed | {"cpu_threaded"}
+    if kind == "jit":
+        try:
+            valid = int(ref.get("cachesize", 0)) == 0 and int(twin.get("cachesize", 0)) > 0
+        except (TypeError, ValueError):
+            valid = False
+        if not valid:
+            return "JIT parity requires an interpreter reference (cachesize=0) and a JIT twin (cachesize>0)"
+    else:
+        axis = "cpu_threaded" if kind == "threaded" else "fpu_softfloat"
+        if str(ref.get(axis, "false")).lower() not in ("false", "no", "0") or str(
+                twin.get(axis, "false")).lower() not in ("true", "yes", "1"):
+            return f"{kind} parity requires {axis}=false on the reference and true on the twin"
+    other = [k for k, _, _ in matrix.option_diff(ref, twin) if k not in allowed]
+    if other:
+        return "entries differ outside the intended engine options: " + ", ".join(other)
+    return None
 
 
 def compare(ref_res, twin_res, ref_fp=None, twin_fp=None):
@@ -40,6 +79,10 @@ def compare(ref_res, twin_res, ref_fp=None, twin_fp=None):
                     why="config adjusted by emulator (" + "; ".join(
                         f"{d['option']} {d['wrote']}->{d['resolved']}" for d in adj[:4])
                         + "): not a run of the designed engine pair")
+        return [], info
+    why = _pair_problem(ref_res, twin_res, kind)
+    if why:
+        info.update(status="not compared", compared=0, why=why)
         return [], info
     ref_fp = ref_fp or casemod.extract(ref_res)
     twin_fp = twin_fp or casemod.extract(twin_res)

@@ -20,7 +20,7 @@ MKADF   := $(PYTHON) ../tools/mkadf.py
 
 B ?= build
 
-CFLAGS  := -m68000 -Os -ffreestanding -nostdlib -fno-builtin -noixemul -fomit-frame-pointer \
+CFLAGS  := -m68000 -Os -ffreestanding -nostdlib -fno-builtin -noixemul -fomit-frame-pointer -MMD -MP \
            -fno-tree-loop-distribute-patterns -Wall -Wextra -Wno-unused-parameter \
            -I$(NDK_INCLUDE) -Irt -Iprobe
 ASFLAGS := -Fhunk -quiet -m68000 -I$(NDK_INCLUDE)
@@ -77,10 +77,10 @@ $(B)/modlist.c: $(MOD_C) ../tools/genmodlist.py
 	@mkdir -p $(dir $@)
 	$(PYTHON) ../tools/genmodlist.py $@ $(MOD_C)
 
-$(B)/modlist.o: $(B)/modlist.c rt/mod.h
+$(B)/modlist.o: $(B)/modlist.c rt/mod.h Makefile
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-$(B)/%.o: %.c rt/rt.h rt/mod.h rt/screen.h probe/probe.h
+$(B)/%.o: %.c rt/rt.h rt/mod.h rt/screen.h probe/probe.h Makefile
 	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) $(call cpuflag,$<) -c -o $@ $<
 
@@ -150,3 +150,5 @@ check-groups:
 .PHONY: check-gen
 check-gen:
 	../tools/check_generated.sh
+
+-include $(C_SRCS:%.c=$(B)/%.d) $(B)/modlist.d

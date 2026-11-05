@@ -110,6 +110,7 @@ struct run {
 static struct run R, F1;
 static int k_tot, k_fail;
 static const char *k_why;
+static long hot_failure_iter = -1;
 
 static void kbegin(const char *why)
 {
@@ -283,6 +284,8 @@ static void kend(const char *id)
     }
     json_int("runs", k_tot);
     json_int("failed_runs", k_fail);
+    if (hot_failure_iter >= 0)
+        json_int("hot_iteration", hot_failure_iter);
     json_obj_end();
     amt_case_close();
 }
@@ -1299,6 +1302,7 @@ static void tcheck(ULONG ret, const struct tev *ex, int n)
         int ok = l->vec == ex[i].vec && l->f[0] == ex[i].sr && frl(l->f, 1) == ex[i].pc &&
                  (IS000 || l->f[3] == fv) &&
                  (!(GE020 && fmt == 2 && ex[i].addr) || frl(l->f, 4) == ex[i].addr);
+        rcmp("handler_sr", (ex[i].sr | 0x2000) & 0x3fff, l->hsr, T_H4);
         if (!ok) {
             R.ev = i;
             rframe_from(l->f, 12);
@@ -1635,155 +1639,72 @@ static void t_berr(void)
 }
 
 /* ------------------------------------------------------------ hot loops */
-static ULONG hmix(ULONG h, ULONG v)
+static void hrec(ULONG fn, ULONG at, UWORD vec, UWORD sr, UWORD mask, ULONG pc)
 {
-    return ((h << 5) | (h >> 27)) ^ v;
-}
-
-/* per-exception record of the current / first hot_frames iteration, so a
- * divergence can be pinned to one exception */
-#define HOTN 32
-static ULONG hot_cur[HOTN][7], hot_first[HOTN][7];
-static int hot_n;
-
-static ULONG hrec(ULONG h, ULONG ret, ULONG at)
-{
-    if (hot_n < HOTN) {
-        ULONG *r = hot_cur[hot_n++];
-        r[0] = ret;
-        r[1] = ret ? xr_spbase - xr_ssp : 0;
-        r[2] = ret ? xr_frame[0] : 0;
-        r[3] = ret ? frl(xr_frame, 1) - at : 0;
-        r[4] = ret ? xr_hsr : 0;
-        r[5] = ret && !IS000 ? xr_frame[3] : 0;
-        r[6] = ret && !IS000 && (xr_frame[3] >> 12) == 2 ? frl(xr_frame, 4) - at : 0;
-    }
-    h = hmix(h, ret);
-    if (!ret)
-        return h;
-    h = hmix(h, xr_spbase - xr_ssp);
-    h = hmix(h, xr_frame[0]);
-    h = hmix(h, frl(xr_frame, 1) - at);
-    h = hmix(h, xr_hsr);
-    if (!IS000) {
-        h = hmix(h, xr_frame[3]);
-        if ((xr_frame[3] >> 12) == 2)
-            h = hmix(h, frl(xr_frame, 4) - at);
-    }
-    return h;
+    rbegin(at);
+    xrun(fn);
+    rexc(vec, sr, mask, pc, at, -1, 0);
+    rend();
 }
 
 static ULONG hot_frames(ULONG it)
 {
-    ULONG h = 0x811c9dc5UL, at;
+    ULONG at;
     int n;
-    hot_n = 0;
+    (void)it;
     for (n = 0; n < 16; n++) {
         at = A(xs_trap) + 4UL * n;
         xset(0x2700 | n);
-        h = hrec(h, xrun(at), at);
+        hrec(at, at, 32 + n, 0x2700 | n, 0xffff, at + 2);
     }
     xset(0x2709);
     xr_in[0] = 0xffff;
     xr_in[1] = 10;
-    h = hrec(h, xrun(A(xs_chkw)), A(xs_chkw_at));
+    hrec(A(xs_chkw), A(xs_chkw_at), 6, 0x2708, 0xff18, A(xs_chkw_nx));
     xset(0x2700);
     xr_in[0] = 0x1234;
-    h = hrec(h, xrun(A(xs_divuw)), A(xs_divuw_at));
+    hrec(A(xs_divuw), A(xs_divuw_at), 5, 0x2700, 0xff11, A(xs_divuw_nx));
     xset(0x2702);
-    h = hrec(h, xrun(A(xs_trapv)), A(xs_trapv_at));
+    hrec(A(xs_trapv), A(xs_trapv_at), 7, 0x2702, 0xffff, A(xs_trapv_nx));
     xset(0x2700);
-    h = hrec(h, xrun(A(xs_ill)), A(xs_ill));
+    hrec(A(xs_ill), A(xs_ill), 4, 0x2700, 0xffff, A(xs_ill));
     at = A(xs_ill) + 8 * 21;                    /* $a000 */
-    h = hrec(h, xrun(at), at);
+    hrec(at, at, 10, 0x2700, 0xffff, at);
     if (GE020) {
         for (n = 0; n < 3; n++) {
             at = A(xs_tcc) + (ULONG)(n * 16 + 7) * 8;    /* TRAPEQ */
             xset(0x2704);
-            h = hrec(h, xrun(at), at);
+            hrec(at, at, 7, 0x2704, 0xffff, at + 2 + 2 * n);
         }
         xset(0x2700);
         xr_in[0] = 0x00010000UL;
         xr_in[1] = 0xffff;
-        h = hrec(h, xrun(A(xs_chkl)), A(xs_chkl_at));
+        hrec(A(xs_chkl), A(xs_chkl_at), 6, 0x2700, 0xff18, A(xs_chkl_nx));
         xset(0x2700);
-        h = hrec(h, xrun(A(xs_divul)), A(xs_divul_at));
+        hrec(A(xs_divul), A(xs_divul_at), 5, 0x2700, 0xff11, A(xs_divul_nx));
     }
-    if (it == 0)
-        for (n = 0; n < hot_n; n++) {
-            int k;
-            for (k = 0; k < 7; k++)
-                hot_first[n][k] = hot_cur[n][k];
-        }
-    return h;
+    return k_fail;
 }
 
 static ULONG hot_trace(ULONG it)
 {
-    ULONG h = 0x01000193UL, r;
-    int i, j;
+    struct tev e[8];
+    ULONG r;
+    int n = tr1_expect(e);
     (void)it;
+    rbegin(A(xs_tr1));
     r = trace_run(A(xs_tr1), 0, 0);
-    h = hmix(h, r);
-    h = hmix(h, xr_nlog);
-    for (i = 0; i < xr_nlog && i < XLOGMAX; i++) {
-        h = hmix(h, xr_log[i].vec);
-        h = hmix(h, xr_log[i].hsr);
-        h = hmix(h, frl(xr_log[i].f, 1) - A(xs_tr1));
-        /* SR and format/vector word; the PC and the format $2 address are
-         * hashed as offsets (absolute words would make the hash, which a
-         * failure reports, depend on the memory layout) */
-        for (j = 0; j < 4; j++)
-            if (j != 1 && j != 2)
-                h = hmix(h, xr_log[i].f[j]);
-        if (GE020)
-            h = hmix(h, frl(xr_log[i].f, 4) - A(xs_tr1));
-    }
-    return h;
+    tcheck(r, e, n);
+    rend();
+    return k_fail;
 }
 
 static void hot_case(const char *id, ULONG (*fn)(ULONG), const char *why)
 {
-    ULONG first = 0, bad = 0;
-    long r = amt_hot(fn, amt_hot_reps(), &first, &bad);
-    if (r < 0) {
-        amt_case(id, AMT_ST_PASS, 0);
-        return;
-    }
-    amt_case_open(id, AMT_ST_FAIL);
-    json_obj("expect");
-    json_hex("hash", first);
-    json_obj_end();
-    json_obj("got");
-    json_hex("hash", bad);
-    json_int("iteration", r);
-    json_obj_end();
-    json_str("why", why);
-    json_obj("ctx");
-    json_str("cpu", amt_probe_result.cpu);
-    if (fn == hot_frames) {
-        int n, k;
-        for (n = 0; n < hot_n; n++) {
-            for (k = 0; k < 7 && hot_cur[n][k] == hot_first[n][k]; k++)
-                ;
-            if (k < 7)
-                break;
-        }
-        if (n < hot_n) {
-            json_int("exception_index", n);
-            json_str("layout", "[vector, frame size, SR, PC offset, handler SR, fv, addr offset]");
-            json_arr("first");
-            for (k = 0; k < 7; k++)
-                json_hex(NULL, hot_first[n][k]);
-            json_arr_end();
-            json_arr("diverged");
-            for (k = 0; k < 7; k++)
-                json_hex(NULL, hot_cur[n][k]);
-            json_arr_end();
-        }
-    }
-    json_obj_end();
-    amt_case_close();
+    kbegin(why);
+    hot_failure_iter = amt_hot_checked(fn, amt_hot_reps(), 0, 0);
+    kend(id);
+    hot_failure_iter = -1;
 }
 
 /* ------------------------------------------------------------ entry */
@@ -1838,8 +1759,8 @@ void amt_run_exceptions(void)
     t_berr();
     hot_case("hot_frames", hot_frames,
              "repeating the same TRAP/CHK/DIV0/TRAPV/illegal/line-A (and 020+ TRAPcc/CHK.L/DIVU.L) "
-             "exceptions gave a different frame on a later iteration (JIT vs interpreter?)");
+             "exceptions must satisfy the architectural frame rules on every iteration");
     hot_case("hot_trace", hot_trace,
-             "repeating the same T1 trace sequence gave different trace frames on a later iteration");
+             "every repetition of the T1 trace sequence must match the independent expected events");
     xr_set_usp(usp0);
 }

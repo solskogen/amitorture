@@ -26,6 +26,7 @@
 	xdef	amt_catchall
 
 	xref	_amt_last_exc
+	xref	_amt_bus_frame_68000
 	xref	_amt_frames
 	xref	_amt_wd_left
 	xref	_amt_wd_hard
@@ -116,8 +117,10 @@ amt_catchall:
 	lea	14(sp),a1		; frame start
 	cmp.w	#3,-2(a0)
 	bhi.s	.grp12
+	tst.w	_amt_bus_frame_68000
+	beq.s	.grp12
 	; vectors 2/3: on the 68000 the frame is status,addr.l,ir,sr,pc.l
-	move.w	8(a1),(a0)+		; sr (68000 layout; 010+ decoded in C)
+	move.w	8(a1),(a0)+		; sr
 	move.l	10(a1),(a0)+		; pc
 	bra.s	.raw
 .grp12:	move.w	(a1),(a0)+		; sr

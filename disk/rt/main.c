@@ -52,6 +52,7 @@ static void emit_hello(void)
     json_str("cpu", probe.cpu);
     json_str("fpu", probe.fpu);
     json_int("mmu", probe.mmu);
+    amt_json_modules();
 
     /* single serialiser for the probe object: disk/probe/probe.c */
     if (amt_probe_json(&probe, probe_json, sizeof probe_json) >= 0)
@@ -67,7 +68,8 @@ int amt_main(void)
     mbox_init();
     ser_init(SysBase->VBlankFrequency != 60, amt_par.baud);
 
-    amt_probe(&probe);
+    amt_probe_with_claims(&probe, amt_par.end_action == AMT_END_HALT ||
+                                  amt_par.end_action == AMT_END_REBOOT);
     ser_init(probe.pal, amt_par.baud);   /* now with the probed clock */
 
     emit_hello();
@@ -97,6 +99,9 @@ int amt_main(void)
         break;
     case AMT_END_RETURN:
         screen_close();
+        amt_probe_release_boards(&probe);
+        amt_return_cleanup();
+        mbox_close();
         return -1;
     default:
         break;

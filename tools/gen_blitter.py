@@ -451,7 +451,7 @@ def build_cases():
                       group="mod"))
     cases.append(area("mod_negative_a_repeat_row", USEA | USEC | USED | 0x6a, 0, w=4, h=6,
                       amod=-8, cmod=2, dmod=2, group="mod"))
-    cases.append(area("mod_negative_b", USEA | USEB | USED | 0xc0 | 0x30, (3 << 12), w=4, h=5,
+    cases.append(area("mod_negative_b", USEA | USEB | USED | 0x3c, (3 << 12), w=4, h=5,
                       amod=0, bmod=-12, dmod=0, group="mod"))
     cases.append(area("mod_negative_d_upward", USEA | USED | 0xf0, 0, w=3, h=6, amod=0,
                       dmod=-12, dpt=D_BASE + 0x200, group="mod"))

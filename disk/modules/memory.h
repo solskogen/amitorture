@@ -6,7 +6,8 @@
  * on a 16 MB boundary, with AllocAbs() at addresses it found free in the
  * region's own free list (falls back to one plain Allocate() block, without
  * a boundary, if no free boundary exists). memory (AMT_PH_BARE) tests them.
- * The blocks are not freed (no hook runs after the bare phase).
+ * The blocks remain available through the bare phase and are freed on CLI
+ * return. Default halt intentionally retains them with the live mailbox.
  */
 #ifndef AMT_MEMORY_H
 #define AMT_MEMORY_H
@@ -32,6 +33,8 @@ struct mem_reg {
     UBYTE nb;                       /* number of blocks */
     UBYTE pad[2];
     ULONG blk[4];                   /* block start (boundary - MEM_HALF), 0 = none, by MB_* */
+    ULONG plain_alloc;              /* original, possibly unaligned Allocate() result */
+    struct MemHeader *plain_owner;
 };
 
 extern struct mem_reg mem_regs[MEM_MAXREG];

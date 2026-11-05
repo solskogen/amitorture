@@ -16,6 +16,7 @@ one or more binaries and diffs fingerprint by fingerprint:
                     or any changed value; `transition` says which)
   fixed             baseline fail -> now pass (xfail ref if registered)
   new / missing     case only in the check / only in the baseline
+  new_failure       unexpected failing case only in the check
   became_unstable   stable in the baseline, differs between check runs
   unstable_excluded unstable in the baseline: reported, not compared
   perf_out_of_band / timing_out_of_band (direction faster/slower)
@@ -43,7 +44,7 @@ BAND_PCT = 0.05
 BAND_ABS = 1.0
 FORMAT = 1
 REGRESSION_KINDS = {"regression", "missing", "became_unstable", "perf_out_of_band", "timing_out_of_band",
-                    "entry_status", "missing_entry"}
+                    "entry_status", "missing_entry", "new_failure", "perf_missing", "timing_missing"}
 
 
 def band(values, k=BAND_K, pct=BAND_PCT, abs_min=BAND_ABS):
@@ -168,7 +169,7 @@ def diff(baseline, check, registry=None):
             continue
         changes = config_changes(b["entry"], c["entry"])
         meta_changes = []
-        for k in ("rom", "ext_rom", "disk_build", "binary_sha256"):
+        for k in ("rom", "ext_rom", "disk_build", "binary_sha256", "warp"):
             if (b.get("meta") or {}).get(k) != (c.get("meta") or {}).get(k):
                 meta_changes.append({"what": k, "baseline": (b.get("meta") or {}).get(k),
                                      "now": (c.get("meta") or {}).get(k)})
@@ -180,15 +181,21 @@ def diff(baseline, check, registry=None):
             add("entry_status", eid, baseline=b["statuses"], now=c["statuses"],
                 why=f"entry ended {c['statuses']} (baseline {b['statuses']})", **ctx)
         good = complete_runs(c["statuses"], c["runs"])
-        if not good or not b["cases"]:
+        if not good:
             continue
         now = stability(good)
         opts = (c["entry"] or {}).get("options") or {}
         for key in sorted(set(b["cases"]) | set(now)):
             bc, nc = b["cases"].get(key), now.get(key)
             if bc is None:
-                add("new", eid, case_key=key, mod=nc["mod"], case=nc["case"], now={"st": nc["st"], "rec": nc["rec"]},
-                    why=f"case {key} is new (not in the baseline)", **ctx)
+                xf = xfailmod.match(registry, key, eid, opts) if "fail" in nc["st"] else None
+                kind = "new_failure" if "fail" in nc["st"] and not xf else "new"
+                item = dict(case_key=key, mod=nc["mod"], case=nc["case"],
+                            now={"st": nc["st"], "rec": nc["rec"]}, **ctx)
+                if xf:
+                    item["xfail"] = xf
+                add(kind, eid, why=f"case {key} is new (not in the baseline)"
+                    + (" and unexpectedly fails" if kind == "new_failure" else ""), **item)
                 continue
             if nc is None:
                 add("missing", eid, case_key=key, mod=bc["mod"], case=bc["case"],
@@ -266,6 +273,8 @@ def diff(baseline, check, registry=None):
             for path, bb in paths_.items():
                 nb = (ntime.get(key) or {}).get(path)
                 if nb is None:
+                    add("timing_missing", eid, case_key=key, path=path,
+                        why=f"timing {key} {path} no longer reported", **ctx)
                     continue
                 d = _out_of_band(bb, nb["mean"])
                 if d:
@@ -352,7 +361,8 @@ def entry_meta(result, ctx_env):
             "disk_build": disk.get("build_id") if "set" not in disk else
             " | ".join(f"{d.get('name')}={d.get('build_id')}" for d in disk["set"]),
             "binary_sha256": ((ctx_env or {}).get("amiberry") or {}).get("sha256"),
-            "adjusted": result.get("adjusted"), "resolved_options": result.get("resolved_options")}
+            "adjusted": result.get("adjusted"), "resolved_options": result.get("resolved_options"),
+            "warp": result.get("warp")}
 
 
 def now_iso():

@@ -31,6 +31,7 @@
  * codes $68-$7F (reset warning $78, CDTV keys). */
 #include "mod.h"
 #include "cia_hw.h"
+#include "hardware_audit.h"
 
 AMT_MODULE(input, 15, AMT_PH_BARE, AMT_MF_LONG, 0, 0);
 
@@ -723,6 +724,7 @@ static void kbd_hold_test(void)
     UBYTE b1 = 0, b2 = 0, acc = 0, sdr_mid;
     int r, early = 0;
     ULONG t0;
+    t0 = cia_now();                     /* before even the first host round trip */
     r = kbd_event(0x35, 0, &b1, 0);       /* B down, not acknowledged yet */
     if (r <= 0) {
         host_untestable("kbd_hold_until_handshake", H_KEY, r);
@@ -749,7 +751,13 @@ static void kbd_hold_test(void)
         host_untestable("kbd_hold_until_handshake", H_KEY, r);
         return;
     }
-    /* 30 ms without the handshake (the keyboard waits up to 143 ms) */
+    /* Include the host round trip in the original byte's deadline. */
+    if (!hw_keyboard_window(t0, cia_now())) {
+        cia_kbd_handshake();
+        amt_case("kbd_hold_until_handshake", AMT_ST_UNTESTABLE,
+                 "host round trip left insufficient coverage before the keyboard handshake deadline");
+        return;
+    }
     t0 = cia_now();
     while (cia_now() - t0 < 30UL * 3547UL)
         acc |= cia_rd(CIAA_BASE, C_ICR);
@@ -917,12 +925,14 @@ static int wait_level(int (*rd)(int), int which, int want, ULONG *frames)
             if (!ok)
                 fok = now;
             ok = 1;
-            if (now - fok >= 2)
+            if (hw_stable_complete(now, fok, ok))
                 break;
         } else
             ok = 0;
-        if (now - f0 >= 50)
+        if (now - f0 >= 50) {
+            ok = 0;
             break;
+        }
     }
     if (frames)
         *frames = fok - f0;

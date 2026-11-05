@@ -49,6 +49,10 @@ struct amt_probe_mem {
     ULONG free;           /* mh_Free */
 };
 
+struct ConfigDev;
+struct Library;
+struct List;
+
 struct amt_probe_board {
     ULONG man;            /* er_Manufacturer */
     ULONG prod;           /* er_Product */
@@ -56,6 +60,8 @@ struct amt_probe_board {
     ULONG size;           /* cd_BoardSize */
     ULONG flags;          /* cd_Flags (CDF_SHUTUP 1, CDF_CONFIGME 2, CDF_BADMEMORY 4) */
     ULONG ertype;         /* cd_Rom.er_Type */
+    ULONG serial;         /* private er_SerialNumber identity snapshot */
+    struct ConfigDev *config_dev; /* private provenance; not part of hello JSON */
 };
 
 struct amt_probe {
@@ -97,9 +103,16 @@ struct amt_probe {
     ULONG traps;          /* number of unexpected exceptions caught */
     LONG  how_used;
     char  how_pool[AMT_PROBE_HOW_POOL];
+    struct Library *board_library; /* private open reference for HALT/REBOOT */
+    struct List *board_list;       /* live list header, never a cached member */
 };
 
 void amt_probe(struct amt_probe *p);
+/* Runtime opt-in: retain expansion.library/list provenance only for terminal
+ * HALT/REBOOT runs. Ordinary standalone/RETURN probing retains no references. */
+void amt_probe_with_claims(struct amt_probe *p, int retain_boards);
+/* OS phase only, before any claims. Idempotent; also used on final RETURN. */
+void amt_probe_release_boards(struct amt_probe *p);
 
 /* Serialise p as the section 8 JSON object (compact, ASCII, no newline).
  * Writes a NUL-terminated string to buf and returns its length, or -1 if it

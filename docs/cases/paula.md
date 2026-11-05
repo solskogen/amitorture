@@ -1,5 +1,14 @@
 # paula (module 14, AMT_PH_BARE, disk group "chip")
 
+Audit validity and restoration: modulator alternatives are the disjoint
+intervals 2800-3600 and 6000-6800 cck, not their convex hull (4800 is rejected).
+ISR/stamp beam sampling has a 256-attempt budget; exhausted samples invalidate
+dependent timing verdicts and the ISR disables the audio source before returning.
+DF1 marker pairs must agree on first-free, block size, kind, total and UUID
+before writes. A completed STEP edge and its displacement accounting are
+interrupt-atomic, before the settling delay; abort cleanup completes and
+accounts a pulse interrupted while STEP was low before restoring displacement.
+
 Paula audio (DMA, interrupts, direct mode, ADKCON attach) and the disk controller (DMA, sync, MFM, drive lines).
 References: Amiga Hardware Reference Manual (HRM) ch.5 "Audio hardware" (incl. the audio state diagram: states
 000 idle, 001/101 DMA start, 010/011 high/low byte; `napnav`, AUDxIP = the channel's INTREQ bit, AUDxIR =

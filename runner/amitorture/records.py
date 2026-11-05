@@ -136,6 +136,14 @@ def validate(obj: dict) -> list[str]:
             missing += [f for f in CASE_FAIL_REQUIRED if f not in obj]
     if missing:
         p.append("missing field(s): " + ",".join(missing))
+    if t == "hello" and "modules" in obj:
+        mods = obj["modules"]
+        if not isinstance(mods, dict) or any(
+                not isinstance(k, str) or not k or type(v) is not int or not 0 <= v < 64
+                for k, v in mods.items()):
+            p.append("hello.modules must map module names to ids in 0..63")
+        elif len(set(mods.values())) != len(mods):
+            p.append("hello.modules contains duplicate ids")
     return p
 
 
@@ -241,6 +249,70 @@ class Merged:
         return [m["rec"] for m in self.records if m["rec"].get("t") == t]
 
 
+def summarize(merged):
+    hello, done = merged.by_type("hello"), merged.by_type("done")
+    return {"merged": len(merged.records), "per_source": merged.per_source, "gaps": merged.gaps,
+            "bad": merged.bad, "bad_count": len(merged.bad), "conflicts": merged.conflicts,
+            "duplicates_dropped": merged.duplicates, "schema_problems": merged.schema_problems,
+            "boots": sorted({m["boot"] for m in merged.records}),
+            "host": sum(1 for m in merged.records if m.get("host")),
+            "hello": hello[-1] if hello else None, "done": done[-1] if done else None}
+
+
+def module_problems(merged):
+    """Lifecycle and declared coverage of the latest guest boot."""
+    guest = [m for m in merged.records if not m.get("host")]
+    if not guest:
+        return ["no modules executed"]
+    boot = guest[-1]["boot"]
+    recs = [m["rec"] for m in guest if m["boot"] == boot]
+    hello = next((r for r in recs if r.get("t") == "hello"), {})
+    expected = hello.get("modules")
+    if expected == {} and not any(r.get("t") in ("mod", "case", "perf", "speed") for r in recs):
+        done = next((r for r in recs if r.get("t") == "done"), {})
+        if done and not any(done.get(k) for k in CASE_STATES):
+            return []
+    active, seen, completed, evidence, problems = None, set(), set(), False, []
+    if not hello:
+        problems.append("no hello record in the latest guest boot")
+    for r in recs:
+        t, mod = r.get("t"), r.get("mod")
+        if t == "mod":
+            if not isinstance(mod, str) or not mod:
+                problems.append("module record has no valid module name")
+                continue
+            if isinstance(expected, dict) and (mod not in expected or r.get("id") != expected[mod]):
+                problems.append(f"module {mod} id={r.get('id')} differs from hello.modules")
+            if r.get("ev") == "begin":
+                if active is not None:
+                    problems.append(f"module {mod} began before module {active} ended")
+                if mod in seen:
+                    problems.append(f"module {mod} began more than once")
+                seen.add(mod)
+                active = mod
+            elif r.get("ev") == "end":
+                if active != mod:
+                    problems.append(f"module {mod} ended without a matching begin")
+                else:
+                    completed.add(mod)
+                    active = None
+        elif t in ("case", "perf", "speed"):
+            evidence = True
+            if active != mod:
+                problems.append(f"{t} record for module {mod} outside its begin/end")
+    if active is not None:
+        problems.append(f"module {active} has no matching end")
+    if not seen:
+        problems.append("no modules executed")
+    elif not evidence:
+        problems.append("no case, perf or speed records were produced")
+    if isinstance(expected, dict):
+        missing = sorted(set(expected) - completed)
+        if missing:
+            problems.append("declared modules did not complete: " + ", ".join(missing))
+    return problems
+
+
 def bad_unrecovered(merged) -> list:
     """Bad-CRC/unparsable lines whose record did NOT arrive intact on another
     transport. A corrupted serial line is harmless when the mailbox (or the
@@ -268,6 +340,62 @@ def bad_unrecovered(merged) -> list:
     return out
 
 
+def boot_alignment(streams):
+    """Map source-local boots to common epochs, retaining uncertain epochs separately."""
+    grouped = {}
+    for src, recs in streams.items():
+        boots = {}
+        for r in recs:
+            boots.setdefault(r.boot, []).append(r)
+        if boots:
+            grouped[src] = boots
+    if not grouped:
+        return {}, []
+    anchor = max(grouped, key=lambda s: (len(grouped[s]), sum(r.crc_ok for r in streams[s])))
+    anchor_boots = sorted(grouped[anchor])
+    if all(len(boots) == len(anchor_boots) for boots in grouped.values()):
+        return {src: dict(zip(sorted(boots), anchor_boots)) for src, boots in grouped.items()}, []
+    views = {b: {r.seq: r.obj for r in grouped[anchor][b]
+                 if r.crc_ok and r.obj is not None and r.seq is not None} for b in anchor_boots}
+    complete = {}
+    for b, view in views.items():
+        last = view.get(len(view) - 1, {})
+        complete[b] = (view.get(0, {}).get("t") == "hello" and last.get("t") == "done"
+                       and last.get("records") == len(view) and set(view) == set(range(len(view))))
+    maps = {anchor: {b: b for b in anchor_boots}}
+    issues, next_boot = [], max(anchor_boots) + 1
+    for src, boots in grouped.items():
+        if src == anchor:
+            continue
+        order = sorted(boots)
+        if len(order) == len(anchor_boots):
+            maps[src] = dict(zip(order, anchor_boots))
+            continue
+        candidates = {}
+        for b in order:
+            valid = [r for r in boots[b] if r.crc_ok and r.obj is not None and r.seq is not None]
+            hello = next((r.obj for r in valid if r.seq == 0 and r.type == "hello"), None)
+            matches = [a for a in anchor_boots if hello is not None and views[a].get(0) == hello]
+            if len(matches) != 1:
+                matches = [a for a in anchor_boots if complete[a] and valid
+                           and all(views[a].get(r.seq) == r.obj for r in valid)]
+            candidates[b] = matches
+        unique = [c[0] for c in candidates.values() if len(c) == 1]
+        monotonic = unique == sorted(set(unique))
+        maps[src] = {}
+        for b in order:
+            matches = candidates[b]
+            if monotonic and len(matches) == 1:
+                maps[src][b] = matches[0]
+            else:
+                maps[src][b] = next_boot
+                issues.append({"boot": next_boot, "source": src, "source_boot": b, "seq": None,
+                               "problems": [f"cannot reconcile source-local boot {b} on {src} "
+                                            f"with {anchor}: ambiguous or incomplete boot evidence"]})
+                next_boot += 1
+    return maps, issues
+
+
 def merge(streams: dict[str, list[Record]]) -> Merged:
     """Merges the records of several transports by (boot, seq).
 
@@ -275,20 +403,24 @@ def merge(streams: dict[str, list[Record]]) -> Merged:
     Records with a bad CRC are never trusted: they go to ``bad`` and only fill
     nothing. If two CRC-valid copies differ, the first source wins and the
     difference is reported in ``conflicts``.
+    Unequal observed boot histories are reconciled first; ambiguous epochs
+    remain separate and produce schema problems rather than filling gaps.
     """
     table: dict[tuple, dict] = {}
-    bad, conflicts, schema = [], [], []
+    boot_maps, schema = boot_alignment(streams)
+    bad, conflicts = [], []
     dups = 0
     per_source = {}
     for src, recs in streams.items():
         c = per_source.setdefault(src, {"records": 0, "bad_crc": 0, "unparsable": 0, "schema": 0})
         for r in recs:
+            boot = boot_maps[src][r.boot]
             c["records"] += 1
             if not r.crc_ok or r.obj is None or r.seq is None:
                 c["bad_crc" if not r.crc_ok else "unparsable"] += 1
-                bad.append(r.to_json())
+                bad.append(r.to_json() | {"boot": boot})
                 continue
-            key = (r.boot, r.seq)
+            key = (boot, r.seq)
             schema_issues = [p for p in r.problems if not p.startswith("bad crc")]
             if key in table:
                 have = table[key]
@@ -298,13 +430,13 @@ def merge(streams: dict[str, list[Record]]) -> Merged:
                     else:
                         dups += 1
                 else:
-                    conflicts.append({"boot": r.boot, "seq": r.seq, "kept": {"sources": have["sources"], "rec": have["rec"]},
+                    conflicts.append({"boot": boot, "seq": r.seq, "kept": {"sources": have["sources"], "rec": have["rec"]},
                                       "other": {"source": src, "rec": r.obj}})
                 continue
             if schema_issues:
                 c["schema"] += 1
-                schema.append({"boot": r.boot, "seq": r.seq, "source": src, "problems": schema_issues, "rec": r.obj})
-            table[key] = {"boot": r.boot, "seq": r.seq, "rec": r.obj, "sources": [src]}
+                schema.append({"boot": boot, "seq": r.seq, "source": src, "problems": schema_issues, "rec": r.obj})
+            table[key] = {"boot": boot, "seq": r.seq, "rec": r.obj, "sources": [src]}
     ordered = [table[k] for k in sorted(table)]
     gaps = []
     boots = sorted({k[0] for k in table})

@@ -261,8 +261,10 @@ def _pc_of(item):
 
 
 def write_pack(outdir, problem, item, entry, *, rom, ext_rom, adf_src, params, module_id, binary, kickstarts,
-               amiberry_src, pointers, bake):
+               amiberry_src, pointers, bake, warp=None):
     """Writes repro/<problem id>/. Returns its info dict (relative paths)."""
+    if warp is not None:
+        entry = dict(entry, options=dict(entry["options"], warp="true" if warp["effective"] else "false"))
     d = os.path.join(outdir, "repro", problem["id"])
     os.makedirs(d, exist_ok=True)
     info = {"dir": f"repro/{problem['id']}/", "files": []}
@@ -288,7 +290,7 @@ def write_pack(outdir, problem, item, entry, *, rom, ext_rom, adf_src, params, m
             "params": p, "entry": _jsonable_entry(entry), "rom": rom, "ext_rom": ext_rom, "kickstarts": kickstarts,
             "binary": binary, "amiberry_src": amiberry_src, "expect": item.get("expect"), "got": item.get("got"),
             "ref_entry": item.get("ref_entry"), "ref": item.get("ref") if item["kind"] == "engine_mismatch" else None,
-            "gdb_port": None if threaded else GDB_PORT}
+            "gdb_port": None if threaded else GDB_PORT, "warp": warp}
     _write(os.path.join(d, "pack.json"), json.dumps(pack, indent=1))
     info["files"].append("pack.json")
     _write(os.path.join(d, "run.sh"), f"""#!/bin/sh

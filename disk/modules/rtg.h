@@ -48,6 +48,7 @@ struct rtg_card {
     UWORD nids;
     UBYTE ids[4];         /* acceptable chip id values (Cirrus CR27 & 0xfc) */
     ULONG man, prod_mem, prod_reg;
+    const struct amt_probe_board *mem_board, *reg_board; /* canonical claim provenance */
     volatile UBYTE *mem;  /* memory board base (natural VRAM window) */
     ULONG memsize;        /* memory board size (autoconfig) */
     ULONG vram_min;       /* documented minimum VRAM of the card */
@@ -66,8 +67,17 @@ struct rtg_card {
 extern struct rtg_card *rtg_cur;
 
 /* VGA port access */
-static inline void vo(UWORD port, UBYTE v) { rtg_cur->io[port ^ rtg_cur->ioxor] = v; }
-static inline UBYTE vi(UWORD port) { return rtg_cur->io[port ^ rtg_cur->ioxor]; }
+static inline UWORD vga_port(UWORD port, int write)
+{
+    /* Picasso II's read-index write and DAC data are in the translated
+     * aperture; a read of 3C7 is the VGA state register, not read-index. */
+    if (rtg_cur->kind == K_PICASSO2 &&
+        (port == 0x3c9 || (write && port == 0x3c7)))
+        port += 0xfff;
+    return port ^ rtg_cur->ioxor;
+}
+static inline void vo(UWORD port, UBYTE v) { rtg_cur->io[vga_port(port, 1)] = v; }
+static inline UBYTE vi(UWORD port) { return rtg_cur->io[vga_port(port, 0)]; }
 static inline void ix_w(UWORD port, UBYTE i, UBYTE v) { vo(port, i); vo(port + 1, v); }
 static inline UBYTE ix_r(UWORD port, UBYTE i) { vo(port, i); return vi(port + 1); }
 /* palette DAC ports: VGA, or a BT482 at RS 0-3 = offsets 0,4,8,C */
@@ -79,8 +89,8 @@ static inline UBYTE ix_r(UWORD port, UBYTE i) { vo(port, i); return vi(port + 1)
 #define SR_R(i)    ix_r(0x3c4, (i))
 #define GR_W(i, v) ix_w(0x3ce, (i), (v))
 #define GR_R(i)    ix_r(0x3ce, (i))
-#define CR_W(i, v) ix_w(0x3d4, (i), (v))
-#define CR_R(i)    ix_r(0x3d4, (i))
+#define CR_W(i, v) ix_w((vi(0x3cc) & 1) ? 0x3d4 : 0x3b4, (i), (v))
+#define CR_R(i)    ix_r((vi(0x3cc) & 1) ? 0x3d4 : 0x3b4, (i))
 
 /* rtg.c helpers */
 const char *rtg_cid(const char *suffix);          /* "<card>_<suffix>" (static buffer) */
@@ -98,11 +108,15 @@ int  rtg_regfile(const char *suffix, UWORD port, const struct regm *l, int n, co
 /* VGA generic */
 struct vga_state {
     UBYTE misc, pel, arx, feat;
+    UBYTE srx, grx, crx, crmx;
+    UBYTE cursor_xlo, cursor_ylo;
     UBYTE sr[0x20], gr[0x40], cr[0x80], ar[0x15];
     UBYTE dac[768];
 };
 void vga_save(struct vga_state *s, int nsr, int ngr, int ncr);
+void vga_save_selectors(struct vga_state *s);
 void vga_restore_std(const struct vga_state *s);  /* standard VGA regs + DAC */
+void vga_restore_selectors(const struct vga_state *s);
 void vga_color_io(void);                          /* MISC bit 0 = 1 (3Dx CRTC) */
 void vga_std_tests(void);
 void vga_set_640x480(void);                       /* standard 640x480 timings, 8 bit graphics */
@@ -112,6 +126,8 @@ void vga_palette_load(void);
 
 /* VRAM generic */
 void rtg_vram_tests(void);
+void rtg_vram_restore(void);
+void rtg_seed_rect(ULONG a, int w, int h, ULONG pitch, UBYTE *copy);
 void rtg_draw_test(const char *suffix, ULONG pitch, int lines);
 int  rtg_screenshot(const char *suffix, const char *tag);
 
@@ -133,5 +149,8 @@ void rtg_zz9000(void);
 /* board-level monitor switch / interrupt enable (rtg.c) */
 void rtg_monswitch(int rtg);
 void rtg_board_irq(int on);
+void rtg_monitor_restore(void);
+extern UBYTE rtg_cv64_ctl_shadow; /* software assumption, not hardware readback */
+void rtg_cv64_control(UBYTE value);
 
 #endif

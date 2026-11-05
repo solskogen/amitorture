@@ -27,6 +27,10 @@ class RunnerError(Exception):
     """A problem with the host setup (not a finding about the emulator)."""
 
 
+class IsolationError(RunnerError):
+    """The user's files changed while the runner owned the emulator."""
+
+
 # ---------------------------------------------------------------------------
 # Ctrl+C. Emulators run in their own session (start_new_session), so the
 # terminal's SIGINT never reaches them: the runner stops them itself.
@@ -421,9 +425,14 @@ class IPC:
 
     def pipeline(self, lines, timeout=15):
         with self.lock:
-            self.sock.sendall("".join(line + "\n" for line in lines).encode())
-            self.requests += len(lines)
-            return self._readlines(len(lines), timeout)
+            try:
+                self.sock.sendall("".join(line + "\n" for line in lines).encode())
+                self.requests += len(lines)
+                return self._readlines(len(lines), timeout)
+            except OSError:
+                self.close()
+                self.buf = b""
+                raise
 
     def request(self, line, timeout=15):
         return self.pipeline([line], timeout)[0]

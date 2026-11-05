@@ -43,7 +43,12 @@ One record per line:
 | `cpu` | string | CPU found by the probe (same as `probe.cpu`) |
 | `fpu` | string | FPU found by the probe (same as `probe.fpu`) |
 | `mmu` | 0/1 | MMU found by the probe |
+| `modules` | object | selected compiled modules, as name-to-id mappings (ids 0-63); absent on older v1 disks |
 | `probe` | object | everything the probe found, see 1.3 |
+
+Every declared module must emit a matching begin/end pair. Module ids must be unique.
+An empty manifest means this disk has no compiled module selected by the run mask; it is skipped, not passed.
+Older captures without a manifest can be checked for lifecycle completion, but not declared-module coverage.
 
 ### 1.3 `hello.probe`: what the hardware looks like from inside
 
@@ -123,6 +128,13 @@ Example (abbreviated):
 | `ctx` | object | optional: machine state that helps diagnosis (registers, addresses) |
 | `in` | any | optional: the inputs of the case (operands, seed-derived values), enough to re-run it |
 
+Runtime `aborted` failures carry `expect.abort_code=0` and the actual
+`got.abort_code`. Unexpected exceptions additionally retain `got.vector`,
+`got.sr`, `got.pc`, and the raw `frame` array. Watchdogs retain `limit_frames`;
+explicit aborts retain `code`; all retain `after_case`. Fatal cleanup reports
+the expected safe idle state and the actual quarantined state with its code,
+without resuming execution.
+
 ```
 {"v":1,"seq":2,"t":"case","mod":"takeover","case":"takeover_restore","st":"pass","ctx":{"vbr":"00000000","intena":"202c","dmacon":"03d0","adkcon":"1100"}} *7c3cfc78
 {"v":1,"seq":9,"t":"case","mod":"cpu","case":"divu_overflow","st":"fail","expect":{"sr":"0002"},"got":{"sr":"0000"},"why":"V flag not set on DIVU overflow","in":{"d0":"ffffffff","d1":"00000001"},"ctx":{"pc":"0001a2c4"}} *xxxxxxxx
@@ -147,7 +159,9 @@ Example (abbreviated):
 |---|---|---|
 | `mod` | string | module |
 | `ops` | int | operations done |
-| `ticks` | int | CIA E-clock ticks taken (709379 Hz PAL, 715909 Hz NTSC) |
+| `ticks` | int | ticks taken in the reported clock domain; `amt_perf()` defaults to colour clocks |
+| `tick_hz` | int | clock frequency in Hz, emitted by the runtime |
+| `unit` | string | clock name, usually `cck`; explicit CIA measurements may use another unit/frequency |
 
 ```
 {"v":1,"seq":30,"t":"perf","mod":"blitter","ops":4096,"ticks":35210} *xxxxxxxx
@@ -245,17 +259,29 @@ Entry `status`:
 
 | status | meaning |
 |---|---|
-| `pass` | `done` arrived, no failed case, records complete and consistent |
+| `pass` | `done` arrived, no failed case, records complete and consistent, module lifecycle and declared coverage complete |
 | `fail` | at least one `case` with `st:"fail"` (or `done.fail` > 0) |
 | `crash` | the emulator process exited by itself (exit code / signal in `raw/<entry>/result.json`) |
 | `hang` | the mailbox heartbeat (or, without a mailbox, the serial output) stopped for `--hang` seconds before `done` |
 | `timeout` | still running at `--timeout` without `done` |
-| `incomplete` | the run ended but records are missing (seq gaps), corrupt, inconsistent, or `done.aborted` > 0 |
+| `incomplete` | the run ended but records are missing, corrupt, inconsistent, modules did not complete, no test evidence arrived, or `done.aborted` > 0 |
 | `error` | a host-side problem (no IPC endpoint, ...), not a finding about the emulator |
-| `skip` | not run; `reason` says why (usually a missing ROM) |
+| `skip` | not run; `reason` says why (usually a missing ROM, or an explicitly empty compiled-module selection) |
 
 `ended` says how observation stopped: `done`, `hang`, `timeout`, `crash`,
 `error`, `selftest`.
+
+Each executed disk result has `warp`: `requested` (`off`, `auto`, `on`, or
+`config` for a legacy explicit option), `effective` (boolean), `group` (from
+the baked disk's build id, or null), `reason`, and, once queried, `reply`
+(raw `GET_WARP` response) and `verified` (boolean). A combined entry carries
+`warp.disks`, the per-disk objects with `name` added; the same summary is
+included in `summary.json`. A verification failure is an entry error.
+`environment.options.warp` and baseline/check top-level metadata store the
+requested CLI policy (null means default pacing or legacy config).
+Baseline per-entry metadata retains the effective per-disk policy. Policy
+changes are listed in `meta_changes`; engine parity rejects different
+effective modes on corresponding disks.
 
 Problem `kind` / failure `kind`:
 
@@ -375,7 +401,7 @@ the same command (a serial capture is just the bytes).
 
 - `entries[]`:
   - `twin_kind` (`jit` / `threaded` / `softfloat` / null);
-  - `as_designed` (false when `--dump-config` showed Amiberry changed an option);
+  - `as_designed` (true only when every disk's configuration verification succeeded and no adjustment was detected);
   - `adjusted` (`[{option, wrote, resolved, because}]`);
   - `cases` with `xfail`, `engine_mismatch`, `unstable` counts.
 - `modules`: `{mod: {id, cases, entries, pass, fail, skip, untestable, xfail, engine_mismatch, unstable,

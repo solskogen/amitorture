@@ -25,6 +25,7 @@
 	xdef	_pa_log,_pa_logp,_pa_log_end,_pa_n,_pa_stop_at
 	xdef	_pa_act,_pa_feed_left,_pa_feed_p,_pa_feed_a
 	xdef	_pa_stamp,_pa_stamp_write
+	xdef	_pa_sample_invalid
 	xref	_amt_frames
 
 PA_LOGN	equ	96
@@ -32,17 +33,26 @@ PA_LOGN	equ	96
 	section	.text,code
 
 _pa_l4:
-	movem.l	d0-d2/a0-a1,-(sp)
+	movem.l	d0-d3/a0-a1,-(sp)
+	move.w	#255,d3
 .t:	move.w	$dff004,d0
 	move.w	$dff006,d1
 	move.w	$dff004,d2
 	eor.w	d0,d2
 	and.w	#$0007,d2
-	bne.s	.t
+	bne.s	.retry
 	cmp.b	#3,d1			; near the line wrap V and H may not
-	bcs.s	.t			; change together: read again
+	bcs.s	.retry			; change together: read again
 	cmp.b	#224,d1
-	bhi.s	.t
+	bhi.s	.retry
+	bra.s	.sample
+.retry:	dbf	d3,.t
+	move.w	#1,_pa_sample_invalid
+	move.w	#$0780,$dff09a
+	move.w	#$0780,$dff09c
+	movem.l	(sp)+,d0-d3/a0-a1
+	rte
+.sample:
 	move.w	$dff01e,d2
 	move.l	_pa_logp,a0
 	cmp.l	#_pa_log_end,a0
@@ -83,7 +93,7 @@ _pa_l4:
 	move.l	_pa_feed_a,a1
 	move.w	(a0)+,(a1)
 	move.l	a0,_pa_feed_p
-.nf:	movem.l	(sp)+,d0-d2/a0-a1
+.nf:	movem.l	(sp)+,d0-d3/a0-a1
 	rte
 
 ; void pa_stamp(ent *e)
@@ -111,23 +121,28 @@ _pa_stamp_write:
 
 ; a0 = entry; trashes d0/d1/d2 (d2 saved)
 stamp:
-	move.l	d2,-(sp)
+	movem.l	d2-d3,-(sp)
+	move.w	#255,d3
 .t:	move.w	$dff004,d0
 	move.w	$dff006,d1
 	move.w	$dff004,d2
 	eor.w	d0,d2
 	and.w	#$0007,d2
-	bne.s	.t
+	bne.s	.retry
 	cmp.b	#3,d1			; near the line wrap V and H may not
-	bcs.s	.t			; change together: read again
+	bcs.s	.retry			; change together: read again
 	cmp.b	#224,d1
-	bhi.s	.t
+	bhi.s	.retry
+	bra.s	.sample
+.retry:	dbf	d3,.t
+	move.w	#1,_pa_sample_invalid
+.sample:
 	move.l	_amt_frames,(a0)+
 	move.w	d0,(a0)+
 	move.w	d1,(a0)+
 	move.w	$dff01e,(a0)+
 	clr.w	(a0)+
-	move.l	(sp)+,d2
+	movem.l	(sp)+,d2-d3
 	rts
 
 	section	.data,data
@@ -137,6 +152,7 @@ _pa_logp:	dc.l	_pa_log
 _pa_log:	ds.b	12*PA_LOGN
 _pa_log_end:
 _pa_n:		ds.w	1
+_pa_sample_invalid: ds.w	1
 _pa_stop_at:	ds.w	1
 _pa_feed_left:	ds.w	1
 		ds.w	1

@@ -3,3 +3,4 @@ disk/build/
 __pycache__/
 *.pyc
 disk/build*/
+docs/findings/*

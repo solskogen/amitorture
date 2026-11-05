@@ -6,10 +6,21 @@
 
 static struct vga_state sst;
 static UBYTE s3_saved[0x50];   /* CR30-CR6F as found (index - 0x30) */
-static ULONG cv64_ctl_now;
-static int virge_retry = -1;
 static volatile ULONG *virge_pci;   /* ViRGE PCI config space, 0 if none */
-static ULONG virge_cmd;             /* its command/status register as found */   /* -1 not tried, 1 a second identical command worked, 0 not */
+static ULONG virge_cmd;
+static UBYTE s3_misc, s3_sr8;
+static int s3_stage, s3_engine, s3_engine_saved;
+static UWORD s3_adv, trio_regs[10], trio_mf[7];
+static UWORD trio_subsys;
+static ULONG virge_regs[8], virge_cmdset;
+static ULONG virge_adv;
+static const UWORD trio_ports[10] = {
+    0x82e8, 0x86e8, 0x8ae8, 0x8ee8, 0x92e8,
+    0x96e8, 0xa6e8, 0xaae8, 0xaee8, 0xbae8
+};
+static const UWORD virge_offsets[8] = {
+    0xa4d4, 0xa4d8, 0xa4dc, 0xa4e0, 0xa4e4, 0xa504, 0xa508, 0xa50c
+};
 
 #define S3_PITCH 640
 
@@ -19,8 +30,7 @@ static ULONG virge_cmd;             /* its command/status register as found */  
  * clears all bits at init). */
 static void cv64_ctl(UBYTE v)
 {
-    cv64_ctl_now = v;
-    rtg_cur->mem[0x40001] = v;
+    rtg_cv64_control(v);
 }
 
 /* ---- 8514/A-compatible engine registers, written as two byte accesses
@@ -28,6 +38,20 @@ static void cv64_ctl(UBYTE v)
  * decode; no assumption about how the board maps 16-bit cycles. */
 static void ew(UWORD port, UWORD v)
 {
+    /* Each queued register write needs a slot (13 on Trio64). A command
+     * programs more than 13 registers, so idle only at its start is not
+     * enough. Reset/control and the immediate READ_SEL bypass the FIFO. */
+    if (port >= 0x82e8 && port <= 0xbee8 &&
+        !(port == 0xbee8 && (v & 0xf000) == 0xf000)) {
+        ULONG f0 = amt_frames_now();
+        while (vi(0x9ae8) & 0x80) {
+            if (amt_frames_now() - f0 > 25) {
+                rtg_chk("s3_fifo", "slot", 1, 0, "command FIFO full; no further parameter or command writes");
+                amt_abort(AMT_ABORT_UNEXPECTED);
+                return;
+            }
+        }
+    }
     vo(port, (UBYTE)v);
     vo(port + 1, (UBYTE)(v >> 8));
 }
@@ -40,11 +64,19 @@ static UWORD er(UWORD port)
 static int s3_idle(void)
 {
     ULONG f0 = amt_frames_now();
-    while (er(0x9ae8) & 0x0200) {           /* GP_STAT bit 9: engine busy */
+    /* DB014-B 18-11: bit 9 busy, bit 10 ALL FIFO slots empty. */
+    while ((er(0x9ae8) & 0x0600) != 0x0400) {
         if (amt_frames_now() - f0 > 25)
             return 0;
     }
     return 1;
+}
+
+static void trio_require_idle(void)
+{
+    if (s3_idle()) return;
+    rtg_chk("s3_engine_idle", "idle", 1, 0, "engine timeout: dependent cases aborted; reset required before restoration");
+    amt_abort(AMT_ABORT_UNEXPECTED);
 }
 
 static UBYTE mix8(UBYTE mix, UBYTE s, UBYTE d)
@@ -71,11 +103,7 @@ static UBYTE mix8(UBYTE mix, UBYTE s, UBYTE d)
 
 static void fill_rand(ULONG a, int w, int h)
 {
-    volatile UBYTE *p = rtg_cur->win[0].p;
-    int x, y;
-    for (y = 0; y < h; y++)
-        for (x = 0; x < w; x++)
-            p[a + (ULONG)y * S3_PITCH + x] = (UBYTE)(amt_rand() >> 13);
+    rtg_seed_rect(a, w, h, S3_PITCH, 0);
 }
 
 static void grab(UBYTE *buf, ULONG d, int w, int h)
@@ -115,7 +143,6 @@ static void report(const char *suffix, const char *why, UBYTE *exp, UBYTE *got, 
     json_obj_end();
     json_obj("diff"); json_int("bytes", (long)nbad); json_hex("rows", rows); json_str("rows_is", "bit r = region row r (row 0 = border above)"); json_obj_end();
     json_obj("ctx"); json_str("region", "dest rect plus a 1-pixel border, which must stay unchanged");
-    if (virge_retry >= 0) json_int("same_command_again_ok", virge_retry);
     rtg_ctx_card(); json_obj_end();
     amt_case_close();
 }
@@ -139,7 +166,6 @@ static void trio_blt_mixes(void)
     UBYTE srcb[40 * 12];
     const int w = 40, h = 12, sx = 8, sy = 4, dx = 320, dy = 40;
     const ULONG src = (ULONG)sy * S3_PITCH + sx, dst = (ULONG)dy * S3_PITCH + dx;
-    volatile UBYTE *p = rtg_cur->win[0].p;
     int m, x, y, done;
     char suf[24];
     for (m = 0; m < 8; m++) {
@@ -148,11 +174,8 @@ static void trio_blt_mixes(void)
         const char *s = "s3_blt_mix_";
         while (*s) *d++ = *s++;
         *d++ = "0123456789abcdef"[mix]; *d = 0;
-        fill_rand(src, w, h);
+        rtg_seed_rect(src, w, h, S3_PITCH, srcb);
         fill_rand(dst - S3_PITCH - 1, w + 2, h + 2);
-        for (y = 0; y < h; y++)
-            for (x = 0; x < w; x++)
-                srcb[y * w + x] = p[src + (ULONG)y * S3_PITCH + x];
         grab(before, dst, w, h);
         for (x = 0; x < (w + 2) * (h + 2); x++) exp[x] = before[x];
         for (y = 0; y < h; y++)
@@ -160,7 +183,8 @@ static void trio_blt_mixes(void)
                 int i = (y + 1) * (w + 2) + x + 1;
                 exp[i] = mix8(mix, srcb[y * w + x], before[i]);
             }
-        s3_idle();
+        trio_require_idle();
+        s3_engine = 1;
         trio_common();
         ew(0xbae8, (UWORD)(0x60 | mix));  /* FRGD_MIX: source = display memory */
         ew(0x86e8, sx); ew(0x82e8, sy);
@@ -168,7 +192,8 @@ static void trio_blt_mixes(void)
         ew(0x96e8, w - 1);
         ew(0xbee8, (UWORD)(0x0000 | (h - 1)));
         ew(0x9ae8, 0xc0b1);               /* BitBLT, draw, +X, +Y, write */
-        done = s3_idle();
+        trio_require_idle();
+        done = 1;
         grab(got, dst, w, h);
         report(suf, "screen-to-screen BitBLT (8514/A command 110) with this foreground mix differs from the CPU result (S3 Trio64 data book mix table)",
                exp, got, w, h, done, 0xc0b1, mix, sx, sy, dx, dy);
@@ -188,7 +213,8 @@ static void trio_rectfill(void)
     for (y = 0; y < h; y++)
         for (x = 0; x < w; x++)
             exp[(y + 1) * (w + 2) + x + 1] = mix8(0x5, col, before[(y + 1) * (w + 2) + x + 1]);
-    s3_idle();
+    trio_require_idle();
+    s3_engine = 1;
     trio_common();
     ew(0xa6e8, col);                      /* FRGD_COLOR */
     ew(0xbae8, 0x25);                     /* FRGD_MIX: foreground colour, XOR */
@@ -196,7 +222,8 @@ static void trio_rectfill(void)
     ew(0x96e8, w - 1);
     ew(0xbee8, (UWORD)(h - 1));
     ew(0x9ae8, 0x40b1);                   /* rectangle fill */
-    done = s3_idle();
+    trio_require_idle();
+    done = 1;
     grab(got, dst, w, h);
     report("s3_rectfill", "rectangle fill (command 010) with FRGD_COLOR and mix XOR differs from the CPU result",
            exp, got, w, h, done, 0x40b1, 0x25, 0, 0, dx, dy);
@@ -223,7 +250,8 @@ static void trio_lines(void)
             int py = t == 0 ? 2 : (t == 1 ? 3 + i : 1 + i);
             exp[(py + 1) * (w + 2) + px + 1] = col[t];
         }
-        s3_idle();
+        trio_require_idle();
+        s3_engine = 1;
         trio_common();
         ew(0xa6e8, col[t]);
         ew(0xbae8, 0x27);                 /* foreground colour, "new" */
@@ -241,7 +269,7 @@ static void trio_lines(void)
             cmd = 0x20b1;
         }
         ew(0x9ae8, cmd);
-        if (!s3_idle()) done = 0;
+        trio_require_idle();
     }
     grab(got, box, w, h);
     report("s3_line", "line draw (command 001: horizontal, vertical, 45 degree lines, last pixel on) differs from the expected pixel set",
@@ -268,6 +296,25 @@ static int virge_idle(volatile ULONG *m)
     return 1;
 }
 
+static void virge_require_idle(volatile ULONG *m)
+{
+    if (virge_idle(m)) return;
+    rtg_chk("virge_engine_idle", "idle", 1, 0, "S3d timeout: no retry or dependent case; reset required before restoration");
+    amt_abort(AMT_ABORT_UNEXPECTED);
+}
+
+static void virge_issue(volatile ULONG *m, ULONG cmd, int w, int h,
+                        int sx, int sy, int dx, int dy)
+{
+    /* DB019-B 15.4.3 / CMD_SET: disable inherited autoexecute with NOP,
+     * then program all parameters. AE=0 executes at CMD_SET, written last. */
+    m[0xa500 / 4] = 0x78000000UL;
+    m[0xa504 / 4] = ((ULONG)(w - 1) << 16) | (ULONG)h;
+    m[0xa508 / 4] = ((ULONG)sx << 16) | (ULONG)sy;
+    m[0xa50c / 4] = ((ULONG)dx << 16) | (ULONG)dy;
+    m[0xa500 / 4] = cmd;
+}
+
 /* MS ROP3 with S and D only (the ROPs used have equal nibbles, so the
  * pattern bit does not matter): result bit = rop bit (S << 1 | D) */
 static UBYTE rop3(UBYTE r, UBYTE s, UBYTE d)
@@ -289,7 +336,6 @@ static void virge_blt(void)
     UBYTE srcb[40 * 12];
     const int w = 40, h = 12, sx = 8, sy = 4, dx = 320, dy = 40;
     const ULONG src = (ULONG)sy * S3_PITCH + sx, dst = (ULONG)dy * S3_PITCH + dx;
-    volatile UBYTE *p = rtg_cur->win[0].p;
     int r, x, y, done;
     char suf[24];
     if (!m) {
@@ -303,11 +349,8 @@ static void virge_blt(void)
         const char *s = "virge_blt_rop_";
         while (*s) *d++ = *s++;
         *d++ = "0123456789abcdef"[rop >> 4]; *d++ = "0123456789abcdef"[rop & 15]; *d = 0;
-        fill_rand(src, w, h);
+        rtg_seed_rect(src, w, h, S3_PITCH, srcb);
         fill_rand(dst - S3_PITCH - 1, w + 2, h + 2);
-        for (y = 0; y < h; y++)
-            for (x = 0; x < w; x++)
-                srcb[y * w + x] = p[src + (ULONG)y * S3_PITCH + x];
         grab(before, dst, w, h);
         for (x = 0; x < (w + 2) * (h + 2); x++) exp[x] = before[x];
         for (y = 0; y < h; y++)
@@ -315,37 +358,19 @@ static void virge_blt(void)
                 int i = (y + 1) * (w + 2) + x + 1;
                 exp[i] = rop3(rop, srcb[y * w + x], before[i]);
             }
-        virge_idle(m);
+        virge_require_idle(m);
+        s3_engine = 1;
+        m[0xa500 / 4] = 0x78000000UL;
         m[0xa4d4 / 4] = 0;                       /* source base */
         m[0xa4d8 / 4] = 0;                       /* destination base */
         m[0xa4dc / 4] = (0UL << 16) | 639;       /* clip left/right */
         m[0xa4e0 / 4] = (0UL << 16) | 479;       /* clip top/bottom */
         m[0xa4e4 / 4] = ((ULONG)S3_PITCH << 16) | S3_PITCH; /* dest/src stride */
         cmd = 0x00000020UL | ((ULONG)rop << 17) | (1UL << 25) | (1UL << 26); /* BitBLT, 8 bpp, draw, +X +Y */
-        m[0xa500 / 4] = cmd;
-        m[0xa504 / 4] = ((ULONG)(w - 1) << 16) | (ULONG)h;
-        m[0xa508 / 4] = ((ULONG)sx << 16) | (ULONG)sy;
-        m[0xa50c / 4] = ((ULONG)dx << 16) | (ULONG)dy;   /* starts the operation */
-        done = virge_idle(m);
+        virge_issue(m, cmd, w, h, sx, sy, dx, dy);
+        virge_require_idle(m);
+        done = 1;
         grab(got, dst, w, h);
-        /* diagnosis only: when the result is wrong, issue the identical
-         * command once more and note whether that one worked */
-        virge_retry = -1;
-        for (x = 0; x < (w + 2) * (h + 2); x++)
-            if (got[x] != exp[x]) {
-                UBYTE *g2 = rtg_buf + 12288;
-                int k;
-                m[0xa500 / 4] = cmd;
-                m[0xa504 / 4] = ((ULONG)(w - 1) << 16) | (ULONG)h;
-                m[0xa508 / 4] = ((ULONG)sx << 16) | (ULONG)sy;
-                m[0xa50c / 4] = ((ULONG)dx << 16) | (ULONG)dy;
-                virge_idle(m);
-                grab(g2, dst, w, h);
-                virge_retry = 1;
-                for (k = 0; k < (w + 2) * (h + 2); k++)
-                    if (g2[k] != exp[k]) { virge_retry = 0; break; }
-                break;
-            }
         report(suf, "S3d BitBLT (command 0, 8 bpp) with this ROP3 differs from the CPU result (ViRGE data book; MS ROP3 with S,D)",
                exp, got, w, h, done, cmd, rop, sx, sy, dx, dy);
     }
@@ -371,11 +396,11 @@ static void cv64_swap(UBYTE bits, UBYTE msk, const char *suffix)
     *(volatile ULONG *)(p + o) = 0x01234567UL;
     *(volatile ULONG *)(p + o + 4) = 0x89abcdefUL;
     for (i = 0; i < 8; i++) nat[i] = p[o + i];
-    cv64_ctl((UBYTE)((cv64_ctl_now & ~0x60) | bits));
+    cv64_ctl((UBYTE)((rtg_cv64_ctl_shadow & ~0x60) | bits));
     gl = *(volatile ULONG *)(p + o);
     gw = *(volatile UWORD *)(p + o + 6);
     *(volatile ULONG *)(p + o) = 0xdeadbeefUL;
-    cv64_ctl((UBYTE)(cv64_ctl_now & ~0x60));
+    cv64_ctl((UBYTE)(rtg_cv64_ctl_shadow & ~0x60));
     wl = lane(p, o, msk, 4);
     el = lane((volatile UBYTE *)nat, 0, msk, 4);
     ew_ = lane((volatile UBYTE *)nat, 6, msk, 2);
@@ -403,11 +428,129 @@ static void s3_board_irq(int on)
     rtg_board_irq(on);
 }
 
-void rtg_s3(void)
+static int s3_cr_used(int i, int virge)
+{
+    return i == 0x31 || i == 0x32 || i == 0x3a || i == 0x45 ||
+           (i >= 0x46 && i <= 0x49) || (i >= 0x4c && i <= 0x4f) ||
+           (i >= 0x58 && i <= 0x5a) || i == 0x67 || i == 0x69 ||
+           (virge ? (i == 0x53 || i == 0x66) : (i == 0x40 || i == 0x50));
+}
+
+static void s3_enable_engine(int virge)
+{
+    if (virge) CR_W(0x66, s3_saved[0x36] | 1);
+    else ew(0x4ae8, (s3_adv & ~0x04) | 1);
+}
+
+static void s3_irq_mode(int virge, int vga)
+{
+    if (vga) {
+        if (virge) {
+            virge_mmio()[0x850c / 4] = virge_adv & ~1;
+            CR_W(0x66, s3_saved[0x36] & ~1);
+        } else
+            ew(0x4ae8, s3_adv & ~0x05);
+    } else {
+        s3_enable_engine(virge);
+        if (virge) virge_mmio()[0x850c / 4] = virge_adv;
+    }
+}
+
+static void trio_cr50_test(void)
+{
+    /* DB014-B 17-1: width encodings 101/111 and pixel length 10 are
+     * reserved. A generic walking-pattern register test would use them. */
+    static const UBYTE values[8] = { 0x00, 0x40, 0x80, 0xc0, 0x01, 0x81, 0x10, 0x30 };
+    UBYTE old = CR_R(0x50), expected = 0, got = 0;
+    int i, bad = 0;
+    for (i = 0; i < 8; i++) {
+        UBYTE v = (old & ~0xf1) | values[i], g;
+        CR_W(0x50, v);
+        g = CR_R(0x50);
+        if (((g ^ v) & 0xf1) && !bad) {
+            expected = v & 0xf1;
+            got = g & 0xf1;
+            bad = 1;
+        }
+    }
+    CR_W(0x50, old);
+    rtg_chk("s3_cr50", "fields", expected, got,
+            "Trio CR50 documented screen-width/pixel-length encoding did not read back");
+}
+
+static void s3_clock_restore(void)
+{
+    int i;
+    /* Select the programmable clock before restoring its latches: writing
+     * a standard VGA clock selection can replace SR12/SR13 automatically.
+     * SR15.5 must be pulsed and never left asserted (DB014-B 14-13..16). */
+    vo(0x3c2, sst.misc | 0x0d);
+    for (i = 0x10; i <= 0x13; i++) SR_W(i, sst.sr[i]);
+    SR_W(0x15, sst.sr[0x15] & ~0x20);
+    SR_W(0x15, sst.sr[0x15] | 0x20);
+    SR_W(0x15, sst.sr[0x15] & ~0x20);
+    vo(0x3c2, sst.misc);
+    /* A standard clock selection also updates the visible latch values;
+     * rewrite them after the final Misc write, without another load. */
+    SR_W(0x12, sst.sr[0x12]);
+    SR_W(0x13, sst.sr[0x13]);
+}
+
+static int s3_save_engine(int virge)
+{
+    int i;
+    if (virge) {
+        volatile ULONG *m = virge_mmio();
+        if (!m) return 0;
+        virge_adv = m[0x850c / 4] & 0x11;
+        virge_cmdset = m[0xa500 / 4];
+        for (i = 0; i < 8; i++) virge_regs[i] = m[virge_offsets[i] / 4];
+    } else {
+        for (i = 0; i < 7; i++) {
+            ew(0xbee8, 0xf000 | i);
+            trio_mf[i] = er(0xbee8) & 0x0fff;
+        }
+        /* 32-bit I/O or a 32-bpp register stack needs a different access
+         * protocol. Do not truncate an inherited engine configuration. */
+        if ((trio_mf[6] & 0x0200) || (s3_saved[0x20] & 0x30) == 0x30)
+            return 0;
+        for (i = 0; i < 10; i++) trio_regs[i] = er(trio_ports[i]);
+        ew(0xbee8, 0xf008);
+        trio_subsys = er(0xbee8) & 0x0f00;
+    }
+    return 1;
+}
+
+static void s3_restore_engine(int virge)
+{
+    int i;
+    if (!s3_engine_saved || !s3_engine) return;
+    if (virge) {
+        volatile ULONG *m = virge_mmio();
+        /* Never restore an execution-trigger register as plain storage. */
+        m[0xa500 / 4] = 0x78000000UL;
+        for (i = 0; i < 8; i++) m[virge_offsets[i] / 4] = virge_regs[i];
+        if ((virge_cmdset & 1) || (virge_cmdset & 0x78000000UL) == 0x78000000UL)
+            m[0xa500 / 4] = virge_cmdset;
+        else
+            rtg_untestable("engine_command_restore", "saved AE=0 command would execute on restoration; left at NOP, readable parameters restored");
+    } else {
+        for (i = 0; i < 10; i++) ew(trio_ports[i], trio_regs[i]);
+        for (i = 0; i < 7; i++) {
+            static const UWORD idx[7] = { 0, 0x1000, 0x2000, 0x3000, 0x4000, 0xa000, 0xe000 };
+            ew(0xbee8, idx[i] | trio_mf[i]);
+        }
+        ew(0x9ae8, 0x0001);    /* NOP flushes pipelined BEE8 writes; bit 0 = 1 */
+        trio_require_idle();
+        ew(0x42e8, trio_subsys); /* restore interrupt enables, no status ack */
+    }
+}
+
+static void s3_run(void)
 {
     struct rtg_card *c = rtg_cur;
     int i, virge = c->chip == CH_S3VIRGE;
-    UBYTE m0, id30, id2d, id2e, e2d = virge ? 0x56 : 0x88, e2e = virge ? 0x31 : 0x11;
+    UBYTE id30, id2d, id2e, e2d = virge ? 0x56 : 0x88, e2e = virge ? 0x31 : 0x11;
     volatile UBYTE *vram;
 
     if (c->kind == K_CV643D_Z2 || c->kind == K_CV643D_Z3) {
@@ -416,24 +559,43 @@ void rtg_s3(void)
         volatile ULONG *pci = (volatile ULONG *)(c->kind == K_CV643D_Z2 ? c->mem + 0x3c0000 : c->mem + 0xc0e0000);
         ULONG idr = pci[0], cmd = pci[1];
         virge_pci = pci;
-        virge_cmd = cmd;
-        rtg_chk("virge_pci_id", "id", 0x56315333UL, idr, "PCI configuration register 0 of the ViRGE must read device 0x5631, vendor 0x5333 (S3 ViRGE data book)");
-        pci[1] = (cmd & 0xffff0000UL) | 0x0003;   /* I/O + memory decode on */
-        if (c->kind == K_CV643D_Z2)
-            *(volatile UWORD *)(c->mem + 0x3a0008) = 0x0080;  /* VRAM window big-endian (board model) */
+        virge_cmd = cmd & 0xffff;
+        if (!rtg_chk("virge_pci_id", "id", 0x56315333UL, idr, "PCI configuration register 0 of the ViRGE must read device 0x5631, vendor 0x5333 (S3 ViRGE data book)")) {
+            virge_pci = 0;
+            return;
+        }
+        if (cmd & 4) {
+            virge_pci = 0;
+            rtg_skip("suite", "PCI bus mastering is enabled; independent host/command DMA ownership and inactivity cannot be proved");
+            return;
+        }
+        s3_stage |= 1;
+        pci[1] = virge_cmd | 0x0003;   /* status half is W1C: never replay it */
     }
-    if (c->kind == K_CV64)
+    if (c->kind == K_CV64) {
+        s3_stage |= 2;
         cv64_ctl(0);
+    }
 
-    m0 = vi(0x3cc);
-    vga_color_io();
+    vga_save_selectors(&sst);
+    s3_misc = vi(0x3cc);
+    s3_stage |= 4;
     for (i = 0; i < 2; i++) s3_saved[0x08 + i] = CR_R(0x38 + i);
+    s3_stage |= 8;
     CR_W(0x38, 0x48);           /* unlock S3 VGA registers (CR30-CR3F) */
     CR_W(0x39, 0xa5);           /* unlock system control/extension registers (CR40-) */
-    for (i = 0; i < 0x40; i++)
-        if (i != 0x08 && i != 0x09) s3_saved[i] = CR_R(0x30 + i);
+    for (i = 0x30; i < 0x70; i++)
+        if (s3_cr_used(i, virge)) s3_saved[i - 0x30] = CR_R(i);
+    s3_sr8 = SR_R(8);
+    s3_stage |= 16;
+    SR_W(8, 0x06);              /* unlock extended sequencer / PLL registers */
     vga_save(&sst, 0x20, 0x09, 0x30);
-    sst.misc = m0;
+    sst.misc = s3_misc;
+    s3_stage |= 32;
+    if (sst.sr[0x15] & 0x20) {
+        rtg_skip("suite", "inherited PLL load remains asserted; cannot safely claim or restore clock state");
+        return;
+    }
 
     id30 = CR_R(0x30);
     id2d = CR_R(0x2d);
@@ -450,15 +612,53 @@ void rtg_s3(void)
                               : "Trio64: CR30 = 0xE1, CR2D:CR2E = 0x88:0x11 after CR38 = 0x48 (S3 Trio64 data book)");
         json_obj("ctx"); rtg_ctx_card(); json_obj_end();
         amt_case_close();
+        rtg_skip("suite", "chip identity mismatch; no mode/VRAM/engine writes");
+        return;
     }
 
+    /* Obtain an idle engine before changing memory mapping or modes.
+     * Enabling register decode does not submit a graphics operation. */
+    if (virge) {
+        if (s3_saved[0x36] & 0x02) {
+            rtg_skip("suite", "inherited S3d reset asserted; no ownership of its state");
+            return;
+        }
+        if (virge_mmio()) {
+            s3_stage |= 512;
+            CR_W(0x53, s3_saved[0x23] | 0x08);
+            if (!virge_idle(virge_mmio())) {
+                rtg_skip("suite", "inherited S3d engine busy; no reset or VRAM writes");
+                return;
+            }
+            if (virge_mmio()[0x850c / 4] & 2) {
+                rtg_skip("suite", "inherited read-DMA pointer reset is asserted; no safe ownership of DMA controls");
+                return;
+            }
+        } else {
+            rtg_skip("suite", "Z2 layout has no verified S3d idle/status path; mode and VRAM tests cannot safely run");
+            return;
+        }
+    } else {
+        s3_stage |= 512;
+        CR_W(0x40, s3_saved[0x10] | 1);
+        if (!s3_idle()) {
+            rtg_skip("suite", "inherited graphics engine busy; no reset or VRAM writes");
+            return;
+        }
+        s3_adv = er(0x4ae8);
+    }
+    s3_stage |= 128;
+    s3_engine_saved = s3_save_engine(virge);
+    s3_stage |= 256;
+    vga_color_io();
     vga_std_tests();
     {
         static const struct regm cur[] = { {0x46, 0x07}, {0x47, 0xff}, {0x48, 0x07}, {0x49, 0xff},
                                            {0x4c, 0x03}, {0x4d, 0xff}, {0x4e, 0x3f}, {0x4f, 0x3f} };
-        static const struct regm ext[] = { {0x50, 0xf1}, {0x69, 0x0f} };
+        static const struct regm ext[] = { {0x69, 0x0f} };
         rtg_regfile("s3_cursor_regs", 0x3d4, cur, 8, "hardware cursor register (CR46/47 X, CR48/49 Y, CR4C/4D start address, CR4E/4F pattern offset) does not read back (S3 data book)");
-        rtg_regfile("s3_ext_regs", 0x3d4, ext, 2, "extended system control register (CR50 screen width/pixel length, CR69 start address high) does not read back");
+        rtg_regfile("s3_ext_regs", 0x3d4, ext, 1, "CR69 extended start address high does not read back");
+        if (!virge) trio_cr50_test();
         /* CR45 bit 0: cursor enable */
         {
             UBYTE o = CR_R(0x45), r;
@@ -477,6 +677,7 @@ void rtg_s3(void)
     CR_W(0x3a, (UBYTE)((s3_saved[0x0a] & ~0x10) | 0x10));
     CR_W(0x67, 0x00);
     if (virge) {
+        s3_enable_engine(1);
         /* linear window 4 MB on (CR58), base 0 (the board decodes the
          * Zorro window), new MMIO at base + 16 MB on (CR53 bit 3) */
         CR_W(0x59, 0x00);
@@ -489,6 +690,7 @@ void rtg_s3(void)
         CR_W(0x5a, 0x40);
         CR_W(0x58, (UBYTE)((s3_saved[0x28] & ~0x13) | 0x13));
         CR_W(0x40, (UBYTE)(s3_saved[0x10] | 0x01));   /* enhanced register access */
+        s3_enable_engine(0);
     }
     vga_check_640x480("mode_640x480");
     vga_palette_load();
@@ -496,6 +698,7 @@ void rtg_s3(void)
     vram = c->win[0].p;
     for (i = 0; i < (int)(RTG_WORK / 4); i++)
         ((ULONG *)rtg_save)[i] = ((volatile ULONG *)vram)[i];
+    s3_stage |= 64;
     rtg_vram_tests();
     if (c->kind == K_CV64) {
         cv64_swap(0x20, 1, "vram_wordswap");
@@ -505,19 +708,71 @@ void rtg_s3(void)
     vga_retrace_test();
     rtg_screenshot("mode_screenshot", rtg_cid("640x480"));
 
-    if (!virge) {
+    if (!s3_engine_saved)
+        rtg_skip("engine", "inherited 32-bit I/O/register-stack configuration cannot be saved losslessly");
+    else if (!virge) {
         trio_blt_mixes();
         trio_rectfill();
         trio_lines();
     } else
         virge_blt();
 
-    vga_vint_test(s3_board_irq);
+    if (virge) {
+        /* Deliberately test VGA semantics, not enhanced MM8504 IRQs.
+         * No command is pending, and CR66 is restored before cleanup. */
+        virge_require_idle(virge_mmio());
+        s3_irq_mode(1, 1);
+        vga_vint_test(s3_board_irq);
+        s3_irq_mode(1, 0);
+    } else {
+        trio_require_idle();
+        s3_irq_mode(0, 1);
+        vga_vint_test(s3_board_irq);
+        s3_irq_mode(0, 0);
+    }
+}
 
-    /* restore */
-    s3_idle();
-    for (i = 0; i < (int)(RTG_WORK / 4); i++)
-        ((volatile ULONG *)vram)[i] = ((ULONG *)rtg_save)[i];
+static void s3_restore(void)
+{
+    struct rtg_card *c = rtg_cur;
+    int i, virge = c->chip == CH_S3VIRGE;
+    if (!(s3_stage & 256)) {
+        if (s3_stage & 512)
+            CR_W(virge ? 0x53 : 0x40, s3_saved[virge ? 0x23 : 0x10]);
+        goto locks;
+    }
+    if (s3_engine) {
+        int idle = virge ? virge_idle(virge_mmio()) : s3_idle();
+        if (!idle) {
+            if (virge) {
+                UBYTE v = CR_R(0x66);
+                CR_W(0x66, v | 2);
+                CR_W(0x66, v & ~2);
+            } else {
+                ew(0x42e8, 0x8000);
+                ew(0x42e8, 0x4000);
+            }
+            idle = virge ? virge_idle(virge_mmio()) : s3_idle();
+            if (!idle) {
+                if (virge) {
+                    CR_W(0x66, CR_R(0x66) | 2);
+                    if (virge_pci) virge_pci[1] = virge_cmd & ~4UL;
+                } else
+                    ew(0x42e8, 0x8000);
+                rtg_chk("s3_quiesce", "idle", 1, 0, "engine still busy after reset: VRAM and parameter restoration withheld");
+                amt_abort_fatal(AMT_ABORT_UNEXPECTED);
+            }
+        }
+    }
+    if (c->kind == K_CV64) cv64_ctl(0); /* abort may leave a swapped CPU window */
+    rtg_monitor_restore();
+    rtg_vram_restore();
+    if (s3_stage & 64)
+        for (i = 0; i < (int)(RTG_WORK / 4); i++)
+            ((volatile ULONG *)c->win[0].p)[i] = ((ULONG *)rtg_save)[i];
+    s3_restore_engine(virge);
+    if (virge && s3_engine_saved) virge_mmio()[0x850c / 4] = virge_adv;
+    if ((s3_stage & 128) && !virge) ew(0x4ae8, s3_adv);
     vga_restore_std(&sst);
     vo(0x3c2, sst.misc | 1);
     if (virge) CR_W(0x53, s3_saved[0x23]);
@@ -528,23 +783,42 @@ void rtg_s3(void)
         CR_W(0x5a, s3_saved[0x2a]);
     }
     CR_W(0x67, s3_saved[0x37]);
-    CR_W(0x50, s3_saved[0x20]);
+    if (!virge) CR_W(0x50, s3_saved[0x20]);
     CR_W(0x69, s3_saved[0x39]);
     CR_W(0x45, s3_saved[0x15]);
-    for (i = 0x46; i <= 0x4f; i++) CR_W(i, s3_saved[i - 0x30]);
+    for (i = 0x46; i <= 0x4f; i++)
+        if (i != 0x4a && i != 0x4b) CR_W(i, s3_saved[i - 0x30]);
     CR_W(0x3a, s3_saved[0x0a]);
     CR_W(0x31, s3_saved[0x01]);
-    CR_W(0x39, s3_saved[0x09]);
-    CR_W(0x38, s3_saved[0x08]);
-    vo(0x3c2, sst.misc);
-    if (c->kind == K_CV64)
+    CR_W(0x32, s3_saved[0x02]);
+    if (virge) CR_W(0x66, s3_saved[0x36]);
+    s3_clock_restore();
+    SR_W(0, sst.sr[0]);
+locks:
+    if (s3_stage & 16) SR_W(8, s3_sr8);
+    if (s3_stage & 8) {
+        CR_W(0x39, s3_saved[0x09]);
+        CR_W(0x38, s3_saved[0x08]);
+    }
+    if (s3_stage & 4) {
+        vga_restore_selectors(&sst);
+    }
+    if ((s3_stage & 2) && c->kind == K_CV64)
         cv64_ctl(0);
-    if (c->kind == K_CV643D_Z2)
-        *(volatile UWORD *)(c->mem + 0x3a0008) = 0x0000;
-    /* PCI command register as found (review M12); +$3A0008 above is write
-     * only, 0 is the board's reset value */
-    if (virge_pci) {
+    /* Restore command only; PCI status is W1C and is never replayed. */
+    if ((s3_stage & 1) && virge_pci) {
         virge_pci[1] = virge_cmd;
         virge_pci = 0;
     }
+}
+
+void rtg_s3(void)
+{
+    int code, cleanup;
+    s3_stage = s3_engine = s3_engine_saved = 0;
+    virge_pci = 0;
+    code = amt_try(s3_run);
+    cleanup = amt_try(s3_restore);
+    if (cleanup) amt_abort_fatal(cleanup);
+    if (code) amt_abort(code);
 }

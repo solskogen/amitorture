@@ -31,6 +31,7 @@
  * read). Saved and restored: interrupt enable, the IDE task file registers
  * and device/head; the IRQ latch bits this part caused are cleared. */
 #include "misc_hw.h"
+#include "hardware_audit.h"
 
 #define G_ID    0xde1000UL
 #define G_CS    0xda8000UL
@@ -627,7 +628,7 @@ static int sig_ok(ULONG a, ULONG blk, UBYTE *uuid, ULONG *total, ULONG *first_fr
         return 0;
 #define U32(o) (((ULONG)b[o] << 24) | ((ULONG)b[(o) + 1] << 16) | ((ULONG)b[(o) + 2] << 8) | b[(o) + 3])
     t = U32(28);
-    if (U32(24) != blk || U32(32) != 512)
+    if (U32(24) != blk || U32(32) != 512 || U32(40) != 4)
         return 0;
     if (blk == 0) {
         for (i = 0; i < 16; i++)
@@ -636,7 +637,8 @@ static int sig_ok(ULONG a, ULONG blk, UBYTE *uuid, ULONG *total, ULONG *first_fr
         *first_free = U32(36);
         return 1;
     }
-    if (t != *total)
+    if (!hw_owner_match(*total, *first_free, 512, 4,
+                        t, U32(36), U32(32), U32(40)))
         return 0;
     for (i = 0; i < 16; i++)
         if (uuid[i] != b[8 + i])
@@ -662,7 +664,8 @@ static void t_common(int writable)
         skip_common(2, "not test-owned (no CONTRACT section 11 signature in the first 512 bytes of common memory)");
         return;
     }
-    if (total < 4 || total * 512 > lim || !sig_ok(COMMON + (total - 1) * 512, total - 1, uuid, &total, &ff)) {
+    if (!hw_owned_domain(total, ff, lim) ||
+        !sig_ok(COMMON + (total - 1) * 512, total - 1, uuid, &total, &ff)) {
         amt_case_open("pcmcia_owner", AMT_ST_FAIL);
         json_str("why", "block 0 is signed but the last block (total-1) is not signed the same way: the card size or "
                         "address decoding of common memory is wrong; not written");
@@ -728,8 +731,16 @@ static void t_common(int writable)
                 amt_watchdog_kick();
         }
     }
-    if (bad == ~0UL && !sig_ok(COMMON + (total - 1) * 512, total - 1, uuid, &total, &ff))
-        bad = (total - 1) * 512 - lo;
+    if (bad == ~0UL) {
+        UBYTE check_uuid[16];
+        ULONG check_total = 0, check_ff = 0;
+        int same = sig_ok(COMMON, 0, check_uuid, &check_total, &check_ff) &&
+                   check_total == total && check_ff == ff;
+        for (i = 0; same && i < 16; i++)
+            same = check_uuid[i] == uuid[i];
+        if (!same || !sig_ok(COMMON + (total - 1) * 512, total - 1, uuid, &total, &ff))
+            bad = (total - 1) * 512 - lo;
+    }
     if (bad == ~0UL) {
         amt_case("pcmcia_common_rw", AMT_ST_PASS, 0);
         return;
@@ -753,6 +764,7 @@ static void t_common(int writable)
 static void t_status_change(void)
 {
     UBYTE irq = hw_rd8(G_IRQ), cs, ir;
+    int inserted;
     ULONG t0;
     if (card_is_ram) {
         amt_case("pcmcia_status_change", AMT_ST_SKIP, "the card is system RAM: it is never ejected");
@@ -772,12 +784,15 @@ static void t_status_change(void)
         cs = hw_rd8(G_CS);
     } while ((cs & 0x40) && mh_ms_since(t0) < 3000);
     ir = hw_rd8(G_IRQ);
-    amt_request("pcmcia", "insert", "{\"op\":\"insert\"}", amt_secs(10));
+    inserted = amt_request("pcmcia", "insert", "{\"op\":\"insert\"}", amt_secs(10));
     t0 = amt_ticks();
     while (!(hw_rd8(G_CS) & 0x40) && mh_ms_since(t0) < 5000)
         amt_watchdog_kick();
     hw_wr8(G_IRQ, (UBYTE)(0xbc | (irq & 3)));
-    if (!(cs & 0x40) && (ir & 0x40))
+    if (!inserted || !(hw_rd8(G_CS) & 0x40))
+        amt_case("pcmcia_status_change", AMT_ST_FAIL,
+                 "card reinsertion was not acknowledged or presence was not restored within 5 seconds");
+    else if (!(cs & 0x40) && (ir & 0x40))
         amt_case("pcmcia_status_change", AMT_ST_PASS, 0);
     else {
         amt_case_open("pcmcia_status_change", AMT_ST_FAIL);

@@ -44,6 +44,8 @@ make -C disk clean
 The build prints each disk's size in memory. Every disk must stay under about 300 KB so that it runs on a 512 KB Kickstart 1.x machine. All the modules together are too big for one 880 KB ADF, which is why the set exists.
 
 The runner picks up `disk/build/set` by itself. Rebuild after any change under `disk/` or to a generator in `tools/`.
+C objects have compiler-generated `.d` dependencies, so changes to module-local headers also rebuild their
+consumers. A Makefile change invalidates existing C objects, including objects built before dependency tracking.
 
 Variables:
 
@@ -55,6 +57,8 @@ Variables:
 | `PARAMS="mode=quick seed=5"` | default run parameters baked into the disk (the keys are listed at the top of `tools/mkadf.py` and in [USAGE.md](USAGE.md) section 5). The runner patches its own parameters into a copy anyway. |
 
 `tools/mkadf.py --dump some.adf` shows any disk's header, baked-in parameters, sizes and CRCs.
+It rejects payload/relocation ranges and sector spans that extend beyond the physical image, even if the
+available bytes have a matching CRC.
 
 ---------------------------------------------------------------------------
 ## 3. Generated tables

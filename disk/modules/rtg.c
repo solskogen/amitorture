@@ -13,8 +13,9 @@
  *     CPU on a RAM copy, compared byte for byte;
  *   - hardware cursor registers, vertical retrace status and the vertical
  *     interrupt (chip level, and at the Amiga level where the board has one);
- * and restores every register it touched, the DAC and the first 64 KB of
- * VRAM it used.
+ * and restores the readable configuration, DAC and work VRAM. Execution
+ * triggers, internal pointers and write-only board state are not generally
+ * restorable; see docs/cases/rtg.md for ownership gates and limitations.
  *
  * The chip-level expectations come from the VGA standard (IBM VGA technical
  * reference) and the chip manuals (Cirrus GD542x/543x/5446 TRM, S3 Trio64
@@ -135,14 +136,14 @@ void vga_color_io(void)
 
 static UBYTE ar_r(UBYTE i)
 {
-    (void)vi(0x3da);              /* reset the attribute flip-flop */
+    (void)vi((vi(0x3cc) & 1) ? 0x3da : 0x3ba);
     vo(0x3c0, i);
     return vi(0x3c1);
 }
 
 static void ar_w(UBYTE i, UBYTE v)
 {
-    (void)vi(0x3da);
+    (void)vi((vi(0x3cc) & 1) ? 0x3da : 0x3ba);
     vo(0x3c0, i);
     vo(0x3c0, v);
 }
@@ -163,21 +164,43 @@ static void dac_write_all(const UBYTE *d)
         vo(DAC_D, d[i]);
 }
 
+void vga_save_selectors(struct vga_state *s)
+{
+    s->srx = vi(0x3c4);
+    s->grx = vi(0x3ce);
+    s->crx = vi(0x3d4);
+    s->crmx = vi(0x3b4);
+}
+
 void vga_save(struct vga_state *s, int nsr, int ngr, int ncr)
 {
     int i;
     s->misc = vi(0x3cc);
     s->feat = vi(0x3ca);
     s->pel = vi(DAC_M);
-    (void)vi(0x3da);
+    (void)vi((vi(0x3cc) & 1) ? 0x3da : 0x3ba);
     s->arx = vi(0x3c0);           /* index register incl. PAS (bit 5) */
-    for (i = 0; i < nsr && i < 0x20; i++) s->sr[i] = SR_R(i);
+    for (i = 0; i < nsr && i < 0x20; i++) {
+        s->sr[i] = SR_R(i);
+        /* GD542x cursor bits 2:0 appear in the sequencer index readback,
+         * bits 7:5, after selecting SR10/SR11. */
+        if (rtg_cur->chip == CH_CIRRUS && i == 0x10) s->cursor_xlo = vi(0x3c4) & 0xe0;
+        if (rtg_cur->chip == CH_CIRRUS && i == 0x11) s->cursor_ylo = vi(0x3c4) & 0xe0;
+    }
     for (i = 0; i < ngr && i < 0x40; i++) s->gr[i] = GR_R(i);
     for (i = 0; i < ncr && i < 0x80; i++) s->cr[i] = CR_R(i);
     for (i = 0; i < 0x15; i++) s->ar[i] = ar_r(i);
     dac_read_all(s->dac);
-    (void)vi(0x3da);
+    (void)vi((vi(0x3cc) & 1) ? 0x3da : 0x3ba);
     vo(0x3c0, s->arx);
+}
+
+void vga_restore_selectors(const struct vga_state *s)
+{
+    vo(0x3c4, s->srx);
+    vo(0x3ce, s->grx);
+    vo(0x3d4, s->crx);
+    vo(0x3b4, s->crmx);
 }
 
 void vga_restore_std(const struct vga_state *s)
@@ -195,7 +218,9 @@ void vga_restore_std(const struct vga_state *s)
     vo(DAC_M, s->pel);
     (void)vi(0x3da);
     vo(0x3c0, s->arx & 0x3f);
+    SR_W(0, s->sr[0]);
     vo(0x3c2, s->misc);
+    vga_restore_selectors(s);
 }
 
 static const struct regm vga_sr[] = { {2, 0x0f}, {3, 0x3f} };
@@ -483,6 +508,32 @@ void vga_retrace_test(void)
 static volatile ULONG vint_f1, vint_count, vint_foreign, vint_stuck, vint_f_is0, vint_f_req, vint_f_cnt;
 static UBYTE vint_level;
 static struct cia_saved vint_cia;
+static UBYTE vint_c11, vint_crx;
+static int vint_stage, vint_cleaning;
+static UWORD vint_intena;
+static void (*vint_enable)(int);
+static void (*vint_old_hook)(ULONG);
+
+static void vint_restore(void)
+{
+    int stage = vint_stage;
+    UWORD bits = vint_level == 2 ? 0x0008 : 0x2000;
+    if (!stage) return;
+    if (vint_cleaning) amt_abort_fatal(AMT_ABORT_UNEXPECTED);
+    vint_cleaning = 1;
+    CR_W(0x11, (vint_c11 | 0x20) & ~0x10);
+    if (stage & 4) {
+        CREG(R_INTENA) = bits;
+        if (vint_enable) vint_enable(0);
+        CREG(R_INTREQ) = bits;
+        amt_irq_hook[vint_level] = vint_old_hook;
+    }
+    if (stage & 2) cia_restore(&vint_cia);
+    CR_W(0x11, vint_c11);
+    vo(0x3d4, vint_crx);
+    if ((stage & 4) && vint_intena) CREG(R_INTENA) = 0x8000 | vint_intena;
+    vint_stage = vint_cleaning = 0;
+}
 
 /* level 2/6 hook: count only interrupts the card reports pending (input
  * status 0 bit 7). Anything else on that level (a CIA left enabled by the
@@ -515,8 +566,9 @@ static void vint_hook(ULONG pending)
     CREG(R_INTREQ) = (UWORD)(pending & bits);
 }
 
-void vga_vint_test(void (*board_enable)(int on))
+static void vint_run(void)
 {
+    void (*board_enable)(int) = vint_enable;
     /* CR11 bit 5 = 0 enables the vertical interrupt, bit 4 = 0 clears it;
      * input status 0 (3C2 read) bit 7 = interrupt pending (IBM VGA TR) */
     UBYTE c11 = CR_R(0x11), s0a, s0b = 0, s0c;
@@ -555,11 +607,15 @@ void vga_vint_test(void (*board_enable)(int on))
      * enabled: its ICR is masked for the test and restored afterwards
      * (cia_hw.h: mask from ciaX.resource, pending events re-posted) */
     cia_save(&vint_cia, vint_level == 2 ? CIAA_BASE : CIAB_BASE, 0);
+    vint_stage |= 2;
     vint_count = 0;
     vint_foreign = 0;
     vint_stuck = 0;
     {
         UWORD bits = vint_level == 2 ? 0x0008 : 0x2000;
+        vint_intena = CREG(R_INTENAR) & bits;
+        vint_old_hook = amt_irq_hook[vint_level];
+        vint_stage |= 4;
         CREG(R_INTREQ) = bits;
         amt_irq_hook[vint_level] = vint_hook;
         CREG(R_INTENA) = (UWORD)(0x8000 | bits);
@@ -569,16 +625,8 @@ void vga_vint_test(void (*board_enable)(int on))
         f0 = amt_frames_now();
         while (amt_frames_now() - f0 < 10 && vint_count < 3)
             ;
-        CR_W(0x11, (c11 & ~0x30));
-        board_enable(0);
-        CREG(R_INTENA) = bits;
-        CR_W(0x11, c11 | 0x20);
-        CR_W(0x11, c11 | 0x30);
-        CR_W(0x11, c11);
-        CREG(R_INTREQ) = bits;
-        amt_irq_hook[vint_level] = 0;
     }
-    cia_restore(&vint_cia);
+    vint_restore();
     if (vint_count >= 3 && !vint_stuck)
         rtg_pass("vint_amiga");
     else if (vint_foreign) {
@@ -606,6 +654,21 @@ void vga_vint_test(void (*board_enable)(int on))
         json_obj("ctx"); json_int("level", vint_level); rtg_ctx_card(); json_obj_end();
         amt_case_close();
     }
+}
+
+void vga_vint_test(void (*board_enable)(int on))
+{
+    int code, cleanup;
+    vint_enable = board_enable;
+    vint_level = rtg_cur->irq;
+    vint_crx = vi(0x3d4);
+    vint_c11 = CR_R(0x11);
+    vint_stage = 1;
+    vint_cleaning = 0;
+    code = amt_try(vint_run);
+    cleanup = amt_try(vint_restore);
+    if (cleanup) amt_abort_fatal(cleanup);
+    if (code) amt_abort(code);
 }
 
 /* ------------------------------------------------------------ VRAM */
@@ -684,6 +747,25 @@ out:
 /* one long per 64 KB at the same in-block offset: VRAM size and mirroring */
 #define WALK_MAX 256
 static ULONG walk_save[WALK_MAX];
+static ULONG walk_pending;
+static volatile ULONG *alias_pending;
+static ULONG alias_saved[2];
+static int alias_longs;
+
+void rtg_vram_restore(void)
+{
+    ULONG i;
+    if (alias_pending) {
+        for (i = 0; i < (ULONG)alias_longs; i++) alias_pending[i] = alias_saved[i];
+        alias_pending = 0;
+    }
+    if (walk_pending) {
+        volatile UBYTE *p = rtg_cur->win[0].p;
+        for (i = walk_pending; i-- > 0;)
+            *(volatile ULONG *)(p + (i << 16) + 0x100) = walk_save[i];
+        walk_pending = 0;
+    }
+}
 
 static void vram_walk(void)
 {
@@ -695,6 +777,7 @@ static void vram_walk(void)
     n = lim >> 16;
     if (n > WALK_MAX) n = WALK_MAX;
     for (i = 0; i < n; i++) walk_save[i] = *(volatile ULONG *)(p + (i << 16) + 0x100);
+    walk_pending = n;
     /* highest block first: on a mirror the lower block's write wins, so
      * the first block that does not read back its own value is the size */
     for (i = n; i-- > 0;) *(volatile ULONG *)(p + (i << 16) + 0x100) = 0x5a000000UL | (i << 8) | (UBYTE)~i;
@@ -704,10 +787,12 @@ static void vram_walk(void)
         good++;
     }
     for (i = n; i-- > 0;) *(volatile ULONG *)(p + (i << 16) + 0x100) = walk_save[i];
+    walk_pending = 0;
     sz = good << 16;
-    /* all of a window smaller than the VRAM backed is a pass too (the
-     * CyberVision 64/3D Z2 shows 3.625 MB of its 4 MB) */
-    if ((sz >= c->vram_min && (sz & (sz - 1)) == 0) || (good == n && n > 0)) {
+    /* Only the known 3.625 MB CV64/3D Z2 aperture can establish window
+     * uniqueness without observing the card's entire minimum VRAM. */
+    if ((sz >= c->vram_min && (sz & (sz - 1)) == 0) ||
+        (c->kind == K_CV643D_Z2 && lim == 0x3a0000UL && good == n)) {
         amt_case_open(rtg_cid("vram_walk"), AMT_ST_PASS);
         json_obj("ctx"); json_int("vram_kb", (long)(sz >> 10)); json_int("window_kb", (long)(lim >> 10)); json_obj_end();
         amt_case_close();
@@ -749,6 +834,10 @@ static void vram_swap(int wi)
     *d = 0;
     save0 = *(volatile ULONG *)(nat + o);
     save1 = *(volatile ULONG *)(nat + o + 4);
+    alias_saved[0] = *(volatile ULONG *)(sw + o);
+    alias_saved[1] = *(volatile ULONG *)(sw + o + 4);
+    alias_longs = 2;
+    alias_pending = (volatile ULONG *)(sw + o);
     /* natural long write, swapped reads */
     *(volatile ULONG *)(nat + o) = 0x01234567UL;
     *(volatile ULONG *)(nat + o + 4) = 0x89abcdefUL;
@@ -778,6 +867,7 @@ static void vram_swap(int wi)
     json_obj("ctx"); json_int("mask", w->mask); json_int("bytes_lane_swapped", bytemode); json_obj_end();
     amt_case_close();
 out:
+    rtg_vram_restore();       /* also restore a window that failed to alias */
     *(volatile ULONG *)(nat + o) = save0;
     *(volatile ULONG *)(nat + o + 4) = save1;
 }
@@ -803,19 +893,52 @@ void rtg_vram_tests(void)
             t = rtg_cur->win[i].name;
             while (*t && d < suf + 30) *d++ = *t++;
             *d = 0;
+            alias_saved[0] = *(volatile ULONG *)(a + 0x3450);
+            alias_longs = 1;
+            alias_pending = (volatile ULONG *)(a + 0x3450);
             *(volatile ULONG *)(n + 0x3450) = 0x600dcafeUL;
             g = *(volatile ULONG *)(a + 0x3450);
             *(volatile ULONG *)(a + 0x3450) = 0x0badf00dUL;
             {
                 ULONG g2 = *(volatile ULONG *)(n + 0x3450);
+                rtg_vram_restore();
                 *(volatile ULONG *)(n + 0x3450) = s;
                 if (g == 0x600dcafeUL && g2 == 0x0badf00dUL)
                     rtg_pass(suf);
+                else if (g != 0x600dcafeUL)
+                    vram_fail(suf, "natural-to-alias read differs", 0x3450, 4, 0x600dcafeUL, g, rtg_cur->win[i].name);
                 else
-                    vram_fail(suf, "a second natural-order view of VRAM does not show the same bytes as the main window", 0x3450, 4, 0x600dcafeUL, g, rtg_cur->win[i].name);
+                    vram_fail(suf, "alias-to-natural read differs", 0x3450, 4, 0x0badf00dUL, g2, rtg_cur->win[i].name);
             }
         }
     }
+}
+
+void rtg_seed_rect(ULONG a, int w, int h, ULONG pitch, UBYTE *copy)
+{
+    UBYTE *seed = rtg_buf + 12288;
+    volatile UBYTE *p = rtg_cur->win[0].p;
+    int x, y, i = 0;
+    if (w <= 0 || h <= 0 || w > 4096 / h || pitch < (ULONG)w ||
+        a > RTG_WORK || (ULONG)(h - 1) > (RTG_WORK - a) / pitch ||
+        (ULONG)w > RTG_WORK - a - (ULONG)(h - 1) * pitch)
+        amt_abort(AMT_ABORT_UNEXPECTED);
+    for (y = 0; y < h; y++)
+        for (x = 0; x < w; x++, i++) {
+            seed[i] = (UBYTE)(amt_rand() >> 13);
+            if (copy) copy[i] = seed[i];
+            p[a + (ULONG)y * pitch + x] = seed[i];
+        }
+    i = 0;
+    for (y = 0; y < h; y++)
+        for (x = 0; x < w; x++, i++) {
+            UBYTE g = p[a + (ULONG)y * pitch + x];
+            if (g != seed[i]) {
+                vram_fail("engine_seed", "CPU-generated input did not read back before submitting an engine command",
+                          a + (ULONG)y * pitch + x, 1, seed[i], g, "natural");
+                amt_abort(AMT_ABORT_UNEXPECTED);
+            }
+        }
 }
 
 /* pattern in an 8-bit mode at `pitch` bytes per line, `lines` lines,
@@ -853,12 +976,23 @@ void rtg_draw_test(const char *suffix, ULONG pitch, int lines)
     amt_case_close();
 }
 
+static int monitor_pending;
+
+void rtg_monitor_restore(void)
+{
+    if (monitor_pending) {
+        rtg_monswitch(0);
+        monitor_pending = 0;
+    }
+}
+
 int rtg_screenshot(const char *suffix, const char *tag)
 {
     int ok;
+    monitor_pending = 1;
     rtg_monswitch(1);
     ok = amt_request("screenshot", tag, "{\"frames\":3}", amt_secs(10));
-    rtg_monswitch(0);
+    rtg_monitor_restore();
     if (ok)
         rtg_pass(suffix);
     else
@@ -871,7 +1005,13 @@ int rtg_screenshot(const char *suffix, const char *tag)
  * for these board registers; the addresses follow the Picasso96 drivers as
  * modelled by WinUAE/Amiberry. They only make the RTG output visible for
  * the screenshot and let the vertical interrupt reach the Amiga. */
-static UBYTE cv64_ctl;
+UBYTE rtg_cv64_ctl_shadow;
+
+void rtg_cv64_control(UBYTE value)
+{
+    rtg_cv64_ctl_shadow = value;
+    rtg_cur->mem[0x40001] = value;
+}
 
 void rtg_monswitch(int on)
 {
@@ -884,8 +1024,7 @@ void rtg_monswitch(int on)
         c->regs[0x8000] = on ? 0x20 : 0x00;
         break;
     case K_CV64:
-        cv64_ctl = (UBYTE)((cv64_ctl & ~0x10) | (on ? 0x10 : 0));
-        c->mem[0x40001] = cv64_ctl;
+        rtg_cv64_control((UBYTE)((rtg_cv64_ctl_shadow & ~0x10) | (on ? 0x10 : 0)));
         break;
     case K_CV643D_Z3:
         *(volatile UWORD *)(c->mem + 0x8000000) = on ? 0 : 1;   /* bit 0 = 0: card output */
@@ -910,8 +1049,7 @@ void rtg_board_irq(int on)
         break;
     case K_CV64:
         /* bit 3 interrupt enable, bit 7 level (0 = INT6, 1 = INT2) */
-        cv64_ctl = (UBYTE)((cv64_ctl & ~0x88) | (on ? 0x08 : 0));
-        c->mem[0x40001] = cv64_ctl;
+        rtg_cv64_control((UBYTE)((rtg_cv64_ctl_shadow & ~0x88) | (on ? 0x08 : 0)));
         break;
     case K_CV643D_Z3:
         *(volatile UWORD *)(c->mem + 0x8000000 + 12) = on ? 2 : 0;  /* bit 1 interrupt enable */
@@ -988,6 +1126,8 @@ static void add_card(const struct cdef *d, const struct amt_probe_board *m, cons
     c->man = d->man;
     c->prod_mem = d->pmem;
     c->prod_reg = d->preg;
+    c->mem_board = m;
+    c->reg_board = r;
     c->bus = (UWORD)board_bus(m);
     c->mem = (volatile UBYTE *)m->addr;
     c->memsize = m->size;
@@ -1046,6 +1186,14 @@ static void find_cards(void)
                 continue;
             if (d->bus && d->bus != board_bus(b))
                 continue;
+            if (d->pmem == d->preg) {
+                for (j = 0; j < nb; j++)
+                    if (!used[j] && amt_probe_result.boards[j].man == d->man &&
+                        amt_probe_result.boards[j].prod == d->pmem &&
+                        amt_probe_result.boards[j].size > b->size)
+                        break;
+                if (j < nb) break;  /* register descriptor before memory */
+            }
             if (d->preg == 0xff) {
                 used[i] = 1;
                 add_card(d, b, 0);
@@ -1065,6 +1213,11 @@ static void find_cards(void)
             }
             if (used[i])
                 break;
+            /* Keep recognised incomplete cards: run_card emits the
+             * missing-register-board skip before deriving any pointers. */
+            used[i] = 1;
+            add_card(d, b, 0);
+            break;
         }
     }
 }
@@ -1100,6 +1253,10 @@ static int setup_card(struct rtg_card *c)
         c->win[0].p = b; c->win[0].size = c->memsize; c->win[0].name = "natural";
         break;
     case K_PICASSO4_Z3:
+        /* The 64 MB variant uses a different layout. Until all apertures
+         * are independently verified, reject it before any board access. */
+        if (c->memsize != 0x2000000UL)
+            return 0;
         c->io = b + 0x600000;
         c->regs = b;
         c->nwin = 3;
@@ -1133,7 +1290,10 @@ static int setup_card(struct rtg_card *c)
     case K_ZZ9000:
         c->regs = b;
         c->nwin = 1;
+        if (c->memsize < 0x10000UL) return 0;
         c->win[0].p = b + 0x10000; c->win[0].size = c->memsize - 0x10000; c->win[0].name = "natural";
+        if (c->win[0].size > (c->bus == 3 ? 0x400000UL : 0x200000UL))
+            c->win[0].size = c->bus == 3 ? 0x400000UL : 0x200000UL;
         break;
     default:
         break;
@@ -1181,6 +1341,12 @@ static int layout_fits(const struct rtg_card *c, const char **what)
     return 1;
 }
 
+static int claim_card(const struct rtg_card *c)
+{
+    return c->mem_board && amt_board_claim(c->mem_board) &&
+           (!c->reg_board || amt_board_claim(c->reg_board));
+}
+
 static void run_card(struct rtg_card *c)
 {
     const char *what = 0;
@@ -1210,10 +1376,13 @@ static void run_card(struct rtg_card *c)
     default:
         break;
     }
-    setup_card(c);
     if (c->kind != K_A2410 && c->kind != K_ZZ9000 && c->kind != K_PICASSO4_Z3 && c->kind != K_CV64 &&
         c->kind != K_CV643D_Z2 && c->kind != K_CV643D_Z3 && !c->regs) {
         rtg_skip("suite", "the register board of this card is missing or was rejected by the board guard; nothing is written");
+        return;
+    }
+    if (!setup_card(c)) {
+        rtg_skip("suite", "board size/layout is not independently verified; nothing is accessed");
         return;
     }
     if (!layout_fits(c, &what)) {
@@ -1230,6 +1399,10 @@ static void run_card(struct rtg_card *c)
     }
     if (c->chip != CH_TMS34010 && c->chip != CH_ZZ9000 && !c->io) {
         rtg_skip("suite", "internal: no I/O base for this board");
+        return;
+    }
+    if (!claim_card(c)) {
+        rtg_skip("suite", "exclusive live ConfigDev claim failed for memory or register board; unsafe consent cannot override a driver or missing provenance");
         return;
     }
     switch (c->chip) {

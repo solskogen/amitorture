@@ -137,9 +137,10 @@ static void encode(const struct rt *t, int is24, UBYTE *g)
 }
 
 /* raw digits -> time; 1 if every digit is in range and the date exists */
-static int decode(const UBYTE *g, int is24, struct rt *t)
+static int decode(const UBYTE *g, int is24, UBYTE leap, struct rt *t)
 {
     int ok = 1, i;
+    t->leap = leap;
     for (i = 0; i < NDIG; i++)
         if (g[i] > 9)
             ok = 0;
@@ -237,11 +238,10 @@ static UBYTE ric_leap_read(void)
 
 static int read_time(struct rt *t, UBYTE *g)
 {
-    int ok;
+    UBYTE leap;
     read_digits(g);
-    ok = decode(g, cur24, t);
-    t->leap = chip == CHIP_RIC ? ric_leap_read() : 0;
-    return ok;
+    leap = chip == CHIP_RIC ? ric_leap_read() : 0;
+    return decode(g, cur24, leap, t);
 }
 
 /* stop / start the clock; stopping also resets the sub-second divider */
@@ -397,8 +397,7 @@ static int layout_ok(const UBYTE *v, const UBYTE *map, UBYTE pmb, int is24)
         g[Y10] = 0;
     pm_bit = pmb;
     chip = map == ric_ix ? CHIP_RIC : CHIP_MSM;
-    t.leap = 0;
-    ok = decode(g, is24, &t);
+    ok = decode(g, is24, 0, &t);
     pm_bit = save_pm;
     chip = saved_chip;
     return ok;
@@ -507,8 +506,6 @@ static void restore_state(void)
         ULONG n = mh_ms_since(sv.tk0) / 1000 + 2;
         ULONG lim = n * amt_cck_hz();
         add_secs(&t, n);
-        if (chip == CHIP_RIC)
-            t.leap = (UBYTE)((sv.leap + (t.y != sv.t0.y)) & 3);
         write_time(&t);
         while (amt_ticks() - sv.tk0 < lim)
             ;
@@ -534,6 +531,20 @@ static void restore_state(void)
 /* ------------------------------------------------------------ cases */
 static int wr_ok;
 
+static void case_edge_timeout(const char *id, const char *why)
+{
+    amt_case_open(id, AMT_ST_FAIL);
+    json_obj("expect");
+    json_int("seconds_edges_min", 1);
+    json_int("within_ms", 2500);
+    json_obj_end();
+    json_obj("got");
+    json_int("seconds_edges", 0);
+    json_obj_end();
+    json_str("why", why);
+    amt_case_close();
+}
+
 static void t_digits_counting(void)
 {
     UBYTE g[NDIG];
@@ -555,7 +566,7 @@ static void t_digits_counting(void)
     if (sv.running)
         amt_case("rtc_counting", AMT_ST_PASS, 0);
     else
-        amt_case("rtc_counting", AMT_ST_FAIL, "the seconds digit did not change within 2.5 s: clock stopped or not counting");
+        case_edge_timeout("rtc_counting", "the seconds digit did not change within 2.5 s: clock stopped or not counting");
 }
 
 static void t_rate(void)
@@ -567,7 +578,7 @@ static void t_rate(void)
         return;
     }
     if (!wait_edge(2500)) {
-        amt_case("rtc_rate", AMT_ST_FAIL, "no second edge within 2.5 s");
+        case_edge_timeout("rtc_rate", "no second edge within 2.5 s");
         return;
     }
     t0 = amt_ticks();
@@ -606,7 +617,7 @@ static void t_hold(void)
         return;
     }
     if (!wait_edge(2500)) {
-        amt_case("rtc_hold", AMT_ST_FAIL, "no second edge within 2.5 s");
+        case_edge_timeout("rtc_hold", "no second edge within 2.5 s");
         return;
     }
     e0 = amt_ticks();
@@ -624,10 +635,9 @@ static void t_hold(void)
     read_digits(c);
     if (wait_edge(1500))
         ms2 = mh_ms_since(e0);
-    decode(a, cur24, &ta);
-    decode(b, cur24, &tb);
-    decode(c, cur24, &tc);
-    ta.leap = tb.leap = tc.leap = 0;
+    decode(a, cur24, 0, &ta);
+    decode(b, cur24, 0, &tb);
+    decode(c, cur24, 0, &tc);
     te = ta;
     add_secs(&te, 1);
     ok_ab = 1;
@@ -821,6 +831,7 @@ static void t_ric_mode1(void)
 static void t_stop(void)
 {
     UBYTE a[NDIG], b[NDIG];
+    UBYTE leap;
     struct rt ta, tb;
     int i, ok = 1;
     if (!sv.running) {
@@ -828,6 +839,7 @@ static void t_stop(void)
         return;
     }
     clk_stop();
+    leap = chip == CHIP_RIC ? ric_leap_read() : 0;
     rd_digits_raw(a);
     mh_wait_ms(1500);
     rd_digits_raw(b);
@@ -839,9 +851,8 @@ static void t_stop(void)
         amt_case("rtc_stop", AMT_ST_PASS, 0);
         return;
     }
-    decode(a, cur24, &ta);
-    decode(b, cur24, &tb);
-    ta.leap = tb.leap = 0;
+    decode(a, cur24, leap, &ta);
+    decode(b, cur24, leap, &tb);
     case_time("rtc_stop", 0, &ta, &tb, b,
               chip == CHIP_MSM ? "the counters advanced for 1.5 s with CF STOP=1 (and REST=1)"
                                : "the counters advanced for 1.5 s with MODE TIMER EN=0 (and the second divider reset)",
@@ -884,7 +895,7 @@ static void roll(const char *id, const struct rt *t, int mode12, const char *why
     clk_stop();
     add_secs(&e, 1);
     if (!edge) {
-        amt_case(id, AMT_ST_FAIL, "no carry within 2.5 s after starting the clock");
+        case_edge_timeout(id, "no carry within 2.5 s after starting the clock");
         return;
     }
     case_time(id, same(&got, &e, chip == CHIP_RIC), &e, &got, g, why, fmt_time(t));
@@ -930,8 +941,7 @@ static void t_rollovers(void)
         for (i = 0; i < NDIG; i++)
             if (g[i] != e[i])
                 ok = 0;
-        decode(g, 0, &got);
-        got.leap = t.leap;
+        decode(g, 0, t.leap, &got);
         case_time("rtc_12h_readback", ok, &t, &got, g,
                   "15:37:42 written in 12-hour mode as 3 PM (H10 = PM bit | 0, H1 = 3) did not read back", 0);
     }
@@ -987,17 +997,15 @@ static void t_restore_check(void)
         return;
     }
     if (!wait_edge(2500)) {
-        amt_case("rtc_restored", AMT_ST_FAIL, "after restoring, the clock does not count");
+        case_edge_timeout("rtc_restored", "after restoring, the clock does not count");
         return;
     }
     s = mh_ms_since(sv.tk0) / 1000;
     read_time(&got, g);
     e0 = sv.t0;
-    e0.leap = 0;
     add_secs(&e0, s ? s - 1 : 0);
     e1 = e0; add_secs(&e1, 1);
     e2 = e1; add_secs(&e2, 1);
-    got.leap = 0;
     if (same(&got, &e0, 0) || same(&got, &e1, 0) || same(&got, &e2, 0)) {
         amt_case("rtc_restored", AMT_ST_PASS, 0);
         return;

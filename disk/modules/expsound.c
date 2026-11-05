@@ -7,8 +7,8 @@
  *   ACT Prelude (Zorro II)   man 16945 ($4231) prod 1   CS4231A codec
  *   UAE uaesnd (Z2/Z3)       man 6502          prod 2   UAE register ABI
  * The Prelude 1200 sits on the A1200 clock port at $D80000 and is not an
- * autoconfig board, so it is probed only with AMT_F_UNSAFE (run parameter
- * flags bit 0): one index write and two reads at $D80001/$D80005.
+ * autoconfig board. No exclusive clock-port reservation is available, so
+ * it is not probed: unsafe permission cannot establish ownership.
  *
  * The codec expectations come from the AD1848K and CS4231A data sheets
  * (index/data register protocol, MCE protection of I8/I9/I28, ACI, the
@@ -25,7 +25,7 @@
 #include "cia_hw.h"
 #include "expsound_hw.h"
 
-AMT_MODULE(expsound, 17, AMT_PH_BARE, 0, 64, 0);   /* chip: a Paula tone (uaesnd_mono_paula) */
+AMT_MODULE(expsound, 17, AMT_PH_BARE, 0, 0, 0);
 
 #define MAN_MACROSYSTEM 18260
 #define PROD_TOCCATA    12
@@ -55,6 +55,9 @@ struct cb {
 static struct cb *B;
 static UBYTE mce;
 static int host_audio = 1;        /* cleared after the first unacknowledged audio_mark */
+static int codec_restoring;
+static void codec_ready(int ok);
+static int cinit_wait(ULONG to_frames);
 
 static void cx(UBYTE i) { es_wb(B->r0, (UBYTE)(mce | i)); }
 static UBYTE cr(UBYTE i)
@@ -66,6 +69,9 @@ static void cw(UBYTE i, UBYTE v)
 {
     cx(i);
     es_wb(B->r1, v);
+    /* A clock change asserts INIT even with MCE still set. */
+    if (i == 8)
+        codec_ready(cinit_wait(50));
 }
 static void cmce(int on)
 {
@@ -94,11 +100,22 @@ static int caci_wait(ULONG to_frames)
 static void cmce_off(void)
 {
     cmce(0);
-    cinit_wait(50);
-    caci_wait(100);
+    codec_ready(cinit_wait(50));
+    codec_ready(caci_wait(100));
 }
 
 static const char *pc(const char *s) { return es_cid(B->n, s); }
+
+static void codec_ready(int ok)
+{
+    if (!ok) {
+        amt_case(pc(codec_restoring ? "cleanup_ready" : "codec_ready"), AMT_ST_FAIL,
+                 "codec INIT/ACI did not clear; subsequent accesses are not valid");
+        if (codec_restoring)
+            amt_abort_fatal(AMT_ABORT_USER);
+        amt_abort(AMT_ABORT_USER);
+    }
+}
 
 static void ctx_board(void)
 {
@@ -138,7 +155,9 @@ static void rep(const char *id, int ok, const char *why, const char *what,
 }
 
 /* ------------------------------------------------ register file tests */
-static UBYTE sav[16];
+static UBYTE sav[32];
+static const UBYTE ext_rw[] = { 16, 17, 18, 19, 20, 21, 26, 28, 30, 31 };
+static int codec_saved, codec_ext_saved, codec_dirty, cia_b_saved, u_dirty, cleanup_failed;
 
 static void t_index(void)
 {
@@ -271,6 +290,7 @@ static void t_i8(void)
         }
     }
     cw(8, 0x00);
+    cw(9, 0x00);                    /* establish SDC=0 under MCE */
     cmce_off();
     sb_reset();
     sb_s("R0 MCE=1; I8 <- ");
@@ -294,7 +314,7 @@ static void t_i8(void)
     g = cr(9);
     rep(pc("i9_needs_mce"), (g & 0xcc) == 0x00,
         "I9 bits other than PEN/CEN cannot be changed unless MCE is set (data sheet R0 MCE; PEN and CEN "
-        "are the only on-the-fly bits)", "i9", 0x00, g & 0xcc, 2,
+        "are the only on-the-fly bits; mask $CC includes SDC $04)", "i9", 0x00, g & 0xcc, 2,
         "MCE=1, I9 <- $00, MCE=0, I9 <- $04 (SDC, MCE=0), read I9 & $CC");
     cmce(1);
     cw(9, 0x00);
@@ -309,6 +329,7 @@ static void t_autocal(void)
     cw(8, 0x01);                    /* 5512.5 Hz: a long calibration */
     cw(9, 0x08);                    /* ACAL */
     cmce(0);
+    codec_ready(cinit_wait(50));
     t0 = frames();
     t1 = t2 = 0;
     while (frames() - t0 < 10) {    /* up to 0.2 s for ACI to rise */
@@ -327,7 +348,7 @@ static void t_autocal(void)
             }
         }
     }
-    cinit_wait(50);
+    codec_ready(cinit_wait(50));
     cmce(1);
     cw(9, 0x00);
     cw(8, 0x00);
@@ -581,15 +602,20 @@ static void hook_prelude(ULONG pending)
     }
 }
 
-static void board_reset(void)
+static void board_quiet(void)
 {
     if (B->kind == CB_TOCCATA) {
         es_wb(B->stat, 0x02);        /* RESET */
         es_wb(B->stat, 0x00);
     } else
         es_wb(B->rst, 0x00);         /* reset strobe: FIFOs and codec */
-    cinit_wait(50);
     mce = 0;
+}
+
+static void board_reset(void)
+{
+    board_quiet();
+    codec_ready(cinit_wait(50));
 }
 
 /* The start mark describes the tone for the host's analysis (CONTRACT
@@ -642,7 +668,7 @@ static void play(int fi, int intena, int mark)
     ULONG period_cck = (FIFO_HALF / f->bps) * 2UL * amt_cck_hz() / f->rate2;
     ULONG dur_frames = (total / f->bps) * 2 * 50 / f->rate2 + 1;
     ULONG t0, to;
-    int completed, drained = 1, marked = 0;
+    int completed, drained = -1, marked = 0;
     char tag[40];
     const char *ccid;
 
@@ -724,7 +750,9 @@ static void play(int fi, int intena, int mark)
 
     if (!intena) {
         ccid = pc("play_intena_off");
-        if (pb_irq == 0 && pb_spur == 0 && !irq_storm)
+        if (pb_spur)
+            amt_case(ccid, AMT_ST_UNTESTABLE, "shared INT6 activity not attributable to this board");
+        else if (pb_irq == 0 && !irq_storm)
             amt_case(ccid, AMT_ST_PASS, 0);
         else {
             amt_case_open(ccid, AMT_ST_FAIL);
@@ -756,7 +784,9 @@ static void play(int fi, int intena, int mark)
         *d = 0;
         ccid = pc(sfx);
     }
-    if (completed && pb_irq == expect && pb_spur == 0 && drained && !irq_storm)
+    if (pb_spur)
+        amt_case(ccid, AMT_ST_UNTESTABLE, "shared INT6 activity not attributable to this board");
+    else if (completed && pb_irq == expect && drained != 0 && !irq_storm)
         amt_case(ccid, AMT_ST_PASS, 0);
     else {
         amt_case_open(ccid, AMT_ST_FAIL);
@@ -764,19 +794,23 @@ static void play(int fi, int intena, int mark)
         json_int("irqs", (long)expect);
         json_int("spurious", 0);
         json_int("undelivered", 0);
-        json_bool("drained", 1);
+        json_str("drained", B->kind == CB_TOCCATA ? "not observable" : "true");
         json_obj_end();
         json_obj("got");
         json_int("irqs", (long)pb_irq);
         json_int("spurious", (long)pb_spur);
         json_int("undelivered", (long)pb_left);
-        json_bool("drained", drained);
+        if (drained < 0)
+            json_str("drained", "not observable");
+        else
+            json_bool("drained", drained);
         json_int("hook_entries", (long)irq_entries);
         json_bool("storm", irq_storm);
         json_obj_end();
         json_str("why", "play FIFO (1024 bytes) filled, then refilled with 512 bytes at every half-empty "
                  "interrupt (the last one, with no data left, masks the interrupt): a buffer of N bytes "
-                 "gives exactly (N-1024)/512+1 interrupts at level 6 (INT6) and the FIFO then drains");
+                 "gives exactly (N-1024)/512+1 interrupts at level 6 (INT6). Empty is measured only on "
+                 "Prelude; this verdict does not measure sample rate or Toccata FIFO drain");
         json_obj("in");
         json_int("buffer_bytes", (long)total);
         json_hexn("i8", f->i8, 2);
@@ -807,6 +841,13 @@ static void play(int fi, int intena, int mark)
          * 512 bytes / bytes-per-frame / sample rate */
         amt_perf(pn, pb_irq - 1, pb_t1 - pb_t0);
     }
+    if (B->kind == CB_TOCCATA) {
+        ccid = pc(fi ? "drain_s16s_11025" : "drain_u8m_5512");
+        amt_case(ccid, AMT_ST_UNTESTABLE, "no documented Toccata play-empty status; drain was not measured");
+    }
+    if (fi)
+        amt_case(pc("rate_s16s_11025"), AMT_ST_UNTESTABLE,
+                 "stereo IRQ period is diagnostic only; no independent calibrated stereo-rate measurement");
     if (mark) {
         ccid = pc("audio_capture");
         if (marked)
@@ -887,8 +928,24 @@ static void codec_board(struct cb *b)
     r0 = es_rb(b->r0);
     rep(pc("init_bit_clear"), (r0 & 0x80) == 0, "R0 bit 7 (INIT) must read 0 once the codec is idle",
         "r0_bit7", 0, r0 & 0x80, 2, 0);
+    if (r0 & 0x40) {
+        amt_case(pc("snapshot"), AMT_ST_UNTESTABLE,
+                 "codec was already in MCE; clearing it would invalidate the unsaved register snapshot");
+        return;
+    }
     for (k = 0; k < 16; k++)
         sav[k] = cr((UBYTE)k);
+    codec_saved = 1;
+    codec_dirty = 1;                 /* also covers a partial MODE2 snapshot */
+    if (b->cs) {
+        cw(12, sav[12] | 0x40);
+        if (!(cr(12) & 0x40))
+            codec_ready(0);
+        for (k = 0; k < (int)sizeof(ext_rw); k++)
+            sav[ext_rw[k]] = cr(ext_rw[k]);
+        codec_ext_saved = 1;
+        cw(12, sav[12] & ~0x40);
+    }
     {
         /* initial register file, for diagnosis (informational) */
         char t[80];
@@ -922,26 +979,55 @@ static void codec_board(struct cb *b)
              "I0/I1 source 11), so no exact data compare is possible");
 
     cia_save(&cia_b, CIAB_BASE, 0);    /* CIA-B also drives INT6 */
+    cia_b_saved = 1;
     if (b->kind != CB_TOCCATA)
         t_fifo_flags();
     play(0, 1, 1);
     play(1, 1, 0);
     if (b->kind == CB_TOCCATA)
         play(0, 0, 0);
-    cia_restore(&cia_b);
+}
 
-    /* restore the codec as found (never leave PEN/CEN on) */
-    board_reset();
+static void codec_cleanup(void)
+{
+    int k;
+    if (!codec_dirty)
+        return;
+    codec_dirty = 0;                 /* a cleanup fault must not retry it */
+    codec_restoring = 1;
+    CREG(R_INTENA) = INT_EXTER;
+    amt_irq_hook[6] = 0;
+    board_quiet();
+    codec_ready(cinit_wait(50));
+    if (!codec_saved) {
+        codec_restoring = 0;
+        return;
+    }
+    /* Restore configuration, not lost FIFO contents or in-flight streams.
+     * I9 PEN/CEN and I10 IEN remain off; the driver must reinitialise. */
+    if (B->cs)
+        cw(12, sav[12] | 0x40);
     cmce(1);
     cw(8, sav[8]);
     cw(9, sav[9] & ~0x03);
+    if (codec_ext_saved)
+        cw(28, sav[28] & 0xf0);
     cmce_off();
+    if (codec_ext_saved)
+        for (k = 0; k < (int)sizeof(ext_rw); k++)
+            if (ext_rw[k] != 28)
+                /* I16 timer enable cannot resume an unknown timer phase. */
+                cw(ext_rw[k], ext_rw[k] == 16 ? sav[16] & ~0x40 : sav[ext_rw[k]]);
     for (k = 0; k < 8; k++)
         cw((UBYTE)k, sav[k]);
+    cw(10, sav[10] & ~0x02);
+    cw(12, sav[12]);
     cw(13, sav[13]);
     cw(14, sav[14]);
     cw(15, sav[15]);
-    es_wb(b->r0, 0);
+    es_wb(B->r0, 0);
+    CREG(R_INTREQ) = INT_EXTER;
+    codec_restoring = 0;
 }
 
 /* ======================================================= uaesnd */
@@ -955,7 +1041,8 @@ static ULONG ucaps;
 #define UL(o) ((volatile ULONG *)(U + (o)))
 #define S0 0x100              /* stream 1 */
 
-static volatile ULONG u_irq, u_spur, u_t0, u_t1;
+static volatile ULONG u_irq, u_spur, u_t0, u_t1, u_bad_status;
+static volatile UBYTE u_expected_status;
 static volatile UBYTE u_seq[8];
 
 static void hook_uae(ULONG pending)
@@ -966,6 +1053,8 @@ static void hook_uae(ULONG pending)
         UBYTE v = es_rb(UB(S0 + 0x87));   /* reading clears */
         if (v & 0x80) {
             ULONG t = cia_now();
+            if (u_expected_status && v != u_expected_status)
+                u_bad_status++;
             if (!u_irq)
                 u_t0 = t;
             u_t1 = t;
@@ -1011,6 +1100,16 @@ static void u_wait_frames(ULONG n)
         ;
 }
 
+static int u_active_for(ULONG n)
+{
+    ULONG t0 = frames();
+    int active = (es_rb(UB(S0 + 0x93)) & 1) != 0;
+    while (frames() - t0 < n)
+        if (!(es_rb(UB(S0 + 0x93)) & 1))
+            active = 0;
+    return active;
+}
+
 /* sample set structure (40 bytes) at RAM offset `so` */
 static ULONG u_set(ULONG so, ULONG data, LONG len, ULONG freq, ULONG rep, LONG replen,
                    UWORD repcnt, UWORD flags, UBYTE intr)
@@ -1038,6 +1137,10 @@ static ULONG u_set(ULONG so, ULONG data, LONG len, ULONG freq, ULONG rep, LONG r
 static void u_seq_case(const char *id, const UBYTE *exp, int n, UBYTE mask, const char *why, ULONG setaddr)
 {
     int k, ok = (int)u_irq == n && u_spur == 0 && !irq_storm;
+    if (u_spur) {
+        amt_case(id, AMT_ST_UNTESTABLE, "shared INT6 activity without uaesnd pending status");
+        return;
+    }
     for (k = 0; ok && k < n; k++)
         if ((u_seq[k] & mask) != exp[k])
             ok = 0;
@@ -1145,6 +1248,7 @@ static void uaesnd_board(const struct amt_probe_board *bd)
         return;
     }
     UR = U + roff;
+    u_dirty = 1;                      /* before the first RAM or stream write */
 
     /* ---- board RAM */
     {
@@ -1203,6 +1307,7 @@ static void uaesnd_board(const struct amt_probe_board *bd)
          "ok", 1, ok, 0);
 
     cia_save(&cia_b, CIAB_BASE, 0);
+    cia_b_saved = 1;
 
     /* ---- timer interrupt: 200 Hz, status $90 (bit 7 + bit 4)
      * The timer value is a frequency in Hz*256 of emulated time: the period
@@ -1221,7 +1326,7 @@ static void uaesnd_board(const struct amt_probe_board *bd)
      * would hide a rate error of up to 0.25 %. */
     {
         ULONG t0, wf, fr, ex;
-        int sok = 1, n;
+        int n;
         if (amt_probe_result.pal) {
             wf = 100;
             fr = 71051UL * 2;                 /* half colour clocks per frame */
@@ -1233,6 +1338,8 @@ static void uaesnd_board(const struct amt_probe_board *bd)
          * (< 2^32: 2.84e9 PAL, 2.87e9 NTSC) */
         ex = (wf * fr * 200UL) / (amt_cck_hz() * 2UL);
         u_irq = u_spur = 0;
+        u_bad_status = 0;
+        u_expected_status = 0x90;
         irq_entries = irq_storm = 0;
         es_wb(UB(S0 + 0x8f), 0x10);           /* stream master int enable: timer */
         CREG(R_INTREQ) = INT_EXTER;
@@ -1251,10 +1358,10 @@ static void uaesnd_board(const struct amt_probe_board *bd)
         CREG(R_INTENA) = INT_EXTER;
         amt_irq_hook[6] = 0;
         CREG(R_INTREQ) = INT_EXTER;
-        for (k = 0; k < 8 && k < (ULONG)n; k++)
-            if (u_seq[k] != 0x90)
-                sok = 0;
-        if (n == (int)ex && (int)u_irq == n && sok && u_spur == 0)
+        u_expected_status = 0;
+        if (u_spur)
+            amt_case("uaesnd_timer_irq", AMT_ST_UNTESTABLE, "shared INT6 activity without uaesnd pending status");
+        else if (n == (int)ex && (int)u_irq == n && !u_bad_status && !irq_storm)
             amt_case("uaesnd_timer_irq", AMT_ST_PASS, 0);
         else {
             amt_case_open("uaesnd_timer_irq", AMT_ST_FAIL);
@@ -1269,6 +1376,7 @@ static void uaesnd_board(const struct amt_probe_board *bd)
             json_int("irqs_running", n);
             json_int("irqs_total", (long)u_irq);
             json_int("spurious", (long)u_spur);
+            json_int("wrong_status", (long)u_bad_status);
             json_hexn("status0", u_seq[0], 2);
             json_obj_end();
             json_str("why", "$0194.L timer frequency (Hz*256) raises interrupt status bit 4 at that rate; "
@@ -1378,77 +1486,77 @@ static void uaesnd_board(const struct amt_probe_board *bd)
                  "irqs_play", 0, (u_irq << 8) | (v & 1), 0);
     }
 
-    /* ---- a mono stream is mixed into both sides without replacing what
-     * Paula plays there: a silent, endlessly repeating mono stream runs while
-     * Paula channel 1 (right output) plays a square tone; the right output
-     * must carry that tone (judged by the runner: host.tone_uaesnd_mono_paula,
-     * side right). Amiberry's mixer used to copy the left mix into the right
-     * side for a one-channel stream. */
+    /* Confirm silent mono playback independently of any host audio request.
+     * The mixer/Paula oracle requires ownership of write-only AUD1 state,
+     * which the current bare runtime does not provide. */
     {
-        UBYTE *tb = (UBYTE *)amt_chip_pool();
-        ULONG clk = amt_cck_hz(), half = amt_secs(1) / 2;
-        UWORD per = 254;                                  /* 32 samples: ~436 Hz PAL */
-        ULONG fm = (ULONG)(((unsigned long long)clk * 1000ULL) / ((ULONG)per * 32UL));
-        int a1 = 0, a2 = 0;
-        char *p;
-        for (k = 0; k < 32; k++)
-            tb[k] = k < 16 ? 96 : (UBYTE)-96;
+        int active;
         for (k = 0; k < 2205; k++)
             es_wb((volatile UBYTE *)(UR + 0x3000 + k), 0);
         setaddr = u_set(0x400, UR + 0x3000, 2205, 22050UL << 8, UR + 0x3000, 2205, 0xffff, 0, 0);
         es_wl(UL(0xf0), 0x00000001);
-        es_wl(UL(S0 + 0x80), setaddr);                    /* starts the stream */
+        es_wl(UL(S0 + 0x80), setaddr);
         u_wait_frames(5);
-        CREG(R_DMACON) = 0x0002;                          /* AUD1 off */
-        *(volatile ULONG *)(CUSTOM_BASE + 0x0b0) = (ULONG)tb;
-        CREG(0x0b4) = 16;                                 /* AUD1LEN (words) */
-        CREG(0x0b6) = per;                                /* AUD1PER */
-        CREG(0x0b8) = 64;                                 /* AUD1VOL */
-        if (host_audio) {
-            p = am_cat(am_args, "{\"edge\":\"start\",\"freq_mhz\":");
-            p = amt_utoa(p, fm);
-            p = am_cat(p, ",\"tol_pct\":2,\"ms\":500,\"side\":\"right\"}");
-            a1 = amt_request("audio_mark", "uaesnd_mono_paula", am_args, amt_secs(10));
-        }
-        if (a1) {
-            CREG(R_DMACON) = 0x8202;                      /* DMAEN | AUD1EN */
-            u_wait_frames(half);
-            CREG(R_DMACON) = 0x0002;
-            CREG(0x0b8) = 0;
-            a2 = audio_mark("uaesnd_mono_paula", 0, 0, 0, 0);
-        }
-        es_wl(UL(S0 + 0x80), 0);                          /* stops the stream */
+        active = u_active_for(25);
+        urep("uaesnd_mono_active", active,
+             "silent repeating mono must start and stay active throughout the observation window",
+             "active_throughout", 1, active, "$F0=1; $180=set; check $193 bit 0 for 25 frames");
+        es_wl(UL(S0 + 0x80), 0);
         u_wait_frames(2);
-        if (!a1)
-            host_audio = 0;
-        amt_case("uaesnd_mono_paula_capture", a1 && a2 ? AMT_ST_PASS : AMT_ST_UNTESTABLE,
-                 a1 && a2 ? 0 : "host did not act on request audio_mark");
+        amt_case("uaesnd_mono_paula_capture", AMT_ST_SKIP,
+                 "no exclusive AUD1 ownership/reinitialisation; write-only Paula channel state cannot be restored");
     }
+}
 
-    cia_restore(&cia_b);
-
-    /* ---- leave the board idle */
+static void u_cleanup(void)
+{
+    ULONG t0;
+    if (!u_dirty)
+        return;
+    u_dirty = 0;
+    CREG(R_INTENA) = INT_EXTER;
+    amt_irq_hook[6] = 0;
+    es_wb(UB(S0 + 0x8f), 0);
+    es_wl(UL(0xf4), 0);
     es_wl(UL(S0 + 0x94), 0);
     es_wl(UL(S0 + 0x80), 0);
-    es_wb(UB(S0 + 0x8f), 0);
     es_wl(UL(0xf0), 0);
-    es_wl(UL(0xf4), 0);
+    t0 = frames();
+    while ((es_rb(UB(S0 + 0x93)) & 1) && frames() - t0 < 25)
+        ;
+    if ((es_rb(UB(S0 + 0x93)) & 1) || es_rl(UL(0xf0)) || es_rl(UL(0xf4))) {
+        amt_case("uaesnd_quiescence", AMT_ST_FAIL,
+                 "stream or interrupt enables did not stop; card state is not known to be quiescent");
+        amt_abort_fatal(AMT_ABORT_USER);
+    }
     es_wl(UL(0xe0), 0);
+    CREG(R_INTREQ) = INT_EXTER;
+    u_expected_status = 0;
 }
 
 /* ======================================================= main */
 static struct cb cbs;
 
-static int p1200_present(void)
+static void expsound_cleanup(void)
 {
-    volatile UBYTE *r0 = (volatile UBYTE *)0xd80001, *r1 = (volatile UBYTE *)0xd80005;
-    UBYTE i, id;
-    if (!(amt_par.flags & AMT_F_UNSAFE))
-        return 0;
-    es_wb(r0, 0x0c);
-    i = es_rb(r0);
-    id = es_rb(r1);
-    return (i & 0x7f) == 0x0c && (id & 0x0f) == 0x0a;
+    codec_cleanup();
+    u_cleanup();
+    if (cia_b_saved) {
+        cia_b_saved = 0;
+        cia_restore(&cia_b);
+    }
+}
+
+static void finish_board(void)
+{
+    int code = amt_try(expsound_cleanup);
+    if (code) {
+        cleanup_failed = 1;
+        amt_case("cleanup_incomplete", AMT_ST_FAIL,
+                 "sound-card cleanup aborted; device configuration/engine state is not known to be restored");
+        amt_abort_fatal(code);
+    }
+    codec_saved = codec_ext_saved = 0;
 }
 
 /* review H1: a known board whose ConfigDev fails the shared guard (shut
@@ -1477,18 +1585,41 @@ static int board_usable(const struct amt_probe_board *bd, const char *name)
     return 0;
 }
 
-void amt_run_expsound(void)
+static void expsound_body(void)
 {
     int k, found = 0;
+    UBYTE seen[3] = { 0, 0, 0 };
     for (k = 0; k < amt_probe_result.n_boards && k < AMT_PROBE_BOARDS_MAX; k++) {
         const struct amt_probe_board *bd = &amt_probe_result.boards[k];
-        if (bd->man == MAN_MACROSYSTEM && bd->prod == PROD_TOCCATA && !board_usable(bd, "toccata")) {
-            found++;
-        } else if (bd->man == MAN_ACT && bd->prod == PROD_PRELUDE && !board_usable(bd, "prelude")) {
-            found++;
-        } else if (bd->man == MAN_UAE && bd->prod == PROD_UAESND && !board_usable(bd, "uaesnd")) {
-            found++;
-        } else if (bd->man == MAN_MACROSYSTEM && bd->prod == PROD_TOCCATA && bd->size >= 0x10000) {
+        int family = bd->man == MAN_MACROSYSTEM && bd->prod == PROD_TOCCATA ? 0 :
+                     bd->man == MAN_ACT && bd->prod == PROD_PRELUDE ? 1 :
+                     bd->man == MAN_UAE && bd->prod == PROD_UAESND ? 2 : -1;
+        const char *name = family == 0 ? "toccata" : family == 1 ? "prelude" : "uaesnd";
+        if (family < 0)
+            continue;
+        if (seen[family]++) {
+            json_begin("log");
+            json_str("mod", "expsound");
+            json_str("msg", "additional same-family board not selected; first ConfigDev entry only");
+            json_str("board", name);
+            json_hex("base", bd->addr);
+            json_int("probe_index", k);
+            json_end();
+            continue;
+        }
+        found++;
+        if (!board_usable(bd, name))
+            continue;
+        if (bd->size < 0x10000) {
+            amt_case(es_cid(name, "board_span"), AMT_ST_SKIP, "board is smaller than the register/RAM aperture");
+            continue;
+        }
+        if (!amt_board_claim(bd)) {
+            amt_case(es_cid(name, "ownership"), AMT_ST_UNTESTABLE,
+                     "no exclusive live ConfigDev claim: driver-owned, changed or missing provenance; unsafe is not ownership");
+            continue;
+        }
+        if (family == 0) {
             struct cb *b = &cbs;
             b->n = "toccata";
             b->kind = CB_TOCCATA;
@@ -1500,8 +1631,8 @@ void amt_run_expsound(void)
             b->stat = (volatile UBYTE *)(bd->addr + 0x0000);
             b->rst = 0;
             codec_board(b);
-            found++;
-        } else if (bd->man == MAN_ACT && bd->prod == PROD_PRELUDE && bd->size >= 0x10000) {
+            finish_board();
+        } else if (family == 1) {
             struct cb *b = &cbs;
             b->n = "prelude";
             b->kind = CB_PRELUDE;
@@ -1517,34 +1648,29 @@ void amt_run_expsound(void)
             b->fmask = 0xf0;
             b->fshift = 4;
             codec_board(b);
-            found++;
-        } else if (bd->man == MAN_UAE && bd->prod == PROD_UAESND && bd->size >= 0x10000) {
+            finish_board();
+        } else {
             uaesnd_board(bd);
-            found++;
+            finish_board();
         }
     }
-    if (p1200_present()) {
-        struct cb *b = &cbs;
-        b->n = "prelude1200";
-        b->kind = CB_P1200;
-        b->cs = 1;
-        b->base = 0xd80000;
-        b->r0 = (volatile UBYTE *)0xd80001;
-        b->r1 = (volatile UBYTE *)0xd80005;
-        b->fifo = (volatile UBYTE *)0xd80011;
-        b->stat = (volatile UBYTE *)0xd80015;
-        b->rst = (volatile UBYTE *)0xd80015;
-        b->hf = 0x08;
-        b->ef = 0x04;
-        b->fmask = 0x0f;
-        b->fshift = 0;
-        codec_board(b);
-        found++;
-    }
+    amt_case("prelude1200_ownership", AMT_ST_UNTESTABLE,
+             "clock-port board has no ConfigDev provenance or exclusive reservation; never probed, even with unsafe");
     if (!found)
         amt_case("no_board", AMT_ST_SKIP,
-                 (amt_par.flags & AMT_F_UNSAFE)
-                     ? "no Toccata/Prelude/uaesnd in the expansion list and no Prelude 1200 at $D80000"
-                     : "no Toccata (18260/12), Prelude (16945/1) or uaesnd (6502/2) in the expansion list; "
-                       "the Prelude 1200 (clock port, not autoconfig) is probed only with the unsafe flag");
+                 "no Toccata (18260/12), Prelude (16945/1) or uaesnd (6502/2) in the expansion list; "
+                 "Prelude 1200 ownership cannot be established");
+}
+
+void amt_run_expsound(void)
+{
+    int code;
+    codec_saved = codec_ext_saved = codec_dirty = cia_b_saved = u_dirty = cleanup_failed = 0;
+    codec_restoring = 0;
+    u_expected_status = 0;
+    code = amt_try(expsound_body);
+    if (!cleanup_failed)
+        finish_board();              /* still inside the module's bare environment */
+    if (code)
+        amt_abort(code);
 }

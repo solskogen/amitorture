@@ -288,7 +288,9 @@ def apply_param(params, item):
         params["end_action"] = END_ACTIONS[val.lower()] if val.lower() in END_ACTIONS else parse_num(val)
     elif key == "flags":
         if val and all(p in FLAG_BITS for p in val.replace("+", ",").split(",")):
-            params["flags"] = sum(FLAG_BITS[p] for p in val.replace("+", ",").split(","))
+            params["flags"] = 0
+            for p in val.replace("+", ",").split(","):
+                params["flags"] |= FLAG_BITS[p]
         else:
             params["flags"] = parse_num(val)
     elif key == "baud":
@@ -458,6 +460,11 @@ def dump(path):
         errors.append(f"blob_sectors {sectors} does not match {nbytes} bytes")
     if alloc != max(sectors * SECTOR, image + bss):
         errors.append("alloc_size mismatch")
+    if max(nbytes, sectors * SECTOR) > len(adf) - BLOB_OFF:
+        errors.append("blob extends beyond the ADF")
+        for e in errors:
+            print(f"ERROR: {e}", file=sys.stderr)
+        return 1
     blob = adf[BLOB_OFF:BLOB_OFF + nbytes]
     real = zlib.crc32(blob) & 0xFFFFFFFF
     print(f"blob crc      {real:08x} ({'ok' if real == crc else 'BAD'})")

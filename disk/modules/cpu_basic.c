@@ -13,9 +13,9 @@
  * masked CCR, the window bytes and the stack pointer with the expectation.
  *
  * A case is one instruction family. It runs every vector once (verification
- * pass), then amt_hot() runs vector (i*7919 mod n) for i = 0..hot_reps() and
+ * pass), then each hot round runs one vector of every supported snippet and
  * returns 0 for a matching vector, so a divergence after the snippets have
- * been executed many times (JIT-compiled) is reported with its iteration.
+ * been executed many times (possibly JIT-compiled) is reported with its iteration.
  */
 #include "mod.h"
 
@@ -470,59 +470,32 @@ static int form_ok(const struct cb_tpl *t)
     return cpu_ok(t) && !(rmw_off && has_mem(t));
 }
 
-/* the test pool is on the chip bus: chip RAM, or A500-style slow RAM at
- * $C00000-$DBFFFF, which is also accessed through Agnus' chip bus
- * arbitration (HRM: no indivisible read-modify-write cycle on that bus) */
-static int pool_on_chip_bus(void)
+/* One round executes every supported snippet. At least one complete vector
+ * sweep follows four warm-up rounds; quick mode still covers every snippet.
+ * Execution counts establish coverage, not actual JIT activation. */
+static ULONG hot_reps(void)
 {
-    ULONG p = (ULONG)amt_any_pool();
-    if (amt_any_pool_is_chip())
-        return 1;
-    return p >= 0x00c00000UL && p < 0x00dc0000UL;
-}
-
-static int vec_at(ULONG k, const struct cb_tpl **tp, UWORD *vi)
-{
+    ULONG r = amt_hot_reps();
     int j;
     for (j = 0; j < ccase->n; j++) {
         const struct cb_tpl *t = &cb_tpls[ccase->first + j];
-        if (!form_ok(t))
-            continue;
-        if (k < t->nvec) {
-            *tp = t;
-            *vi = (UWORD)k;
-            return 1;
-        }
-        k -= t->nvec;
+        if (form_ok(t) && r < (ULONG)t->nvec + 4)
+            r = (ULONG)t->nvec + 4;
     }
-    return 0;
-}
-
-/* Here the hot pass is coverage, not repetition: every vector of the case
- * once more after its snippet is warm (JIT-translated), up to 1000 vectors
- * as before, plus a margin past the translation threshold. A small case no
- * longer runs 1000 iterations over the same few vectors. */
-static ULONG hot_reps(void)
-{
-    ULONG n = ccase_total < 1000UL ? ccase_total : 1000UL;
-    ULONG r = n + 16;
-    if (AMT_QUICK() || r < amt_hot_reps())
-        r = amt_hot_reps();
     return r;
 }
 
 static ULONG hot_fn(ULONG i)
 {
-    const struct cb_tpl *t;
-    UWORD vi;
-    /* stride through the vectors (7919 is prime, so every vector is
-     * reachable): with only amt_hot_reps() iterations, "i mod n" would never
-     * hot-check the vectors past the first reps of a large case */
-    ULONG k = (ccase_total % 7919UL) ? (i * 7919UL) % ccase_total : i % ccase_total;
+    int j;
     hot_iter = i;
-    if (!vec_at(k, &t, &vi))
-        return 0xffffffffUL;
-    return run_vec(t, vi) ? k + 1 : 0;
+    for (j = 0; j < ccase->n; j++) {
+        const struct cb_tpl *t = &cb_tpls[ccase->first + j];
+        if (form_ok(t) && t->nvec && run_vec(t, (UWORD)(i % t->nvec)))
+            return (ULONG)j + 1;
+    }
+    amt_watchdog_kick();
+    return 0;
 }
 
 static const char *const cpu_names[12] = {
@@ -564,9 +537,9 @@ static void case_body(void)
         }
         amt_watchdog_kick();
     }
-    /* hot loop: vector (i*7919 mod n), 0 = match */
+    /* Every round checks each snippet directly against its model. */
     in_hot = 1;
-    cs_hr = amt_hot(hot_fn, hot_reps(), &cs_first, &cs_bad);
+    cs_hr = amt_hot_checked(hot_fn, hot_reps(), &cs_first, &cs_bad);
     in_hot = 0;
 }
 
@@ -648,7 +621,7 @@ static void run_case(const struct cb_case *c)
         else
             nskip_forms++;
     }
-    if (ccase_total && is_rmw_case(c->id) && pool_on_chip_bus()) {
+    if (ccase_total && is_rmw_case(c->id) && amt_any_pool_on_chip_bus()) {
         /* run only the forms without a memory operand (TAS Dn) */
         rmw_off = 1;
         ccase_total = 0;

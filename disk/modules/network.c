@@ -270,6 +270,7 @@ static int buf_eq(ULONG roff, ULONG toff, int len, int *at)
 
 /* ---------------------------------------------------------------- IRQs */
 static volatile ULONG n_l2, n_l6, irq_storm, irq_entries;
+static volatile ULONG n_foreign;
 static volatile UWORD csr0_hook, csr0_or;
 
 static int storm_check(UWORD bit)
@@ -288,7 +289,7 @@ static void hook_l2(ULONG pending)
         return;
     if (pending & INT_PORTS) {
         UWORD v = es_rw(rdp);              /* RAP is 0 while interrupts are on */
-        if (v & C0_INTR) {
+        if ((v & (C0_INTR | C0_INEA)) == (C0_INTR | C0_INEA)) {
             if (!n_l2)
                 csr0_hook = v;
             csr0_or |= v;
@@ -296,7 +297,8 @@ static void hook_l2(ULONG pending)
             /* acknowledge the interrupt flags, keep INEA */
             es_ww(rdp, (UWORD)((v & (C0_BABL | C0_CERR | C0_MISS | C0_MERR | C0_RINT | C0_TINT | C0_IDON)) |
                                C0_INEA));
-        }
+        } else
+            n_foreign++;
         CREG(R_INTREQ) = INT_PORTS;
     }
 }
@@ -307,15 +309,18 @@ static void hook_l6(ULONG pending)
         return;
     if (pending & INT_EXTER) {
         n_l6++;
+        n_foreign++;                     /* no A2065 status identifies this source */
         CREG(R_INTREQ) = INT_EXTER;
     }
 }
 
 static struct cia_saved cia_a, cia_b;
+static int cia_a_saved, cia_b_saved, net_dirty, z_mac_saved, cleanup_failed;
+static UWORD z_saved_mac[3];
 
 static void irq_on(void)
 {
-    n_l2 = n_l6 = irq_storm = irq_entries = 0;
+    n_l2 = n_l6 = n_foreign = irq_storm = irq_entries = 0;
     csr0_hook = csr0_or = 0;
     es_ww(rap, 0);
     CREG(R_INTREQ) = INT_PORTS | INT_EXTER;
@@ -450,7 +455,9 @@ static void t_irq(void)
     wait_frames(3);
     irq_off();
     v = csr_r(0);
-    if (n_l2 == 1 && n_l6 == 0 && csr0_hook == (C0_INIT | C0_IDON | C0_INTR | C0_INEA) &&
+    if (n_foreign)
+        amt_case("a2065_irq_idon", AMT_ST_UNTESTABLE, "shared INT2/INT6 activity not attributable to the A2065");
+    else if (n_l2 == 1 && n_l6 == 0 && csr0_hook == (C0_INIT | C0_IDON | C0_INTR | C0_INEA) &&
         v == (C0_INIT | C0_INEA) && !irq_storm)
         amt_case("a2065_irq_idon", AMT_ST_PASS, 0);
     else {
@@ -489,7 +496,9 @@ static void t_irq(void)
     wait_frames(5);
     v = es_rw(rdp);
     irq_off();
-    if (n_l2 == 0 && n_l6 == 0 && v == (C0_INIT | C0_IDON | C0_INTR) && !irq_storm)
+    if (n_foreign)
+        amt_case("a2065_irq_masked", AMT_ST_UNTESTABLE, "shared INT2/INT6 activity not attributable to the A2065");
+    else if (n_l2 == 0 && n_l6 == 0 && v == (C0_INIT | C0_IDON | C0_INTR) && !irq_storm)
         amt_case("a2065_irq_masked", AMT_ST_PASS, 0);
     else {
         amt_case_open("a2065_irq_masked", AMT_ST_FAIL);
@@ -683,22 +692,39 @@ static int may_transmit(void)
     return (amt_par.flags & (AMT_F_UNSAFE | AMT_F_NET)) != 0;
 }
 
-/* ARP sender 10.0.2.2, target 10.0.2.15: the answer to our request */
-static int arp_ips_match_b(const UBYTE *spa, const UBYTE *tpa)
+/* Length excludes any FCS. Never inspect a truncated/stale packet tail. */
+static int arp_reply(const UBYTE *r, ULONG len, const UBYTE *mac)
 {
-    return spa[0] == 10 && spa[1] == 0 && spa[2] == 2 && spa[3] == 2 &&
-           tpa[0] == 10 && tpa[1] == 0 && tpa[2] == 2 && tpa[3] == 15;
+    static const UBYTE header[10] = { 8, 6, 0, 1, 8, 0, 6, 4, 0, 2 };
+    static const UBYTE ips[8] = { 10, 0, 2, 2, 10, 0, 2, 15 };
+    int i;
+    if (len < 42 || len > 1518)
+        return 0;
+    for (i = 0; i < 10; i++)
+        if (r[12 + i] != header[i])
+            return 0;
+    for (i = 0; i < 6; i++)
+        if (r[i] != mac[i] || r[32 + i] != mac[i] || r[6 + i] != r[22 + i])
+            return 0;
+    if (r[6] & 1)                      /* sender must be an individual address */
+        return 0;
+    for (i = 0; i < 4; i++) {
+        if (r[28 + i] != ips[i] || r[38 + i] != ips[4 + i])
+            return 0;
+    }
+    return 1;
 }
 
-static int arp_ips_match(volatile UBYTE *r)
+static int a2065_arp_reply(volatile UBYTE *r, UWORD flags, UWORD mcnt)
 {
-    UBYTE a[4], b[4];
+    UBYTE packet[42];
     int i;
-    for (i = 0; i < 4; i++) {
-        a[i] = es_rb(r + 28 + i);
-        b[i] = es_rb(r + 38 + i);
-    }
-    return arp_ips_match_b(a, b);
+    ULONG len = mcnt & 0x0fff;         /* LANCE MCNT includes the four-byte FCS */
+    if ((flags & 0xff00) != (D_STP | D_ENP) || len < 46 || len > 1518 || len > BUFSZ)
+        return 0;
+    for (i = 0; i < 42; i++)
+        packet[i] = es_rb(r + i);
+    return arp_reply(packet, len - 4, padr);
 }
 
 static void t_external(void)
@@ -748,8 +774,7 @@ static void t_external(void)
             if (rmd1 & D_OWN)
                 continue;
             any++;
-            if (es_rb(r + 12) == 0x08 && es_rb(r + 13) == 0x06 && es_rb(r + 20) == 0 && es_rb(r + 21) == 2 &&
-                arp_ips_match(r)) {
+            if (a2065_arp_reply(r, rmd1, ram_rw(RDR_OFF + k * 8 + 6))) {
                 found = k;
                 break;
             }
@@ -811,14 +836,15 @@ static void a2065_board(const struct amt_probe_board *bd)
     rdp = (volatile UWORD *)(A + 0x4000);
     rap = (volatile UWORD *)(A + 0x4002);
     ram = (volatile UBYTE *)(A + 0x8000);
+    net_dirty = 1;                 /* before CSR, RAM or ring writes */
 
     t_csr();
     t_init();
     cia_save(&cia_a, CIAA_BASE, 0);     /* CIA-A also drives INT2, CIA-B INT6 */
+    cia_a_saved = 1;
     cia_save(&cia_b, CIAB_BASE, 0);
+    cia_b_saved = 1;
     t_irq();
-    cia_restore(&cia_b);
-    cia_restore(&cia_a);
     t_loopback();
     t_external();
     stop();
@@ -830,7 +856,7 @@ static ULONG Z;
 #define ZW(o) ((volatile UWORD *)(Z + (o)))
 #define ZB(o) ((volatile UBYTE *)(Z + (o)))
 static const UBYTE zmac[6] = { 0x02, 0x00, 0x5a, 0x22, 0x90, 0x00 };   /* locally administered */
-static volatile ULONG z_l2, z_l6;
+static volatile ULONG z_l2, z_l6, z_foreign;
 static volatile UWORD z_cfg;
 
 static void z_ctx(void)
@@ -851,27 +877,56 @@ static void z_hook(ULONG pending, UWORD bit, volatile ULONG *cnt)
             if (!z_l2 && !z_l6)
                 z_cfg = c;
             (*cnt)++;
-            es_ww(ZW(0x04), 0x0018);     /* ack mode: acknowledge Ethernet */
-            es_ww(ZW(0x04), 0x0000);     /* and disable it: one-shot */
-        }
+        } else
+            z_foreign++;
+        /* Let the foreground consume the RX window. Do NOT disable the
+         * device: that would clear pending independently of its ACK path. */
+        CREG(R_INTENA) = INT_PORTS | INT_EXTER;
         CREG(R_INTREQ) = bit;
     }
 }
 static void z_hook2(ULONG p) { z_hook(p, INT_PORTS, &z_l2); }
 static void z_hook6(ULONG p) { z_hook(p, INT_EXTER, &z_l6); }
 
+static int z_ack(void)
+{
+    UWORD before = es_rw(ZW(0x04)), after;
+    es_ww(ZW(0x04), 0x0018);            /* ACK mode leaves Ethernet enabled */
+    after = es_rw(ZW(0x04));
+    if (!(before & 1))
+        return -1;                    /* no pending transition was measured */
+    return (after & 1) == 0;
+}
+
+static int z_rx_length(UWORD len)
+{
+    return len >= 42 && len <= 1518;
+}
+
 static void zz9000_board(const struct amt_probe_board *bd)
 {
     static const UBYTE spa[4] = { 10, 0, 2, 15 }, tpa[4] = { 10, 0, 2, 2 };
-    UWORD m0, m1, m2, g0, g1, g2, st, len = 0, ser = 0, st2;
+    UWORD g0, g1, g2, len = 0, ser = 0, last_ser = 0, fw;
     UBYTE f[64];
-    int i, got = 0, ok, others = 0;
-    ULONG t0;
+    int i, got = 0, ok, have_serial = 0;
+    int ack_good = 0, ack_bad = 0, advanced = 0;
+    ULONG t0, quiet, observed;
 
     Z = bd->addr;
-    m0 = es_rw(ZW(0x84));
-    m1 = es_rw(ZW(0x86));
-    m2 = es_rw(ZW(0x88));
+    fw = es_rw(ZW(0xc0));
+    json_begin("log");
+    json_str("mod", "network");
+    json_str("msg", "ZZ9000 firmware; using CONFIG pending + legacy ETH_RX advance, not $8C");
+    json_hexn("firmware", fw, 4);
+    json_end();
+    if (!fw || fw == 0xffff) {
+        amt_case("zz9000_firmware", AMT_ST_UNTESTABLE, "firmware version register did not identify a usable ABI");
+        return;
+    }
+    for (i = 0; i < 3; i++)
+        z_saved_mac[i] = es_rw(ZW(0x84 + i * 2));
+    z_mac_saved = 1;
+    net_dirty = 2;                     /* before the first MAC/configuration write */
     es_ww(ZW(0x84), (UWORD)(zmac[0] << 8 | zmac[1]));
     es_ww(ZW(0x86), (UWORD)(zmac[2] << 8 | zmac[3]));
     es_ww(ZW(0x88), (UWORD)(zmac[4] << 8 | zmac[5]));
@@ -898,17 +953,30 @@ static void zz9000_board(const struct amt_probe_board *bd)
     }
 
     if (!may_transmit()) {
-        es_ww(ZW(0x84), m0);
-        es_ww(ZW(0x86), m1);
-        es_ww(ZW(0x88), m2);
         amt_case("zz9000_ext_arp", AMT_ST_UNTESTABLE, no_tx_why);
         amt_case("zz9000_rx_accept", AMT_ST_UNTESTABLE, "no frame was received (nothing was sent)");
         amt_case("zz9000_rx_irq", AMT_ST_UNTESTABLE, "no frame was received (nothing was sent)");
         return;
     }
-    /* drain anything already queued */
-    for (i = 0; i < 16 && (es_rw(ZW(0x8c)) & 0xff); i++)
-        es_ww(ZW(0x82), es_rw(ZW(0x2002)));
+    /* Official firmware retains stale RX-window bytes when empty. Only a
+     * pending Ethernet source says a frame is available. ETH_RX advances
+     * the backlog (legacy firmware ignores the written value). */
+    es_ww(ZW(0x04), 0x0001);
+    t0 = quiet = frames();
+    while (frames() - t0 < 50 && frames() - quiet < 3) {
+        if (es_rw(ZW(0x04)) & 1) {
+            es_ww(ZW(0x82), es_rw(ZW(0x2002)));
+            (void)z_ack();
+            quiet = frames();
+        }
+    }
+    if (frames() - quiet < 3) {
+        amt_case("zz9000_ext_arp", AMT_ST_UNTESTABLE, "RX backlog did not become quiet before transmission");
+        amt_case("zz9000_rx_accept", AMT_ST_UNTESTABLE, "no isolated RX observation");
+        amt_case("zz9000_rx_irq", AMT_ST_UNTESTABLE, "no isolated RX observation");
+        amt_case("zz9000_irq_ack", AMT_ST_UNTESTABLE, "continuous backlog can immediately reassert pending");
+        return;
+    }
 
     /* ARP request in the TX window */
     for (i = 0; i < 60; i++)
@@ -927,8 +995,10 @@ static void zz9000_board(const struct amt_probe_board *bd)
         es_ww(ZW(0x8000 + i), (UWORD)(f[i] << 8 | f[i + 1]));
 
     cia_save(&cia_a, CIAA_BASE, 0);
+    cia_a_saved = 1;
     cia_save(&cia_b, CIAB_BASE, 0);
-    z_l2 = z_l6 = irq_storm = irq_entries = 0;
+    cia_b_saved = 1;
+    z_l2 = z_l6 = z_foreign = irq_storm = irq_entries = 0;
     z_cfg = 0;
     CREG(R_INTREQ) = INT_PORTS | INT_EXTER;
     amt_irq_hook[2] = z_hook2;
@@ -937,30 +1007,37 @@ static void zz9000_board(const struct amt_probe_board *bd)
     es_ww(ZW(0x04), 0x0001);             /* Ethernet interrupt enable */
     es_ww(ZW(0x80), 60);                 /* transmit */
     t0 = frames();
+    observed = 0;
     while (frames() - t0 < 100) {
-        st = es_rw(ZW(0x8c));
-        if (st & 0xff) {
+        if ((es_rw(ZW(0x04)) & 1) || z_l2 + z_l6 > observed) {
+            int ack;
+            observed = z_l2 + z_l6;
             len = es_rw(ZW(0x2000));
             ser = es_rw(ZW(0x2002));
-            for (i = 0; i < 42 && i < len; i++)
-                f[i] = es_rb(ZB(0x2004 + i));
-            if (len >= 42 && f[12] == 0x08 && f[13] == 0x06 && f[20] == 0 && f[21] == 2 &&
-                arp_ips_match_b(f + 28, f + 38)) {
-                got = 1;
-                break;
+            if (!have_serial || ser != last_ser) {
+                if (z_rx_length(len)) {
+                    for (i = 0; i < 42; i++)
+                        f[i] = es_rb(ZB(0x2004 + i));
+                    got = arp_reply(f, len, zmac);
+                }
+                last_ser = ser;
+                have_serial = 1;
             }
-            es_ww(ZW(0x82), ser);       /* not ours: release it */
-            others++;
+            es_ww(ZW(0x82), ser);
+            if (got)
+                advanced = es_rw(ZW(0x2002)) != ser;
+            ack = z_ack();              /* measure BEFORE any device disable */
+            if (ack == 1) ack_good++;
+            if (ack == 0) ack_bad++;
+            if (got)
+                break;
         }
     }
-    wait_frames(3);
     es_ww(ZW(0x04), 0x0000);
     CREG(R_INTENA) = INT_PORTS | INT_EXTER;
     amt_irq_hook[2] = 0;
     amt_irq_hook[6] = 0;
     CREG(R_INTREQ) = INT_PORTS | INT_EXTER;
-    cia_restore(&cia_b);
-    cia_restore(&cia_a);
 
     if (!got) {
         amt_case("zz9000_ext_arp", AMT_ST_UNTESTABLE,
@@ -994,43 +1071,18 @@ static void zz9000_board(const struct amt_probe_board *bd)
             z_ctx();
             amt_case_close();
         }
-        st = es_rw(ZW(0x8c)) & 0xff;
-        es_ww(ZW(0x82), ser);
-        st2 = es_rw(ZW(0x8c)) & 0xff;
-        /* Exact: the queue was drained before the request, every frame
-         * ahead of the reply was released in the poll loop, and the one ARP
-         * request sent gets one reply (slirp sends nothing unsolicited), so
-         * the reply is the only queued frame: 1 before the release, 0 after. */
-        if (st == 1 && st2 == 0)
-            amt_case("zz9000_rx_accept", AMT_ST_PASS, 0);
-        else {
-            amt_case_open("zz9000_rx_accept", AMT_ST_FAIL);
-            json_obj("expect");
-            json_int("count_before", 1);
-            json_int("count_after", 0);
-            json_obj_end();
-            json_obj("got");
-            json_int("count_before", st);
-            json_int("count_after", st2);
-            json_obj_end();
-            json_str("why", "writing the frame's serial to ETH_RX ($82) releases the head frame: the RX status "
-                     "frame count ($8C low byte) drops by exactly one. One frame was sent (an ARP request) "
-                     "and its one reply is the only frame queued, so the count goes 1 -> 0");
-            json_obj("in");
-            json_str("seq", "drain RX, send 1 ARP request (60 bytes), release non-ARP-reply frames, "
-                     "read $8C, write the reply's serial to $82, read $8C");
-            json_hexn("serial", ser, 4);
-            json_int("other_frames_released", others);
-            json_obj_end();
-            z_ctx();
-            amt_case_close();
-        }
-        if (z_l2 + z_l6 == 1 && (z_cfg & 1) && !irq_storm)
+        amt_case("zz9000_rx_accept", AMT_ST_UNTESTABLE,
+                 "legacy firmware has no empty/queue-count register; exact single-frame release cannot be measured");
+        amt_case("zz9000_rx_window_advance", advanced ? AMT_ST_PASS : AMT_ST_UNTESTABLE,
+                 advanced ? 0 : "unchanged serial cannot distinguish empty from a stuck RX window");
+        if (z_foreign)
+            amt_case("zz9000_rx_irq", AMT_ST_UNTESTABLE, "shared INT2/INT6 activity without Ethernet pending");
+        else if (z_l2 + z_l6 >= 1 && (z_cfg & 1) && !irq_storm)
             amt_case("zz9000_rx_irq", AMT_ST_PASS, 0);
         else {
             amt_case_open("zz9000_rx_irq", AMT_ST_FAIL);
             json_obj("expect");
-            json_str("irqs", "1 at level 6 (INT6) or level 2 (INT2, board option)");
+            json_str("irqs", "at least 1 at level 6 (INT6) or level 2 (INT2, board option)");
             json_str("config_bit0", "1");
             json_obj_end();
             json_obj("got");
@@ -1040,26 +1092,84 @@ static void zz9000_board(const struct amt_probe_board *bd)
             json_bool("storm", irq_storm);
             json_obj_end();
             json_str("why", "with CONFIG ($04) bit 0 set a received frame raises the card interrupt and CONFIG "
-                     "reads bit 0 = Ethernet pending; the handler acknowledges (bit 3|4) and disables it");
+                     "reads bit 0 = Ethernet pending; the Amiga line is masked while foreground consumes the frame. "
+                     "Device ACK is checked separately, before disabling Ethernet");
             z_ctx();
             amt_case_close();
         }
     }
-    for (i = 0; i < 16 && (es_rw(ZW(0x8c)) & 0xff); i++)
-        es_ww(ZW(0x82), es_rw(ZW(0x2002)));
-    es_ww(ZW(0x84), m0);
-    es_ww(ZW(0x86), m1);
-    es_ww(ZW(0x88), m2);
+    if (ack_good && !ack_bad)
+        amt_case("zz9000_irq_ack", AMT_ST_PASS, 0);
+    else
+        amt_case("zz9000_irq_ack", AMT_ST_UNTESTABLE,
+                 "no unambiguous enabled-source pending-to-clear ACK transition; backlog/new traffic can reassert pending");
 }
 
-void amt_run_network(void)
+static void network_cleanup(void)
+{
+    int kind = net_dirty, i;
+    net_dirty = 0;
+    if (kind) {
+        CREG(R_INTENA) = INT_PORTS | INT_EXTER;
+        amt_irq_hook[2] = amt_irq_hook[6] = 0;
+        if (kind == 1) {
+            stop();
+            if (csr_r(0) != C0_STOP) {
+                amt_case("a2065_quiescence", AMT_ST_FAIL, "STOP did not quiesce the LANCE; driver state is not restored");
+                amt_abort_fatal(AMT_ABORT_USER);
+            }
+            es_ww(rap, 0);
+        } else {
+            es_ww(ZW(0x04), 0);
+            if (z_mac_saved)
+                for (i = 0; i < 3; i++)
+                    es_ww(ZW(0x84 + i * 2), z_saved_mac[i]);
+            z_mac_saved = 0;
+        }
+        CREG(R_INTREQ) = INT_PORTS | INT_EXTER;
+    }
+    if (cia_b_saved) {
+        cia_b_saved = 0;
+        cia_restore(&cia_b);
+    }
+    if (cia_a_saved) {
+        cia_a_saved = 0;
+        cia_restore(&cia_a);
+    }
+}
+
+static void finish_board(void)
+{
+    int code = amt_try(network_cleanup);
+    if (code) {
+        cleanup_failed = 1;
+        amt_case("cleanup_incomplete", AMT_ST_FAIL, "NIC cleanup aborted; device/driver state is not known to be restored");
+        amt_abort_fatal(code);
+    }
+}
+
+static void network_body(void)
 {
     int k, found = 0;
+    UBYTE seen[2] = { 0, 0 };
     for (k = 0; k < amt_probe_result.n_boards && k < AMT_PROBE_BOARDS_MAX; k++) {
         const struct amt_probe_board *bd = &amt_probe_result.boards[k];
         int a2065 = bd->man == MAN_COMMODORE_WC && bd->prod == PROD_A2065;
         int zz = bd->man == MAN_MNT && (bd->prod == PROD_ZZ9000_Z2 || bd->prod == PROD_ZZ9000_Z3);
-        if ((a2065 || zz) && !amt_board_ok(bd)) {
+        int family = a2065 ? 0 : 1;
+        if (!a2065 && !zz)
+            continue;
+        found++;
+        if (seen[family]++) {
+            json_begin("log");
+            json_str("mod", "network");
+            json_str("msg", "additional same-family board not selected; first ConfigDev entry only");
+            json_hex("base", bd->addr);
+            json_int("probe_index", k);
+            json_end();
+            continue;
+        }
+        if (!amt_board_ok(bd)) {
             /* review H1: shut up / unconfigured / no valid Zorro address */
             amt_case_open(a2065 ? "a2065_board_rejected" : "zz9000_board_rejected", AMT_ST_SKIP);
             json_str("why", "the board is in the expansion list, but its ConfigDev is shut up or "
@@ -1069,16 +1179,37 @@ void amt_run_network(void)
             json_hexn("cd_flags", bd->flags, 2);
             json_obj_end();
             amt_case_close();
-            found++;
-        } else if (a2065 && bd->size >= 0x10000) {
+            continue;
+        }
+        if (bd->size < 0x10000) {
+            amt_case(a2065 ? "a2065_board_span" : "zz9000_board_span", AMT_ST_SKIP,
+                     "board is smaller than the register/RAM aperture");
+            continue;
+        }
+        if (!amt_board_claim(bd)) {
+            amt_case(a2065 ? "a2065_ownership" : "zz9000_ownership", AMT_ST_UNTESTABLE,
+                     "no exclusive live ConfigDev claim: driver-owned, changed or missing provenance; unsafe is not ownership");
+            continue;
+        }
+        if (a2065) {
             a2065_board(bd);
-            found++;
-        } else if (bd->man == MAN_MNT && (bd->prod == PROD_ZZ9000_Z2 || bd->prod == PROD_ZZ9000_Z3) &&
-                   bd->size >= 0x10000) {
+            finish_board();
+        } else {
             zz9000_board(bd);
-            found++;
+            finish_board();
         }
     }
     if (!found)
         amt_case("no_board", AMT_ST_SKIP, "no A2065 (514/112) or ZZ9000 (28014/3,4) in the expansion list");
+}
+
+void amt_run_network(void)
+{
+    int code;
+    net_dirty = z_mac_saved = cia_a_saved = cia_b_saved = cleanup_failed = 0;
+    code = amt_try(network_body);
+    if (!cleanup_failed)
+        finish_board();              /* before the runtime reinstalls OS state */
+    if (code)
+        amt_abort(code);
 }

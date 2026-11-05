@@ -88,6 +88,7 @@ struct probe {
 static struct probe pr[NPL][4];
 static int pr_n;
 static UBYTE pr_col[NPL][4];
+static UWORD pr_clx[NPL][8];
 static UWORD scan_tries;
 
 static void reset_scene(void)
@@ -189,9 +190,14 @@ static void cop_palette(void)
 static int wait_vbl(void)
 {
     ULONG f = amt_frames_now();
+    ULONG budget = 1000000, t0 = amt_ticks();
     UWORD last = hw_vline(), v;
     int wraps = 0;
     while (amt_frames_now() == f) {
+        if (!--budget || amt_ticks() - t0 > 4 * 71051UL) {
+            amt_set_sr(0x2000);
+            amt_abort(AMT_ABORT_WATCHDOG);
+        }
         v = hw_vline();
         if (v < last && ++wraps > 3)
             return 0;
@@ -241,8 +247,12 @@ static void display_off(void)
 
 static void wait_line(UWORD y)
 {
+    ULONG budget = 1000000;
     while (hw_vline() < y)
-        ;
+        if (!--budget) {
+            amt_set_sr(0x2000);
+            amt_abort(AMT_ABORT_WATCHDOG);
+        }
 }
 
 /* Timing-independent collision read. The scene is static from frame to
@@ -298,6 +308,7 @@ static void scan_mask(UBYTE mask)
 {
     int p, i, s;
     memset(pr_col, 0, sizeof(pr_col));
+    memset(pr_clx, 0, sizeof(pr_clx));
     for (i = 0; i < pr_n; i++) {
         if (!(pr[i][0].data | pr[i][1].data | pr[i][2].data | pr[i][3].data))
             continue;
@@ -312,6 +323,7 @@ static void scan_mask(UBYTE mask)
             else
                 clx2 = (p == 6) ? 0x41 : 0x82;
             r = clean_clx(clx, clx2, 0);
+            pr_clx[i][p] = r;
             for (s = 0; s < 4; s++)
                 if (pr[i][s].data && (r & (bit << s)))
                     pr_col[i][s] |= (UBYTE)(1 << p);
@@ -589,8 +601,6 @@ static void mode_case(const char *id, int res, int np, UWORD con0x, const char *
     cell_probes(res, 20);
     apply();
     scan_colors(np);
-    err = 0;
-    (void)err;
     ok = check_cells(20, mask, &bad);
     if (want_shot)
         s = shot(id);
@@ -603,6 +613,10 @@ static void mode_case(const char *id, int res, int np, UWORD con0x, const char *
         json_obj("got");
         got_cells(20);
         json_int("first_bad_cell", bad);
+        json_arr("clxdat_first_bad_group");
+        for (err = 0; err < np; err++)
+            json_hexn(NULL, pr_clx[bad / 4][err], 4);
+        json_arr_end();
         json_obj_end();
         json_str("why", what);
     }
@@ -2042,7 +2056,7 @@ static void id_tests(void)
     for (i = 0; i < 16; i++)
         v[i] = CU(DENISEID);
     for (i = 1; i < 16; i++)
-        if (v[i] != v[0])
+        if ((v[i] & 0xff) != (v[0] & 0xff))
             stable = 0;
     lo = (UBYTE)v[0];
     dc = !stable ? "unstable" : lo == 0xf8 ? "lisa" : lo == 0xfc ? "ecs_denise" : "no_id";
@@ -2050,6 +2064,10 @@ static void id_tests(void)
         ok = stable && lo == 0xf8;
         why = "Agnus is Alice (VPOSR ID $22/$23), so Denise must be Lisa: LISAID bits 7-0 = $F8 on "
               "every read (AGA documentation: LISAID)";
+    } else if (!ecsd) {
+        amt_case("deniseid", AMT_ST_UNTESTABLE,
+                 "no independently corroborated Denise ID register; OCS floating-bus coincidences cannot identify Denise");
+        return;
     } else {
         ok = lo != 0xf8 && (stable || (lo != 0xfc && lo != 0xf8));
         why = "without Alice there is no Lisa, so bits 7-0 must not read $F8; an ECS Denise ID ($FC, "
@@ -2086,16 +2104,21 @@ static void id_tests(void)
 static ULONG count_reads(void)
 {
     volatile UWORD *p = (volatile UWORD *)(pool + OFF_WORK);
-    ULONG n = 0;
+    ULONG n = 0, budget = 1000000;
+    UWORD sr = amt_get_sr();
     wait_vbl();
     amt_set_sr(0x2700);
     wait_line(0x60);
     while (hw_vline() < 0xa0) {
+        if (!--budget) {
+            amt_set_sr(sr);
+            amt_abort(AMT_ABORT_WATCHDOG);
+        }
         (void)p[0]; (void)p[0]; (void)p[0]; (void)p[0];
         (void)p[0]; (void)p[0]; (void)p[0]; (void)p[0];
         n += 8;
     }
-    amt_set_sr(0x2000);
+    amt_set_sr(sr);
     return n;
 }
 

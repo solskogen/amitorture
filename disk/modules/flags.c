@@ -10,8 +10,8 @@
  * All instruction sequences are in flags_asm.s (68000 ISA) and flags_010.s
  * (MOVE from CCR). Expected values come from the M68000 Programmer's
  * Reference Manual (PRM) rules, modelled in C below; every table case runs
- * once against the model and then again under amt_hot(), so an interpreted
- * pass and later (possibly compiled) passes must agree. */
+ * once against the model and on every repetition, including potentially
+ * already-compiled execution. */
 #include "mod.h"
 
 AMT_MODULE(flags, 3, AMT_PH_BARE, 0, 0, 0);
@@ -171,7 +171,7 @@ struct tcase {
 };
 
 static const struct tcase *cur_tc;
-static ULONG tramp(ULONG it) { (void)it; return cur_tc->run(); }
+static ULONG tramp(ULONG it);
 
 /* cheap order-sensitive hash of got[] for the repetition check (equality
  * is all that matters; crc32 is too slow on a 68000 for these tables) */
@@ -218,6 +218,14 @@ static long first_bad(const struct tcase *t, ULONG *nbad, ULONG *ebad)
     return fb;
 }
 
+static ULONG tramp(ULONG it)
+{
+    ULONG nbad, e[12];
+    (void)it;
+    cur_tc->run();
+    return first_bad(cur_tc, &nbad, e) < 0 ? 0 : nbad;
+}
+
 static void run_tcase(const struct tcase *t)
 {
     ULONG nbad = 0, first = 0, bad = 0, e[12], j;
@@ -227,7 +235,7 @@ static void run_tcase(const struct tcase *t)
     t->run();
     fb = first_bad(t, &nbad, e);
     if (fb < 0) {
-        hot = amt_hot(tramp, reps_for(t->n), &first, &bad);
+        hot = amt_hot_checked(tramp, reps_for(t->n), &first, &bad);
         if (hot < 0) {
             amt_case(t->id, AMT_ST_PASS, 0);
             return;

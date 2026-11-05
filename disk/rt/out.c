@@ -86,18 +86,18 @@ void ser_write(const char *s, ULONG len)
 /* mailbox */
 
 volatile struct amt_mbox *amt_mbox;
+static UBYTE *mbox_alloc;
 
 int mbox_init(void)
 {
     static const char magic[] = "AMITORTURE-MBOX!";
-    ULONG raw;
     int i;
-    if (amt_par.flags & AMT_F_NOMBOX)
+    if (amt_mbox || (amt_par.flags & AMT_F_NOMBOX))
         return 0;
-    raw = (ULONG)AllocMem(sizeof(struct amt_mbox) + 16, MEMF_CHIP | MEMF_CLEAR);
-    if (!raw)
+    mbox_alloc = AllocMem(sizeof(struct amt_mbox) + 16, MEMF_CHIP | MEMF_CLEAR);
+    if (!mbox_alloc)
         return -1;
-    amt_mbox = (volatile struct amt_mbox *)((raw + 15) & ~15UL);
+    amt_mbox = (volatile struct amt_mbox *)(((ULONG)mbox_alloc + 15) & ~15UL);
     amt_mbox->version = 1;
     amt_mbox->state = MBOX_STATE_INIT;
     amt_mbox->ring_size = MBOX_RING_SIZE;
@@ -105,6 +105,16 @@ int mbox_init(void)
     for (i = 0; i < 16; i++)
         amt_mbox->magic[i] = magic[i];
     return 0;
+}
+
+void mbox_close(void)
+{
+    if (amt_mbox)
+        amt_mbox->magic[0] = 0;
+    amt_mbox = 0;
+    if (mbox_alloc)
+        FreeMem(mbox_alloc, sizeof(struct amt_mbox) + 16);
+    mbox_alloc = 0;
 }
 
 void mbox_set_state(ULONG state)

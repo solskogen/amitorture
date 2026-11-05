@@ -17,6 +17,8 @@
  * 32-bit E-clock reference; both CIAs are saved/restored (cia_hw.h). */
 #include "mod.h"
 #include "cia_hw.h"
+#include "interrupts_clock.h"
+#include "hardware_audit.h"
 
 AMT_MODULE(interrupts, 6, AMT_PH_BARE, AMT_MF_OWNS_DISPLAY, 256, 0);
 
@@ -48,6 +50,7 @@ extern volatile ULONG ir_old27, ir_vertb_n, ir_phantom, ir_snappc, ir_snapregs[1
 extern volatile ULONG ir_st_soft, ir_st_cia, ir_st_l2, ir_st_vb;
 extern volatile ULONG ir_lat_buf[64];
 extern volatile UBYTE *volatile ir_lat_p;
+extern volatile UWORD ir_lat_overflow;
 
 #define SOFT  0x0004
 #define PORTS 0x0008
@@ -1180,10 +1183,11 @@ static void chain_tests(void)
  * interrupt was held back by something other than the CPU finishing its
  * work (interrupt sampling, IPL or INTREQ propagation delayed). */
 #define LAT_MAX_CCK (2UL * 227UL)
+static ULONG eb_read(void);
 
 static void latency_cia(void)
 {
-    int n = AMT_QUICK() ? 8 : 32, i, got = 0, torn = 0, lost_first = -1, late;
+    int n = AMT_QUICK() ? 8 : 32, i, got = 0, torn = 0, lost_first = -1, late, ambiguous = 0;
     ULONG hist[16], mn = 0xffff, mx = 0, sum = 0;
     amt_vec_fn old;
     const UWORD L = 4095;
@@ -1197,22 +1201,35 @@ static void latency_cia(void)
     env();
     ir_lat_p = (volatile UBYTE *)ir_lat_buf;
     ir_lat_n = 0;
+    ir_lat_overflow = 0;
+    cia_wr(CIAB_BASE, C_CRA, 0);
+    cia_wr(CIAB_BASE, C_CRB, 0);
+    cia_wr(CIAB_BASE, C_TALO, 0xff);
+    cia_wr(CIAB_BASE, C_TAHI, 0xff);
+    cia_wr(CIAB_BASE, C_TBLO, 0xff);
+    cia_wr(CIAB_BASE, C_TBHI, 0xff);
+    cia_wr(CIAB_BASE, C_CRB, CR_SPMODE | CR_START);
+    cia_wr(CIAB_BASE, C_CRA, CR_START | CR_LOAD);
     cia_wr(CIAA_BASE, C_ICR, 0x7f);
     (void)cia_icr(CIAA_BASE);
     cia_wr(CIAA_BASE, C_ICR, 0x81);
     CREG(R_INTENA) = 0x8000 | PORTS;
     for (i = 0; i < n; i++) {
         ULONG t0;
+        ULONG independent;
         UWORD n0 = ir_lat_n;
         cia_wait_cc(5 * (amt_rand() % 300));
         cia_wr(CIAA_BASE, C_CRA, 0);
         cia_wr(CIAA_BASE, C_TALO, (UBYTE)L);
         cia_wr(CIAA_BASE, C_TAHI, (UBYTE)(L >> 8));
         CREG(R_INTENA) = 0x8000 | PORTS;
+        independent = eb_read();
         cia_wr(CIAA_BASE, C_CRA, CR_START | CR_LOAD);
         t0 = cia_now();
         while (ir_lat_n == n0 && cia_now() - t0 < MS(20))
             ;
+        if (eb_read() - independent >= 2UL * (L + 1UL))
+            ambiguous++;
         if (ir_lat_n == n0 && lost_first < 0)
             lost_first = i;
     }
@@ -1236,11 +1253,19 @@ static void latency_cia(void)
     }
     env_end();
     amt_vec_set(26, old);
+    if (got == n && !hw_latency_observation_valid(got, n, torn, ambiguous, ir_lat_overflow) &&
+        !ir_lat_overflow) {
+        amt_case("latency_cia_ta_to_handler", AMT_ST_UNTESTABLE,
+                 "torn timer samples or independent elapsed-time bound cannot exclude a full timer reload");
+        return;
+    }
     if (got != n && late_stuck("latency_cia_ta_to_handler"))
         return;
     late = got - torn > 0 && mx * 5 > LAT_MAX_CCK;
-    amt_case_open("latency_cia_ta_to_handler", got == n && !late ? AMT_ST_PASS : AMT_ST_FAIL);
-    if (got != n || late) {
+    amt_case_open("latency_cia_ta_to_handler",
+                  hw_latency_observation_valid(got, n, torn, ambiguous, ir_lat_overflow) && !late
+                  ? AMT_ST_PASS : AMT_ST_FAIL);
+    if (got != n || late || ir_lat_overflow) {
         json_obj("expect");
         json_int("samples", n);
         json_int("max_cck", (long)LAT_MAX_CCK);
@@ -1298,6 +1323,7 @@ static void latency_coper(void)
     env();
     ir_lat_p = (volatile UBYTE *)ir_lat_buf;
     ir_lat_n = 0;
+    ir_lat_overflow = 0;
     copper_used = 1;
     CREG(R_INTENA) = 0x8000 | COPER;
     wait_window();
@@ -1320,14 +1346,15 @@ static void latency_coper(void)
     env_end();
     amt_vec_set(27, old);
     late = got > 0 && mx > LAT_MAX_CCK;
-    amt_case_open("latency_coper_to_handler", got >= n && !late ? AMT_ST_PASS : AMT_ST_FAIL);
-    if (got < n || late) {
+    amt_case_open("latency_coper_to_handler", got >= n && !late && !ir_lat_overflow ? AMT_ST_PASS : AMT_ST_FAIL);
+    if (got < n || late || ir_lat_overflow) {
         json_obj("expect");
         json_int("samples", n);
         json_int("max_cck", (long)LAT_MAX_CCK);
         json_obj_end();
         json_obj("got");
         json_int("samples", got);
+        json_int("overflow", ir_lat_overflow);
         json_int("max_cck", (long)mx);
         json_obj_end();
         json_obj("in");
@@ -1368,17 +1395,64 @@ static ULONG eb_read(void)
     return ((ULONG)(0xffff - b1) << 16) | (ULONG)(0xffff - a);
 }
 
+static int storm_clock_rec(const struct ir_clock *clock)
+{
+    amt_case_open("storm_reference_clock", clock->invalid ? AMT_ST_FAIL : AMT_ST_PASS);
+    if (clock->invalid) {
+        json_obj("expect");
+        json_str("clock", "nondecreasing coherent CIA-B E-clock samples");
+        json_obj_end();
+        json_obj("got");
+        json_str("clock", "went backwards");
+        json_obj_end();
+        json_str("why", "CIA-B TA counts E clocks continuously and TB counts TA underflows; "
+                 "neither timer is reloaded during the storm. A backward coherent sample "
+                 "invalidates the elapsed-time reference, not the interrupt counts");
+    }
+    json_obj("timing");
+    json_hexn("start_e", clock->start, 8);
+    json_hexn("previous_e", clock->previous, 8);
+    json_hexn("sample_e", clock->sample, 8);
+    json_int("elapsed_e", (long)clock->elapsed);
+    json_obj_end();
+    amt_case_close();
+    return !clock->invalid;
+}
+
 static int frame_lines(void)
 {
-    ULONG f0, maxv = 0, v;
+    ULONG maxv = 0, v, previous = 0, before = 0, now, begin, start, budget = 1000000;
+    int endpoint = 0;
+    cia_wr(CIAB_BASE, C_CRA, 0);
+    cia_wr(CIAB_BASE, C_CRB, 0);
+    cia_wr(CIAB_BASE, C_TALO, 0xff);
+    cia_wr(CIAB_BASE, C_TAHI, 0xff);
+    cia_wr(CIAB_BASE, C_TBLO, 0xff);
+    cia_wr(CIAB_BASE, C_TBHI, 0xff);
+    cia_wr(CIAB_BASE, C_CRB, CR_SPMODE | CR_START);
+    cia_wr(CIAB_BASE, C_CRA, CR_START | CR_LOAD);
     wait_window();
-    f0 = amt_frames_now();
-    while (amt_frames_now() == f0) {
+    start = eb_read();
+    before = cia_timer(CIAB_BASE, C_TALO, C_TAHI);
+    while (--budget) {
+        begin = cia_timer(CIAB_BASE, C_TALO, C_TAHI);
         v = beam_v();
+        now = cia_timer(CIAB_BASE, C_TALO, C_TAHI);
+        if (v < previous && maxv > 200) {
+            endpoint = hw_frame_endpoint(maxv, previous, v, (UWORD)(before - now));
+            break;
+        }
         if (v > maxv && v < 1000)
             maxv = v;
+        previous = v;
+        before = begin;
     }
-    return (int)maxv + 1;
+    /* A complete 16-bit wrap must not alias the short per-pair bracket. */
+    if (eb_read() - start >= 65536UL)
+        endpoint = 0;
+    cia_wr(CIAB_BASE, C_CRA, 0);
+    cia_wr(CIAB_BASE, C_CRB, 0);
+    return endpoint ? (int)maxv + 1 : 0;
 }
 
 static void storm_rec(const char *id, ULONG exp, ULONG got, ULONG tol, const char *why,
@@ -1427,17 +1501,21 @@ static void storm(void)
     const UWORD P = 141;                       /* 142 E = 200 us */
     ULONG secs = AMT_QUICK() ? 1 : 5;
     ULONG ehz = amt_probe_result.pal ? 709379UL : 715909UL;
-    ULONG target = secs * ehz, e0, e1, el, issued = 0, tmo = 0;
+    ULONG target = secs * ehz, el, issued = 0, tmo = 0;
     ULONG cia_exp, vb_exp, lines2, cc4;
+    struct ir_clock clock;
     amt_vec_fn o25, o26, o27;
 
     if (!need("storm_cia_timer", PORTS)) {
+        need("storm_reference_clock", PORTS);
         need("storm_softint", PORTS);
         need("storm_vertb", PORTS);
         return;
     }
-    lines2 = (ULONG)frame_lines();
-    lines2 += (ULONG)frame_lines();
+    {
+        ULONG a = (ULONG)frame_lines(), b = (ULONG)frame_lines();
+        lines2 = a && b ? a + b : 0;
+    }
     env();
     /* reference clock */
     cia_wr(CIAB_BASE, C_ICR, 0x7f);
@@ -1462,26 +1540,32 @@ static void storm(void)
     o27 = amt_vec_set(27, ir_st3);
     CREG(R_INTENA) = 0x8000 | SOFT | PORTS;
     cia_wait_cc(1000);
-    e0 = eb_read();
+    ir_clock_init(&clock, eb_read());
     cia_wr(CIAA_BASE, C_CRA, CR_START | CR_LOAD);
     for (;;) {
         ULONG s0, te = eb_read();
-        if (te - e0 >= target)
+        if (!ir_clock_sample(&clock, te) || clock.elapsed >= target)
             break;
         s0 = ir_st_soft;
         CREG(R_INTREQ) = 0x8000 | SOFT;
         issued++;
-        while (ir_st_soft == s0)
-            if (eb_read() - te > 3000) {
+        while (ir_st_soft == s0) {
+            ULONG now = eb_read();
+            if (!ir_clock_sample(&clock, now))
+                break;
+            if (now - te > 3000) {
                 tmo++;
                 break;
             }
+        }
+        if (clock.invalid)
+            break;
         if ((issued & 1023) == 0)
             amt_watchdog_kick();
         ir_kbd();                       /* a key event seen by ir_st2 */
     }
     cia_wr(CIAA_BASE, C_CRA, 0);
-    e1 = eb_read();
+    ir_clock_sample(&clock, eb_read());
     ir_settle();
     CREG(R_INTENA) = SOFT | PORTS;
     cia_wr(CIAA_BASE, C_ICR, 0x7f);
@@ -1493,11 +1577,19 @@ static void storm(void)
     amt_vec_set(27, o27);
     env_end();
 
-    el = e1 - e0;
+    if (!storm_clock_rec(&clock)) {
+        const char *why = "storm_reference_clock failed: elapsed time is invalid; "
+            "interrupt delivery cannot be judged from this aborted storm";
+        amt_case("storm_cia_timer", AMT_ST_UNTESTABLE, why);
+        amt_case("storm_softint", AMT_ST_UNTESTABLE, why);
+        amt_case("storm_vertb", AMT_ST_UNTESTABLE, why);
+        return;
+    }
+    el = clock.elapsed;
     cia_exp = el / (P + 1);
     /* frame length in colour clocks x4: lines x 227 (PAL) or 227.5 (NTSC) */
     cc4 = lines2 * (amt_probe_result.pal ? 454UL : 455UL);
-    vb_exp = (el * 20UL) / cc4;   /* el E x 5 cc x 4 */
+    vb_exp = cc4 ? (el * 20UL) / cc4 : 0;
     storm_rec("storm_cia_timer", cia_exp, ir_st_cia, 1,
               "CIA-A timer A interrupts counted by the level-2 handler differ by more than 1 from "
               "elapsed/period (elapsed from the CIA-B E-clock counter): interrupts lost or doubled",
@@ -1506,7 +1598,10 @@ static void storm(void)
               "every SOFTINT written to INTREQ (one at a time, each waited for) must be taken exactly "
               "once; a timeout means a lost request",
               el, P + 1, lines2, issued, tmo);
-    storm_rec("storm_vertb", vb_exp, ir_st_vb, 1,
+    if (!lines2)
+        amt_case("storm_vertb", AMT_ST_UNTESTABLE,
+                 "beam sampling did not cover the terminal line and wrap within a sub-line E-clock interval");
+    else storm_rec("storm_vertb", vb_exp, ir_st_vb, 1,
               "VERTB interrupts differ by more than 1 from elapsed time / frame length (lines measured "
               "from the beam): lost or extra vertical-blank interrupts",
               el, P + 1, lines2, issued, tmo);

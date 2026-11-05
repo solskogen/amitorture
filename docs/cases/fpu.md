@@ -13,6 +13,8 @@ The module runs in the BARE phase with AMT_MF_NEEDS_FPU. With no FPU (68LC040, 6
 
 Expected values are computed on the host by `tools/gen_fpu.py`, using exact integer and Fraction arithmetic (decimal for transcendentals) and never the host's double. The generator writes `disk/modules/fpu_gen.s`.
 
+`arith_fsglmul` truncates both input mantissas to 24 bits before multiplication, then rounds the product to single precision with the extended exponent range (M68000 Family PRM, FSGLMUL). The input truncation is independent of FPCR rounding mode and precision. Vectors with `1 + 2^-24` in either or both operands, including a negative operand, distinguish truncation from multiplying the full mantissas in all rounding modes and FPCR precisions. FSGLDIV retains its separate division rule.
+
 ## How a table case runs
 
 Each `conv_*`, `arith_*`, `trans_*`, `fcmp_*` and `ftst_*` case is a table of vectors. Each vector runs these steps:
@@ -22,7 +24,7 @@ Each `conv_*`, `arith_*`, `trans_*`, `fcmp_*` and `ftst_*` case is a table of ve
 3. Execute one instruction.
 4. Compare FP0 (or the memory written), FP2, and the FPSR (CC, quotient, EXC, AEXC) with the generated values. Each vector has a mask for bits the manuals leave open.
 
-After that, `amt_hot()` repeats the whole table `amt_hot_reps()` times and checks that every repetition gives the same results. This is the interpreter-vs-JIT check.
+After that, `amt_hot_checked()` executes the whole table for iterations 0 through `amt_hot_reps()`. Every supported vector is checked with the same independent expectations, FPSR/result masks and ULP tolerance used by the cold pass. Architecturally allowed NaN-sign/FPSR or tolerance variants need not be bit-identical between passes; consistently wrong hot results cannot become a baseline. Failures retain the actual failing vector and output.
 
 ## Reading a failure
 

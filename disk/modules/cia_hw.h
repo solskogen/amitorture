@@ -1,4 +1,4 @@
-/* 8520 CIA access and save/restore, shared by the cia and interrupts
+/* 8520 CIA access and best-effort save/restore, shared by the cia and interrupts
  * modules (header only, so each module builds on its own).
  *
  * Register access goes through inline asm MOVE.B on purpose: gcc may emit
@@ -8,10 +8,14 @@
  *
  * The 8520 has write-only state we cannot read back:
  *   - the ICR mask: taken from ciaX.resource AbleICR(0), the OS's own copy;
- *   - the timer latches: a stopped timer has counter == latch after a
- *     one-shot underflow (the latch is reloaded on every underflow), so the
- *     counter is used; a running continuous timer is sampled until it
- *     wraps and the highest value seen right after the wrap is used;
+ *   - the timer latches: exact latch provenance is unavailable. Even
+ *     START=0 does not prove that the stopped counter equals its latch.
+ *     The estimator uses stopped counters or observed running maxima;
+ *     neither is an authoritative latch snapshot, and sampling can miss
+ *     reload values. Writing these estimates back can change OS timer
+ *     periods: this is best-effort restoration, not exact OS state recovery.
+ *     The runtime's RETURN gate protects nondestructive return; HALT/REBOOT
+ *     runs retain this limitation and require a disposable environment;
  *   - the TOD alarm: the OS value is unknown. When the TOD is restored
  *     (save_tod), the alarm is set to TOD-1, just behind the restored
  *     clock, so it matches again only after a full 24-bit wrap (CIA-B,
@@ -256,7 +260,7 @@ static UBYTE cia_able_icr(void *res, UBYTE mask)
     return (UBYTE)d0;
 }
 
-/* ---- save / restore */
+/* ---- best-effort save / restore (timer latches are estimates) */
 struct cia_saved {
     volatile UBYTE *c;
     UBYTE cra, crb;        /* CR as found (after one-shots finished) */
@@ -264,7 +268,7 @@ struct cia_saved {
     UBYTE pending;         /* OS events drained from ICR at save */
     UBYTE have_res;
     UBYTE tod_saved;
-    UWORD la, lb;          /* latch values (see above) */
+    UWORD la, lb;          /* estimated latches, not authoritative (see above) */
     ULONG tod;             /* TOD at save */
     ULONG frames0, ticks0; /* time of the TOD save */
 };
@@ -278,14 +282,15 @@ static UWORD cia_latch_estimate(volatile UBYTE *c, UWORD lo, UWORD hi, UWORD cr)
     if (!(crv & CR_START))
         return cia_timer(c, lo, hi);
     if (crv & CR_RUNMODE) {
-        /* one-shot running: let it finish (<= 65536 E = 93 ms) */
+        /* Try to let a one-shot finish; its stopped counter alone does not
+         * establish exact latch provenance. 65536 E is ~93 ms in phi2 mode. */
         t0 = cia_now();
         while ((cia_rd(c, cr) & CR_START) && cia_now() - t0 < 600000UL)
             ;
         if (!(cia_rd(c, cr) & CR_START))
             return cia_timer(c, lo, hi);
     }
-    /* continuous: watch for a wrap, then keep the highest of a few samples */
+    /* Continuous: observed maxima may undershoot the actual reload value. */
     t0 = cia_now();
     prev = cia_timer(c, lo, hi);
     while (cia_now() - t0 < 1200000UL) {
@@ -396,7 +401,8 @@ static void cia_restore(struct cia_saved *s)
     }
     if (s->tod_saved)   /* park the alarm just behind the clock (see top) */
         cia_alarm_write(c, (cia_tod_read(c) - 1) & 0xffffff);
-    /* stopped + continuous: a high-byte write loads the counter as well */
+    /* Best effort only: install estimated latches, not recovered OS values.
+     * Stopped + continuous: a high-byte write loads the counter as well. */
     cia_wr(c, C_TALO, (UBYTE)s->la);
     cia_wr(c, C_TAHI, (UBYTE)(s->la >> 8));
     cia_wr(c, C_TBLO, (UBYTE)s->lb);

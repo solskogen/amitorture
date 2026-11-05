@@ -155,8 +155,8 @@ class SpeedVerdict(unittest.TestCase):
 
 class SpeedParity(unittest.TestCase):
     def test_speed_cases_are_not_compared(self):
-        ref = {"id": "a", "status": "pass"}
-        twin = {"id": "a-jit", "status": "pass", "twin_kind": "jit"}
+        ref = {"id": "a", "status": "pass", "options": {"cachesize": "0"}}
+        twin = {"id": "a-jit", "status": "pass", "twin_kind": "jit", "options": {"cachesize": "8192"}}
         body = {"mod": "host", "case": "speed_fsin"}
         fp_a = {"cases": {"host.speed_fsin": {"mod": "host", "case": "speed_fsin", "st": "fail", "engine_dependent":
                                               True, "fp": cases.canonical(dict(body, st="fail")), "rec": {}}}}
@@ -165,6 +165,7 @@ class SpeedParity(unittest.TestCase):
         items, info = parity.compare(ref, twin, fp_a, fp_b)
         self.assertEqual(items, [])
         self.assertEqual(info["compared"], 0)
+        self.assertEqual(info["status"], "compared")
 
 
 class SpeedSampler(unittest.TestCase):

@@ -2282,7 +2282,7 @@ _fpu_groups:
 	dc.l	gn_30,gv_30,72,3
 	dc.l	gn_31,gv_31,78,3
 	dc.l	gn_32,gv_32,78,3
-	dc.l	gn_33,gv_33,12,15
+	dc.l	gn_33,gv_33,60,15
 	dc.l	gn_34,gv_34,13,15
 	dc.l	gn_35,gv_35,104,12
 	dc.l	gn_36,gv_36,9,3
@@ -15258,13 +15258,121 @@ gv_32:
 gv_33:
 	dc.w	5,15
 	dc.l	$00000000
+	dc.l	$3fff0000,$80000080,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_0
+	dc.w	5,15
+	dc.l	$00000040
+	dc.l	$3fff0000,$80000080,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_1
+	dc.w	5,15
+	dc.l	$00000080
+	dc.l	$3fff0000,$80000080,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_2
+	dc.w	5,15
+	dc.l	$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3fff0000,$80000080,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_3
+	dc.w	5,15
+	dc.l	$00000040
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3fff0000,$80000080,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_4
+	dc.w	5,15
+	dc.l	$00000080
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3fff0000,$80000080,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_5
+	dc.w	5,15
+	dc.l	$00000000
+	dc.l	$bfff0000,$80000080,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$bfff0000,$80000000,$00000000
+	dc.l	$08000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_6
+	dc.w	5,15
+	dc.l	$00000040
+	dc.l	$bfff0000,$80000080,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$bfff0000,$80000000,$00000000
+	dc.l	$08000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_7
+	dc.w	5,15
+	dc.l	$00000080
+	dc.l	$bfff0000,$80000080,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$bfff0000,$80000000,$00000000
+	dc.l	$08000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_8
+	dc.w	5,15
+	dc.l	$00000000
+	dc.l	$3fff0000,$80000080,$00000000
+	dc.l	$3fff0000,$80000080,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_9
+	dc.w	5,15
+	dc.l	$00000040
+	dc.l	$3fff0000,$80000080,$00000000
+	dc.l	$3fff0000,$80000080,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_10
+	dc.w	5,15
+	dc.l	$00000080
+	dc.l	$3fff0000,$80000080,$00000000
+	dc.l	$3fff0000,$80000080,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_11
+	dc.w	5,15
+	dc.l	$00000000
 	dc.l	$3fff0000,$80000100,$00000000
 	dc.l	$3fff0000,$80000100,$00000000
 	dc.l	$3fff0000,$80000200,$00000000
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_33_0
+	dc.l	wy_33_12
 	dc.w	5,15
 	dc.l	$00000080
 	dc.l	$40000000,$c0000000,$00000000
@@ -15273,7 +15381,7 @@ gv_33:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_33_1
+	dc.l	wy_33_13
 	dc.w	5,15
 	dc.l	$00000000
 	dc.l	$40c80000,$c0000000,$00000000
@@ -15282,7 +15390,115 @@ gv_33:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_33_2
+	dc.l	wy_33_14
+	dc.w	5,15
+	dc.l	$00000010
+	dc.l	$3fff0000,$80000080,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_15
+	dc.w	5,15
+	dc.l	$00000050
+	dc.l	$3fff0000,$80000080,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_16
+	dc.w	5,15
+	dc.l	$00000090
+	dc.l	$3fff0000,$80000080,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_17
+	dc.w	5,15
+	dc.l	$00000010
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3fff0000,$80000080,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_18
+	dc.w	5,15
+	dc.l	$00000050
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3fff0000,$80000080,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_19
+	dc.w	5,15
+	dc.l	$00000090
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3fff0000,$80000080,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_20
+	dc.w	5,15
+	dc.l	$00000010
+	dc.l	$bfff0000,$80000080,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$bfff0000,$80000000,$00000000
+	dc.l	$08000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_21
+	dc.w	5,15
+	dc.l	$00000050
+	dc.l	$bfff0000,$80000080,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$bfff0000,$80000000,$00000000
+	dc.l	$08000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_22
+	dc.w	5,15
+	dc.l	$00000090
+	dc.l	$bfff0000,$80000080,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$bfff0000,$80000000,$00000000
+	dc.l	$08000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_23
+	dc.w	5,15
+	dc.l	$00000010
+	dc.l	$3fff0000,$80000080,$00000000
+	dc.l	$3fff0000,$80000080,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_24
+	dc.w	5,15
+	dc.l	$00000050
+	dc.l	$3fff0000,$80000080,$00000000
+	dc.l	$3fff0000,$80000080,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_25
+	dc.w	5,15
+	dc.l	$00000090
+	dc.l	$3fff0000,$80000080,$00000000
+	dc.l	$3fff0000,$80000080,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_26
 	dc.w	5,15
 	dc.l	$00000010
 	dc.l	$3fff0000,$80000100,$00000000
@@ -15291,7 +15507,7 @@ gv_33:
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_33_3
+	dc.l	wy_33_27
 	dc.w	5,15
 	dc.l	$00000090
 	dc.l	$40000000,$c0000000,$00000000
@@ -15300,7 +15516,7 @@ gv_33:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_33_4
+	dc.l	wy_33_28
 	dc.w	5,15
 	dc.l	$00000010
 	dc.l	$40c80000,$c0000000,$00000000
@@ -15309,7 +15525,115 @@ gv_33:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_33_5
+	dc.l	wy_33_29
+	dc.w	5,15
+	dc.l	$00000020
+	dc.l	$3fff0000,$80000080,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_30
+	dc.w	5,15
+	dc.l	$00000060
+	dc.l	$3fff0000,$80000080,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_31
+	dc.w	5,15
+	dc.l	$000000a0
+	dc.l	$3fff0000,$80000080,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_32
+	dc.w	5,15
+	dc.l	$00000020
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3fff0000,$80000080,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_33
+	dc.w	5,15
+	dc.l	$00000060
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3fff0000,$80000080,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_34
+	dc.w	5,15
+	dc.l	$000000a0
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3fff0000,$80000080,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_35
+	dc.w	5,15
+	dc.l	$00000020
+	dc.l	$bfff0000,$80000080,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$bfff0000,$80000000,$00000000
+	dc.l	$08000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_36
+	dc.w	5,15
+	dc.l	$00000060
+	dc.l	$bfff0000,$80000080,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$bfff0000,$80000000,$00000000
+	dc.l	$08000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_37
+	dc.w	5,15
+	dc.l	$000000a0
+	dc.l	$bfff0000,$80000080,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$bfff0000,$80000000,$00000000
+	dc.l	$08000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_38
+	dc.w	5,15
+	dc.l	$00000020
+	dc.l	$3fff0000,$80000080,$00000000
+	dc.l	$3fff0000,$80000080,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_39
+	dc.w	5,15
+	dc.l	$00000060
+	dc.l	$3fff0000,$80000080,$00000000
+	dc.l	$3fff0000,$80000080,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_40
+	dc.w	5,15
+	dc.l	$000000a0
+	dc.l	$3fff0000,$80000080,$00000000
+	dc.l	$3fff0000,$80000080,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_41
 	dc.w	5,15
 	dc.l	$00000020
 	dc.l	$3fff0000,$80000100,$00000000
@@ -15318,7 +15642,7 @@ gv_33:
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_33_6
+	dc.l	wy_33_42
 	dc.w	5,15
 	dc.l	$000000a0
 	dc.l	$40000000,$c0000000,$00000000
@@ -15327,7 +15651,7 @@ gv_33:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_33_7
+	dc.l	wy_33_43
 	dc.w	5,15
 	dc.l	$00000020
 	dc.l	$40c80000,$c0000000,$00000000
@@ -15336,7 +15660,115 @@ gv_33:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_33_8
+	dc.l	wy_33_44
+	dc.w	5,15
+	dc.l	$00000030
+	dc.l	$3fff0000,$80000080,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_45
+	dc.w	5,15
+	dc.l	$00000070
+	dc.l	$3fff0000,$80000080,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_46
+	dc.w	5,15
+	dc.l	$000000b0
+	dc.l	$3fff0000,$80000080,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_47
+	dc.w	5,15
+	dc.l	$00000030
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3fff0000,$80000080,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_48
+	dc.w	5,15
+	dc.l	$00000070
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3fff0000,$80000080,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_49
+	dc.w	5,15
+	dc.l	$000000b0
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3fff0000,$80000080,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_50
+	dc.w	5,15
+	dc.l	$00000030
+	dc.l	$bfff0000,$80000080,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$bfff0000,$80000000,$00000000
+	dc.l	$08000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_51
+	dc.w	5,15
+	dc.l	$00000070
+	dc.l	$bfff0000,$80000080,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$bfff0000,$80000000,$00000000
+	dc.l	$08000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_52
+	dc.w	5,15
+	dc.l	$000000b0
+	dc.l	$bfff0000,$80000080,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$bfff0000,$80000000,$00000000
+	dc.l	$08000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_53
+	dc.w	5,15
+	dc.l	$00000030
+	dc.l	$3fff0000,$80000080,$00000000
+	dc.l	$3fff0000,$80000080,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_54
+	dc.w	5,15
+	dc.l	$00000070
+	dc.l	$3fff0000,$80000080,$00000000
+	dc.l	$3fff0000,$80000080,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_55
+	dc.w	5,15
+	dc.l	$000000b0
+	dc.l	$3fff0000,$80000080,$00000000
+	dc.l	$3fff0000,$80000080,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_56
 	dc.w	5,15
 	dc.l	$00000030
 	dc.l	$3fff0000,$80000100,$00000000
@@ -15345,7 +15777,7 @@ gv_33:
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_33_9
+	dc.l	wy_33_57
 	dc.w	5,15
 	dc.l	$000000b0
 	dc.l	$40000000,$c0000000,$00000000
@@ -15354,7 +15786,7 @@ gv_33:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_33_10
+	dc.l	wy_33_58
 	dc.w	5,15
 	dc.l	$00000030
 	dc.l	$40c80000,$c0000000,$00000000
@@ -15363,7 +15795,7 @@ gv_33:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_33_11
+	dc.l	wy_33_59
 	cnop	0,4
 gv_34:
 	dc.w	6,15
@@ -18898,18 +19330,66 @@ wy_32_75:	dc.b	"frem src=3 dst=2 rn.x: quotient byte = sign + low 7 bits of the 
 wy_32_76:	dc.b	"frem src=1 dst=3/2 rn.x: quotient byte = sign + low 7 bits of the quotient",0
 wy_32_77:	dc.b	"frem src=1 dst=5/2 rn.x: quotient byte = sign + low 7 bits of the quotient",0
 gn_33:	dc.b	"arith_fsglmul",0
-wy_33_0:	dc.b	"fsglmul src=m*2^0 dst=m*2^0 rn.x: product rounded to single precision, any FPCR precision",0
-wy_33_1:	dc.b	"fsglmul src=3 dst=5 rn.d",0
-wy_33_2:	dc.b	"fsglmul src=m*2^201 dst=m*2^202 rn.x: extended exponent range is kept",0
-wy_33_3:	dc.b	"fsglmul src=m*2^0 dst=m*2^0 rz.x: product rounded to single precision, any FPCR precision",0
-wy_33_4:	dc.b	"fsglmul src=3 dst=5 rz.d",0
-wy_33_5:	dc.b	"fsglmul src=m*2^201 dst=m*2^202 rz.x: extended exponent range is kept",0
-wy_33_6:	dc.b	"fsglmul src=m*2^0 dst=m*2^0 rm.x: product rounded to single precision, any FPCR precision",0
-wy_33_7:	dc.b	"fsglmul src=3 dst=5 rm.d",0
-wy_33_8:	dc.b	"fsglmul src=m*2^201 dst=m*2^202 rm.x: extended exponent range is kept",0
-wy_33_9:	dc.b	"fsglmul src=m*2^0 dst=m*2^0 rp.x: product rounded to single precision, any FPCR precision",0
-wy_33_10:	dc.b	"fsglmul src=3 dst=5 rp.d",0
-wy_33_11:	dc.b	"fsglmul src=m*2^201 dst=m*2^202 rp.x: extended exponent range is kept",0
+wy_33_0:	dc.b	"fsglmul src=m*2^0 dst=1 rn.x: both input mantissas truncated to 24 bits before multiplication",0
+wy_33_1:	dc.b	"fsglmul src=m*2^0 dst=1 rn.s: both input mantissas truncated to 24 bits before multiplication",0
+wy_33_2:	dc.b	"fsglmul src=m*2^0 dst=1 rn.d: both input mantissas truncated to 24 bits before multiplication",0
+wy_33_3:	dc.b	"fsglmul src=1 dst=m*2^0 rn.x: both input mantissas truncated to 24 bits before multiplication",0
+wy_33_4:	dc.b	"fsglmul src=1 dst=m*2^0 rn.s: both input mantissas truncated to 24 bits before multiplication",0
+wy_33_5:	dc.b	"fsglmul src=1 dst=m*2^0 rn.d: both input mantissas truncated to 24 bits before multiplication",0
+wy_33_6:	dc.b	"fsglmul src=-m*2^0 dst=1 rn.x: both input mantissas truncated to 24 bits before multiplication",0
+wy_33_7:	dc.b	"fsglmul src=-m*2^0 dst=1 rn.s: both input mantissas truncated to 24 bits before multiplication",0
+wy_33_8:	dc.b	"fsglmul src=-m*2^0 dst=1 rn.d: both input mantissas truncated to 24 bits before multiplication",0
+wy_33_9:	dc.b	"fsglmul src=m*2^0 dst=m*2^0 rn.x: both input mantissas truncated to 24 bits before multiplication",0
+wy_33_10:	dc.b	"fsglmul src=m*2^0 dst=m*2^0 rn.s: both input mantissas truncated to 24 bits before multiplication",0
+wy_33_11:	dc.b	"fsglmul src=m*2^0 dst=m*2^0 rn.d: both input mantissas truncated to 24 bits before multiplication",0
+wy_33_12:	dc.b	"fsglmul src=m*2^0 dst=m*2^0 rn.x: product rounded to single precision, any FPCR precision",0
+wy_33_13:	dc.b	"fsglmul src=3 dst=5 rn.d",0
+wy_33_14:	dc.b	"fsglmul src=m*2^201 dst=m*2^202 rn.x: extended exponent range is kept",0
+wy_33_15:	dc.b	"fsglmul src=m*2^0 dst=1 rz.x: both input mantissas truncated to 24 bits before multiplication",0
+wy_33_16:	dc.b	"fsglmul src=m*2^0 dst=1 rz.s: both input mantissas truncated to 24 bits before multiplication",0
+wy_33_17:	dc.b	"fsglmul src=m*2^0 dst=1 rz.d: both input mantissas truncated to 24 bits before multiplication",0
+wy_33_18:	dc.b	"fsglmul src=1 dst=m*2^0 rz.x: both input mantissas truncated to 24 bits before multiplication",0
+wy_33_19:	dc.b	"fsglmul src=1 dst=m*2^0 rz.s: both input mantissas truncated to 24 bits before multiplication",0
+wy_33_20:	dc.b	"fsglmul src=1 dst=m*2^0 rz.d: both input mantissas truncated to 24 bits before multiplication",0
+wy_33_21:	dc.b	"fsglmul src=-m*2^0 dst=1 rz.x: both input mantissas truncated to 24 bits before multiplication",0
+wy_33_22:	dc.b	"fsglmul src=-m*2^0 dst=1 rz.s: both input mantissas truncated to 24 bits before multiplication",0
+wy_33_23:	dc.b	"fsglmul src=-m*2^0 dst=1 rz.d: both input mantissas truncated to 24 bits before multiplication",0
+wy_33_24:	dc.b	"fsglmul src=m*2^0 dst=m*2^0 rz.x: both input mantissas truncated to 24 bits before multiplication",0
+wy_33_25:	dc.b	"fsglmul src=m*2^0 dst=m*2^0 rz.s: both input mantissas truncated to 24 bits before multiplication",0
+wy_33_26:	dc.b	"fsglmul src=m*2^0 dst=m*2^0 rz.d: both input mantissas truncated to 24 bits before multiplication",0
+wy_33_27:	dc.b	"fsglmul src=m*2^0 dst=m*2^0 rz.x: product rounded to single precision, any FPCR precision",0
+wy_33_28:	dc.b	"fsglmul src=3 dst=5 rz.d",0
+wy_33_29:	dc.b	"fsglmul src=m*2^201 dst=m*2^202 rz.x: extended exponent range is kept",0
+wy_33_30:	dc.b	"fsglmul src=m*2^0 dst=1 rm.x: both input mantissas truncated to 24 bits before multiplication",0
+wy_33_31:	dc.b	"fsglmul src=m*2^0 dst=1 rm.s: both input mantissas truncated to 24 bits before multiplication",0
+wy_33_32:	dc.b	"fsglmul src=m*2^0 dst=1 rm.d: both input mantissas truncated to 24 bits before multiplication",0
+wy_33_33:	dc.b	"fsglmul src=1 dst=m*2^0 rm.x: both input mantissas truncated to 24 bits before multiplication",0
+wy_33_34:	dc.b	"fsglmul src=1 dst=m*2^0 rm.s: both input mantissas truncated to 24 bits before multiplication",0
+wy_33_35:	dc.b	"fsglmul src=1 dst=m*2^0 rm.d: both input mantissas truncated to 24 bits before multiplication",0
+wy_33_36:	dc.b	"fsglmul src=-m*2^0 dst=1 rm.x: both input mantissas truncated to 24 bits before multiplication",0
+wy_33_37:	dc.b	"fsglmul src=-m*2^0 dst=1 rm.s: both input mantissas truncated to 24 bits before multiplication",0
+wy_33_38:	dc.b	"fsglmul src=-m*2^0 dst=1 rm.d: both input mantissas truncated to 24 bits before multiplication",0
+wy_33_39:	dc.b	"fsglmul src=m*2^0 dst=m*2^0 rm.x: both input mantissas truncated to 24 bits before multiplication",0
+wy_33_40:	dc.b	"fsglmul src=m*2^0 dst=m*2^0 rm.s: both input mantissas truncated to 24 bits before multiplication",0
+wy_33_41:	dc.b	"fsglmul src=m*2^0 dst=m*2^0 rm.d: both input mantissas truncated to 24 bits before multiplication",0
+wy_33_42:	dc.b	"fsglmul src=m*2^0 dst=m*2^0 rm.x: product rounded to single precision, any FPCR precision",0
+wy_33_43:	dc.b	"fsglmul src=3 dst=5 rm.d",0
+wy_33_44:	dc.b	"fsglmul src=m*2^201 dst=m*2^202 rm.x: extended exponent range is kept",0
+wy_33_45:	dc.b	"fsglmul src=m*2^0 dst=1 rp.x: both input mantissas truncated to 24 bits before multiplication",0
+wy_33_46:	dc.b	"fsglmul src=m*2^0 dst=1 rp.s: both input mantissas truncated to 24 bits before multiplication",0
+wy_33_47:	dc.b	"fsglmul src=m*2^0 dst=1 rp.d: both input mantissas truncated to 24 bits before multiplication",0
+wy_33_48:	dc.b	"fsglmul src=1 dst=m*2^0 rp.x: both input mantissas truncated to 24 bits before multiplication",0
+wy_33_49:	dc.b	"fsglmul src=1 dst=m*2^0 rp.s: both input mantissas truncated to 24 bits before multiplication",0
+wy_33_50:	dc.b	"fsglmul src=1 dst=m*2^0 rp.d: both input mantissas truncated to 24 bits before multiplication",0
+wy_33_51:	dc.b	"fsglmul src=-m*2^0 dst=1 rp.x: both input mantissas truncated to 24 bits before multiplication",0
+wy_33_52:	dc.b	"fsglmul src=-m*2^0 dst=1 rp.s: both input mantissas truncated to 24 bits before multiplication",0
+wy_33_53:	dc.b	"fsglmul src=-m*2^0 dst=1 rp.d: both input mantissas truncated to 24 bits before multiplication",0
+wy_33_54:	dc.b	"fsglmul src=m*2^0 dst=m*2^0 rp.x: both input mantissas truncated to 24 bits before multiplication",0
+wy_33_55:	dc.b	"fsglmul src=m*2^0 dst=m*2^0 rp.s: both input mantissas truncated to 24 bits before multiplication",0
+wy_33_56:	dc.b	"fsglmul src=m*2^0 dst=m*2^0 rp.d: both input mantissas truncated to 24 bits before multiplication",0
+wy_33_57:	dc.b	"fsglmul src=m*2^0 dst=m*2^0 rp.x: product rounded to single precision, any FPCR precision",0
+wy_33_58:	dc.b	"fsglmul src=3 dst=5 rp.d",0
+wy_33_59:	dc.b	"fsglmul src=m*2^201 dst=m*2^202 rp.x: extended exponent range is kept",0
 gn_34:	dc.b	"arith_fsgldiv",0
 wy_34_0:	dc.b	"fsgldiv src=3 dst=1 rn.x: 1/3 rounded to single precision",0
 wy_34_1:	dc.b	"fsgldiv src=3 dst=-2 rn.d",0

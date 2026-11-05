@@ -107,11 +107,16 @@ static void __attribute__((unused)) hw_restore_copper(void)
 static inline ULONG __attribute__((unused)) hw_beam(void)
 {
     UWORD a, b, vh;
+    ULONG polls = 4096;
     do {
         a = CU(VPOSR) & 7;
         vh = CU(VHPOSR);
         b = CU(VPOSR) & 7;
-    } while (a != b);
+    } while (a != b && --polls);
+    if (!polls) {
+        amt_set_sr(0x2000);
+        amt_abort(AMT_ABORT_WATCHDOG);
+    }
     return ((ULONG)a << 16) | vh;
 }
 

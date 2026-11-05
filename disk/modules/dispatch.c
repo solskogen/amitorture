@@ -384,6 +384,7 @@ struct fail {
 static struct fail F;
 static struct st hot_got;
 static int hot_have;
+static UWORD hot_block;
 static UWORD hot_vec;
 static UWORD hot_frame[16];
 
@@ -588,6 +589,7 @@ static ULONG hot_fn(ULONG i)
     if (v || ds_hash(&g_st) != exp_hash[j]) {
         if (!hot_have) {            /* keep the state of the first diverging run */
             hot_have = 1;
+            hot_block = b;
             hot_got = g_st;
             hot_vec = v;
             if (v)
@@ -650,9 +652,9 @@ static void case_body(void)
         return;
     }
     hot_have = 0;
-    r = amt_hot(hot_fn, amt_hot_reps(), &first, &bad);
+    r = amt_hot_checked(hot_fn, amt_hot_reps(), &first, &bad);
     if (r >= 0) {
-        UWORD b = c->first + (UWORD)(bad - 1);
+        UWORD b = hot_block;
         F.have = 1;
         F.hot = 1;
         F.blk = b;

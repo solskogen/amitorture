@@ -11,7 +11,7 @@ from . import cases as casemod
 from . import matrix
 from . import runner as R
 from . import xfail as xfailmod
-from .emulator import RunnerError
+from .emulator import IsolationError, RunnerError
 
 
 def _strip(entry):
@@ -43,6 +43,8 @@ def _collect(opts, entries, outdir, repeat, label, binary=None, run_id=None):
             R.log(o, f"{label}: REPORT.md for {rdir} failed: {type(ex).__name__}: {ex}")
             with open(os.path.join(rdir, "report-error.txt"), "w", encoding="utf-8") as fh:
                 fh.write(traceback.format_exc())
+        if not ctx.environment.get("isolation", {}).get("ok", True):
+            raise IsolationError(f"{label}: the isolation guard recorded changes to the user's files")
         for r in results:
             d = per[r["id"]]
             d["statuses"].append(r["status"])
@@ -53,45 +55,73 @@ def _collect(opts, entries, outdir, repeat, label, binary=None, run_id=None):
     return per, envs
 
 
+def _publish_baseline(bdir):
+    names = ("runs", "baseline.json", "BASELINE.md")
+    for name in names:
+        if not os.path.exists(os.path.join(bdir, name + ".new")):
+            raise RunnerError(f"baseline preparation is missing {name}.new")
+    existed = {name: os.path.exists(os.path.join(bdir, name)) for name in names}
+    try:
+        for name in names:
+            path = os.path.join(bdir, name)
+            if existed[name]:
+                if os.path.isdir(path):
+                    R._safe_rmtree(path + ".previous", bdir)
+                os.replace(path, path + ".previous")
+            os.replace(path + ".new", path)
+    except BaseException:
+        # A consumed .new identifies an installed artifact even if interrupted.
+        for name in reversed(names):
+            path = os.path.join(bdir, name)
+            if not os.path.exists(path + ".new"):
+                if os.path.isdir(path):
+                    R._safe_rmtree(path, bdir)
+                elif os.path.exists(path):
+                    os.unlink(path)
+            if existed[name] and not os.path.exists(path) and os.path.exists(path + ".previous"):
+                os.replace(path + ".previous", path)
+        raise
+
+
 def cmd_baseline(opts, name, repeat):
+    if repeat < 1:
+        raise RunnerError("--repeat must be at least 1")
     entries = R.select_entries(opts)
     bdir = B.baseline_dir(opts.workdir, name)
-    old_json = os.path.join(bdir, "baseline.json")
     runs_dir = os.path.join(bdir, "runs")
     new_runs = runs_dir + ".new"
     existed = os.path.isdir(bdir)
     os.makedirs(bdir, exist_ok=True)
     R._safe_rmtree(new_runs, bdir)
-    # Nothing of an existing baseline is touched until the new one is
-    # complete: Ctrl+C or an error leaves it exactly as it was.
+    # Prepare every artifact before publishing; failed publication rolls back.
     try:
         per, envs = _collect(opts, entries, new_runs, repeat, "baseline")
+        env = envs[0]
+        meta = {"name": name, "created": B.now_iso(), "repeat": repeat, "matrix": opts.matrix, "configs": opts.configs,
+                "sets": opts.sets, "params": opts.params, "warp": getattr(opts, "warp", None),
+                "binary": {k: env["amiberry"].get(k) for k in ("path", "sha256", "version", "size", "mtime")},
+                "disk": {k: (env.get("disk_source") or {}).get(k) for k in ("path", "build_id", "sha256", "set")},
+                "kickstarts": env.get("kickstarts_dir"), "amitorture": env.get("amitorture"), "host": env.get("host"),
+                "roms": {eid: {k: d["meta"].get(k) for k in ("rom", "rom_name", "rom_crc32", "ext_rom")}
+                         for eid, d in per.items()}}
+        doc = B.build({eid: {k: d[k] for k in ("entry", "statuses", "runs", "meta")} for eid, d in per.items()}, meta)
+        for eid, d in per.items():
+            doc["entries"][eid]["runs_raw"] = d["results"]
+        with open(os.path.join(bdir, "baseline.json.new"), "w", encoding="utf-8") as fh:
+            json.dump(doc, fh, indent=1, default=B._json_default)
+        with open(os.path.join(bdir, "BASELINE.md.new"), "w", encoding="utf-8") as fh:
+            fh.write(render_baseline(doc))
+        _publish_baseline(bdir)
     except BaseException:
         R._safe_rmtree(new_runs, bdir)
+        for name_ in ("baseline.json.new", "BASELINE.md.new"):
+            path = os.path.join(bdir, name_)
+            if os.path.exists(path):
+                os.unlink(path)
         if not existed:
             R._safe_rmtree(bdir, B.baseline_dir(opts.workdir, ""))
         raise
-    if os.path.exists(old_json):
-        os.replace(old_json, old_json + ".previous")
-    if os.path.isdir(runs_dir):
-        R._safe_rmtree(runs_dir + ".previous", bdir)
-        os.replace(runs_dir, runs_dir + ".previous")
-    os.replace(new_runs, runs_dir)
-    env = envs[0]
-    meta = {"name": name, "created": B.now_iso(), "repeat": repeat, "matrix": opts.matrix, "configs": opts.configs,
-            "sets": opts.sets, "params": opts.params,
-            "binary": {k: env["amiberry"].get(k) for k in ("path", "sha256", "version", "size", "mtime")},
-            "disk": {k: (env.get("disk_source") or {}).get(k) for k in ("path", "build_id", "sha256", "set")},
-            "kickstarts": env.get("kickstarts_dir"), "amitorture": env.get("amitorture"), "host": env.get("host"),
-            "roms": {eid: {k: d["meta"].get(k) for k in ("rom", "rom_name", "rom_crc32", "ext_rom")}
-                     for eid, d in per.items()}}
-    doc = B.build({eid: {k: d[k] for k in ("entry", "statuses", "runs", "meta")} for eid, d in per.items()}, meta)
-    for eid, d in per.items():
-        doc["entries"][eid]["runs_raw"] = d["results"]
-    path = B.save(opts.workdir, name, doc)
-    with open(os.path.join(bdir, "BASELINE.md"), "w", encoding="utf-8") as fh:
-        fh.write(render_baseline(doc))
-    return path, doc
+    return os.path.join(bdir, "baseline.json"), doc
 
 
 def render_baseline(doc):
@@ -137,9 +167,14 @@ def render_baseline(doc):
 
 
 def cmd_check(opts, name, binaries, repeat):
+    if repeat < 1:
+        raise RunnerError("--repeat must be at least 1")
     base = B.load(opts.workdir, name)
     if base is None:
         raise RunnerError(f"no baseline {name!r} in {B.baseline_dir(opts.workdir, name)} (make one with `baseline`)")
+    if getattr(opts, "warp", None) is None and "warp" not in opts.sets:
+        opts = copy.copy(opts)
+        opts.warp = base["meta"].get("warp")
     entries = []
     for eid, be in base["entries"].items():
         e = dict(be["entry"])
@@ -171,6 +206,8 @@ def cmd_check(opts, name, binaries, repeat):
         envs[label] = envl[0]
     first = B.first_changes(per_binary) if len(per_binary) > 1 else []
     doc = {"baseline": name, "baseline_meta": base["meta"], "repeat": repeat, "sets": opts.sets,
+           "warp": getattr(opts, "warp", None),
+           "entry_ids": [e["id"] for e in entries],
            "binaries": [{"label": lb, **d["binary"], "counts": d["counts"], "regressions": d["regressions"]}
                         for lb, d in per_binary],
            "per_binary": [{"label": lb, "findings": d["findings"], "entries": d["entries"]} for lb, d in per_binary],
@@ -182,8 +219,9 @@ def cmd_check(opts, name, binaries, repeat):
     return outdir, doc
 
 
-CHECK_ORDER = ["entry_status", "missing_entry", "regression", "became_unstable", "missing", "perf_out_of_band",
-               "timing_out_of_band", "fixed", "new", "perf_missing", "perf_new", "new_entry", "unstable_excluded"]
+CHECK_ORDER = ["entry_status", "missing_entry", "new_failure", "regression", "became_unstable", "missing",
+               "perf_missing", "timing_missing", "perf_out_of_band", "timing_out_of_band",
+               "fixed", "new", "perf_new", "new_entry", "unstable_excluded"]
 
 
 def check_verdict(doc):
@@ -249,6 +287,8 @@ def render_check(doc):
             if f["kind"] in ("regression", "fixed"):
                 L.append(f"  - baseline: `{_j(f['baseline'], 700)}`")
                 L.append(f"  - now: `{_j(f['now'], 700)}`")
+            elif f["kind"] == "new_failure":
+                L.append(f"  - now: `{_j(f['now'], 700)}`")
             if f.get("xfail"):
                 L.append(f"  - xfail: {f['xfail'].get('ref')}: {f['xfail'].get('why')}")
             if f.get("band"):
@@ -286,6 +326,8 @@ def cmd_repro(packdir, binary=None, gdb=False, keep=False, timeout=300.0, verbos
         res = ctx.run_entries([entry], extra_options=extra)[0]
     finally:
         ctx.close()
+    if not ctx.environment.get("isolation", {}).get("ok", True):
+        raise IsolationError("repro: the isolation guard recorded changes to the user's files")
     fp = casemod.extract(res)
     key = pack.get("case_key")
     c = fp["cases"].get(key)
@@ -317,7 +359,7 @@ def rediff(check_dir, workdir):
     for i, b in enumerate(old["binaries"]):
         bdir = os.path.join(check_dir, f"bin{i + 1}")
         per = {}
-        for run in sorted(os.listdir(bdir)):
+        for run in sorted(os.listdir(bdir)) if os.path.isdir(bdir) else []:
             rdir = os.path.join(bdir, run)
             env = {}
             try:
@@ -325,6 +367,8 @@ def rediff(check_dir, workdir):
                     env = json.load(fh)
             except OSError:
                 pass
+            if not env.get("isolation", {}).get("ok", True):
+                raise IsolationError(f"saved run {rdir} recorded an isolation violation")
             for r in analysis.load_results(rdir):
                 be = (base["entries"].get(r["id"]) or {}).get("entry") or {"id": r["id"]}
                 e = dict(be, options=dict(r.get("options") or be.get("options") or {}))
@@ -332,7 +376,15 @@ def rediff(check_dir, workdir):
                 d["statuses"].append(r["status"])
                 d["runs"].append(casemod.extract(r))
                 d["meta"] = B.entry_meta(r, env)
-        keep = set(base["entries"]) & set(per) if per else set()
+        keep = old.get("entry_ids")
+        if keep is None:
+            saved = old["per_binary"][i]
+            keep = set(saved.get("entries") or {})
+            keep.update(f["entry"] for f in saved.get("findings", []) if f["kind"] == "missing_entry")
+            if not keep:
+                keep = set(base["entries"])
+        if set(keep) - set(base["entries"]):
+            raise RunnerError("the baseline no longer contains all entries of the saved check")
         bsub = dict(base, entries={k: v for k, v in base["entries"].items() if k in keep})
         dd = B.diff(bsub, per, registry)
         per_binary.append((b["label"], dd, b))

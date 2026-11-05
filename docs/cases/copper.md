@@ -1,5 +1,18 @@
 # copper (module 13, AMT_PH_BARE, disk "chip")
 
+Audit observation gates: `copen_pause_resume` needs at least one valid
+disable-window trial; four missed windows are untestable. BFD ordering is
+accepted only when the sticky marker is witnessed while the sole blit remains
+busy, or is still absent after completion before subsequently appearing.
+Merely finding a marker and then reading BBUSY does not prove ordering:
+ambiguous completion crossings are untestable. Beam waits reset their
+finite stalled-beam polling budget whenever the sampled beam advances:
+fast CPUs may legitimately poll more than a million times per frame.
+Unreachable line targets abort after four observed frame wraps, and the
+next-frame wait also guards against a stopped beam. Frame/tick deadlines
+apply where interrupts can run; masked timeout paths re-enable interrupt
+servicing before aborting.
+
 The Copper instruction set and its CPU-visible effects. References: Amiga Hardware Reference
 Manual (HRM) chapter 2 "Coprocessor Hardware" (MOVE/WAIT/SKIP, comparison enable bits, BFD,
 COP1LC/COP2LC/COPJMP, vertical blank restart, COPCON danger bit, waiting past line 255), chapter 7

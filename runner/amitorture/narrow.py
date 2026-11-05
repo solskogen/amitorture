@@ -92,7 +92,7 @@ def analyze(case_key, kind, options, base_runs, variants, ref_fp=None, binary_la
     flips, holds, incon = [], [], []
     for v in variants:
         vref = ref_fp
-        if kind == "engine_mismatch" and v.get("ref_run") is not None:
+        if kind == "engine_mismatch" and "ref_run" in v:
             # the reference machine with the same change, run alongside
             c = v["ref_run"]["cases"].get(case_key) if v["ref_run"] else None
             vref = c["fp"] if c else None

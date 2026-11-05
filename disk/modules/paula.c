@@ -29,6 +29,7 @@
  * CIA-A PRA bit 1, and the drive lines (see paula_disk.c). The serial UART
  * is the output channel and is not tested (UARTBRK is never set). */
 #include "paula.h"
+#include "hardware_audit.h"
 
 AMT_MODULE(paula, 14, AMT_PH_BARE, AMT_MF_OWNS_DISPLAY, 28672, 0);
 
@@ -43,6 +44,7 @@ extern struct pa_ent pa_log[];
 extern char pa_log_end[];
 extern struct pa_ent *volatile pa_logp;
 extern volatile UWORD pa_n, pa_stop_at, pa_feed_left;
+extern volatile UWORD pa_sample_invalid;
 extern const UWORD *volatile pa_feed_p;
 extern volatile UWORD *volatile pa_feed_a;
 extern volatile UWORD pa_act[16];
@@ -142,6 +144,7 @@ struct chk {
     const char *what;
     UWORD a, b;           /* parameters, named by the case (pa_ka/pa_kb) */
     LONG got, lo, hi;
+    int alternatives;
 };
 #define MAXCHK 40
 static struct chk chks[MAXCHK];
@@ -165,7 +168,14 @@ static void chk_add(const char *what, UWORD a, UWORD b, LONG got, LONG lo, LONG 
         c->got = got;
         c->lo = lo;
         c->hi = hi;
+        c->alternatives = 0;
     }
+}
+
+static void chk_modulator(LONG got)
+{
+    chk_add("modulator_iv", 8, 400, got, 2800, 3600);
+    chks[nchk - 1].alternatives = 1;
 }
 
 static void chk_fields(const struct chk *c, int with_got)
@@ -177,6 +187,10 @@ static void chk_fields(const struct chk *c, int with_got)
         json_int(pa_kb, c->b);
     json_int("lo", c->lo);
     json_int("hi", c->hi);
+    if (c->alternatives) {
+        json_int("alternative_lo", 6000);
+        json_int("alternative_hi", 6800);
+    }
     if (with_got)
         json_int("got", c->got);
 }
@@ -192,8 +206,13 @@ static void chk_one(const struct chk *c)
 static int chk_report(const char *id, const char *why, void (*extra)(void))
 {
     int i, bad = -1;
+    if (pa_sample_invalid) {
+        amt_case(id, AMT_ST_UNTESTABLE, "bounded beam sampling could not obtain a coherent audio timestamp");
+        return 0;
+    }
     for (i = 0; i < nchk; i++)
-        if (chks[i].got < chks[i].lo || chks[i].got > chks[i].hi) {
+        if (chks[i].alternatives ? !hw_modulator_period(chks[i].got) :
+            (chks[i].got < chks[i].lo || chks[i].got > chks[i].hi)) {
             bad = i;
             break;
         }
@@ -670,7 +689,7 @@ static void t_modulation(void)
             chk_add("modulated_iv", 16, Pm, iv(t1, n1, k), 2L * 16 * Pm - Pm, 2L * 16 * Pm + Pm);
         if (m == 0)
             for (k = 2; k < 5; k++)
-                chk_add("modulator_iv", 8, 400, iv(t0, n0, k), 8L * 400 - 400, 2L * 8 * 400 + 400);
+                chk_modulator(iv(t0, n0, k));
         chk_report(m == 0 ? "adk_pmod_01" : m == 1 ? "adk_pmod_12" : "adk_pmod_23",
                    "ADKCON USExPy (attach period, HRM ch.5 'joining tracks'): the modulator's "
                    "data words go to the next channel's period register, so the modulated "
@@ -686,7 +705,7 @@ static void t_modulation(void)
     for (k = 2; k < 5; k++)
         chk_add("modulated_iv", 16, 150, iv(t1, n1, k), 2L * 16 * 150 - 150, 2L * 16 * 150 + 150);
     for (k = 2; k < 5; k++)
-        chk_add("modulator_iv", 8, 400, iv(t0, n0, k), 8L * 400 - 400, 2L * 8 * 400 + 400);
+        chk_modulator(iv(t0, n0, k));
     chk_report("adk_vmod_01",
                "ADKCON USE0V1 (attach volume only): channel 1's period stays its own (150), "
                "2*16*150 cck per block; the modulator's block time is accepted as 8*400 or "
@@ -709,7 +728,7 @@ static void t_modulation(void)
     mod_run(3, 0x0080, 0x0000, 0x0000, t0, &n0, t1, &n1);
     chk_begin("len", "per");
     for (k = 2; k < 5; k++)
-        chk_add("modulator_iv", 8, 400, iv(t0, n0, k), 8L * 400 - 400, 2L * 8 * 400 + 400);
+        chk_modulator(iv(t0, n0, k));
     chk_report("adk_use3pn",
                "ADKCON USE3PN: channel 3 modulates nothing (its output is off); its DMA and "
                "interrupts go on, block time accepted as 8*400 or 2*8*400 (see adk_pmod_01)",
@@ -969,6 +988,7 @@ void pa_audio_tests(void)
  * parts are not run; the abort is passed on to the runtime at the end. */
 void amt_run_paula(void)
 {
+    pa_sample_invalid = 0;
     UWORD adk0 = CREG(R_ADKCONR);
     int i, code;
     pa_chip = amt_chip_pool();

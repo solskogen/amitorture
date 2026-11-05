@@ -88,7 +88,11 @@ class Emulator:
         self.cmd = cmd
         self.proc = subprocess.Popen(cmd, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                                      stdin=subprocess.DEVNULL)
-        threading.Thread(target=self._drain, daemon=True).start()
+        try:
+            threading.Thread(target=self._drain, daemon=True).start()
+        except BaseException:
+            self.kill()
+            raise
 
     def _drain(self):
         for raw in self.proc.stdout:
@@ -276,6 +280,21 @@ def check_records(data, fail):
             fail(f"done.records = {done.get('records')}, received {len(records)}")
         if done.get("fail"):
             fail(f"done reports {done['fail']} failures")
+        if done.get("aborted"):
+            fail(f"done reports {done['aborted']} aborted modules")
+        counts = {st: 0 for st in ("pass", "fail", "skip", "untestable")}
+        for r in records:
+            if r.get("t") == "case":
+                st = r.get("st")
+                if st not in counts:
+                    fail(f"case {r.get('mod')}.{r.get('case')} has invalid status {st!r}")
+                else:
+                    counts[st] += 1
+        if counts["fail"]:
+            fail(f"case records report {counts['fail']} failures")
+        for st, count in counts.items():
+            if done.get(st) != count:
+                fail(f"done.{st} = {done.get(st)}, case records report {count}")
     return records
 
 
@@ -329,23 +348,26 @@ def main():
         failures.append(msg)
         print(f"FAIL {msg}")
 
-    for attempt in range(3):
-        # keep temp files on the repo's work/ (not /tmp, which may be a small tmpfs)
-        tmproot = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "work", "tmp")
-        os.makedirs(tmproot, exist_ok=True)
-        work = tempfile.mkdtemp(prefix="amt-smoke-", dir=tmproot)
-        emu = Emulator(args, work)
-        # SDL's offscreen driver sometimes fails to start when several
-        # emulators start at once; try again.
-        time.sleep(2)
-        if emu.proc.poll() is None or "SDL could not initialize" not in "".join(emu.output):
-            break
-        print(f"info emulator did not start (SDL), retry {attempt + 1}")
-        emu.kill()
-        shutil.rmtree(work, ignore_errors=True)
-    t0 = time.monotonic()
-    shots = Screenshots(emu, args.screenshots, args.shot_every) if args.screenshots else None
+    emu = shots = ser = None
     try:
+        for attempt in range(3):
+            # Keep temp files off a potentially small /tmp tmpfs.
+            tmproot = os.path.join(ROOT, "work", "tmp")
+            os.makedirs(tmproot, exist_ok=True)
+            work = tempfile.mkdtemp(prefix="amt-smoke-", dir=tmproot)
+            emu = Emulator(args, work)
+            time.sleep(2)
+            if emu.proc.poll() is None or "SDL could not initialize" not in "".join(emu.output):
+                break
+            print(f"info emulator did not start (SDL), retry {attempt + 1}")
+            emu.kill()
+            if attempt == 2:
+                fail("SDL could not initialize after three attempts")
+                return finish(failures, emu, work, args)
+            shutil.rmtree(work)
+            emu = None
+        t0 = time.monotonic()
+        shots = Screenshots(emu, args.screenshots, args.shot_every) if args.screenshots else None
         try:
             ser, data = read_serial(args.port, args.timeout)
         except OSError as e:
@@ -412,12 +434,15 @@ def main():
             print(f"info alive after done: IdleCount {idle1}->{idle2} DispCount {disp1}->{disp2}")
         if ipc.read(mb + 24) != beat:
             print("info heartbeat still moving after done")
-        if ser:
-            ser.close()
     finally:
-        if shots:
-            shots.stop()
-        emu.kill()
+        try:
+            if ser:
+                ser.close()
+            if shots:
+                shots.stop()
+        finally:
+            if emu:
+                emu.kill()
     return finish(failures, emu, work, args)
 
 

@@ -22,6 +22,7 @@
  * Beam-polled latencies are reported in "timing" objects only. */
 #include "mod.h"
 #include "display_hw.h"
+#include "hardware_audit.h"
 
 AMT_MODULE(copper, 13, AMT_PH_BARE, AMT_MF_LONG | AMT_MF_OWNS_DISPLAY, 24576, 0);
 
@@ -90,13 +91,30 @@ static void mk_clear(void)
 static UWORD mk_get(void) { return CU(INTREQR) & MK_ALL; }
 
 /* ------------------------------------------------------------ beam */
+static void wait_progress(ULONG now, ULONG last, ULONG *budget)
+{
+    /* A fast CPU can poll more than a million times in one frame. */
+    if (now != last)
+        *budget = 1000000;
+    else if (!--*budget) {
+        amt_set_sr(0x2000);
+        amt_abort(AMT_ABORT_WATCHDOG);
+    }
+}
+
 static int wait_vbl(void)
 {
     ULONG f = amt_frames_now();
+    ULONG budget = 1000000, t0 = amt_ticks();
     UWORD last = hw_vline(), v;
     int wraps = 0;
     while (amt_frames_now() == f) {
+        if (amt_ticks() - t0 > 4 * 71051UL) {
+            amt_set_sr(0x2000);
+            amt_abort(AMT_ABORT_WATCHDOG);
+        }
         v = hw_vline();
+        wait_progress(v, last, &budget);
         if (v < last && ++wraps > 3)
             return 0;
         last = v;
@@ -106,8 +124,30 @@ static int wait_vbl(void)
 
 static void wait_line(UWORD y)
 {
-    while (hw_vline() < y)
-        ;
+    ULONG budget = 1000000;
+    UWORD last = hw_vline(), v;
+    int wraps = 0;
+    while ((v = hw_vline()) < y) {
+        wait_progress(v, last, &budget);
+        if (v < last && last - v > 100 && ++wraps > 3) {
+            amt_set_sr(0x2000);
+            amt_abort(AMT_ABORT_WATCHDOG);
+        }
+        last = v;
+    }
+}
+
+static void wait_frame_wrap(void)
+{
+    ULONG budget = 1000000;
+    UWORD last = hw_vline(), v;
+    for (;;) {
+        v = hw_vline();
+        wait_progress(v, last, &budget);
+        if (v < last && last - v > 100)
+            return;
+        last = v;
+    }
 }
 
 /* right after a VBL, with interrupts masked, at line y */
@@ -125,8 +165,10 @@ static void unsync(void) { amt_set_sr(0x2000); }
 static int poll(UWORD mask, ULONG limit, ULONG *lo, ULONG *hi)
 {
     ULONG p, last = hw_beam(), l = 0;
+    ULONG budget = 1000000;
     for (;;) {
         p = hw_beam_fix(hw_beam(), last);
+        wait_progress(p, last, &budget);
         if (CU(INTREQR) & mask)
             break;
         if (p < last || p >= limit)
@@ -672,7 +714,7 @@ static void jump_tests(void)
     cend();
     g = g2 = 0;
     for (t = 0; t < 4; t++) {
-        UWORD last, v, lim = pal ? 0x130 : 0x100;
+        UWORD lim = pal ? 0x130 : 0x100;
         int valid;
         mk_clear();
         sync_line(0x40);
@@ -680,13 +722,7 @@ static void jump_tests(void)
         wait_line(lim);
         g = mk_get();
         valid = hw_vline() >= lim;       /* still in the same frame */
-        last = hw_vline();
-        for (;;) {                      /* to the next frame */
-            v = hw_vline();
-            if (v < last && last - v > 100)
-                break;
-            last = v;
-        }
+        wait_frame_wrap();
         wait_line(0x10);
         g2 = mk_get();
         cop_idle();
@@ -770,6 +806,11 @@ static void copen_test(void)
         cop_idle();
         unsync();
     }
+    if (!valid) {
+        amt_case("copen_pause_resume", AMT_ST_UNTESTABLE,
+                 "all four trials missed the required COPEN-disable observation window");
+        return;
+    }
     ok = !g && g2 == MK_A;
     amt_case_open("copen_pause_resume", ok ? AMT_ST_PASS : AMT_ST_FAIL);
     if (!ok) {
@@ -823,22 +864,13 @@ static void blit_start_long(void)
     CU(BLTSIZE) = 0;                    /* 1024 lines x 64 words */
 }
 
-/* poll a marker for up to n frames (no beam timing involved) */
-static int wait_marker(UWORD m, ULONG n)
-{
-    ULONG f0 = amt_frames_now();
-    while (!(CU(INTREQR) & m))
-        if (amt_frames_now() - f0 > n)
-            return 0;
-    return 1;
-}
-
 static void bfd_tests(void)
 {
     int bfd;
     for (bfd = 0; bfd < 2; bfd++) {
         ULONG f0, frames;
-        int f, busy0, busy_at, ok;
+        int f = 0, busy0, busy_at = 0, ok, order = 0, saw_done_clear = 0;
+        ULONG budget = 2000000;
         lst(OFF_L1);
         cwaitx(0x40, 0x00, 0x7f, 0xfe, bfd, 0);
         cmark(MK_A);
@@ -850,13 +882,28 @@ static void bfd_tests(void)
         busy0 = blit_busy();
         f0 = amt_frames_now();
         cop_start(OFF_L1);
-        f = wait_marker(MK_A, 20);
-        busy_at = blit_busy();
+        while (--budget && amt_frames_now() - f0 < 20) {
+            int before = blit_busy();
+            UWORD marker = CU(INTREQR) & MK_A;
+            busy_at = blit_busy();
+            if (!before && !marker)
+                saw_done_clear = 1;
+            if (marker) {
+                f = 1;
+                order = hw_bfd_order(marker, busy_at, saw_done_clear);
+                break;
+            }
+        }
         frames = amt_frames_now() - f0;
         cop_idle();
         blit_wait();
         CU(DMACON) = DMAF_BLTEN;
-        ok = busy0 && f && (bfd ? busy_at : !busy_at);
+        if (busy0 && f && !order) {
+            amt_case(bfd ? "wait_bfd1_ignores_blitter" : "wait_bfd0_waits_blitter",
+                     AMT_ST_UNTESTABLE, "CPU observation straddled completion: marker ordering was not witnessed");
+            continue;
+        }
+        ok = busy0 && f && (bfd ? order == -1 : order == 1);
         amt_case_open(bfd ? "wait_bfd1_ignores_blitter" : "wait_bfd0_waits_blitter",
                       ok ? AMT_ST_PASS : AMT_ST_FAIL);
         if (!ok) {

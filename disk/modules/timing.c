@@ -510,6 +510,15 @@ static int hscan_frames(UWORD *hmax, UWORD *hmin, ULONG *blocks, ULONG *nlines)
     return done >= want;
 }
 
+static int hscan_status(UWORD hmax, UWORD hmin, UWORD expected_max)
+{
+    if (hmax > expected_max)
+        return AMT_ST_FAIL;
+    if (hmin == 0 && hmax >= expected_max - 1)
+        return AMT_ST_PASS;
+    return AMT_ST_UNTESTABLE;
+}
+
 static void beam_tests(void)
 {
     UWORD lines[NFR];
@@ -518,7 +527,7 @@ static void beam_tests(void)
     UWORD hmax, hmin;
     ULONG n, blocks, nlines;
     UWORD exp_hmax = pal ? 0xe2 : 0xe3;
-    int ok;
+    int ok, status;
 
     amt_set_sr(0x2700);
     tm_start_copper(pal);
@@ -557,21 +566,22 @@ static void beam_tests(void)
         stuck_case("cck_per_line", "8 frames of beam lines while sampling VHPOSR", WHY_BEAM_STUCK);
         return;
     }
-    /* A polling CPU reads VHPOSR at most every second colour clock (chip bus
-     * slots), and a fast or JIT-compiled loop can stay in phase with the
-     * counter, so it may never see the last position. The architectural
-     * rule checked: the counter never exceeds the line end, and reaches it
-     * or the position before it. The observed maximum is a timing field. */
-    if ((hmax == exp_hmax || hmax == exp_hmax - 1) && hmin == 0) {
+    /* Polls need not visit every H position, even across whole frames:
+     * instruction/block timing can quantize every access to the same phases.
+     * An out-of-range value is a failure; missing endpoints is insufficient
+     * coverage, not evidence that the hardware counter missed them. */
+    status = hscan_status(hmax, hmin, exp_hmax);
+    if (status == AMT_ST_PASS) {
         amt_case_open("cck_per_line", AMT_ST_PASS);
         json_obj("timing");
         json_hexn("hmax_seen", hmax, 2);
+        json_hexn("hmin_seen", hmin, 2);
         json_int("samples", (long)(blocks * 1000));
         json_int("lines", (long)nlines);
         json_obj_end();
         amt_case_close();
     } else {
-        amt_case_open("cck_per_line", AMT_ST_FAIL);
+        amt_case_open("cck_per_line", status);
         json_obj("expect");
         json_hexn("hmax", exp_hmax, 2);
         json_hexn("hmin", 0, 2);
@@ -580,8 +590,11 @@ static void beam_tests(void)
         json_hexn("hmax", hmax, 2);
         json_hexn("hmin", hmin, 2);
         json_obj_end();
-        json_str("why", pal ? "PAL line is 227 colour clocks: VHPOSR H counts $00-$E2, so a poll over 8 whole frames must see $00 as the minimum and $E1 or $E2 as the maximum, never more (HRM ch.6 beam position)"
-                            : "NTSC lines alternate 227/228 colour clocks: VHPOSR H reaches $E3 on long lines (HRM, LOL); a poll over 8 whole frames must see $00 and $E2 or $E3");
+        json_str("why", hmax > exp_hmax
+                 ? (pal ? "VHPOSR H exceeds $E2 on a PAL line (227 colour clocks; HRM ch.6 beam position)"
+                        : "VHPOSR H exceeds $E3 on an NTSC long line (228 colour clocks; HRM, LOL)")
+                 : "CPU polling did not cover both ends of the VHPOSR H range; access timing can "
+                   "skip these positions even over whole frames, so the line-end check is inconclusive");
         json_obj("ctx");
         json_int("pal", pal);
         json_int("frames", TM_HS_FRAMES);

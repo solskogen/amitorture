@@ -7,26 +7,33 @@
 
 /* ---------------------------------------------------- ET4000 */
 static struct vga_state est;
+static UBYTE seg, cr33, cr37, cr30, cr36, ix217a;
+static int w32, cr37_set, et_stage;
 
-void rtg_et4000(void)
+static void et_run(void)
 {
     struct rtg_card *c = rtg_cur;
-    UBYTE m0, seg, cr33, cr37, cr30 = 0, cr36 = 0, ix217a;
-    int w32 = 0, cr37_set;
     int i, bad = 0;
     UBYTE bw = 0, br = 0;
     volatile UBYTE *vram = c->win[0].p;
 
-    m0 = vi(0x3cc);
+    vga_save_selectors(&est);
+    et_stage = 8;
+    vga_save(&est, 8, 9, 0x38);
+    et_stage |= 1;
     vga_color_io();
     /* KEY: 03h to 3BF, then A0h to 3D8 enables the extended registers */
     vo(0x3bf, 0x03);
     vo(0x3d8, 0xa0);
-    vga_save(&est, 8, 9, 0x38);
-    est.misc = m0;
 
     /* segment select 3CD: bits 3:0 write segment, 7:4 read segment, R/W */
     seg = vi(0x3cd);
+    cr33 = CR_R(0x33);
+    cr37 = CR_R(0x37);
+    cr30 = CR_R(0x30);
+    cr36 = CR_R(0x36);
+    ix217a = vi(0x217a);
+    et_stage |= 2;
     for (i = 0; i < 5; i++) {
         static const UBYTE v[5] = { 0x55, 0xaa, 0x00, 0xff, 0x3c };
         vo(0x3cd, v[i]);
@@ -44,7 +51,6 @@ void rtg_et4000(void)
         json_obj("ctx"); rtg_ctx_card(); json_obj_end();
         amt_case_close();
     }
-    cr33 = CR_R(0x33);
     {
         static const struct regm ext[] = { {0x33, 0x03} };
         rtg_regfile("et4_cr33", 0x3d4, ext, 1, "CR33 (extended start address bits 17:16) does not read back after the KEY sequence");
@@ -53,14 +59,10 @@ void rtg_et4000(void)
 
     vga_set_640x480();
     vo(0x3cd, 0x00);
-    cr37 = CR_R(0x37);
     /* ET4000/W32: CR36 bit 4 linear map, CR30 (address map comparator)
      * = 0, which is where these boards put their window (W32 data book;
      * board model). The W32 is told apart by its 217A index register,
      * which reads back (the ET4000AX does not decode it). */
-    cr30 = CR_R(0x30);
-    cr36 = CR_R(0x36);
-    ix217a = vi(0x217a);
     vo(0x217a, 0x5c);
     w32 = vi(0x217a) == 0x5c;
     vo(0x217a, ix217a);
@@ -91,24 +93,52 @@ void rtg_et4000(void)
     json_end();
     for (i = 0; i < (int)(RTG_WORK / 4); i++)
         ((ULONG *)rtg_save)[i] = ((volatile ULONG *)vram)[i];
+    et_stage |= 4;
     rtg_vram_tests();
     rtg_draw_test("mode_draw", 640, 100);
     vga_retrace_test();
     rtg_screenshot("mode_screenshot", rtg_cid("640x480"));
     vga_vint_test(0);
 
-    for (i = 0; i < (int)(RTG_WORK / 4); i++)
-        ((volatile ULONG *)vram)[i] = ((ULONG *)rtg_save)[i];
+}
+
+static void et_restore(void)
+{
+    int i;
+    if (!et_stage) return;
+    if (!(et_stage & 1)) {
+        vga_restore_selectors(&est);
+        return;
+    }
+    rtg_monitor_restore();
+    rtg_vram_restore();
+    if (et_stage & 4)
+        for (i = 0; i < (int)(RTG_WORK / 4); i++)
+            ((volatile ULONG *)rtg_cur->win[0].p)[i] = ((ULONG *)rtg_save)[i];
     vga_restore_std(&est);
     vo(0x3c2, est.misc | 1);
-    CR_W(0x33, cr33);
-    if (w32) {
-        CR_W(0x36, cr36);
-        CR_W(0x30, cr30);
+    if (et_stage & 2) {
+        CR_W(0x33, cr33);
+        if (w32) {
+            CR_W(0x36, cr36);
+            CR_W(0x30, cr30);
+        }
+        CR_W(0x37, cr37);
+        vo(0x3cd, seg);
+        vo(0x217a, ix217a);
     }
-    CR_W(0x37, cr37);
-    vo(0x3cd, seg);
     vo(0x3c2, est.misc);
+    vga_restore_selectors(&est);
+}
+
+void rtg_et4000(void)
+{
+    int code, cleanup;
+    et_stage = w32 = cr37_set = 0;
+    code = amt_try(et_run);
+    cleanup = amt_try(et_restore);
+    if (cleanup) amt_abort_fatal(cleanup);
+    if (code) amt_abort(code);
 }
 
 /* ---------------------------------------------------- A2410 / TMS34010 */
@@ -124,12 +154,16 @@ void rtg_et4000(void)
 #define HST_INCR 0x1000
 #define HST_INCW 0x0800
 
-/* HSTCTL write without disturbing the TMS: keep HLT and NMI as read,
+/* HSTCTL write without disturbing the TMS: keep HLT, NMIM and MSGIN,
  * INTIN = 0, INTOUT written 1 (writing 0 would clear a pending request) */
 static void hctl(UWORD keep, UWORD bits)
 {
-    HCTL = (UWORD)((keep & 0xc000) | (bits & 0x3800) | 0x0080);
+    HCTL = (UWORD)((keep & 0x8207) | (bits & 0x3800) | 0x0080);
 }
+
+static UWORD tms_ctl, tms_l, tms_h, tms_save[32];
+static ULONG tms_addr;
+static int tms_stage, tms_pending;
 
 static void tms_seek(ULONG bitaddr)
 {
@@ -139,12 +173,14 @@ static void tms_seek(ULONG bitaddr)
 
 static int tms_rw(const char *suffix, ULONG bitaddr, int n, const char *why)
 {
-    UWORD keep = HCTL, save[32], e = 0, g = 0;
+    UWORD keep = HCTL, e = 0, g = 0;
     int i, bad = -1;
     if (n > 32) n = 32;
     hctl(keep, HST_INCR);
     tms_seek(bitaddr);
-    for (i = 0; i < n; i++) save[i] = HDATA;
+    for (i = 0; i < n; i++) tms_save[i] = HDATA;
+    tms_addr = bitaddr;
+    tms_pending = n;
     hctl(keep, HST_INCW);
     tms_seek(bitaddr);
     for (i = 0; i < n; i++) HDATA = (UWORD)(0x5a00 ^ (i * 0x0101) ^ (bitaddr >> 4));
@@ -156,8 +192,9 @@ static int tms_rw(const char *suffix, ULONG bitaddr, int n, const char *why)
     }
     hctl(keep, HST_INCW);
     tms_seek(bitaddr);
-    for (i = 0; i < n; i++) HDATA = save[i];
-    hctl(keep, 0);
+    for (i = 0; i < n; i++) HDATA = tms_save[i];
+    tms_pending = 0;
+    hctl(keep, keep);
     if (bad < 0) { rtg_pass(suffix); return 1; }
     amt_case_open(rtg_cid(suffix), AMT_ST_FAIL);
     json_obj("expect"); json_hexn("word", e, 4); json_obj_end();
@@ -169,28 +206,26 @@ static int tms_rw(const char *suffix, ULONG bitaddr, int n, const char *why)
     return 0;
 }
 
-void rtg_a2410(void)
+static void tms_run(void)
 {
     UWORD ctl = HCTL, l0, h0, l1, h1, c1;
-    /* nothing has loaded TMS code at this point: after reset the TMS34010
-     * of a host-interface system is halted (HSTCTL HLT = 1, TMS34010 UG
-     * "reset"), waiting for the host to load its program. A running TMS
-     * executes whatever is in its DRAM (and can master the Zorro bus):
-     * then the module touches nothing else. */
+    /* HLT is an observed ownership prerequisite, not evidence that a
+     * running board violates reset behaviour: firmware may have started it. */
     if (ctl & HST_HLT)
         rtg_pass("tms_reset_halted");
     else {
-        amt_case_open(rtg_cid("tms_reset_halted"), AMT_ST_FAIL);
-        json_obj("expect"); json_int("hlt", 1); json_obj_end();
-        json_obj("got"); json_int("hlt", 0); json_obj_end();
-        json_str("why", "no driver has released the TMS34010, yet HSTCTL HLT (bit 15) is clear: after reset the TMS34010 must be halted until the host clears HLT (TMS34010 UG); with HLT = 0 it runs uninitialised DRAM");
-        json_obj("ctx"); rtg_ctx_card(); json_obj_end();
-        amt_case_close();
+        rtg_skip("tms_reset_halted", "TMS is running; reset history and software ownership are unknown, not a reset conformance failure");
         rtg_skip("tms_host", "TMS34010 is running (HLT = 0): the host port tests are not run, so the running TMS is not disturbed");
+        return;
+    }
+    if (ctl & 0x4100) {
+        rtg_skip("tms_host", "cache flush or NMI is pending; host controls cannot be changed and restored without side effects");
         return;
     }
     /* address registers: 16-bit read/write */
     l0 = HADRL; h0 = HADRH;
+    tms_ctl = ctl; tms_l = l0; tms_h = h0;
+    tms_stage = 1;
     hctl(ctl, 0);
     HADRL = 0x1230; HADRH = 0x00ab;
     l1 = HADRL; h1 = HADRH;
@@ -234,18 +269,21 @@ void rtg_a2410(void)
      * (0xC0000140), PMASK (0xC0000160), plain 16-bit read/write */
     {
         static const ULONG regs[3] = { 0xc0000130UL, 0xc0000140UL, 0xc0000160UL };
-        UWORD keep = HCTL, save, v, e = 0, g = 0;
+        UWORD keep = HCTL, v, e = 0, g = 0;
         int i, bad = -1;
         for (i = 0; i < 3; i++) {
             hctl(keep, 0);
             tms_seek(regs[i]);
-            save = HDATA;
+            tms_save[0] = HDATA;
+            tms_addr = regs[i];
+            tms_pending = 1;
             tms_seek(regs[i]);
             HDATA = (UWORD)(0x1357 + i * 0x2222);
             tms_seek(regs[i]);
             v = HDATA;
             tms_seek(regs[i]);
-            HDATA = save;
+            HDATA = tms_save[0];
+            tms_pending = 0;
             if (v != (UWORD)(0x1357 + i * 0x2222) && bad < 0) { bad = i; e = (UWORD)(0x1357 + i * 0x2222); g = v; }
         }
         hctl(keep, keep);
@@ -261,7 +299,35 @@ void rtg_a2410(void)
             amt_case_close();
         }
     }
-    HADRL = l0; HADRH = h0;
+}
+
+static void tms_restore(void)
+{
+    int i;
+    if (!tms_stage) return;
+    if (!(HCTL & HST_HLT)) {
+        rtg_chk("tms_restore", "halted", 1, 0, "TMS unexpectedly running: host memory restoration withheld");
+        amt_abort_fatal(AMT_ABORT_UNEXPECTED);
+    }
+    if (tms_pending) {
+        hctl(tms_ctl, HST_INCW);
+        tms_seek(tms_addr);
+        for (i = 0; i < tms_pending; i++) HDATA = tms_save[i];
+        tms_pending = 0;
+    }
+    hctl(tms_ctl, 0);
+    HADRL = tms_l; HADRH = tms_h;
+    hctl(tms_ctl, tms_ctl);  /* final restoration after every memory test */
+}
+
+void rtg_a2410(void)
+{
+    int code, cleanup;
+    tms_stage = tms_pending = 0;
+    code = amt_try(tms_run);
+    cleanup = amt_try(tms_restore);
+    if (cleanup) amt_abort_fatal(cleanup);
+    if (code) amt_abort(code);
 }
 
 /* ---------------------------------------------------- ZZ9000 */
@@ -273,10 +339,7 @@ void rtg_zz9000(void)
     UWORD fw = ZZR(0xc0), hw = ZZR(0x00);
     ULONG f0;
     int s0 = 0, s1 = 0, i;
-    volatile UBYTE *vram = c->win[0].p;
 
-    if (c->bus == 3) { c->win[0].size = 0x400000; }
-    else if (c->win[0].size > 0x200000) c->win[0].size = 0x200000;
     c->vram_max = c->win[0].size;
     if (fw != 0 && fw != 0xffff) {
         amt_case_open(rtg_cid("zz_fw_version"), AMT_ST_PASS);
@@ -290,10 +353,15 @@ void rtg_zz9000(void)
         json_obj("ctx"); rtg_ctx_card(); json_obj_end();
         amt_case_close();
     }
-    /* vertical blank status register (0x4C): bit 0 must be seen 0 and 1 */
+    /* Official firmware 1.14 returns zstate_raw bit 21 in this 32-bit
+     * register; the Amiga upper word at +4C therefore uses bit 5. There
+     * is no advertised capability bit for alternate firmware layouts. */
+    if (fw != 0x010e) {
+        rtg_skip("zz_vblank", "vblank encoding verified for official firmware 1.14 only; unknown/alternate firmware has no capability discriminator");
+    } else {
     f0 = amt_frames_now();
     while (amt_frames_now() - f0 < 4 && !(s0 && s1)) {
-        if (ZZR(0x4c) & 1) s1 = 1; else s0 = 1;
+        if (ZZR(0x4c) & 0x20) s1 = 1; else s0 = 1;
     }
     if (s0 && s1)
         rtg_pass("zz_vblank");
@@ -301,24 +369,19 @@ void rtg_zz9000(void)
         amt_case_open(rtg_cid("zz_vblank"), AMT_ST_FAIL);
         json_obj("expect"); json_str("vblank", "toggles"); json_obj_end();
         json_obj("got"); json_int("seen0", s0); json_int("seen1", s1); json_obj_end();
-        json_str("why", "ZZ9000 vblank status (register 0x4C bit 0) did not toggle within 4 Amiga frames");
+        json_str("why", "ZZ9000 vblank status (upper word at 0x4C bit 5) did not toggle within 4 Amiga frames");
         json_obj("ctx"); rtg_ctx_card(); json_obj_end();
         amt_case_close();
     }
+    }
     /* The memory window at +$10000 is the ZZ9000's ARM-side RAM, which the
      * running firmware uses (frame buffers, GFXData, its own state); there
-     * is no documented free area in it. The write/restore cases would race
-     * with the firmware, so they run only with the unsafe flag (review M8). */
-    if (!(amt_par.flags & AMT_F_UNSAFE)) {
+     * is no documented free area in it. Neither a Zorro claim nor unsafe
+     * consent establishes a firmware reservation, so write cases skip. */
+    {
         static const char *const ids[] = { "vram_bwl", "vram_addr_lines", "vram_walk", "vram_draw" };
         for (i = 0; i < 4; i++)
-            rtg_skip(ids[i], "ZZ9000 memory at +$10000 is RAM of the running ARM firmware: written only with the unsafe flag");
+            rtg_skip(ids[i], "ZZ9000 RAM belongs to running ARM firmware; unsafe consent does not reserve a race-free work area");
         return;
     }
-    for (i = 0; i < (int)(RTG_WORK / 4); i++)
-        ((ULONG *)rtg_save)[i] = ((volatile ULONG *)vram)[i];
-    rtg_vram_tests();
-    rtg_draw_test("vram_draw", 640, 100);
-    for (i = 0; i < (int)(RTG_WORK / 4); i++)
-        ((volatile ULONG *)vram)[i] = ((ULONG *)rtg_save)[i];
 }

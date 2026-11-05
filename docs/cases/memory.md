@@ -4,7 +4,9 @@
 centred on a 64 KB boundary (Amiberry's `mem_banks` granularity), on an odd 32 KB boundary and, if the
 region spans one, on a 16 MB boundary. It uses AllocAbs() at addresses it found free in the region's own
 free-chunk list (falls back to one plain Allocate() block without boundary when no free 64 KB boundary
-exists). The blocks are not freed. `memory` (AMT_PH_BARE) then tests every block.
+exists). `memory` (AMT_PH_BARE) then tests every block. On CLI return the runtime frees all blocks,
+using `FreeMem` for `AllocAbs` and the original base, size and owning MemHeader with `Deallocate` for
+the aligned fallback. Default halt intentionally retains them with the live mailbox.
 
 Region kinds (from the address map and the expansion board list): `chip` (MEMF_CHIP below $200000),
 `slow` ($C00000-$DBFFFF), `z2` (Zorro II / $200000-$9FFFFF), `z3` (inside an autoconfig board at or above

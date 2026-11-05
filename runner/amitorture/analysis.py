@@ -42,9 +42,6 @@ def failure_items(results, fps, registry):
         r = by_id.get(it["entry"]) or {}
         it.update({"jit": r.get("jit"), "twin_of": r.get("twin_of"), "machine": r.get("machine"),
                    "rom": (r.get("rom") or {}).get("name"), "config": (r.get("config") or {}).get("file")})
-        xf = xfailmod.match(registry, it["case_key"], it["entry"], r.get("options"))
-        if xf:
-            it["xfail"] = xf
     items.extend(par)
     hrm = hrm_timing_items(results, fps)
     n = len(items)
@@ -173,12 +170,18 @@ def analyze_run(opts, ctx, entries, results):
                     ctx.results, p, rep, e, rom=romd, ext_rom=extd,
                     adf_src=disk_with_module(r, rep.get("mod"), ctx.d.get("disks")) or ctx.d["adf_src"], params=params,
                     module_id=mids.get(rep.get("mod")), binary=opts.binary, kickstarts=os.path.abspath(opts.kickstarts),
-                    amiberry_src=src_path, pointers=p["pointers"], bake=adfmod.bake)
+                    amiberry_src=src_path, pointers=p["pointers"], bake=adfmod.bake,
+                    warp=module_warp(r, rep.get("mod")))
             except Exception as ex:
                 p["repro"] = {"error": f"{type(ex).__name__}: {ex}"}
     return {"fps": fps, "items": items, "parity": parity_info, "xfail": xf, "fixed": fixed, "problems": probs,
             "narrowing": narrowing, "amiberry_src": src_path, "baseline": opts.baseline,
             "module_ids": mids}
+
+
+def module_warp(result, mod):
+    return next((s.get("warp") for s in (result.get("disks") or [result])
+                 if mod in (s.get("modules") or {})), None)
 
 
 def disk_with_module(result, mod, disks):
@@ -225,6 +228,7 @@ def load_results(results_dir):
     """The entry results of a run directory (raw/*/result.json + records.jsonl),
     without the narrowing/repro launches (ids containing '~')."""
     from . import records as recmod
+    from .emulator import RunnerError
     out = []
     raw = os.path.join(results_dir, "raw")
     for name in sorted(os.listdir(raw)):
@@ -237,12 +241,17 @@ def load_results(results_dir):
             continue
         def merged_from(sub, rp):
             if not os.path.isfile(rp):
-                return None
+                if sub.get("status") in ("skip", "error") and not (sub.get("records") or {}).get("merged"):
+                    return None
+                raise RunnerError(f"saved records missing: {rp}")
             with open(rp, encoding="utf-8") as fh:
                 recs = [json.loads(line) for line in fh if line.strip()]
             st = sub.get("records") or {}
+            schema = list(st.get("schema_problems", []))
+            if st.get("bad_count", 0) > len(st.get("bad", [])):
+                schema.append({"problems": ["saved transport corruption metadata is incomplete"]})
             return recmod.Merged(recs, st.get("gaps", []), st.get("bad", []), st.get("conflicts", []),
-                                 st.get("duplicates_dropped", 0), st.get("schema_problems", []),
+                                 st.get("duplicates_dropped", 0), schema,
                                  st.get("per_source", {}))
         if r.get("disks"):
             from .runner import merge_disks
@@ -313,7 +322,8 @@ def rebuild(results_dir, opts_like=None, repro=True, xfail_path=None):
                     results_dir, p, rep, e, rom=romd, ext_rom=extd, adf_src=src_adf,
                     params=dict(env.get("params") or {}, **(r.get("params") or {})),
                     module_id=mids.get(rep.get("mod")), binary=binary, kickstarts=env.get("kickstarts_dir"),
-                    amiberry_src=sp, pointers=p["pointers"], bake=adfmod.bake)
+                    amiberry_src=sp, pointers=p["pointers"], bake=adfmod.bake,
+                    warp=module_warp(r, rep.get("mod")))
             except Exception as ex:
                 p["repro"] = {"error": f"{type(ex).__name__}: {ex}"}
     an = {"fps": fps, "items": items, "parity": parity_info, "xfail": xf, "fixed": fixed, "problems": probs,

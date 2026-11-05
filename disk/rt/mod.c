@@ -18,6 +18,8 @@
  */
 #include <proto/exec.h>
 #include <exec/memory.h>
+#include <libraries/configvars.h>
+#include <stdint.h>
 #include "mod.h"
 #include "screen.h"
 /* CIA save/restore helpers shared with the cia module (header-only) */
@@ -35,6 +37,7 @@ void amt_supervisor_run(void (*fn)(void), void *top);
 
 /* shared with bare.s */
 struct amt_exc_info amt_last_exc;
+UWORD amt_bus_frame_68000;
 volatile ULONG amt_frames;
 volatile ULONG amt_wd_left;
 volatile ULONG amt_wd_hard;        /* frames left for the whole module (not kicked) */
@@ -52,16 +55,54 @@ static const char *oom_why;         /* not enough memory: every module skips */
 static ULONG m_pass, m_fail, m_skip, m_untestable;
 static ULONG case_no;
 static UBYTE *chip_pool, *any_pool, *stack_mem;
+static UBYTE *chip_alloc, *any_alloc;
 static ULONG chip_size, any_size;
 static int any_is_chip;
 #define BARE_STACK 32768
+static void (*return_cleanup[64])(void);
+static int n_return_cleanup;
 static struct amt_saved saved;
 static volatile ULONG *vbr_tab;      /* may be 0: VBR=0 on 68000 / most KS */
 static int bare_active;              /* vbr_tab valid */
+static volatile struct ConfigDev *board_claims[AMT_PROBE_BOARDS_MAX];
+static volatile int fatal_quarantine;
 static ULONG rng;
 static ULONG wd_limit;
 
 /* ------------------------------------------------------------ helpers */
+int amt_on_return(void (*fn)(void))
+{
+    int i;
+    for (i = 0; i < n_return_cleanup; i++)
+        if (return_cleanup[i] == fn)
+            return 0;
+    if (n_return_cleanup == 64)
+        return -1;
+    return_cleanup[n_return_cleanup++] = fn;
+    return 0;
+}
+
+static void free_test_memory(void)
+{
+    if (stack_mem)
+        FreeMem(stack_mem, BARE_STACK);
+    if (any_alloc)
+        FreeMem(any_alloc, any_size + 16);
+    if (chip_alloc)
+        FreeMem(chip_alloc, chip_size + 16);
+    stack_mem = any_alloc = chip_alloc = 0;
+    chip_pool = any_pool = 0;
+    chip_size = any_size = 0;
+    any_is_chip = 0;
+}
+
+void amt_return_cleanup(void)
+{
+    while (n_return_cleanup)
+        return_cleanup[--n_return_cleanup]();
+    free_test_memory();
+}
+
 int amt_board_ok(const struct amt_probe_board *b)
 {
     ULONG a, e;
@@ -88,9 +129,78 @@ int amt_board_ok(const struct amt_probe_board *b)
     return 0;
 }
 
+int amt_board_claim(const struct amt_probe_board *b)
+{
+    volatile struct ConfigDev *cd;
+    struct amt_probe_board current;
+    UWORD sr;
+    UBYTE flags;
+    struct Node *node;
+    ULONG scanned;
+    int i, ok = 0;
+    if (!b || !bare_active || !SysBase || !amt_probe_result.board_library || !amt_probe_result.board_list ||
+        (amt_par.end_action != AMT_END_HALT && amt_par.end_action != AMT_END_REBOOT))
+        return 0;
+    sr = amt_get_sr();
+    amt_set_sr(sr | 0x0700);
+    if (SysBase->TDNestCnt < 0 || SysBase->IDNestCnt < 0)
+        goto out;
+    for (i = 0; i < amt_probe_result.n_boards && i < AMT_PROBE_BOARDS_MAX; i++)
+        if (b == &amt_probe_result.boards[i])
+            break;
+    if (i >= amt_probe_result.n_boards || i >= AMT_PROBE_BOARDS_MAX || !b->config_dev)
+        goto out;
+    /* Check live membership before dereferencing a possibly removed/freed
+     * ConfigDev. Task exclusion and the retained library reference keep
+     * this list stable; do not call semaphore-taking OS enumeration here. */
+    cd = 0;
+    if (amt_probe_result.board_list->lh_Tail)
+        goto out;
+    node = amt_probe_result.board_list->lh_Head;
+    for (scanned = 0; node && node->ln_Succ && scanned < 4096; scanned++, node = node->ln_Succ)
+        if (node == (struct Node *)b->config_dev) {
+            cd = (volatile struct ConfigDev *)node;
+            break;
+        }
+    if (!cd)
+        goto out;
+    flags = cd->cd_Flags;
+    if (cd->cd_Rom.er_Manufacturer != b->man || cd->cd_Rom.er_Product != b->prod ||
+        cd->cd_Rom.er_Type != b->ertype || cd->cd_Rom.er_SerialNumber != b->serial ||
+        (uintptr_t)cd->cd_BoardAddr != (uintptr_t)b->addr ||
+        cd->cd_BoardSize != b->size || cd->cd_Driver || (flags & CDF_BADMEMORY))
+        goto out;
+    current = *b;
+    current.flags = flags;            /* probe flags are not current ownership */
+    if (!amt_board_ok(&current))
+        goto out;
+    for (i = 0; i < AMT_PROBE_BOARDS_MAX; i++)
+        if (board_claims[i] == cd) {
+            ok = !(flags & CDF_CONFIGME);
+            goto out;
+        }
+    if (!(flags & CDF_CONFIGME))
+        goto out;
+    for (i = 0; i < AMT_PROBE_BOARDS_MAX; i++)
+        if (!board_claims[i]) {
+            cd->cd_Flags = (UBYTE)(flags & ~CDF_CONFIGME);
+            board_claims[i] = cd;
+            ok = 1;
+            break;
+        }
+out:
+    amt_set_sr(sr);
+    return ok;
+}
+
 void *amt_chip_pool(void) { return chip_pool; }
 void *amt_any_pool(void) { return any_pool; }
 int amt_any_pool_is_chip(void) { return any_is_chip; }
+int amt_any_pool_on_chip_bus(void)
+{
+    ULONG addr = (ULONG)any_pool;
+    return any_is_chip || (addr >= 0x00c00000UL && addr < 0x00dc0000UL);
+}
 volatile ULONG *amt_vbr(void) { return vbr_tab; }
 
 void amt_srand(ULONG seed) { rng = seed ? seed : 0x2545f491UL; }
@@ -121,6 +231,24 @@ long amt_hot(ULONG (*fn)(ULONG iter), ULONG reps, ULONG *first, ULONG *bad)
         if (r != f) {
             if (bad)
                 *bad = r;
+            return (long)i;
+        }
+        if ((i & 63) == 0)
+            amt_watchdog_kick();
+    }
+    return -1;
+}
+
+long amt_hot_checked(ULONG (*fn)(ULONG iter), ULONG reps, ULONG *first, ULONG *bad)
+{
+    ULONG i;
+    if (first)
+        *first = 0;
+    for (i = 0; i <= reps; i++) {
+        ULONG result = fn(i);
+        if (result) {
+            if (bad)
+                *bad = result;
             return (long)i;
         }
         if ((i & 63) == 0)
@@ -336,11 +464,56 @@ static int enabled(const struct amt_module *m)
 
 int amt_module_enabled(const struct amt_module *m) { return enabled(m); }
 
+void amt_json_modules(void)
+{
+    int i;
+    json_obj("modules");
+    for (i = 0; i < amt_n_modules; i++)
+        if (enabled(amt_modules[i]))
+            json_int(amt_modules[i]->name, amt_modules[i]->id);
+    json_obj_end();
+}
+
+void amt_abort_fatal(int code)
+{
+    fatal_quarantine = 1;
+    amt_wd_armed = 0;
+    Disable();
+    Forbid();
+    amt_n_aborted++;
+    amt_case_open("fatal_cleanup", AMT_ST_FAIL);
+    json_obj("expect");
+    json_str("cleanup", "safe idle state");
+    json_obj_end();
+    json_obj("got");
+    json_str("cleanup", "unsafe; quarantined");
+    json_int("code", code);
+    json_obj_end();
+    json_str("why", "hardware cleanup could not establish a safe idle state; "
+                   "quarantined without OS resumption; reset this test machine");
+    json_int("code", code);
+    amt_case_close();
+    mbox_set_state(MBOX_STATE_ABORTED);
+    for (;;)
+        ;
+}
+
 static void report_abort(int code)
 {
     UWORD i;
     amt_n_aborted++;
     amt_case_open("aborted", AMT_ST_FAIL);
+    json_obj("expect");
+    json_int("abort_code", 0);
+    json_obj_end();
+    json_obj("got");
+    json_int("abort_code", code);
+    if (code == AMT_ABORT_UNEXPECTED) {
+        json_int("vector", amt_last_exc.vector);
+        json_hexn("sr", amt_last_exc.sr, 4);
+        json_hex("pc", amt_last_exc.pc);
+    }
+    json_obj_end();
     if (code == AMT_ABORT_WATCHDOG) {
         if (amt_wd_hard == 0) {
             json_str("why", "watchdog: the module ran past its hard time limit (stuck in a loop that keeps "
@@ -351,11 +524,6 @@ static void report_abort(int code)
         json_int("limit_frames", (long)wd_limit);
     } else if (code == AMT_ABORT_UNEXPECTED) {
         json_str("why", "unexpected exception: hit the runtime catch-all vector");
-        json_obj("got");
-        json_int("vector", amt_last_exc.vector);
-        json_hexn("sr", amt_last_exc.sr, 4);
-        json_hex("pc", amt_last_exc.pc);
-        json_obj_end();
         json_arr("frame");
         for (i = 0; i < 16; i++)
             json_hexn(NULL, amt_last_exc.frame[i], 4);
@@ -541,6 +709,11 @@ static void run_module(const struct amt_module *m)
         amt_wd_armed = 1;
         code = amt_try(bare_body);
         amt_wd_armed = 0;
+        if (fatal_quarantine) {
+            amt_set_sr(0x2700);
+            for (;;)
+                ;
+        }
         bare_reset_env();
         cpu_module_policy();               /* also after an abort: caches/MMU/FPU */
         chip_module_policy();               /* disk DMA, FMODE, copper, CIAs quiet */
@@ -689,6 +862,11 @@ static int quiesce(void)
     int cli = amt_bootio == 0, tries;
     struct Library *dos = 0;
     const char *why = 0;
+    if (amt_par.end_action == AMT_END_RETURN) {
+        refuse_why = "bare phase refused for return: original CIA timer latches cannot be recovered; "
+                     "use halt or reboot only in a disposable test environment";
+        return 0;
+    }
     find_ide();
     if (cli) {
         dos = OpenLibrary((CONST_STRPTR)"dos.library", 0);
@@ -727,6 +905,7 @@ static int skip_all_oom(const char *why)
     for (i = 0; i < amt_n_modules; i++)
         if (enabled(amt_modules[i]))
             run_module(amt_modules[i]);
+    free_test_memory();
     return 0;
 }
 
@@ -734,6 +913,7 @@ static int skip_all_oom(const char *why)
 int amt_run_modules(void)
 {
     int i, any_bare = 0;
+    amt_bus_frame_68000 = AMT_CPU() == AMT_CPU_68000;
 
     for (i = 0; i < amt_n_modules; i++) {
         const struct amt_module *m = amt_modules[i];
@@ -747,21 +927,21 @@ int amt_run_modules(void)
             any_bare = 1;
     }
     if (chip_size) {
-        chip_pool = AllocMem(chip_size + 16, MEMF_CHIP | MEMF_CLEAR);
-        if (!chip_pool)
+        chip_alloc = AllocMem(chip_size + 16, MEMF_CHIP | MEMF_CLEAR);
+        if (!chip_alloc)
             return skip_all_oom("not enough memory on this machine for this disk: the chip-RAM test pool "
                                 "could not be allocated (run this disk on a machine with more chip RAM)");
-        chip_pool = (UBYTE *)(((ULONG)chip_pool + 15) & ~15UL);
+        chip_pool = (UBYTE *)(((ULONG)chip_alloc + 15) & ~15UL);
     }
     if (any_size) {
-        any_pool = AllocMem(any_size + 16, MEMF_FAST | MEMF_CLEAR);
-        if (!any_pool)
-            any_pool = AllocMem(any_size + 16, MEMF_ANY | MEMF_CLEAR);
-        if (!any_pool)
+        any_alloc = AllocMem(any_size + 16, MEMF_FAST | MEMF_CLEAR);
+        if (!any_alloc)
+            any_alloc = AllocMem(any_size + 16, MEMF_ANY | MEMF_CLEAR);
+        if (!any_alloc)
             return skip_all_oom("not enough memory on this machine for this disk: the test pool could not "
                                 "be allocated (run this disk on a machine with more RAM)");
-        any_is_chip = (TypeOfMem(any_pool) & MEMF_CHIP) != 0;
-        any_pool = (UBYTE *)(((ULONG)any_pool + 15) & ~15UL);
+        any_is_chip = (TypeOfMem(any_alloc) & MEMF_CHIP) != 0;
+        any_pool = (UBYTE *)(((ULONG)any_alloc + 15) & ~15UL);
     }
 
     if (any_bare) {
@@ -783,6 +963,7 @@ int amt_run_modules(void)
     if (!quiesce()) {                 /* holds Forbid+Disable on success */
         amt_log(refuse_why);
         FreeMem(stack_mem, BARE_STACK);
+        stack_mem = 0;
         for (i = 0; i < amt_n_modules; i++)
             if (amt_modules[i]->phase == AMT_PH_BARE && enabled(amt_modules[i]))
                 run_module(amt_modules[i]);
@@ -793,5 +974,6 @@ int amt_run_modules(void)
     Enable();
     Permit();
     FreeMem(stack_mem, BARE_STACK);
+    stack_mem = 0;
     return 0;
 }

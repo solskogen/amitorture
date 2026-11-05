@@ -108,6 +108,7 @@ struct amt_mbox {
 extern volatile struct amt_mbox *amt_mbox;
 
 int  mbox_init(void);                 /* 0 on success */
+void mbox_close(void);
 void mbox_set_state(ULONG state);
 void mbox_set_pos(ULONG mod, ULONG cas);
 void mbox_beat(void);

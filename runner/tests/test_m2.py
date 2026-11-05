@@ -252,7 +252,8 @@ class Parity(unittest.TestCase):
 
     def test_softfloat_is_informational_and_crash_not_compared(self):
         sf = fake_result("m-sf", [{"case": "add", "st": "fail", "expect": 1, "got": 2, "why": "x"},
-                                  {"case": "sub", "st": "pass"}], twin_of="m", twin_kind="softfloat")
+                                  {"case": "sub", "st": "pass"}], twin_of="m", twin_kind="softfloat",
+                         options={"cachesize": "0", "fpu_softfloat": "true"})
         items, _ = parity.check_all([self.ref, sf])
         self.assertEqual({i["kind"] for i in items}, {"fpu_mode_difference"})
         crash = dict(fake_result("m-jit", [], twin_of="m", twin_kind="jit"), status="crash")
@@ -323,6 +324,53 @@ class Baselines(unittest.TestCase):
         d = self.check(base, [v])
         self.assertEqual(d["regressions"], 0)
         self.assertEqual(d["findings"], [])
+
+    def test_new_unexpected_failure_regresses(self):
+        old = [{"case": "a", "st": "pass"}]
+        failed = {"case": "new", "st": "fail", "expect": 1, "got": 0, "why": "broken"}
+        d = self.check(self.make([old]), [old + [failed]])
+        self.assertEqual(d["regressions"], 1)
+        self.assertEqual([f["kind"] for f in d["findings"]], ["new_failure"])
+
+    def test_new_intermittent_failure_regresses(self):
+        old = [{"case": "a", "st": "pass"}]
+        d = self.check(self.make([old]), [old + [{"case": "new", "st": "pass"}],
+                                       old + [{"case": "new", "st": "fail", "expect": 1, "got": 0, "why": "broken"}]])
+        self.assertEqual(d["regressions"], 1)
+        self.assertEqual(d["findings"][0]["kind"], "new_failure")
+
+    def test_new_registered_failure_is_informational(self):
+        old = [{"case": "a", "st": "pass"}]
+        now = old + [{"case": "new", "st": "fail", "expect": 1, "got": 0, "why": "known"}]
+        registry = {"cpu.new": {"ref": "known", "when": {"cpu_model": "68020"}}}
+        d = self.check(self.make([old]), [now], registry=registry)
+        self.assertEqual(d["regressions"], 0)
+        self.assertEqual(d["findings"][0]["kind"], "new")
+        self.assertEqual(d["findings"][0]["xfail"]["ref"], "known")
+        other = dict(self.ENTRY, options=dict(self.ENTRY["options"], cpu_model="68030"))
+        self.assertEqual(self.check(self.make([old]), [now], entry=other, registry=registry)["regressions"], 1)
+
+    def test_empty_baseline_cases_do_not_hide_new_failures(self):
+        base = self.make([[]])
+        base["entries"]["e1"]["cases"] = {}
+        d = self.check(base, [[{"case": "new", "st": "fail", "expect": 1, "got": 0, "why": "broken"}]])
+        self.assertEqual(d["regressions"], 1)
+        self.assertIn("new_failure", {f["kind"] for f in d["findings"]})
+
+    def test_missing_measurements_regress_even_on_max_speed(self):
+        old = [{"case": "a", "st": "pass", "ctx": {"latency": 100}}]
+        base = self.make([old], perf=[[{"name": "loop", "ops": 10, "ticks": 100}]])
+        fast = dict(self.ENTRY, options=dict(self.ENTRY["options"], cpu_speed="max"))
+        d = self.check(base, [[{"case": "a", "st": "pass", "ctx": {}}]], entry=fast)
+        self.assertEqual({f["kind"] for f in d["findings"]}, {"perf_missing", "timing_missing"})
+        self.assertEqual(d["regressions"], 2)
+
+    def test_perf_only_baseline_still_compares_measurements(self):
+        base = self.make([[]], perf=[[{"name": "loop", "ops": 10, "ticks": 100}]])
+        base["entries"]["e1"]["cases"] = {}
+        d = self.check(base, [[]])
+        self.assertEqual(d["regressions"], 1)
+        self.assertIn("perf_missing", {f["kind"] for f in d["findings"]})
 
     def test_all_kinds(self):
         good = [{"case": "a", "st": "pass"}, {"case": "b", "st": "fail", "expect": 1, "got": 2, "why": "w"},
@@ -494,6 +542,15 @@ class Narrowing(unittest.TestCase):
                            [{"axis": "cpu_model", "label": "68030", "fp": bad, "ref_run": bad},
                             {"axis": "jit", "label": "off", "fp": ref}], ref_fp=rfp)
         self.assertEqual([x["axis"] for x in r["flips"]], ["jit", "cpu_model"])   # AXIS_ORDER
+
+    def test_missing_paired_reference_is_inconclusive(self):
+        ref = fp_of([{"case": "addx", "st": "pass", "ctx": {"x": 1}}])
+        bad = fp_of([{"case": "addx", "st": "pass", "ctx": {"x": 2}}])
+        r = narrow.analyze("cpu.addx", "engine_mismatch", self.OPTS, [bad],
+                           [{"axis": "cpu_model", "label": "68030", "fp": ref, "ref_run": None}],
+                           ref_fp=ref["cases"]["cpu.addx"]["fp"])
+        self.assertEqual(r["flips"], [])
+        self.assertEqual(r["inconclusive"][0]["why"], "no reference")
 
     def test_run_budget_and_launch_plan(self):
         entry = dict(matrix.find("a4000-68040nommu-fast-jit"))

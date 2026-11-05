@@ -50,6 +50,11 @@ python3 -m amitorture check    --amiberry /path/to/new/amiberry --kickstarts ~/A
 ```
 
 Emulators run headless; add `--show` to watch their windows. At most `nproc` emulators run at once, machine-wide.
+Add `--warp auto` to accelerate CPU/FPU/MMU set disks while keeping all other disks, including audio,
+input, RTC and host-speed tests, normally paced. No tests are removed. `--warp off` uses normal pacing
+everywhere; `--warp on` is an experimental forced mode, not a correctness-equivalent run.
+Some timing-observation cases already vary between `pass` and `untestable` at normal
+speed, so full-suite verdict equivalence is not yet established; see [Automatic warp](docs/RUNNER.md#automatic-warp).
 
 Results go to `work/results/<run-id>/`:
 
@@ -60,7 +65,9 @@ Results go to `work/results/<run-id>/`:
 | `repro/` | a minimal reproduction per problem |
 | `raw/` | every record and emulator log |
 
-Known emulator bugs are registered in `runner/amitorture/xfail.json`, with the evidence in [docs/findings/](docs/findings/). A failure that matches one shows as `xfail`, and as `fixed` once a build no longer has the bug.
+Known emulator bugs are registered in `runner/amitorture/xfail.json`. Local evidence reports can be kept in
+`docs/findings/`, which is ignored by Git and not shipped with the repository. A failure that matches a
+registered bug shows as `xfail`, and as `fixed` once a build no longer has the bug.
 
 ## Layout
 
@@ -72,7 +79,7 @@ Known emulator bugs are registered in `runner/amitorture/xfail.json`, with the e
 | `tests/smoke_disk.py` | boot one disk on one config, quickly |
 | `docs/cases/` | one line per test case: intent, rule, what a failure means |
 | `docs/catalogue.yaml` | what an Amiga can do, and what amitorture covers |
-| `docs/findings/` | emulator bugs found, with evidence and suspected code |
+| `docs/findings/` | local, Git-ignored evidence reports and suspected emulator code |
 | `docs/review/` | code reviews of amitorture itself and their resolutions |
 
 ## Licence

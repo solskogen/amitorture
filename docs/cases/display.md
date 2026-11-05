@@ -1,5 +1,14 @@
 # display (module 12, AMT_PH_BARE, disk "chip")
 
+Audit validity: DENISEID stability compares only bits 7-0. Floating-bus
+coincidences cannot establish Denise identity; an uncorroborated ID assertion
+is untestable rather than a chip-mismatch failure. ECS Denise detection needs
+graphics.library V36+ `GFXF_HR_DENISE` corroboration, while Alice corroborates
+Lisa. The probe exports only defined ID bits. On older OS versions ECS Denise
+upgrades may remain unidentified. Beam waits and masked DMA-slot acquisition
+have finite CPU-poll budgets; exhaustion restores interrupt servicing before
+aborting instead of waiting for a watchdog that cannot execute.
+
 Denise/Lisa: bitplane modes, fetch and window edges, scrolling, modulos, sprites, collisions,
 IDs, AGA FMODE/palette/sprite extensions. References: Amiga Hardware Reference
 Manual (HRM) chapters 3 (playfields), 4 (sprites), 6 (DMA time slots), 7 (collisions, beam
@@ -19,6 +28,21 @@ read-out independent of how the odd/even groups combine (see `clx_spf_odd_indepe
 are set up by a copper list (registers, BPLxPT, SPRxPT, palette) that the copper reloads every
 frame. Frame length, LOF and the H counter range are checked by timing (`lines_per_frame_*`,
 `cck_per_line`), not here.
+
+On a mode failure, `got.clxdat_first_bad_group` records the raw CLXDAT value for each
+selected plane (plane 1 first) in the group containing `first_bad_cell`. Group slot
+`first_bad_cell % 4` uses sprite `2*slot`; odd-plane collision bits are `1+slot`,
+even-plane bits `5+slot`. These are the original reads, not a retry.
+
+The variable `mode_lores_7bpl` failure in the 2026-11-04 JIT reports added
+`$20` to cells 4, 5 and 7 (one probe group); the repeated run passed.
+Native regressions execute the actual row-fill, sprite-list, selector and
+decode helpers on those input cells, including poisoned destination memory.
+They establish that all eight plane rows are initialized and that selecting
+plane 6 should set only group slot 2 (`CLXDAT=$0080`), not all four slots.
+They do not reproduce the DMA/renderer timing failure. No collision tolerance
+or retry is added; a repeat still fails and now retains the original raw reads.
+Run: `cd runner && python3 -m unittest tests.test_guest_display_timing -v`.
 
 Playfield patterns: *cells* are 16 lores pixels wide (1/2/4 words in lores/hires/shres), one row
 repeated with modulo -rowbytes. *Address-encoded* (AE) planes have plane p word w = $FFFF if bit p

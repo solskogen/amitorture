@@ -45,6 +45,11 @@ class Options:
         self.xfail_path = kw.get("xfail_path")
         self.media = kw.get("media", True)
         self.audio = kw.get("audio", "auto")          # auto | on | off (SDL disk audio capture)
+        self.warp = kw.get("warp")
+        if self.warp not in (None, "off", "auto", "on"):
+            raise RunnerError(f"unknown warp policy {self.warp!r}")
+        if self.warp is not None and "warp" in self.sets:
+            raise RunnerError("use --warp or --set warp=..., not both")
         self.ports = kw.get("ports")                  # (lo, hi) serial port range, None = emulator.PORT_RANGE
         self.show = kw.get("show", False)             # emulator windows on the desktop (emulator.display_env)
 
@@ -76,8 +81,10 @@ class EntryRun:
     URGENT_SCAN = 0.25      # full scans this often while a request waits for the mailbox
     DONE_GRACE = 5.0
 
-    def __init__(self, opts, entry, rawdir, rel="", audio=None):
+    def __init__(self, opts, entry, rawdir, rel="", audio=None, warp=False):
         self.opts, self.entry, self.rawdir, self.rel = opts, entry, rawdir, rel
+        if warp:
+            self.POLL = self.POLL_BUSY
         self.audio = audio          # audio.Capture (SDL disk driver) or None
         self.requests = None        # hostreq.Requests, once the IPC is up
         self._taken = {"serial": 0, "mailbox": 0}
@@ -354,6 +361,7 @@ def _launch_once(opts, entry, run, argv, env, home, rawdir, port, res):
             res["ipc"] = {"endpoint": endpoint, "reported_after_s": round(t, 3)}
             ipc = emulator.IPC(endpoint)
             res["ipc"]["version"] = ipc.request("GET_VERSION")
+            verify_warp(ipc, res["warp"])
             run.requests = hostreq.Requests(
                 ipc, rawdir, run.rel, options=entry["options"], audio=run.audio,
                 frame_hz=60 if entry["options"].get("ntsc") == "true" else 50, t0=run.t0,
@@ -530,6 +538,48 @@ def base_result(entry):
 # turbo DMA path) breaks raw disk-DMA timing, but loads the payload through
 # trackdisk in a fraction of the time (about 9 s of a disk's ~12 s start).
 REAL_SPEED_GROUPS = ("chip", "cpux")
+WARP_GROUPS = ("cpu", "fpu", "mmu")
+
+
+def build_group(info):
+    parts = (info.get("build_id") or "").split()
+    if len(parts) >= 2 and "/" in parts[-2] and parts[-2].replace("/", "").isdigit():
+        return parts[-1]
+    return None
+
+
+def disk_warp(opts, entry, info, capture=False, extra=None):
+    """Choose pacing from the baked disk's build identity, never its filename."""
+    group = build_group(info or {})
+    mode = getattr(opts, "warp", None)
+    configured = (extra or {}).get("warp", entry["options"].get("warp", "false"))
+    if mode is None:
+        value = str(configured).strip().lower()
+        if value not in ("true", "yes", "1", "false", "no", "0"):
+            raise RunnerError(f"invalid warp option {configured!r}")
+        enabled = value in ("true", "yes", "1")
+        mode = "config" if "warp" in entry["options"] or "warp" in (extra or {}) else "off"
+        reason = "explicit config option" if mode == "config" else "normal pacing by default"
+    elif mode == "auto":
+        enabled = group in WARP_GROUPS and not capture and not opts.selftest
+        reason = ("audio capture requires normal pacing" if capture else
+                  "selftest requires normal pacing" if opts.selftest else
+                  "functional set disk" if enabled else
+                  "timing-sensitive or unclassified disk")
+        if "warp" in (extra or {}):
+            raise RunnerError("automatic warp cannot be overridden through extra options")
+    else:
+        enabled = mode == "on"
+        reason = "forced by warp policy" + ("; timing-sensitive results may be invalid" if enabled else "")
+    return {"requested": mode, "effective": enabled, "group": group, "reason": reason}
+
+
+def verify_warp(ipc, policy):
+    reply = ipc.request("GET_WARP")
+    policy["reply"] = reply
+    policy["verified"] = reply == f"OK\t{int(policy['effective'])}"
+    if not policy["verified"]:
+        raise RunnerError(f"warp state verification failed: expected {int(policy['effective'])}, got {reply!r}")
 
 
 def adf_set_group(path):
@@ -540,10 +590,7 @@ def adf_set_group(path):
         bid = (adfmod.header_info(path) or {}).get("build_id") or ""
     except Exception:   # not an amitorture disk: real speed, as before
         return None
-    parts = bid.split()
-    if len(parts) >= 2 and "/" in parts[-2] and parts[-2].replace("/", "").isdigit():
-        return parts[-1]
-    return None
+    return build_group({"build_id": bid})
 
 
 def disk_floppy_speed(dname, entry, adf=None):
@@ -648,7 +695,6 @@ def _run_disk(opts, ctx, entry, binary=None, extra_options=None, disk=None):
         cd_opts = {"cdimage0": f"{iso},image", "nr_floppies": "0", "floppy0type": "-1"}
         floppy = ""
     # Config
-    port = emulator.pick_port(*(opts.ports or emulator.PORT_RANGE))
     media_opts, media_info = _media_options(opts, ctx, entry, media_dir)
     if cd_opts:
         # no floppy drive on a CD-booted machine: drop test floppies (DF1)
@@ -667,6 +713,11 @@ def _run_disk(opts, ctx, entry, binary=None, extra_options=None, disk=None):
         res["floppy_speed"] = fs
     if extra_options:
         extra.update(extra_options)
+    src_disk = disk[1] if disk else (None if opts.no_disk else ctx.get("adf_src"))
+    capture = audio_wanted(opts, entry, src_disk)
+    res["warp"] = disk_warp(opts, entry, res.get("disk"), capture, extra)
+    extra["warp"] = "true" if res["warp"]["effective"] else "false"
+    port = emulator.pick_port(*(opts.ports or emulator.PORT_RANGE))
     cfg_entry = dict(entry, options={k: (v.replace("{media}", media_dir) if isinstance(v, str) else v)
                                      for k, v in entry["options"].items()})
     opts_written, text = amiberry_cfg.build(cfg_entry, rom_path=rom_cfg, floppy=floppy, serial_port=port,
@@ -681,8 +732,7 @@ def _run_disk(opts, ctx, entry, binary=None, extra_options=None, disk=None):
     # Audio capture (SDL3 disk driver) only where the disk asks for audio
     # marks (or --audio on); the dummy driver otherwise.
     audio_path = None
-    src_disk = disk[1] if disk else (None if opts.no_disk else ctx.get("adf_src"))
-    if audio_wanted(opts, entry, src_disk):
+    if capture:
         audio_path = os.path.join(etmp, "audio.raw")
         env.update(audiomod.env_for(audio_path))
     ver = amiberry_cfg.verify(binary, conf, env)
@@ -691,6 +741,7 @@ def _run_disk(opts, ctx, entry, binary=None, extra_options=None, disk=None):
     res["config"] = {"file": f"configs/{safe}{dsuf}.uae", "resolved": f"configs/{safe}{dsuf}.resolved.uae",
                      "dump_ok": ver.get("ok"), "differences": ver.get("differences", []),
                      "unknown_options": ver.get("unknown_options", []), "fixup_messages": ver.get("fixup_messages", []),
+                     "error": ver.get("error"), "returncode": ver.get("returncode"), "stderr": ver.get("stderr"),
                      "serial_port": port}
     res["resolved_options"] = {k: v for k, v in (ver.get("resolved") or {}).items()
                                if k in entry["options"] or k in amiberry_cfg.DWRITE_DEFAULTS}
@@ -698,6 +749,13 @@ def _run_disk(opts, ctx, entry, binary=None, extra_options=None, disk=None):
     adj = [d for d in ver.get("differences", []) if d["option"] not in ADJUST_IGNORE]
     if adj:
         res["adjusted"] = adj
+    error = amiberry_cfg.verification_error(ver)
+    if error:
+        res["status"], res["reason"], res["ended"] = "error", error, "error"
+        emulator.release_port(port)
+        if not opts.keep:
+            _safe_rmtree(etmp, ctx["tmp"])
+        return res
     # Launch
     rel = f"raw/{safe}/{dname}/" if dname else f"raw/{safe}/"
     rawdir = os.path.join(ctx["results"], rel)
@@ -724,10 +782,11 @@ def _run_disk(opts, ctx, entry, binary=None, extra_options=None, disk=None):
                 if os.path.exists(audio_path):
                     os.remove(audio_path)
                 cap = audiomod.Capture(audio_path, rawdir, rel)
-            run = EntryRun(eopts, entry, rawdir, rel, audio=cap)
+            run = EntryRun(eopts, entry, rawdir, rel, audio=cap, warp=res["warp"]["effective"])
             log(opts, f"{rid}{(' [' + dname + ']') if dname else ''}: launching ({entry['title']}), serial port {port}"
                 + (f", attempt {attempt}" if attempt > 1 else "")
-                + (f", binary {binary}" if binary != opts.binary else ""))
+                + (f", binary {binary}" if binary != opts.binary else "")
+                + f", warp {'on' if res['warp']['effective'] else 'off'} ({res['warp']['reason']})")
             proc, serial, ipc, ended, exit_before_stop, stop = _launch_once(eopts, entry, run, argv, env, home,
                                                                             rawdir, port, res)
             emulator.check_interrupt()      # stopped by Ctrl+C: not a result
@@ -873,7 +932,7 @@ def run_entry(opts, ctx, entry, binary=None, extra_options=None):
     for d in disks:
         r = _run_disk(opts, ctx, entry, binary=binary, extra_options=extra_options, disk=d)
         subs.append(r)
-        if r["status"] == "skip":       # ROM missing: same for every disk
+        if r["status"] == "skip" and "process" not in r:  # ROM missing: same for every disk
             break
     if disks == [None]:
         return subs[0]
@@ -910,8 +969,10 @@ def combine(entry, subs):
     res = {k: v for k, v in first.items() if not k.startswith("_") and k not in (
         "disk", "disk_name", "raw", "process", "serial", "mailbox", "ipc", "records", "ended", "hang",
         "launch_attempts", "media", "modules", "log_counts", "emulator_slot", "slot_wait_s", "host_requests",
-        "audio")}
+        "audio", "warp")}
     res["disks"] = subs
+    if any("warp" in s for s in subs):
+        res["warp"] = {"disks": [dict(s["warp"], name=s.get("disk_name")) for s in subs if "warp" in s]}
     if all(s["status"] == "skip" for s in subs):
         res["status"], res["reason"] = "skip", subs[0].get("reason")
         return res
@@ -1178,24 +1239,10 @@ def observe(opts, entry, run, proc, serial, ipc, res):
 
 def summarize_records(merged, run):
     sp, mp = run.serial_parser, run.mbox_parser
-    done = merged.by_type("done")
-    hello = merged.by_type("hello")
-    return {
-        "merged": len(merged.records),
-        "per_source": merged.per_source,
-        "gaps": merged.gaps,
-        "bad": merged.bad[:50],
-        "bad_count": len(merged.bad),
-        "conflicts": merged.conflicts[:20],
-        "duplicates_dropped": merged.duplicates,
-        "schema_problems": merged.schema_problems[:50],
+    return records.summarize(merged) | {
         "noise": {"serial": {"lines": sp.noise_lines, "bytes": sp.noise_bytes, "samples": sp.noise_samples[:10]},
                   "mailbox": {"lines": mp.noise_lines, "bytes": mp.noise_bytes, "samples": mp.noise_samples[:10]}},
         "lost": {"serial": sp.lost, "mailbox": mp.lost},
-        "boots": sorted({m["boot"] for m in merged.records}),
-        "host": sum(1 for m in merged.records if m.get("host")),
-        "hello": hello[-1] if hello else None,
-        "done": done[-1] if done else None,
     }
 
 
@@ -1221,6 +1268,10 @@ def classify(res, merged, ended):
         integrity.append(f"{len(bad_lost)} corrupt line(s) (bad CRC/JSON) not recovered from another transport")
     if merged.conflicts:
         integrity.append(f"{len(merged.conflicts)} seq conflict(s) between transports")
+    if merged.schema_problems:
+        integrity.append(f"{len(merged.schema_problems)} record schema problem(s)")
+    if ended != "selftest":
+        integrity.extend(records.module_problems(merged))
     guest = hostreq.guest_records(merged.records)
     if done and guest and isinstance(done[-1].get("records"), int) and done[-1]["records"] != len(
             [m for m in guest if m["boot"] == guest[-1]["boot"]]):
@@ -1250,6 +1301,9 @@ def classify(res, merged, ended):
             return "incomplete", "; ".join(integrity)
         if done[-1].get("aborted"):
             return "incomplete", f"done.aborted={done[-1]['aborted']}"
+        hello = merged.by_type("hello")
+        if ended != "selftest" and hello and hello[-1].get("modules") == {}:
+            return "skip", "no compiled modules selected by the run mask"
         return "pass", "done, no failures" + (" (host selftest records, not a guest run)" if ended == "selftest" else "")
     return "error", f"ended: {ended}"
 
@@ -1343,7 +1397,7 @@ class Context:
             "tmpdir": self.tmp,
             "options": {"timeout": opts.timeout, "hang": opts.hang, "no_disk": opts.no_disk, "selftest": opts.selftest,
                         "configs": opts.configs, "matrix": opts.matrix, "sets": opts.sets, "jobs": opts.jobs,
-                        "show": getattr(opts, "show", False)},
+                        "show": getattr(opts, "show", False), "warp": opts.warp},
         }
         self.d["romset"] = romid.RomSet(self.environment["roms"])
         self._binfo = {opts.binary: self.environment["amiberry"]}

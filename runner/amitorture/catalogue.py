@@ -11,6 +11,7 @@ mappings:
       what: the danger bit (COPCON CDANG)
       cases: [copper.*dang*]          # fnmatch globs over "<mod>.<case>" keys
       entries: [*-rtg-picasso4*]      # optional: only cases from these entries count
+      parity: jit                    # optional: needs a completed engine comparison
       partial: why only partly        # optional: covered at best partly
       not_covered: why                # optional: no test can cover it (stated reason)
       needs: what hardware/config it needs (text)
@@ -32,7 +33,7 @@ import os
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 DEFAULT = os.path.abspath(os.path.join(HERE, "..", "..", "docs", "catalogue.yaml"))
-FIELDS = ("id", "area", "what", "cases", "entries", "partial", "not_covered", "needs")
+FIELDS = ("id", "area", "what", "cases", "entries", "partial", "not_covered", "needs", "parity")
 
 
 def _strip_comment(line):
@@ -114,6 +115,8 @@ def parse(text):
                 it[k] = [it[k]]
         if not it.get("cases") and not it.get("not_covered"):
             raise ValueError(f"catalogue item {it['id']}: needs cases or not_covered")
+        if "parity" in it and it["parity"] not in ("jit", "threaded", "softfloat"):
+            raise ValueError(f"catalogue item {it['id']}: unknown parity kind {it['parity']!r}")
     return items
 
 
@@ -129,11 +132,14 @@ def _match(key, pats):
     return any(fnmatch.fnmatchcase(key, p) for p in pats)
 
 
-def coverage(items, results, fps):
+def coverage(items, results, fps, parity_info=None):
     """[{id, area, what, status, why, tested, pass, fail, skip, untestable,
     entries, cases}] for one run. results: entry results; fps: {entry id:
     cases.extract(result)}."""
     ran = [r for r in results if r.get("status") not in ("skip",)]
+    if any(it.get("parity") for it in items) and parity_info is None:
+        from . import parity
+        _, parity_info = parity.check_all(results, fps)
     out = []
     for it in items:
         row = {"id": it["id"], "area": it.get("area"), "what": it.get("what"), "pass": 0, "fail": 0, "skip": 0,
@@ -145,12 +151,21 @@ def coverage(items, results, fps):
         pats = it.get("cases") or []
         epats = it.get("entries")
         ents = [r for r in ran if not epats or _match(r["id"], epats)]
+        paired = {}
+        if it.get("parity"):
+            for p in parity_info or []:
+                if p.get("status") != "compared" or p.get("twin_kind") != it["parity"]:
+                    continue
+                rc = (fps.get(p["ref"]) or {}).get("cases", {})
+                tc = (fps.get(p["twin"]) or {}).get("cases", {})
+                paired[p["twin"]] = {k for k in rc.keys() & tc.keys()
+                                     if not rc[k].get("engine_dependent") and not tc[k].get("engine_dependent")}
         keys = set()
         for r in ents:
             fp = fps.get(r["id"]) or {"cases": {}}
             hit = False
             for k, c in fp["cases"].items():
-                if _match(k, pats):
+                if _match(k, pats) and (not it.get("parity") or k in paired.get(r["id"], ())):
                     hit = True
                     keys.add(k)
                     if c.get("st") in row:
@@ -166,6 +181,8 @@ def coverage(items, results, fps):
         elif keys:
             row.update(status="partial", why="only skip/untestable results in this run"
                        + (f"; {it['partial']}" if it.get("partial") else ""))
+        elif it.get("parity"):
+            row.update(status="not_covered", why=f"no matching cases in a completed {it['parity']} parity comparison")
         elif epats and not ents:
             row.update(status="not_covered", why=f"no entry matching {', '.join(epats)} ran"
                        + (f" (needs {it['needs']})" if it.get("needs") else ""))

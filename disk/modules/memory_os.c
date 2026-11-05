@@ -76,6 +76,27 @@ static ULONG find_free(struct MemHeader *mh, ULONG step, ULONG rem)
     return 0;
 }
 
+static void release_blocks(void)
+{
+    LONG i, k;
+    Forbid();
+    for (i = 0; i < mem_nreg; i++) {
+        struct mem_reg *r = &mem_regs[i];
+        for (k = 0; k < 3; k++) {
+            if (r->blk[k])
+                FreeMem((APTR)r->blk[k], MEM_BLK);
+            r->blk[k] = 0;
+        }
+        if (r->plain_alloc)
+            Deallocate(r->plain_owner, (APTR)r->plain_alloc, MEM_BLK + 16);
+        r->plain_alloc = r->blk[MB_PLAIN] = 0;
+        r->plain_owner = 0;
+        r->nb = 0;
+    }
+    mem_nreg = mem_os_ran = 0;
+    Permit();
+}
+
 void amt_run_memory_os(void)
 {
     struct MemHeader *mh;
@@ -84,7 +105,11 @@ void amt_run_memory_os(void)
     LONG n = 0, i, k;
     char id[24];
 
-    mem_nreg = 0;
+    release_blocks();
+    if (amt_on_return(release_blocks) < 0) {
+        amt_case("module", AMT_ST_UNTESTABLE, "no slot for OS-return memory cleanup");
+        return;
+    }
     Forbid();
     for (mh = (struct MemHeader *)SysBase->MemList.lh_Head; mh->mh_Node.ln_Succ && n < MEM_MAXREG;
          mh = (struct MemHeader *)mh->mh_Node.ln_Succ) {
@@ -123,6 +148,8 @@ void amt_run_memory_os(void)
             /* no free 64 KB boundary: one plain block from this region */
             UBYTE *p = Allocate(mh, MEM_BLK + 16);
             if (p) {
+                r->plain_alloc = (ULONG)p;
+                r->plain_owner = mh;
                 r->blk[MB_PLAIN] = ((ULONG)p + 15) & ~15UL;
                 r->nb++;
             }

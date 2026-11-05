@@ -166,21 +166,24 @@ static int vec_ok(const struct fvec *v, const struct fout *o)
 #define MAXREP 6
 static const struct fgroup *hot_g;
 static struct fout hot_o;
+static ULONG hot_bad_i;
 
 static ULONG hot_fn(ULONG iter)
 {
     const struct fgroup *g = hot_g;
-    ULONG i, h = 0x1234567UL, k;
+    ULONG i;
     (void)iter;
     for (i = 0; i < g->n; i++) {
         const struct fvec *v = &g->v[i];
         if (!(v->flags & fm))
             continue;
         fpu_exec(v, &hot_o);
-        for (k = 0; k < 7; k++)
-            h = ((h << 5) | (h >> 27)) ^ ((const ULONG *)&hot_o)[k];
+        if (!vec_ok(v, &hot_o)) {
+            hot_bad_i = i;
+            return i + 1;
+        }
     }
-    return h;
+    return 0;
 }
 
 static void vec_fields(const struct fvec *v, const struct fout *o, int full)
@@ -237,7 +240,12 @@ static void run_group(const struct fgroup *g)
         }
     }
     hot_g = g;
-    r = amt_hot(hot_fn, amt_hot_reps(), &first, &badh);
+    r = amt_hot_checked(hot_fn, amt_hot_reps(), &first, &badh);
+    if (!nbad && r >= 0) {
+        bad_i[0] = (UWORD)hot_bad_i;
+        bad_o[0] = hot_o;
+        nbad = 1;
+    }
     if (!nbad && r < 0) {
         amt_case(g->name, AMT_ST_PASS, 0);
         return;

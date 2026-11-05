@@ -6,6 +6,8 @@
 
 static struct vga_state cst;
 static UBYTE p4_bank, gr31_pre, gr33_pre;
+static UBYTE cl_sr6, cl_misc;
+static int cl_stage, cl_extensions, cl_engine;
 
 /* Cirrus 8-bit ROP codes (GR32), as in the TRM / XFree86 cirRop[] */
 static const UBYTE cl_rops[16] = {
@@ -45,8 +47,19 @@ static int cl_wait(void)
     return 1;
 }
 
+static int cl_finish(void)
+{
+    if (cl_wait()) return 1;
+    rtg_chk("cl_engine_idle", "idle", 1, 0,
+            "BitBLT timed out; dependent cases are aborted, engine reset precedes restoration");
+    amt_abort(AMT_ABORT_UNEXPECTED);
+    return 0;
+}
+
 static int cl_blt(ULONG dst, ULONG src, UWORD w, UWORD h, UWORD dp, UWORD sp, UBYTE mode, UBYTE rop)
 {
+    cl_finish();
+    cl_engine = 1;
     GR_W(0x20, (UBYTE)(w - 1)); GR_W(0x21, (UBYTE)((w - 1) >> 8));
     GR_W(0x22, (UBYTE)(h - 1)); GR_W(0x23, (UBYTE)((h - 1) >> 8));
     GR_W(0x24, (UBYTE)dp); GR_W(0x25, (UBYTE)(dp >> 8));
@@ -56,13 +69,15 @@ static int cl_blt(ULONG dst, ULONG src, UWORD w, UWORD h, UWORD dp, UWORD sp, UB
     GR_W(0x30, mode);
     GR_W(0x32, rop);
     GR_W(0x31, 0x02);
-    return cl_wait();
+    return cl_finish();
 }
 
 /* 5436/5446 autostart (GR31 bit 7): the BLT starts when GR2A (destination
  * address high byte) is written, so everything else is programmed first */
 static int cl_blt_auto(ULONG dst, ULONG src, UWORD w, UWORD h, UWORD dp, UWORD sp, UBYTE mode, UBYTE rop)
 {
+    cl_finish();
+    cl_engine = 1;
     GR_W(0x20, (UBYTE)(w - 1)); GR_W(0x21, (UBYTE)((w - 1) >> 8));
     GR_W(0x22, (UBYTE)(h - 1)); GR_W(0x23, (UBYTE)((h - 1) >> 8));
     GR_W(0x24, (UBYTE)dp); GR_W(0x25, (UBYTE)(dp >> 8));
@@ -74,7 +89,7 @@ static int cl_blt_auto(ULONG dst, ULONG src, UWORD w, UWORD h, UWORD dp, UWORD s
     GR_W(0x28, (UBYTE)dst); GR_W(0x29, (UBYTE)(dst >> 8));
     GR_W(0x2a, (UBYTE)(dst >> 16));
     {
-        int ok = cl_wait();
+        int ok = cl_finish();
         GR_W(0x31, 0x00);
         return ok;
     }
@@ -86,11 +101,7 @@ static int cl_blt_auto(ULONG dst, ULONG src, UWORD w, UWORD h, UWORD dp, UWORD s
 /* fill a rectangle of the work area with seeded random bytes */
 static void fill_rand(ULONG a, int w, int h)
 {
-    volatile UBYTE *p = rtg_cur->win[0].p;
-    int x, y;
-    for (y = 0; y < h; y++)
-        for (x = 0; x < w; x++)
-            p[a + (ULONG)y * PITCH + x] = (UBYTE)(amt_rand() >> 13);
+    rtg_seed_rect(a, w, h, PITCH, 0);
 }
 
 /* read the region around a destination rect (one pixel / line border) */
@@ -144,7 +155,6 @@ static void blt_rops(void)
     const int w = 40, h = 12;
     int r, x, y, done;
     char suf[24];
-    volatile UBYTE *p = rtg_cur->win[0].p;
     for (r = 0; r < 16; r++) {
         UBYTE rop = cl_rops[r];
         const char *hx = "0123456789abcdef";
@@ -152,11 +162,8 @@ static void blt_rops(void)
         const char *s = "cl_blt_rop_";
         while (*s) *d++ = *s++;
         *d++ = hx[rop >> 4]; *d++ = hx[rop & 15]; *d = 0;
-        fill_rand(src, w, h);
+        rtg_seed_rect(src, w, h, PITCH, srcb);
         fill_rand(dst - PITCH - 1, w + 2, h + 2);
-        for (y = 0; y < h; y++)
-            for (x = 0; x < w; x++)
-                srcb[y * w + x] = p[src + (ULONG)y * PITCH + x];
         grab(before, dst, w, h);
         for (x = 0; x < (w + 2) * (h + 2); x++) exp[x] = before[x];
         for (y = 0; y < h; y++)
@@ -178,12 +185,8 @@ static void blt_autostart(void)
     const ULONG src = BX(16, 20), dst = BX(480, 20);
     const int w = 32, h = 8;
     int x, y, done;
-    volatile UBYTE *p = rtg_cur->win[0].p;
-    fill_rand(src, w, h);
+    rtg_seed_rect(src, w, h, PITCH, srcb);
     fill_rand(dst - PITCH - 1, w + 2, h + 2);
-    for (y = 0; y < h; y++)
-        for (x = 0; x < w; x++)
-            srcb[y * w + x] = p[src + (ULONG)y * PITCH + x];
     grab(before, dst, w, h);
     for (x = 0; x < (w + 2) * (h + 2); x++) exp[x] = before[x];
     for (y = 0; y < h; y++)
@@ -259,13 +262,12 @@ static void blt_backward(void)
     const ULONG src = BX(8, 80), dst = BX(10, 81);
     const int w = 48, h = 10;
     int x, y, done;
-    volatile UBYTE *p = rtg_cur->win[0].p;
     /* overlapping move down/right: the decrementing BLT (GR30 bit 0, start
      * addresses = last byte) must give a correct (memmove) copy */
     fill_rand(src - PITCH - 1, w + 4, h + 3);
     for (y = 0; y < h; y++)
         for (x = 0; x < w; x++)
-            srcb[y * w + x] = p[src + (ULONG)y * PITCH + x];
+            srcb[y * w + x] = rtg_buf[12288 + (y + 1) * (w + 4) + x + 1];
     grab(before, dst, w, h);
     for (x = 0; x < (w + 2) * (h + 2); x++) exp[x] = before[x];
     for (y = 0; y < h; y++)
@@ -280,10 +282,21 @@ static void blt_backward(void)
 static void cl_board_irq(int on) { rtg_board_irq(on); }
 static void cl_noop_irq(int on) { (void)on; }
 
-void rtg_cirrus(void)
+static void cl_normalize_blt(UBYTE id)
+{
+    cl_extensions = (id & 0xfc) >= 0xac;  /* 5436/5446, not 5434 */
+    gr33_pre = cl_extensions ? cst.gr[0x33] : 0;
+    GR_W(0x31, 0);
+    if (cl_extensions) {
+        GR_W(0x2f, cst.gr[0x2f] & ~0x07);
+        GR_W(0x33, gr33_pre & ~0x07);
+    }
+}
+
+static void cl_run(void)
 {
     struct rtg_card *c = rtg_cur;
-    UBYTE sr6, id, m0, r1, r2, lin;
+    UBYTE id, r1, r2, lin;
     int i, idok = 0;
     volatile UBYTE *vram = c->win[0].p;
 
@@ -291,11 +304,14 @@ void rtg_cirrus(void)
         /* board bank register: bit 1 unmaps the flash, the VGA I/O appears
          * at +0x10000 (Amiberry/WinUAE Picasso IV model) */
         p4_bank = c->regs[0];
+        cl_stage = 1;
         c->regs[0] = (UBYTE)(p4_bank | 0x02);
     }
-    m0 = vi(0x3cc);
-    vga_color_io();
-    sr6 = SR_R(6);
+    vga_save_selectors(&cst);
+    cl_misc = vi(0x3cc);
+    cl_stage |= 2;
+    cl_sr6 = SR_R(6);
+    cl_stage |= 4;
     /* SR6 key: writing 0x12 unlocks the extensions and reads back 0x12;
      * any other value locks them and reads back 0x0F (GD542x TRM) */
     SR_W(6, 0x00);
@@ -309,18 +325,14 @@ void rtg_cirrus(void)
         json_obj("expect"); json_hexn("locked", 0x0f, 2); json_hexn("unlocked", 0x12, 2); json_obj_end();
         json_obj("got"); json_hexn("locked", r1, 2); json_hexn("unlocked", r2, 2); json_obj_end();
         json_str("why", "SR6 (unlock extensions) must read 0x12 after writing 0x12 and 0x0F after writing any other value (GD542x TRM)");
-        json_obj("ctx"); json_hexn("sr6_found", sr6, 2); rtg_ctx_card(); json_obj_end();
+        json_obj("ctx"); json_hexn("sr6_found", cl_sr6, 2); rtg_ctx_card(); json_obj_end();
         amt_case_close();
     }
-    vga_save(&cst, 0x20, 0x40, 0x40);
-    cst.misc = m0;
     /* GR31 bit 7 (autostart, 5436/5446) as found: the Picasso IV's own
      * boot ROM leaves it set, and then every GR2A write starts a BLT. It
      * is cleared before any BitBLT register is written (GR31 bit 1 starts
      * each BLT) and restored at the end. */
     gr31_pre = GR_R(0x31);
-    gr33_pre = GR_R(0x33);
-    GR_W(0x31, 0x00);
 
     /* chip id: CR27 bits 7:2 (bits 1:0 = revision) */
     id = CR_R(0x27);
@@ -339,7 +351,18 @@ void rtg_cirrus(void)
         json_str("why", "CR27 (ID) bits 7:2 do not identify the Cirrus chip this board carries (5426 0x90, 5428 0x98, 5434 0xA8, 5446 0xB8; TRM)");
         json_obj("ctx"); json_hexn("cr27_raw", id, 2); rtg_ctx_card(); json_obj_end();
         amt_case_close();
+        rtg_skip("suite", "chip identity mismatch; no mode, VRAM or engine writes");
+        return;
     }
+    if (!cl_wait()) {
+        rtg_skip("suite", "inherited BitBLT is busy: not owned by this test, so no reset or VRAM writes");
+        return;
+    }
+    vga_save(&cst, 0x20, 0x40, 0x40);
+    cst.misc = cl_misc;
+    cl_stage |= 8;
+    vga_color_io();
+    cl_normalize_blt(id);
     /* Picasso II: 5428 is the II+, which has the vertical interrupt on INT2 */
     if (c->kind == K_PICASSO2 && (id & 0xfc) == 0x98) {
         c->irq = 2;
@@ -387,6 +410,7 @@ void rtg_cirrus(void)
      * planar modes CPU writes go through the VGA write logic) */
     for (i = 0; i < (int)(RTG_WORK / 4); i++)
         ((ULONG *)rtg_save)[i] = ((volatile ULONG *)vram)[i];
+    cl_stage |= 16;
     rtg_vram_tests();
     vga_palette_load();
     rtg_draw_test("mode_draw", PITCH, 100);
@@ -407,24 +431,63 @@ void rtg_cirrus(void)
     vga_vint_test(c->kind == K_PICASSO4_Z2 || c->kind == K_PICASSO4_Z3 ? cl_noop_irq :
                   (c->irq ? cl_board_irq : 0));
 
-    /* restore: VRAM work area, extension registers, standard VGA, lock */
-    for (i = 0; i < (int)(RTG_WORK / 4); i++)
-        ((volatile ULONG *)vram)[i] = ((ULONG *)rtg_save)[i];
+}
+
+static void cl_restore(void)
+{
+    struct rtg_card *c = rtg_cur;
+    int i;
+    if (!(cl_stage & 8)) goto locks;
+    if (cl_engine && !cl_wait()) {
+        GR_W(0x31, 0x04);       /* GD542x GR31 RESET, not START */
+        GR_W(0x31, 0);
+        if (!cl_wait()) {
+            GR_W(0x31, 0x04);  /* leave failed owned engine held in reset */
+            rtg_chk("cl_quiesce", "idle", 1, 0, "engine busy after reset: VRAM and parameter restoration withheld");
+            amt_abort_fatal(AMT_ABORT_UNEXPECTED);
+        }
+    }
+    GR_W(0x31, 0);             /* disable autostart before restoring addresses */
+    rtg_monitor_restore();
+    rtg_vram_restore();
+    if (cl_stage & 16)
+        for (i = 0; i < (int)(RTG_WORK / 4); i++)
+            ((volatile ULONG *)c->win[0].p)[i] = ((ULONG *)rtg_save)[i];
     for (i = 0x09; i <= 0x0b; i++) GR_W(i, cst.gr[i]);
     for (i = 0x10; i <= 0x11; i++) GR_W(i, cst.gr[i]);
     for (i = 0x20; i <= 0x2e; i++) if (i != 0x2b) GR_W(i, cst.gr[i]);
     GR_W(0x30, cst.gr[0x30]);
     GR_W(0x32, cst.gr[0x32]);
+    if (cl_extensions) {
+        GR_W(0x2f, cst.gr[0x2f]);
+        GR_W(0x33, cst.gr[0x33]);
+    }
     GR_W(0x31, (UBYTE)(gr31_pre & 0x80));
     SR_W(0, 0x01);
     SR_W(7, cst.sr[7]);
-    for (i = 0x10; i <= 0x13; i++) SR_W(i, cst.sr[i]);
+    SR_W(0x10 | cst.cursor_xlo, cst.sr[0x10]);
+    SR_W(0x11 | cst.cursor_ylo, cst.sr[0x11]);
+    for (i = 0x12; i <= 0x13; i++) SR_W(i, cst.sr[i]);
     SR_W(0, 0x03);
     CR_W(0x19, cst.cr[0x19]);
     CR_W(0x1b, cst.cr[0x1b]);
     vga_restore_std(&cst);
     SR_W(0, cst.sr[0]);
-    SR_W(6, sr6 == 0x12 ? 0x12 : 0x00);
-    if (c->kind == K_PICASSO4_Z2)
+locks:
+    if (cl_stage & 4) SR_W(6, cl_sr6 == 0x12 ? 0x12 : 0);
+    if (cl_stage & 2) {
+        vga_restore_selectors(&cst);
+    }
+    if (cl_stage & 1)
         c->regs[0] = p4_bank;
+}
+
+void rtg_cirrus(void)
+{
+    int code, cleanup;
+    cl_stage = cl_extensions = cl_engine = 0;
+    code = amt_try(cl_run);
+    cleanup = amt_try(cl_restore);
+    if (cleanup) amt_abort_fatal(cleanup);
+    if (code) amt_abort(code);
 }

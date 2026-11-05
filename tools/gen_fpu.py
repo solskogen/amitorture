@@ -625,7 +625,15 @@ def op_tst(src, mode, prec):
 
 def op_sgl(src, dst, mode, prec, div):
     if src.k == "f" and dst.k == "f":
-        x = dst.m / src.m if div else dst.m * src.m
+        if div:
+            x = dst.m / src.m
+        else:
+            # FSGLMUL discards both input mantissas' low bits before multiplying,
+            # independently of FPCR rounding mode and without narrowing exponents.
+            def trunc(m):
+                unit = Fr(2) ** (ilog2(m) - 23)
+                return (m // unit) * unit
+            x = trunc(dst.m) * trunc(src.m)
         return rnd(src.s ^ dst.s, Exact(x), mode, PS)
     return (op_div if div else op_mul)(src, dst, mode, PX)
 
@@ -1220,6 +1228,11 @@ modrem_group("arith_frem", True)
 
 group("arith_fsglmul")
 for mode in MODES:
+    for src, dst in ((1 + P2(-24), 1), (1, 1 + P2(-24)),
+                     (-(1 + P2(-24)), 1), (1 + P2(-24), 1 + P2(-24))):
+        for prec in PRECS:
+            emit_reg("fsglmul", lambda s, d, m, p: op_sgl(s, d, m, p, False), fin(src), fin(dst), mode, prec,
+                     note="both input mantissas truncated to 24 bits before multiplication")
     emit_reg("fsglmul", lambda s, d, m, p: op_sgl(s, d, m, p, False), fin(1 + P2(-23)), fin(1 + P2(-23)), mode, PX,
              note="product rounded to single precision, any FPCR precision")
     emit_reg("fsglmul", lambda s, d, m, p: op_sgl(s, d, m, p, False), fin(3), fin(Fr(1, 3) * 0 + 5), mode, PD)

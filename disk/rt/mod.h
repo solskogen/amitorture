@@ -67,6 +67,7 @@ struct amt_module {
         { #name, (id), (phase), (flags), (chip), (any), amt_run_##name }
 
 /* ---- environment ---- */
+void amt_json_modules(void);
 extern struct amt_probe amt_probe_result;   /* filled before any module runs */
 #define AMT_CPU()   (amt_probe_result.cpu_id)       /* AMT_CPU_* */
 #define AMT_FPU()   (amt_probe_result.fpu_id)       /* AMT_FPU_* (0 = none) */
@@ -80,6 +81,11 @@ int   amt_any_pool_is_chip(void);/* 1 if the any-pool had to come from chip RAM
                                     not support the 68k indivisible read-modify-
                                     write cycle (TAS/CAS/CAS2): the write may be
                                     lost (HRM); don't test RMW there. */
+int amt_any_pool_on_chip_bus(void); /* includes slow RAM arbitrated by Agnus */
+
+/* ---- OS-return cleanup (not per-module abort cleanup) ---- */
+int  amt_on_return(void (*fn)(void)); /* non-null callback; 0 or -1 if full */
+void amt_return_cleanup(void);
 
 /* ---- expansion boards ----
  * Every module that touches a Zorro board's registers or memory MUST get the
@@ -90,8 +96,20 @@ int   amt_any_pool_is_chip(void);/* 1 if the any-pool had to come from chip RAM
  * ($200000-$9FFFFF memory, $E90000-$EFFFFF I/O; $E8xxxx is the autoconfig slot) or Zorro III space
  * (>= $10000000), or wrap around the address space. Writing to a rejected
  * board's "address" could hit chip RAM (e.g. address 0) or a board that is
- * still in configuration space. Returns 1 if the board may be accessed. */
+ * still in configuration space. This is structural/read-only permission;
+ * destructive access additionally requires amt_board_claim(). */
 int amt_board_ok(const struct amt_probe_board *b);
+/* Exclusive destructive access, not an unsafe/net permission check.
+ * Requires an original &amt_probe_result.boards[i], current BoardList
+ * membership, ConfigDev identity/range matching the probe, no bound driver,
+ * and current CDF_CONFIGME. The OS probe retains list/library provenance;
+ * stale ConfigDev pointers are never dereferenced before membership checks.
+ * Only the bare phase with Forbid+Disable held may claim. Claims clear
+ * CDF_CONFIGME atomically and remain reserved through HALT/REBOOT; repeat
+ * calls by later modules succeed for our own still-valid claims.
+ * Returns 0 for unknown/driver-owned boards or outside that context.
+ * amt_board_ok() remains a structural guard for read-only access. */
+int amt_board_claim(const struct amt_probe_board *b);
 
 /* ---- results ---- */
 #define AMT_ST_PASS        0
@@ -190,10 +208,13 @@ volatile ULONG *amt_vbr(void);   /* the vector table in use */
 #define AMT_ABORT_USER       3
 int  amt_try(void (*fn)(void));
 void amt_abort(int code);         /* from C or from inside a handler */
+/* Cleanup could not quiesce hardware: report failure and quarantine in place,
+ * without unwinding into another module or resuming OS execution. */
+void amt_abort_fatal(int code) __attribute__((noreturn));
 
 struct amt_exc_info {
     UWORD vector;                 /* vector number that hit the catch-all */
-    UWORD sr;                     /* stacked SR (68000 group 1/2 layout or 010+) */
+    UWORD sr;                     /* stacked SR, including CPU-specific bus/address frames */
     ULONG pc;                     /* stacked PC */
     UWORD frame[16];              /* raw words from the exception frame */
 };
@@ -213,6 +234,9 @@ void  amt_srand(ULONG seed);
  * fn must be deterministic in its argument-independent part: it may use i
  * only for things that cancel out (or ignore it). */
 long amt_hot(ULONG (*fn)(ULONG iter), ULONG reps, ULONG *first, ULONG *bad);
+/* fn returns zero only for an architecturally valid result. Checks iteration 0
+ * as well as reps subsequent iterations; returns the first invalid iteration. */
+long amt_hot_checked(ULONG (*fn)(ULONG iter), ULONG reps, ULONG *first, ULONG *bad);
 
 /* Standard repetition count: 100 in full mode, 20 in quick. Amiberry's JIT
  * translates a block after 4 executions, so 100 is a 25x margin. A module

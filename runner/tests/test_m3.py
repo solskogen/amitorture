@@ -164,16 +164,18 @@ class HostRequests(unittest.TestCase):
     def test_attach_after_request_and_integrity_counts_guest_only(self):
         guest = [{"v": 1, "seq": 0, "t": "hello", "build": "b", "mode": 0, "seed": 1, "exec": "40.68", "cpu": "68020",
                   "fpu": "none", "mmu": 0, "probe": {}},
-                 req(1, 1, "wait"),
-                 {"v": 1, "seq": 2, "t": "case", "mod": "input", "case": "c", "st": "pass"},
-                 {"v": 1, "seq": 3, "t": "done", "pass": 1, "fail": 0, "skip": 0, "untestable": 0, "aborted": 0,
-                  "records": 4}]
+                 {"v": 1, "seq": 1, "t": "mod", "mod": "input", "ev": "begin"},
+                 req(2, 1, "wait"),
+                 {"v": 1, "seq": 3, "t": "case", "mod": "input", "case": "c", "st": "pass"},
+                 {"v": 1, "seq": 4, "t": "mod", "mod": "input", "ev": "end", "pass": 1, "fail": 0, "skip": 0},
+                 {"v": 1, "seq": 5, "t": "done", "pass": 1, "fail": 0, "skip": 0, "untestable": 0, "aborted": 0,
+                  "records": 6}]
         m = records.merge({"serial": [records.parse_line(records.encode(r)) for r in guest]})
         self.assertEqual(m.schema_problems, [])     # "request" is a known record type
-        self.rq.offer(guest[1], "serial")
+        self.rq.offer(guest[2], "serial")
         hosts = self.rq.service(self.MBOX)
         hostreq.attach(m, hosts)
-        self.assertEqual([x["rec"]["t"] for x in m.records], ["hello", "request", "host", "case", "done"])
+        self.assertEqual([x["rec"]["t"] for x in m.records], ["hello", "mod", "request", "host", "case", "mod", "done"])
         st, why = R.classify({}, m, "done")
         self.assertEqual(st, "pass", why)
 

@@ -5,6 +5,18 @@ serialises it as the CONTRACT.md section 8 object. Its output is byte-identical
 to the `hello.probe` object that `rt/main.c` builds (checked in Amiberry).
 The probe runs with exec alive, before the takeover.
 
+The ordinary `amt_probe()` API closes expansion.library before returning and has
+no runtime-parameter dependency. The disk runtime alone opts into
+`amt_probe_with_claims(p, retain_boards)` for HALT/REBOOT: it keeps a library
+reference and live BoardList provenance for authoritative bare-phase claims.
+RETURN passes zero, so the reference is already closed before module allocation
+or error paths. Its final OS return also calls the idempotent
+`amt_probe_release_boards()`; HALT/REBOOT never release claim provenance.
+An independent caller abandoning retained provenance must release it with the OS
+alive, before any destructive claims or reuse of the probe record. A claimed
+terminal run instead keeps its reservation until HALT/REBOOT and cannot return.
+Private provenance is not serialised.
+
 Files:
 
 | File | What it holds |
@@ -13,6 +25,17 @@ Files:
 | `probe.c` | Decision logic, the 68020 address-alias test, chipset/exec/memory/expansion info, and JSON. Built with `-m68000`. |
 | `probe_asm.s` | `amt_probe_sv()`, which runs one test in supervisor mode with our own vectors, plus the tests themselves. It sets `machine 68060`, `fpu 1` and `opt o-` itself, and the CPU-specific instructions are `dc.w`-encoded, so one object holds everything. |
 | `Makefile.probe` | A compile-only check: `make -f Makefile.probe` (or `dis` for a disassembly). |
+
+Isolated cross-check from the project root:
+`make -C disk/probe -f Makefile.probe B=../build-audit-expansion-fixes/probe-only -j12`.
+This is a compile-only target, not a standalone executable; the probe objects
+provide their own `amt_*` functions and assembly helpers. Embedding still supplies
+the normal Exec `SysBase` (and target compiler arithmetic support), not disk
+runtime globals such as `amt_par`.
+For a freestanding 68000 link, `rt/divmod.s` supplies the division helpers this
+toolchain normally gets from libnix; libgcc alone does not provide them. Linking
+the probe objects with this arithmetic-only shim leaves just `SysBase` imported,
+with no unresolved `amt_*` dependency.
 
 ## How a test runs
 
@@ -35,8 +58,10 @@ value is 0 if the test completed, or the vector number if it trapped.
   trap. Every later test installs the stubs at the VBR it read.
 
 Registers that are written are restored to the value read just before:
-CACR, PCR, the 040/060 TC/URP, and the 030 TC. Writes are only test bits that
-enable nothing (no cache enables). The FPU state is restored with
+CACR, PCR, the 040/060 TC/URP, and the 030 TC/TT0/TT1. Most writes are test bits
+that enable nothing (no cache enables); the 030 walk test briefly enables an identity map and disables
+transparent translation, then restores it. A saved CRP with DT=0 is not restored and is explicitly reported.
+The FPU state is restored with
 `FSAVE`/`FRESTORE`.
 
 ## Decision table
@@ -51,7 +76,7 @@ The `how` strings are listed in the order they appear. `attn:xxxx`
 | 68020 / 68EC020 | CACR ok and scale ×4. No PCR, no ITT0. CACR bits 13 (WA) and 9 (FD) written, both read back 0. Then 020 vs EC020: see the alias row. | `movec-cacr:ok cacr=…`, `scale:x4`, `movec-pcr:illegal`, `movec-itt0:illegal`, `cacr-w:2200 rb=0000`, `cacr:020`, `movec-caar:ok`, `pmove-tc:linef` | MC68020UM §6 CACR (only C, CE, F, E; reserved bits read 0). |
 | 020 vs EC020 | Memory above 16 MB in the MemList? If not: EC020 is assumed. If so: under Forbid, find a free chunk H ≥ 16 MB whose `H & $FFFFFF` is a free chunk L below 16 MB, AllocAbs both, write different patterns, and see whether L changed. | `addr24:no-highmem assume 24` (→ 68EC020), `alias:no hi=…` (→ 68020), `alias:yes hi=…` (→ 68EC020), `addr24:highmem, no alias pair, assume 32` | MC68EC020 data sheet: A0-A23 only. With a 24-bit bus a write to H lands in L, which we also own, so only owned memory is ever written. |
 | 68030 / 68EC030 | CACR bits 13 and 9 read back as set. MMU: see the next row. | `cacr-w:2200 rb=2200`, `cacr:030 wa+fd`, `movec-caar:ok`, `pmove-tc:ok tc=…` | MC68030UM §6.1.3 CACR (WA bit 13, FD bit 9; ED bit 8 is not touched). |
-| 030 MMU | PMOVE TC,(a0): line-F means no MMU. If TC.E is already 1, there is an MMU. Otherwise, if TT0/TT1 are not enabled, the MMU **table-walk test** runs: CRP = `$80000002`/table (L/U=1, DT=2), and the table is 16 identity early-termination page descriptors (DT=1, 256 MB each). TC = `$80F04445` is loaded for 3 instructions and then the original TC is loaded again. If the MMU walked the table, it set the U bit (bit 3) in the descriptors it used. If TT0/TT1 are active, the fallback is the PMOVE TC write/read-back. | `mmu030:walk u=N` (→ 68030), `mmu030:no-walk u=0` (→ 68EC030), `pmove-tc:linef` (→ EC030), `tc030:e=1`, `tt030:active` + `tc030:rw` / `tc030:ro`, `mmu030:config-exception` (vector 56, → MMU present), `crp:dt=0 not restored` | MC68030UM §9 (root pointer, TC, early-termination descriptors, U bit "set by the processor during table search"). |
+| 030 MMU | PMOVE TC,(a0): line-F means no MMU. If TC.E is already 1, there is an MMU. Otherwise, if TT0/TT1 can be read, the MMU **table-walk test** runs: active TT entries are temporarily disabled and restored by the assembly cleanup. CRP = `$80000002`/table (L/U=1, DT=2), and the table is 16 identity early-termination page descriptors (DT=1, 256 MB each). TC = `$80F04445` is loaded for 3 instructions and then the original TC is loaded again. If the MMU walked the table, it set the U bit (bit 3) in the descriptors it used. Only a TT-register or walk-test trap falls back to PMOVE TC write/read-back (a configuration exception instead proves MMU presence). | `mmu030:walk u=N` (→ 68030), `mmu030:no-walk u=0` (→ 68EC030), `pmove-tc:linef` (→ EC030), `tc030:e=1`, `tt030:active tt0=…` + `tt030:disabled for the walk test`, `tc030:rw` / `tc030:ro`, `mmu030:config-exception` (vector 56, → MMU present), `crp:dt=0 not restored` | MC68030UM §9 (root pointer, TC, early-termination descriptors, U bit "set by the processor during table search"). |
 | 68040 family | No PCR, MOVEC ITT0/DTT0 ok. CACR bits 13 and 9 read back 0. CAAR traps (020/030 only). | `movec-pcr:illegal`, `movec-itt0:ok`, `cacr-w:2200 rb=0000`, `movec-caar:illegal` | MC68040UM §3 / M68000PM MOVEC table (ITT0-DTT1 at $004-$007, URP/SRP $806/$807; CAAR not on the 040). |
 | 68040 / LC040 / EC040 | FPU (FMOVE.L FPCR,D0 works) → 68040. Without an FPU: MMU → 68LC040, no MMU → 68EC040. MMU test: if TC.E=1, there is an MMU. Otherwise TC is written with P (bit 14) toggled and E kept 0, then read back. A stored P means an MMU. URP read-back is recorded as a cross-check only. | `fsave:41000000` / `fpu:linef`, `tc:p-rw urp:rw` (MMU), `tc:p-ro …` (no MMU), `tc:e=1 tc=8000`, `cpu:040 fpu without mmu` (a contradiction, reported as 68040, mmu 0) | MC68040UM: the LC040/EC040 take line-F for FPU opcodes; the EC040 has no MMU, so its TC is not implemented. |
 | 68060 / LC060 / EC060 | MOVEC PCR ($808) works only on the 060. PCR bits 31-16 = $0430 (68060) or $0431 (EC/LC). `cpu_rev` = PCR bits 15-8. If PCR.DFP (bit 1) is set, it is cleared for the FPU test and then restored (`fpu_dis`=1). No FPU: MMU (TC P bit, as on the 040) → 68LC060, else 68EC060. CACR bit 13 (FIC) reads back as set. | `pcr:ok id=0430 rev=6 dfp=1`, `cacr-w:2200 rb=2000`, `fsave:00006000`, `tc:p-rw urp:rw`; EC/LC: `pcr:ok id=0431 …`, `pcr:dfp stuck`, `fpu:linef`, `tc:p-ro` (EC) | MC68060UM §5 / Appendix (PCR: ID $0430/$0431, revision, DFP); §5.3 CACR (FIC bit 13). |

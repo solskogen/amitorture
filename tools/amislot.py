@@ -165,12 +165,11 @@ def emulator_slot(poll=0.5, quiet=False, cancel=None, cancel_exc=KeyboardInterru
                         os.close(f)
                         held += 1
                         continue
+                    # Unlocked registrations cannot hide surviving orphans.
+                    os.ftruncate(f, 0)
                     if fd is None:
                         fd, num = f, i
                     else:
-                        # free slot: clear what a holder that died without
-                        # its cleanup left in it (stale holder/emu pids)
-                        os.ftruncate(f, 0)
                         fcntl.flock(f, fcntl.LOCK_UN)
                         os.close(f)
                 if fd is not None:

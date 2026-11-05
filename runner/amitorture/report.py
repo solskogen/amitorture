@@ -139,6 +139,11 @@ def collect_failures(results):
             if dn:
                 dref["raw"] = sub.get("raw")
                 dref["config"] = (sub.get("config") or {}).get("file") or ref.get("config")
+            cfg = sub.get("config") or {}
+            if cfg.get("dump_ok") is False and sub["status"] != "error":
+                from . import amiberry_cfg
+                items.append({"kind": "error", **dref,
+                              "why": amiberry_cfg.verification_error(dict(cfg, ok=False))})
             if merged is not None:
                 recs = merged.records
                 hello = merged.by_type("hello")
@@ -188,6 +193,11 @@ def collect_failures(results):
                                   "why": "serial and mailbox delivered different content for the same seq"})
                 for sp in merged.schema_problems[:10]:
                     items.append({"kind": "schema", **dref, **sp, "why": "; ".join(sp["problems"])})
+                if sub.get("ended") != "selftest":
+                    lifecycle = recmod.module_problems(merged)
+                    if lifecycle:
+                        items.append({"kind": "schema", **dref, "problems": lifecycle,
+                                      "why": "module lifecycle: " + "; ".join(lifecycle)})
             if sub["status"] in ("crash", "hang", "timeout", "error", "incomplete"):
                 items.append({
                     "kind": sub["status"], **dref,
@@ -424,7 +434,7 @@ def module_catalogue(results, fps, items, narrowing):
     return mods
 
 
-def catalogue_summary(results, fps):
+def catalogue_summary(results, fps, parity_info=None):
     """The coverage catalogue (docs/catalogue.yaml) evaluated on this run."""
     from . import catalogue
     try:
@@ -433,7 +443,7 @@ def catalogue_summary(results, fps):
         return {"error": str(e)}
     if items is None:
         return None
-    rows = catalogue.coverage(items, results, fps)
+    rows = catalogue.coverage(items, results, fps, parity_info)
     return {"file": "docs/catalogue.yaml", "totals": catalogue.totals(rows), "rows": rows}
 
 
@@ -556,7 +566,11 @@ def write_all(outdir, environment, results, source="run", analysis=None):
                      "jit": r.get("jit"), "twin_of": r.get("twin_of"), "twin_kind": r.get("twin_kind"),
                      "machine": r.get("machine"), "rom": (r.get("rom") or {}).get("name"),
                      "cases": entry_case_counts(fps.get(r["id"]), items, r["id"]),
-                     "as_designed": not r.get("adjusted"), "adjusted": r.get("adjusted"),
+                     "as_designed": not r.get("adjusted") and all(
+                         (s.get("config") or {}).get("dump_ok") is True and
+                         ("warp" not in s or s["warp"].get("verified") is True)
+                         for s in (r.get("disks") or [r])),
+                     "adjusted": r.get("adjusted"), "warp": r.get("warp"),
                      "records": (r.get("records") or {}).get("merged"), "duration_s": r.get("duration_s"),
                      "ended": r.get("ended")} for r in results],
         "modules": {k: {kk: (sorted(vv) if isinstance(vv, set) else vv) for kk, vv in v.items() if kk != "cases"}
@@ -574,7 +588,7 @@ def write_all(outdir, environment, results, source="run", analysis=None):
             "budget_s", "used_s", "launches", "exhausted", "skipped")},
         "isolation": {"ok": iso.get("ok", True), "changes": iso.get("changes", []),
                       "user_amiberry_seen": iso.get("user_amiberry_seen", [])},
-        "catalogue": catalogue_summary(results, fps),
+        "catalogue": catalogue_summary(results, fps, an.get("parity")),
         "host_requests": host_summary(results),
         "hostspeed": speed_summary(results),
         "files": {"report": "REPORT.md", "failures": "failures.jsonl", "environment": "environment.json",
@@ -708,7 +722,7 @@ def render_markdown(summ, env, results, items, problems, an):
         st = e["status"] if e["status"] not in BAD else f"**{e['status']}**"
         mach = " ".join(x for x in (m.get("model"), m.get("cpu"), "+" + m["fpu"] if m.get("fpu") not in ("none", None)
                                     else "", m.get("chipset"), m.get("video"), m.get("core")) if x)
-        des = "yes" if e.get("as_designed") else "**no: adjusted**"
+        des = "yes" if e.get("as_designed") else ("**no: adjusted**" if e.get("adjusted") else "**unverified**")
         if e["status"] == "skip":
             des = "-"
         L.append(f"| {e['id']} | {_cell(mach)} | {_cell(e.get('rom'))} | {_cell(_engine(e))} | {st} | {des} | "
@@ -803,6 +817,16 @@ def render_markdown(summ, env, results, items, problems, an):
     if nar and (nar.get("exhausted") or nar.get("skipped")):
         L.append(f"Narrowing: {nar.get('skipped') or 'budget exhausted'} (used {nar.get('used_s')} s of "
                  f"{nar.get('budget_s')} s, {nar.get('launches')} launches; untried variants are listed per problem).")
+        L.append("")
+    paced = [(r["id"], s) for r in results for s in (r.get("disks") or [r]) if s.get("warp")]
+    if paced:
+        L.extend(["## Warp policy", "", "Pacing is selected before each fresh boot; no tests are removed.", "",
+                  "| Entry | Disk | Policy | Warp | Runtime verified | Reason |",
+                  "|---|---|---|---|---|---|"])
+        for eid, sub in paced:
+            w = sub["warp"]
+            L.append(f"| {_cell(eid)} | {_cell(sub.get('disk_name'))} | {w['requested']} | "
+                     f"{'on' if w['effective'] else 'off'} | {w.get('verified', False)} | {_cell(w['reason'])} |")
         L.append("")
     # ---------------- environment
     L.append("## Environment")
@@ -1257,16 +1281,21 @@ def import_files(paths, outdir, label="import"):
     from . import runner as runmod
     groups = _import_groups(streams)
     if not groups:
-        groups = [("capture", {})]
+        groups = [("capture", {}, [])]
     noise = {sp.source: {"lines": sp.noise_lines, "samples": sp.noise_samples[:10]} for sp in parsers}
     subs = []
-    for name, gstreams in groups:
+    for index, (name, gstreams, alignment_issues) in enumerate(groups, 1):
         m = recmod.merge(gstreams)
+        m.schema_problems.extend(alignment_issues)
         d = m.by_type("done")
-        h = m.by_type("hello")
-        sub = {"disk_name": name, "_merged": m,
-               "records": {"merged": len(m.records), "per_source": m.per_source, "gaps": m.gaps,
-                           "bad_count": len(m.bad), "hello": h[-1] if h else None, "done": d[-1] if d else None}}
+        sub = {"disk_name": name, "_merged": m, "records": recmod.summarize(m)}
+        if len(groups) > 1:
+            sub["raw"] = f"raw/imported/disks/{index:03d}/"
+            rawdir = os.path.join(outdir, sub["raw"])
+            os.makedirs(rawdir, exist_ok=True)
+            with open(os.path.join(rawdir, "records.jsonl"), "w", encoding="utf-8") as fh:
+                for rec in m.records:
+                    fh.write(json.dumps(rec) + "\n")
         sub["status"], sub["reason"] = runmod.classify(sub, m, "done" if d else "timeout")
         if not d:
             # a capture has no emulator that timed out: the capture stopped,
@@ -1279,18 +1308,16 @@ def import_files(paths, outdir, label="import"):
     hellos = [(s["disk_name"], s["records"]["hello"]) for s in subs]
     hello = [h for _, h in hellos if h]
     probe = (hello[0].get("probe") if hello else None) or {}
-    done = merged.by_type("done")
     r = {"id": "imported", "title": "imported capture: " + ", ".join(os.path.basename(p) for p in paths),
          "jit": False, "twin_of": None,
          "machine": {"cpu": probe.get("cpu") or (hello[0].get("cpu") if hello else None),
                      "fpu": probe.get("fpu") or (hello[0].get("fpu") if hello else None),
                      "chipset": probe.get("chipset")},
          "rom": {"name": f"kick {probe.get('kick')}" if probe.get("kick") else None},
-         "records": {"merged": len(merged.records), "per_source": merged.per_source, "gaps": merged.gaps,
-                     "bad_count": len(merged.bad), "done": done[-1] if done else None,
+         "records": recmod.summarize(merged) | {
                      "per_disk": {s["disk_name"]: s["records"]["merged"] for s in subs},
                      "noise": noise},
-         "_merged": merged}
+         "_merged": merged, "raw": "raw/imported/"}
     if len(subs) > 1:
         r["disks"] = subs
         r["probe_consistency"] = runmod.probe_consistency(hellos)
@@ -1312,21 +1339,13 @@ def import_files(paths, outdir, label="import"):
 
 
 def _import_groups(streams):
-    """Splits imported records into disk runs: [(disk name, {source: records})].
-
-    seq restarts at 0 per boot, so boots of different files must not be
-    merged by (boot, seq). A boot is matched across files by the disk's build
-    id (the hello `build`, which ends with the set group, e.g. "... core") and
-    its occurrence number in the file: the serial capture and a mailbox dump
-    of the same boot become two transports of one run. Records before any
-    hello stay a run of their own.
-    """
-    order, groups = [], {}
+    """Split by disk build, then reconcile each disk's source-local boot histories."""
+    from dataclasses import replace
+    groups = {}
     for src, recs in streams.items():
         by_boot = {}
         for rec in recs:
             by_boot.setdefault(rec.boot, []).append(rec)
-        seen = {}
         for boot in sorted(by_boot):
             brecs = by_boot[boot]
             build = next((x.obj.get("build") for x in brecs
@@ -1334,27 +1353,27 @@ def _import_groups(streams):
             if build is None:
                 key = ("", src, boot)
             else:
-                n = seen.get(build, 0)
-                seen[build] = n + 1
-                key = (build, n)
-            if key not in groups:
-                groups[key] = {}
-                order.append(key)
-            for x in brecs:
-                x.boot = 0
-            groups[key].setdefault(src, []).extend(brecs)
+                key = (build,)
+            groups.setdefault(key, {}).setdefault(src, []).extend(brecs)
     out, names = [], set()
-    for key in order:
-        if key[0] == "":
-            base = f"{key[1].split(':', 1)[-1]}#{key[2] + 1}"
-        else:
-            words = str(key[0]).split()
-            base = (words[-1] if words else "disk") + (f"#{key[1] + 1}" if key[1] else "")
-        name, k = base, 2
-        while name in names:
-            name, k = f"{base}-{k}", k + 1
-        names.add(name)
-        out.append((name, groups[key]))
+    for key, gstreams in groups.items():
+        maps, issues = recmod.boot_alignment(gstreams)
+        boots = {}
+        for src, recs in gstreams.items():
+            for r in recs:
+                boot = maps[src][r.boot]
+                boots.setdefault(boot, {}).setdefault(src, []).append(replace(r, boot=0))
+        for index, boot in enumerate(sorted(boots)):
+            if key[0] == "":
+                base = f"{key[1].split(':', 1)[-1]}#{key[2] + 1}"
+            else:
+                words = str(key[0]).split()
+                base = (words[-1] if words else "disk") + (f"#{index + 1}" if index else "")
+            name, k = base, 2
+            while name in names:
+                name, k = f"{base}-{k}", k + 1
+            names.add(name)
+            out.append((name, boots[boot], [dict(p, boot=0) for p in issues if p["boot"] == boot]))
     return out
 
 

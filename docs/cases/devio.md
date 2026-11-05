@@ -1,5 +1,10 @@
 # devio (module 11, OS phase)
 
+Timeout initialization is transactional: both timer message ports and
+timer.device must open before any device discovery/request is issued.
+Failure is `setup` untestable, with all allocated signals released (including
+signal zero); no zero-frequency conversion or untimed request is attempted.
+
 Block I/O through trackdisk.device (units 0-3) and scsi-style devices (scsi.device, 2nd.scsi.device,
 3rd.scsi.device, uaehf.device; units 0-7; every exec device node of that name, so the A4091's
 scsi.device next to the A4000 IDE one is tested too). Writes happen ONLY on units signed as

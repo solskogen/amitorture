@@ -278,9 +278,9 @@ def passes_diff(p, ctx):
             continue
         cs = (ctx.fps.get(r["id"]) or {}).get("cases", {})
         sts = [cs[k]["st"] for k in keys if k in cs]
-        if sts and all(s == "pass" for s in sts):
+        if len(sts) == len(keys) and all(s == "pass" for s in sts):
             passing.append(r["id"])
-        elif not sts or all(s in ("skip", "untestable") for s in sts):
+        elif len(sts) != len(keys) or all(s in ("skip", "untestable") for s in sts):
             skipped.append(r["id"])
     out = {"passes_on": passing, "not_run_or_skipped_on": skipped, "separating": [], "nearest": []}
     if not passing:

@@ -60,7 +60,7 @@ How the runner uses it:
 - **Launches.** Each entry runs every disk as a separate, sequential emulator launch.
   - Each launch holds its own slot and bakes its own copy of the disk.
   - Its config is `configs/<entry>.<disk>.uae`, and its raw files go to `raw/<entry>/<disk>/`.
-  - Apart from the floppy, the config is identical for every disk.
+  - Apart from media, floppy speed and automatic warp policy, the config is identical for every disk.
 - **One entry result.**
   - Case records of all disks are merged into one result. Cases keep their `(mod, case)` key, so parity,
     baselines, check and narrowing work as with one disk.
@@ -83,6 +83,47 @@ How the runner uses it:
   disk takes 243 s on a cycle-exact A500 (cpu 125 s, chip 127 s, cpux 101 s, fpu/exp about 35 s) and 225 s on the
   CDTV, the slowest launches.
 
+### Automatic warp
+
+`--warp auto` accelerates only the `cpu`, `fpu` and `mmu` set disks. The baked disk's
+build id, not its filename, identifies its group; renamed set disks passed with `--adf`
+get the same policy. `core`, `chip`, `exp`, `cpux`, mixed/unknown disks, selftests and
+any launch requiring audio capture stay normally paced. `--audio off` does not make
+a timing-sensitive disk eligible for warp. Module masks never change this decision.
+All selected disks and cases still run with their existing assertions and verdict rules.
+
+The policy is applied before each fresh boot, so audio/input/RTC/hostspeed sections
+never inherit a warped clock, muted audio buffers or synthetic key releases from a
+previous section. There are no asynchronous mid-module mode changes. The runner
+checks the resolved config and `GET_WARP` at launch; an unsupported command, malformed
+reply or unexpected mode is a host error, not a successful fallback. Warped launches
+poll the mailbox every 10 ms instead of 250 ms; overruns, serial recovery and record
+integrity remain visible through the existing transport checks.
+
+Normal pacing remains the default (`--warp off`). `--warp on` forces continuous warp
+for experiments and **invalidates timing-sensitive coverage**: Amiberry suppresses
+audio, synthesizes key releases, and advances emulated clocks faster than its host-backed
+RTC. Legacy `--set warp=true` remains an explicit experimental override; it cannot be
+combined with `--warp`. An explicit `--warp` policy takes precedence over matrix options.
+
+Every launch records its requested policy, effective mode, group, reason and runtime
+verification in results and REPORT.md. Baselines store the policy; `check` inherits it
+unless overridden and reports changes in per-entry metadata. Engine parity requires
+matching effective modes on corresponding disks. Repro packs pin the original module's
+effective mode in both their config and stored entry, including packs rebuilt from saved
+results. Equivalence means unchanged coverage
+and case outcomes, not identical wall-clock timings, live RTC digits or throughput;
+validate against matched normal-paced runs and retain any differences as findings.
+
+**Current validation limit:** paired quick smoke runs preserved every case identity
+and failure outcome, but Paula timestamp acquisition and the timing module's H-range
+coverage check changed some cases between `pass` and `untestable`, even though both
+disks used normal pacing. A separate warp-off-only control also reproduced Paula
+outcome changes. Automatic warp is therefore not yet certified to give identical
+pass/skip/untestable outcomes for the entire suite. These observation failures and
+their engine-parity differences remain visible; they are not converted to passes,
+excluded from comparisons, or added to the xfail registry.
+
 ## Commands
 
 ### roms
@@ -100,6 +141,8 @@ amitorture matrix --matrix full --validate --amiberry BIN --kickstarts DIR
 Lists the entries. `--validate` runs `amiberry --dump-config` on every config without emulating, and prints each
 option Amiberry changed together with the fixup message that explains it. That is the quick way to see what the
 emulator refuses, e.g. a threaded CPU with an MMU.
+Failed or unusable dumps are printed as `FAILED`, retained in the JSON diagnostics, and return host-error
+exit status 2; they are not counted as validated entries.
 
 The matrices (runner/amitorture/matrix.py):
 
@@ -142,6 +185,8 @@ The matrices (runner/amitorture/matrix.py):
   MMU/compat/CE/68000, an FPU on a 68000/010.
 - **Run-time validation** works two ways.
   - **Config.** Every config is checked with `--dump-config`.
+    A failed verification stops that disk before emulation, reports `error`, and preserves the dump error,
+    exit code and stderr. An unverified entry is never marked "as designed".
   - **Emulator log.** After the run, the log is checked for what actually ran: build_cpufunctbl's
     `CPU=68040, FPU=68040 (host 64b), MMU=0, JIT=CPU/FPU=8192. fast` line (JIT on or off, FPU, softfloat, MMU,
     CPU), and `uae_start_thread "cpu"` versus "... running the CPU on the main thread" for the threaded CPU.
@@ -161,7 +206,7 @@ amitorture run --amiberry BIN --kickstarts DIR [--matrix smoke] [--config GLOB .
                [--disk-set DIR] [--jobs N] [--keep] [--timeout S per disk (600)] [--hang S (120)]
                [--narrow-budget S (7200)] [--narrow-reruns N (3)] [--narrow-binary BIN ...] [--no-narrow]
                [--baseline NAME] [--no-repro] [--amiberry-src DIR] [--xfail FILE]
-               [--audio auto|on|off] [--ports LO-HI] [--end-action halt|reboot|return] [-q] [--show]
+               [--audio auto|on|off] [--warp off|auto|on] [--ports LO-HI] [--end-action halt|reboot|return] [-q] [--show]
                [--no-disk] [--selftest]
 ```
 - `--end-action`: what the disk does after its last module (default `halt`; the runner stops the emulator itself).
@@ -174,6 +219,11 @@ amitorture run --amiberry BIN --kickstarts DIR [--matrix smoke] [--config GLOB .
    a hang, a crash or the timeout (as in milestone 1). Test media for devio come from `runner/amitorture/media.py`
    (`prepare(entry, options, media_dir, seed)` returns config options) when that file exists; without it the run
    goes on without media.
+   A completed guest boot must have matched module begin/end records and test evidence (case, perf or speed
+   records). New disks announce their selected compiled modules in `hello.modules`; all must complete with
+   matching ids. A disk with an explicitly empty selection is `skip`, not PASS, and does not stop the remaining
+   disks of a set. Older captures without the manifest receive lifecycle checks but cannot prove selected-module
+   coverage. Synthetic host selftests are exempt from guest-module checks.
 2. **Engine parity.** Every twin is compared with its reference entry, case by case (identified by
    `<mod>.<case>`):
    - a case missing on either side is an `engine_mismatch`;
@@ -181,8 +231,13 @@ amitorture run --amiberry BIN --kickstarts DIR [--matrix smoke] [--config GLOB .
      options the twins differ in;
    - timing fields (`perf` records, and keys named `timing`, `ticks` or `latency*` at any depth) are excluded;
    - softfloat twins give `fpu_mode_difference` (informational).
+   The effective options must actually select the intended engines and differ only in the designed engine
+   settings (including the combined JIT/threaded variant). Overrides that collapse both sides to one engine
+   make the pair "not compared". The JIT parity catalogue row requires matching cases in a completed comparison;
+   JIT-only runs cannot cover it.
 3. **xfail.** Cases in `runner/amitorture/xfail.json` that fail are `xfail` and are not counted as problems. If
-   they pass, they are reported as `fixed`.
+   they pass, they are reported as `fixed`. Guest-case xfails never suppress engine parity disagreements,
+   even when the differing cases both pass.
 4. **Narrowing.** For each (entry, module) with failing cases or mismatches, the runner reruns only that module
    (`modules=<1<<id>`, same seed):
    - N times on the same config, giving `deterministic` / `intermittent` / `not reproduced` and a fail rate. If
@@ -285,10 +340,11 @@ Runs every entry `--repeat` times and writes `WORKDIR/baselines/<name>/`:
 - `BASELINE.md` is a human/AI summary: unstable cases and perf bands.
 - `runs/run<N>/` holds the full results (REPORT.md, raw/) of each repetition.
 
-Re-running a baseline with the same name keeps the old file as `baseline.json.previous` and the old runs as
-`runs.previous/`. The new runs are recorded into `runs.new/` first; the old baseline is replaced only once the
-new one is complete. Ctrl+C or an error leaves it exactly as it was (a baseline that did not exist before is
-removed again).
+`--repeat` must be at least 1 for both `baseline` and `check`.
+Re-running a baseline with the same name keeps the old files as `baseline.json.previous` and
+`BASELINE.md.previous`, and the old runs as `runs.previous/`. Runs, JSON and Markdown are all prepared
+before publication. If publication fails or is interrupted, the active baseline and its runs are restored;
+a baseline that did not exist before is removed again.
 
 ### check
 ```
@@ -303,9 +359,11 @@ default to the baseline's; giving `--param` replaces the baseline's extra values
 | `regression` | a stable baseline fingerprint changed; `transition` (`pass->fail`, `pass->pass`, `fail->fail`, ...) and the differing paths are given |
 | `fixed` | baseline `fail`, now `pass` (with the xfail reference if registered) |
 | `new` / `missing` | the case is only in the check / only in the baseline |
+| `new_failure` | a new case fails in at least one completed check run without a matching xfail; a regression, even if it is intermittent |
 | `became_unstable` | stable in the baseline, differs between the check's own runs (needs `--repeat` > 1) |
 | `unstable_excluded` | unstable in the baseline: reported, not compared |
 | `perf_out_of_band` / `timing_out_of_band` | outside the band; `direction` lower (faster) or higher (slower). On `cpu_speed=max` entries (fast core, JIT) timing follows the host speed and load: such findings are marked `host_dependent` and are not counted as regressions |
+| `perf_missing` / `timing_missing` | a previously present measurement is no longer reported; a regression even on `cpu_speed=max` |
 | `entry_status` / `missing_entry` / `new_entry` | the entry as a whole ended differently (crash, skip ...) |
 | `fail_detail_changed` | a case that failed in the baseline and fails now, either with the same expect/got/why/in and only paths under `ctx` differing (e.g. absolute addresses after a disk rebuild moved the payload), or as a registered xfail whose measured values changed. Informational, not a regression |
 
@@ -316,7 +374,11 @@ default to the baseline's; giving `--param` replaces the baseline's extra values
   where each fingerprint differs. That lets you bisect over prebuilt binaries without building anything.
 - Output goes to `WORKDIR/results/check-<id>/` (`REPORT.md`, `check.json`, raw runs under `bin<N>/run<M>/`).
 - Regression kinds: `regression`, `missing`, `became_unstable`, `perf_out_of_band`, `timing_out_of_band`,
-  `entry_status`, `missing_entry`. Any of them gives exit status 1.
+  `entry_status`, `missing_entry`, `new_failure`, `perf_missing`, `timing_missing`. Any of them gives exit status 1.
+- Isolation violations stop `baseline`, `check` and `repro` with exit status 3, independently of case differences.
+  A baseline with an isolation violation is not installed. Saved violations also fail `check --rediff`.
+- Rediff preserves the check's selected entry scope: missing saved results produce `missing_entry`, not a
+  silently reduced comparison.
 
 ### Host request channel (CONTRACT §13)
 While watching a launch the runner reads `request` records from either transport (the copy that arrives second is
@@ -416,13 +478,18 @@ Builds the same report from serial captures or `mailbox.jsonl` made elsewhere (r
 `report.import_files`, `_import_groups`). All files describe one machine.
 - **Disk runs.** Each boot in a file (a `hello` with seq 0 starts one) is one disk run, so one long capture across
   every disk works, and so do several files (one per disk, any names, any order). Boots are matched across files
-  by the hello's build id and their occurrence number in the file: the serial capture and the mailbox dump of
-  one boot merge as two transports of one run. A run is named after the last word of its build id (the group,
+  by the hello's build id, then their observed boot histories. Equal-length histories retain their boot order;
+  unequal histories need a unique matching hello or a unique complete boot containing the same valid records.
+  Ambiguous epochs stay separate and are reported as integrity problems: without a shared boot nonce, partial
+  captures cannot safely be combined merely by right-aligning them. A run is named after the last word of its build id (the group,
   e.g. `core`); the same disk booted twice gives `core` and `core#2`. Records before any hello are a run of their
   own.
 - **One entry,** `imported`, combined like a disk set in `run`: a status per disk (without `done`: "no done record:
   the capture stopped, or the machine hung, before this disk finished"), the worst one for the entry, and
   `probe_consistency` across the disks (`probe_inconsistent` when they did not see the same machine).
+- **Rebuildable evidence.** The combined `raw/imported/records.jsonl` remains available; multidisk imports also
+  save per-disk records under `raw/imported/disks/NNN/`. Corruption, conflicts, schema problems and duplicate
+  counts are persisted, so `report` retains the original evidence. Missing saved records are an explicit error.
 - **No emulator:** no narrowing, no repro packs, no engine parity, no code pointers (no config), no emulator log.
   xfail and the docs/cases lines are applied. Exit status 0 for PASS, else 1.
 - The DF1 results-disk transport is not implemented (CONTRACT §11): serial is the only way off a real machine.

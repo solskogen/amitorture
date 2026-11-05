@@ -311,7 +311,7 @@ def ea_calc(st, ea):
 
 
 def loc(st, ea, s):
-    """resolve an operand: ('d', n) / ('a', n) / ('i', v) / ('m', addr); applies (An)+/-(An)"""
+    """Resolve an operand; predecrement now, postincrement after its access."""
     m = ea.mode
     if m == 'dn':
         return ('d', ea.reg)
@@ -325,8 +325,7 @@ def loc(st, ea, s):
     step = 2 if (r == 15 and s == 1) else s
     b = st.r[r]
     if m == 'pi':
-        set_ptr(st, r, b + step)
-        return ('m', b)
+        return ('m', b, (r, b + step))
     if m == 'pd':
         set_ptr(st, r, b - step)
         return ('m', b - step)
@@ -334,8 +333,15 @@ def loc(st, ea, s):
     return ('m', a)
 
 
-def lrd(st, lc, s):
-    k, v = lc
+def lpost(st, lc):
+    if len(lc) == 3:
+        r, v = lc[2]
+        set_ptr(st, r, v)
+
+
+def lrd(st, lc, s, rmw=False):
+    """Read an operand; an RMW defers postincrement until the matching lwr."""
+    k, v = lc[:2]
     if k == 'd':
         return st.r[v] & msk(s)
     if k == 'a':
@@ -344,15 +350,19 @@ def lrd(st, lc, s):
         return st.r[v] & msk(s)
     if k == 'i':
         return v
-    return mrd(st, v, s)
+    val = mrd(st, v, s)
+    if not rmw:
+        lpost(st, lc)
+    return val
 
 
 def lwr(st, lc, s, val):
-    k, v = lc
+    k, v = lc[:2]
     if k == 'd':
         st.r[v] = setlo(st.r[v], val, s)
     elif k == 'm':
         mwr(st, v, s, val)
+        lpost(st, lc)
     else:
         raise AssertionError('bad destination')
 
@@ -657,7 +667,7 @@ def g_alu(G, st):
     def ex(st, a=a, b=b, s=s, op=op):
         va = lrd(st, loc(st, a, s), s)
         lb = loc(st, b, s)
-        vb = lrd(st, lb, s)
+        vb = lrd(st, lb, s, rmw=(op != 'cmp'))
         if op == 'add':
             r, f = f_add(s, vb, va)
             m = 0x1F
@@ -681,7 +691,7 @@ def g_alu_imm(G, st):
 
     def ex(st, b=b, s=s, op=op, v=v):
         lb = loc(st, b, s)
-        vb = lrd(st, lb, s)
+        vb = lrd(st, lb, s, rmw=(op != 'cmpi'))
         if op == 'addi':
             r, f = f_add(s, vb, v)
             m = 0x1F
@@ -718,7 +728,7 @@ def g_addq(G, st):
 
     def ex(st, b=b, s=s, q=q, op=op):
         lb = loc(st, b, s)
-        vb = lrd(st, lb, s)
+        vb = lrd(st, lb, s, rmw=True)
         r, f = (f_add if op == 'addq' else f_sub)(s, vb, q)
         lwr(st, lb, s, r)
         setcc(st, f, 0x1F)
@@ -738,7 +748,7 @@ def g_addx(G, st):
         need(st, X)
         va = lrd(st, loc(st, a, s), s)
         lb = loc(st, b, s)
-        vb = lrd(st, lb, s)
+        vb = lrd(st, lb, s, rmw=True)
         xin = 1 if st.ccr & X else 0
         zin = 1 if st.ccr & Z else 0
         r, f = (f_add if op == 'addx' else f_sub)(s, vb, va, xin, zin, ext=True)
@@ -807,7 +817,7 @@ def g_unary(G, st):
 
     def ex(st, b=b, s=s, op=op):
         lb = loc(st, b, s)
-        v = lrd(st, lb, s)
+        v = lrd(st, lb, s, rmw=(op != 'tst'))
         if op == 'neg':
             r, f = f_sub(s, 0, v)
             m = 0x1F
@@ -859,7 +869,7 @@ def g_shift(G, st):
         else:
             n = cnt
         lb = loc(st, b, s)
-        v = lrd(st, lb, s)
+        v = lrd(st, lb, s, rmw=True)
         r, f = f_shift(op, s, v, n, st.ccr & X)
         lwr(st, lb, s, r)
         setcc(st, f, (N | Z | V | C) if (n == 0 or op in ('rol', 'ror')) else 0x1F)
@@ -889,7 +899,7 @@ def g_bit(G, st):
         n = nb[1] if nb[0] == 'i' else st.r[nb[1]]
         n &= (31 if s == 4 else 7)
         lb = loc(st, b, s)
-        v = lrd(st, lb, s)
+        v = lrd(st, lb, s, rmw=(op != 'btst'))
         bit = (v >> n) & 1
         if op == 'bchg':
             lwr(st, lb, s, v ^ (1 << n))
@@ -979,11 +989,11 @@ def g_bcd(G, st):
         x = 1 if st.ccr & X else 0
         if op == 'nbcd':
             lb = loc(st, b, 1)
-            vs, vd = lrd(st, lb, 1), 0
+            vs, vd = lrd(st, lb, 1, rmw=True), 0
         else:
             vs = lrd(st, loc(st, a, 1), 1)
             lb = loc(st, b, 1)
-            vd = lrd(st, lb, 1)
+            vd = lrd(st, lb, 1, rmw=True)
         if not (bcd_ok(vs) and bcd_ok(vd)):
             raise Bad('not BCD')
         if op == 'abcd':
@@ -1896,9 +1906,11 @@ def write_doc(path, cases, stats, nblocks):
          'window), runs it (supervisor mode, interrupt mask 0, its own stack above the window), and compares '
          'd0-d7/a0-a7 (pointers a0-a3/a6/a7 as offsets from the window base M), the CCR (only the flags the '
          'manual defines at that point: a DIV overflow leaves N,Z undefined, ABCD/SBCD/NBCD leave N,V '
-         'undefined) and the window with the expectation. Then `amt_hot()` re-runs block `i mod n` for '
-         'i = 0..amt_hot_reps() and compares a hash of the result with the expected one (interpreter vs '
-         'JIT-compiled execution).' % (NBLK, NBLK_QUICK), '',
+         'undefined) and the window with the expectation. Then `amt_hot_checked()` re-runs block `i mod n` for '
+         'i = 0..amt_hot_reps() and compares a hash of the result with the independent expected one '
+         '(interpreter vs possibly JIT-compiled execution). The first failing block index and state are '
+         'saved explicitly; an iteration-0 failure is reported immediately and cannot underflow the '
+         'diagnostic block index.' % (NBLK, NBLK_QUICK), '',
          'On a mismatch the guest bisects in-guest: it copies the block to a buffer, replaces the first opcode '
          'word of static instruction k by TRAP #15, runs it, and compares the state captured by the trap with '
          'the expected state at the first arrival at k, for each k in first-arrival order. For a failure seen '
@@ -1910,6 +1922,9 @@ def write_doc(path, cases, stats, nblocks):
          'culprit; `ctx.block_text` lists every instruction of the block (branch targets as @index); '
          '`ctx.window_base` is M (a0-a3/a6/a7 are M-relative). `tools/gencode.py --trace <case> <block>` '
          'prints the block source and the full expected trace (the state before every executed instruction).', '',
+         'Stack sequences include MOVE.B/W/L pushes and ordinary `(SP)+` pops, as well as MOVEM. '
+         'A pop reads the old stack address before incrementing SP and releasing its bytes; byte accesses '
+         'adjust A7 by two, not one. Read-modify-write operands increment only after the write.', '',
          'Totals: %d blocks, %d static instructions, %d executed instructions.'
          % (nblocks, stats['ins'], stats['dyn']), '',
          '| case | intent | rule (manual) | CPUs | a failure usually means |', '|---|---|---|---|---|']

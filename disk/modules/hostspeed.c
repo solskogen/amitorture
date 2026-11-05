@@ -195,8 +195,8 @@ static const char *skip_why(const struct hs_blk *b)
         return "68040/68060: not implemented by the FPU (emulated by the FPSP on real hardware)";
     if ((b->flags & B_FPSP040) && fpu == AMT_FPU_68040)
         return "68040: not implemented by the FPU (emulated by the FPSP on real hardware)";
-    if ((b->flags & B_RMW) && amt_any_pool_is_chip())
-        return "no non-chip RAM: chip RAM has no indivisible read-modify-write cycle";
+    if ((b->flags & B_RMW) && amt_any_pool_on_chip_bus())
+        return "chip-bus RAM (chip or $C00000-$DBFFFF slow RAM) has no indivisible read-modify-write cycle";
     return 0;
 }
 

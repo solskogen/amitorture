@@ -27,6 +27,7 @@
  * 8 (access error frame), MC68060UM section 4 (MMU) and 8 (access error,
  * FSLW). Docs: docs/cases/mmu.md. */
 #include "mod.h"
+#include "cpu_checks.h"
 
 #define POOL_SIZE  59392UL
 #define T_SIZE     (16UL * 1024)     /* tables */
@@ -418,7 +419,12 @@ static void wb040(ULONG idx)
         ULONG sz = (s >> 5) & 3;
         if (!(s & 0x80) || sz == 3)
             continue;
-        mm_moves_put(fl32(fr, aw[n]), fl32(fr, dw[n]), s & 7, sz);
+        {
+            ULONG addr = fl32(fr, aw[n]), data = fl32(fr, dw[n]);
+            if (n == 0)
+                data = cpu_wb1_data(data, addr, sz);
+            mm_moves_put(addr, data, s & 7, sz);
+        }
         fr[sw[n]] = s & ~0x80;
         wb_done++;
     }
@@ -2066,8 +2072,8 @@ static void t_tt(void)
         tt_case("tt_disabled", W_TT30, tt30(blk, 0, 0, 1, 1, 0, 0), 0, 0, 0, -1);
         if (!pre("tt_rmw")) {
             rs(W_TTRMW);
-            if (amt_any_pool_is_chip())
-                skip("tt_rmw", "the pool is in chip RAM, which does not support the indivisible "
+            if (amt_any_pool_on_chip_bus())
+                skip("tt_rmw", "the pool is on the chip bus (chip or $C00000-$DBFFFF slow RAM), which does not support the indivisible "
                      "read-modify-write cycle of TAS (HRM)");
             else {
                 int rwm;

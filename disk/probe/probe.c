@@ -16,6 +16,7 @@
 #include <exec/memory.h>
 #include <exec/resident.h>
 #include <libraries/configvars.h>
+#include <graphics/gfxbase.h>
 #include <proto/exec.h>
 
 #define __NOLIBBASE__
@@ -648,23 +649,32 @@ static void probe_chips(void)
     UWORD d, v;
     ULONG a;
     int i, stable = 1, lisa, ecsd, alice, ecsa;
+    struct GfxBase *gfx;
+    int os_ecsd = 0;
+
+    gfx = (struct GfxBase *)OpenLibrary((CONST_STRPTR)"graphics.library", 36);
+    if (gfx) {
+        os_ecsd = (gfx->ChipRevBits0 & GFXF_HR_DENISE) != 0;
+        CloseLibrary((struct Library *)gfx);
+    }
 
     a = (VPOSR >> 8) & 0x7f;
     d = DENISEID;
     for (i = 0; i < 8; i++) {
         v = DENISEID;
-        if (v != d)
+        if ((v & 0xff) != (d & 0xff))
             stable = 0;
     }
-    lisa = stable && (d & 0xff) == 0xf8;
-    ecsd = stable && (d & 0xff) == 0xfc;
     alice = (a & 0x2e) == 0x22;
     ecsa = (a & 0x20) != 0;
+    lisa = alice && stable && (d & 0xff) == 0xf8;
+    /* No register is guaranteed on OCS: an open-bus coincidence is not ID. */
+    ecsd = os_ecsd && stable && (d & 0xff) == 0xfc;
 
     P->agnus_id = a;
     /* OCS Denise has no DENISEID register: the read floats (open bus), so
      * any value seen there means nothing and must not leak into the record */
-    P->denise_id = (ecsd || lisa) ? d : 0xffff;
+    P->denise_id = (ecsd || lisa) ? d & 0xff : 0xffff;
     P->ecs_agnus = (UBYTE)(ecsa || alice);
     P->ecs_denise = (UBYTE)(ecsd || lisa);
     P->chipset = (lisa || alice) ? "AGA" : (ecsa || ecsd) ? "ECS" : "OCS";
@@ -682,7 +692,7 @@ static void probe_chips(void)
         how_x(d, 4);
         how_s(lisa ? " lisa" : " ecs");
     } else {
-        how_s("denise:ocs (no DENISEID register, the read floats)");
+        how_s("denise:unknown (uncorroborated ID; OCS reads float)");
     }
     how_end();
     how_begin();
@@ -735,30 +745,49 @@ static void probe_mem(void)
     Permit();
 }
 
-static void probe_boards(void)
+static void probe_boards(int retain_boards)
 {
     struct ConfigDev *cd = 0;
+    struct List *boards = 0;
     amt_expbase = OpenLibrary((CONST_STRPTR)"expansion.library", 33);
     if (!amt_expbase) {
         how("expansion:none");
         return;
     }
+    ObtainConfigBinding();
     while ((cd = FindConfigDev(cd, -1, -1)) != 0 && P->n_boards < AMT_PROBE_BOARDS_MAX) {
         struct amt_probe_board *b = &P->boards[P->n_boards++];
+        if (P->n_boards == 1) {
+            /* FindConfigDev(NULL,-1,-1) returns the first list member.
+             * Its Exec Node predecessor is the real list-head sentinel;
+             * no private ExpansionBase field/offset is assumed. */
+            boards = (struct List *)cd->cd_Node.ln_Pred;
+            if (!boards || boards->lh_Head != &cd->cd_Node || boards->lh_Tail)
+                boards = 0;
+        }
         b->man = cd->cd_Rom.er_Manufacturer;
         b->prod = cd->cd_Rom.er_Product;
         b->addr = (ULONG)cd->cd_BoardAddr;
         b->size = cd->cd_BoardSize;
         b->flags = cd->cd_Flags;
         b->ertype = cd->cd_Rom.er_Type;
+        b->serial = cd->cd_Rom.er_SerialNumber;
+        b->config_dev = cd;
     }
-    CloseLibrary(amt_expbase);
+    ReleaseConfigBinding();
+    if (boards && retain_boards) {
+        /* Pin the list's library storage through the terminal test run.
+         * RETURN never claims boards and must not retain this reference. */
+        P->board_library = amt_expbase;
+        P->board_list = boards;
+    } else
+        CloseLibrary(amt_expbase);
     amt_expbase = 0;
 }
 
 /* ------------------------------------------------------------------ */
 
-void amt_probe(struct amt_probe *p)
+void amt_probe_with_claims(struct amt_probe *p, int retain_boards)
 {
     UBYTE *z = (UBYTE *)p;
     ULONG i;
@@ -787,7 +816,24 @@ void amt_probe(struct amt_probe *p)
     probe_chips();
     probe_exec();
     probe_mem();
-    probe_boards();
+    probe_boards(retain_boards);
+}
+
+void amt_probe(struct amt_probe *p)
+{
+    amt_probe_with_claims(p, 0);
+}
+
+void amt_probe_release_boards(struct amt_probe *p)
+{
+    struct Library *lib;
+    if (!p)
+        return;
+    lib = p->board_library;
+    p->board_library = 0;
+    p->board_list = 0;
+    if (lib)
+        CloseLibrary(lib);
 }
 
 /* ------------------------------------------------------------------ */

@@ -1,5 +1,12 @@
 # misc_hw (module 19, AMT_PH_BARE) and misc_hw_os (module 24, AMT_PH_OS)
 
+Gayle audit safety: SRAM ownership markers must agree on UUID, total,
+first-free, 512-byte blocks and SRAM kind. Totals and first-free are validated
+in the block domain before multiplication; writes stay in the validated
+interior and both endpoint markers are checked afterwards. Card-change
+success requires acknowledged reinsertion and actual restored presence;
+a reinsertion failure is reported explicitly, never hidden by a good eject.
+
 Motherboard and custom-machine hardware outside the custom chips. Disk group `exp`.
 Every part runs only when its hardware is found, and the detection never writes to an address
 that could be unmapped:
@@ -30,6 +37,14 @@ start and restored at the end: saved time + elapsed time, measured with the beam
 with the clock stopped and started on the exact second. The RP5C01 RAM and the mode-01 registers
 are restored too. When the counters ignore writes (Amiberry), every write-dependent case is
 `untestable`, not `fail`.
+RP5C01 dates are decoded using the sampled leap-year counter, not prior stack contents or the year digits.
+Restoration arithmetic preserves that counter through February and year rollover; only the final time
+comparison ignores the counter itself.
+Missing-second-edge failures include `expect.seconds_edges_min=1`,
+`expect.within_ms=2500` and `got.seconds_edges=0`; they remain failures,
+including on the counting, rate, hold, rollover and restoration paths.
+Automatic warp keeps the entire expansion disk normally paced because
+Amiberry's RTC follows host time, not warped emulated time.
 
 | case | intent | rule (reference) | a failure usually means |
 |---|---|---|---|

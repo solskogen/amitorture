@@ -36,6 +36,16 @@ python3 -m amitorture run --amiberry ./amiberry --kickstarts ~/Amiberry/ROMs --m
 
 Exit code: 0 means no problems, 1 means problems found (read the report), 2 is a host-side error, 3 means the isolation check failed, 130 means the run was stopped with Ctrl+C (see "Stopping a run" below).
 
+Add `--warp auto` for selective acceleration: CPU/FPU/MMU set disks run in warp;
+all other disks and any audio-captured launch retain normal pacing. Coverage and
+assertions are unchanged. The report lists each disk's effective mode and runtime
+verification. Baselines record this policy and checks inherit it. `--warp off`
+forces normal pacing. Do not use `--warp on` or `--set warp=true` for equivalent
+correctness results: continuous warp changes audio, keyboard and RTC behaviour.
+The existing Paula/timing observation gates can vary even between normal-paced
+runs; automatic warp has not yet demonstrated identical outcomes for every case.
+Do not dismiss such differences merely because the warp policy changed.
+
 ### Thorough runs
 | Matrix | Entries | Time | What it adds |
 |---|---|---|---|
@@ -217,7 +227,7 @@ Failures that share a cause are grouped into one problem: same module, same narr
    ```
    Each pack also has `run.sh` and `host-gdb.cmd`, with breakpoints on the suggested emulator functions.
 3. **After a fix,** rerun the pack, then `check` against your baseline. The case should come out `fixed` and nothing else should change.
-4. **Known bugs** live in `runner/amitorture/xfail.json` (key `<module>.<case>`, globs allowed, optional `configs` glob and `when` option conditions, `ref`/`why` text; a key may hold a list of entries when one case has several independent known causes). Add an entry when a finding is confirmed, so it shows as `xfail` instead of a new problem; the runner reports it as `fixed` once it passes. The findings themselves are documented in `docs/findings/`.
+4. **Known bugs** live in `runner/amitorture/xfail.json` (key `<module>.<case>`, globs allowed, optional `configs` glob and `when` option conditions, `ref`/`why` text; a key may hold a list of entries when one case has several independent known causes). Add an entry when a finding is confirmed, so it shows as `xfail` instead of a new problem; the runner reports it as `fixed` once it passes. Local evidence reports belong in `docs/findings/`; this directory is ignored by Git and is not shipped with the repository.
 
 ---------------------------------------------------------------------------
 ## 5. Real hardware and FPGA (not tested yet)
@@ -278,7 +288,7 @@ python3 -m amitorture import ~/core.txt ~/cpu.txt ~/fpu.txt … --label hw-a1200
 - **What you get:** the same REPORT.md, `summary.json` and `failures.jsonl`, with problems grouped, `xfail.json` applied and the docs/cases lines. There is no narrowing, no repro packs, no engine parity, and no code pointers or emulator log, because no emulator ran. The exit code is 0 for PASS, 1 otherwise.
 
 ### What the disks do to the machine
-- **Memory and hardware:** a module touches only its pools, its own stack and BSS, the vector table (through `amt_vec_set`) and the hardware it tests. No writes to unmapped addresses unless the run has the `unsafe` flag (CONTRACT §10, rule 4). After every module the runtime resets the interrupts, DMA and vectors. At the end it restores the OS and, with the default end action, halts with the OS still running.
+- **Memory and hardware:** a module touches only its pools, its own stack and BSS, the vector table (through `amt_vec_set`) and the hardware it tests. No writes to unmapped addresses unless the run has the `unsafe` flag (CONTRACT §10, rule 4). After every module the runtime resets the interrupts, DMA and vectors. Default halt resumes OS execution for the screen/mailbox, but CIA timer-latch restoration is only best-effort: counters cannot reveal the original reload values. Use halt/reboot only in a disposable emulator or a machine intended for reboot, not on a working desktop. `end_action=return` therefore runs OS modules but skips bare tests before takeover; it releases pools, mailbox and per-region allocations before returning.
 - **Floppies and hard disks:** nothing is written to a disk unit unless it carries the test-owned signature in its first and its last block (CONTRACT §11). devio (exp disk) reads only block 0 of any other unit, to look for the signature. The paula module (chip disk) only reads DF0, its own boot disk, and writes DF1 only when it is signed and not write-protected. Only the runner makes such media (`runner/amitorture/media.py`), for emulator runs, so your own disks are never written.
 - **Takeover guard** (rt/mod.c): before it takes the machine over, the runtime waits until floppy DMA and the blitter are idle, and, when started from a CLI, the Gayle or A4000 IDE port too. If they are still busy after 10 s it refuses: nothing is taken over, and every bare module reports one `module` skip with the reason (CONTRACT §14).
 - **Other hardware:** on a Gayle machine (A600/A1200) misc_hw sends IDENTIFY DEVICE to the IDE drive, a command that only reads, and restores the task file. The battery-backed clock is saved and set back at the end, adjusted for the time the test took. A network card sends no frame onto the network unless the `net` or `unsafe` flag is set (the A2065 tests use the LANCE's internal loopback; the one external frame is an ARP broadcast).

@@ -86,6 +86,7 @@
   what: the JIT gives the same results as the interpreter (twins; amt_hot loops)
   cases: [cpu_basic.*, flags.*, fpu.*, dispatch.*]
   entries: [*-jit*]
+  parity: jit
 
 # ----------------------------------------------------------------- Agnus/Alice
 - id: agnus.dma_slots

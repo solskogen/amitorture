@@ -1,5 +1,14 @@
 # interrupts (module 6, AMT_PH_BARE)
 
+Audit observation gates: CIA latency requires every requested sample to be
+coherent and usable. CIA-B's independent 32-bit E-clock bounds each acquisition
+to less than two CIA-A periods; a possible extra reload or torn sample is
+untestable, not a short-latency PASS. Both latency producers guard their 64-slot
+buffers before writing; saturation disables the source and records overflow.
+VBL storm expectations require the terminal raster line/wrap to be bracketed
+within a sub-line CIA-B interval. Insufficient endpoint coverage makes only
+`storm_vertb` untestable; CIA and software-interrupt coverage remains active.
+
 Paula interrupt logic and the 680x0 interrupt model. References: Amiga Hardware Reference Manual (HRM)
 chapter 7 "System Control Hardware" (INTENA/INTREQ, table of levels), M68000 Family Programmer's
 Reference Manual (PRM) section 6 (exception processing, interrupts) and the STOP/MOVE to SR entries,
@@ -13,6 +22,20 @@ chained to the runtime handler (frame counter, watchdog); a no-op `amt_irq_hook[
 the pre-fix runtime from clearing other levels' requests on its "spurious" path; harmless now). Exact-sequence tests run
 in a beam window right after a VBL. CIA-A TA is used as a timed interrupt source, CIA-B TA+TB as a
 32-bit E-clock reference; both CIAs are saved and restored (`modules/cia_hw.h`).
+
+The storm reads each CIA timer HI/LO/HI until coherent, brackets TA with two
+equal TB reads, and avoids the TA underflow boundary. Its reference must also
+be nondecreasing (modulo a genuine 32-bit wrap). A backward sample fails
+`storm_reference_clock`, preserves the start/previous/offending samples in
+`timing`, aborts the storm, and makes its three count cases `untestable`; it
+is not clamped or retried away. In particular, a one-tick backward sample
+must not turn unsigned elapsed time into `$FFFFFFFF` and manufacture a
+`storm_vertb` lost-interrupt failure. The Amiberry fast-CPU CIA read adjustment
+could fabricate just such a decrement followed by a rebound without changing
+the counter; coherent byte reads alone cannot fix that emulator defect.
+Healthy runs still require the original exact SOFT count and ±1 CIA/VERTB
+bounds. Focused clock arithmetic tests: `cd runner && python3 -m unittest
+tests.test_interrupts_clock` (requires a host C compiler).
 
 Held external lines: at module start (both CIA masks clear, ICR drained) the module checks
 whether INTREQ PORTS or EXTER comes straight back after a clear, i.e. another device holds
@@ -70,5 +93,6 @@ orders only.
 | `latency_cia_ta_to_handler` | 8/32 samples of CIA-A TA underflow -> handler entry, in E clocks (`timing`: min/max/sum/histogram); fails if a sample is lost or the largest latency exceeds 2 raster lines (454 cck = 90.8 E clocks) | worst case on a 7 MHz 68000 by MC68000UM timings: a runtime VERTB handler in the way (~590 clocks) + the level 2 exception (44) + the handler's prologue and E-clock-synced CIA read (~50) = ~345 cck = 1.5 lines; faster CPUs only shorten it (HRM 7 interrupts) | lost CIA interrupts, or interrupts held back (IPL/INTREQ propagation, interrupt sampling); the distribution is compared by the host |
 | `latency_coper_to_handler` | 4/16 frames of copper WAIT $80 + MOVE INTREQ COPER -> handler entry, in colour clocks (`timing`); fails if a frame's COPER is lost or a latency exceeds 2 raster lines (454 cck) or is negative | the copper MOVE follows the WAIT within a few cck (HRM 2); the CPU side is the current instruction + the level 3 exception + prologue, well under a line on a 7 MHz 68000 (MC68000UM) | lost copper interrupts, or COPER/IPL delivered late |
 | `storm_cia_timer` | 1 s (quick) / 5 s: CIA-A TA every 142 E + back-to-back SOFTINT + VERTB; CIA-A count = elapsed/142 +-1 (elapsed from CIA-B E-clock counter). A fail shows only `got.count` "too few"/"too many"; the numbers are in `got.timing` and `timing` (they depend on the elapsed time) | no lost or doubled interrupts | interrupts dropped/doubled under load (e.g. requests queued from other threads) |
+| `storm_reference_clock` | every coherent CIA-B timestamp during the storm is nondecreasing, including SOFT waits and the final elapsed sample | HRM appendix F: TA counts E clocks, TB counts TA underflows, no reload while running | invalid CIA reference (e.g. synthetic timer-read decrements), not evidence of lost interrupts |
 | `storm_softint` | in the same storm every SOFTINT issued is taken exactly once (each waited for, 3000 E timeout) | as above | lost software interrupts |
 | `storm_vertb` | in the same storm VERTB count = elapsed/frame length +-1 (lines per frame measured from the beam) | as above | lost/extra VBL interrupts |

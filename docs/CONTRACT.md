@@ -76,7 +76,7 @@ long amt_entry(struct ExecBase *SysBase /* A6 */, const struct amt_header *hdr /
 | 0 | char[4] | `"PARM"` (absent means defaults; mkadf always writes the block, with defaults for keys not given) |
 | 4 | u32 | mode: 0 = full (default), 1 = quick (fewer inputs per case, same case ids), 2 = soak (reserved: not implemented, runs like full) |
 | 8 | u32 | seed (default 1) |
-| 12 | u32 | end_action: 0 = **halt** (default: restore OS, set mailbox state=done, then Wait(0) forever, so the system stays alive and the host kills the emulator), 1 = ColdReboot, 2 = return D0=-1 to the bootblock |
+| 12 | u32 | end_action: 0 = **halt** (default: resume OS execution with best-effort CIA restoration, then Wait(0) forever, so the system stays alive and the host kills the emulator), 1 = ColdReboot, 2 = run OS modules only, skip bare takeover, then return D0=-1 to the bootblock |
 | 16 | u32 | flags: bit0 = unsafe tests allowed, bit1 = serial output off, bit2 = mailbox off, bit3 = net: the network cards are on an emulator-only backend (user-mode NAT), so the network module may transmit (the runner sets it for entries with a `slirp` network option), bit4 = noscreen: no status screen (`rt/screen.c`, §10), so every bare module starts with all DMA off. mkadf names: `unsafe`, `noserial`, `nombox`, `net`, `noscreen`. |
 | 20 | u32 | serial baud (default 115200) |
 | 24 | u32[2] | module enable mask (bit n means module id n; all ones means all) |
@@ -97,9 +97,14 @@ long amt_entry(struct ExecBase *SysBase /* A6 */, const struct amt_header *hdr /
 | `mod` | `mod`, `ev` ("begin"/"end"), on end also `pass`, `fail`, `skip` | module boundary |
 | `case` | `mod`, `case`, `st` ("pass"/"fail"/"skip"/"untestable"); on fail: `expect`, `got`, `why`; optional `ctx`, `in` | one test case result |
 | `capture` | `what` ("screen"/"audio_start"/"audio_stop"), `tag` | asks the host to capture now (best effort) |
-| `perf` | `mod`, `ops`, `ticks` (CIA E-clock ticks) | throughput |
+| `perf` | `mod`, `ops`, `ticks`; optional `tick_hz`, `unit` | throughput; `amt_perf()` uses colour clocks (`unit:"cck"`), while `amt_perf_hz()` specifies its clock |
 | `speed` | `mod`, `ev` ("begin"/"end"/"skip"), `insn`; begin/end also `cls`, `pos`; end also `n` and `timing` (`cck`, `empty_cck`, `frames`, `units`); skip also `why` | a hostspeed timed block (docs/schema.md 1.10); not a case |
 | `done` | `pass`, `fail`, `skip`, `untestable`, `aborted`, `records` (count of all records sent this boot, including `done`) | last record |
+
+New disks also emit `hello.modules`, an object mapping every selected compiled module name to its unique id
+(0-63). This is additive to v1: readers accept older captures without it. It records the intersection of the
+compiled module table and the run mask, not all modules available in the source tree. Every declared module
+must have matching begin/end records before `done`; an empty selection is skipped rather than passed.
 
 ---------------------------------------------------------------------------
 ## 6. Serial transport
@@ -111,7 +116,9 @@ long amt_entry(struct ExecBase *SysBase /* A6 */, const struct amt_header *hdr /
 
 ---------------------------------------------------------------------------
 ## 7. Memory mailbox
-AllocMem(4096+48 rounded, MEMF_CHIP|MEMF_CLEAR), with the start aligned to 16 (allocate 16 extra bytes and align). The layout (all u32 big-endian):
+`AllocMem(sizeof(struct amt_mbox)+16, MEMF_CHIP|MEMF_CLEAR)`, with the start aligned to 16.
+The ring uses `MBOX_RING_SIZE` from `disk/rt/rt.h` (currently 32768 bytes), plus the 48-byte header.
+The layout (all u32 big-endian):
 
 | Off | Field |
 |---|---|
@@ -165,6 +172,11 @@ The API is in `disk/rt/mod.h`, which is authoritative; read it. In short:
 - **Phases:**
   - `AMT_PH_OS`: exec alive, user mode.
   - `AMT_PH_BARE`: after takeover, supervisor mode, own 32 KB stack, INTENA = INTEN|VERTB, SR = $2000. DMA: DMACON = DMAEN|BPLEN|COPEN with COP1LC on the status screen's copper list; all DMA off for a module with `AMT_MF_OWNS_DISPLAY`, and for every module when the screen is off (`noscreen` flag, or no chip RAM for it). The default vectors 2..63 go to a catch-all that aborts the module with a full report. Levels 1..6 dispatch to `amt_irq_hook[level]` (C); level-3 VERTB belongs to the runtime (frame counter, heartbeat, watchdog of about 120 s; ×10 with AMT_MF_LONG; kicked by every reported case); it clears VERTB and counts the frame at IPL 7, so a level 4-6 handler reading `amt_ticks()` never sees the request cleared but the frame not yet counted).
+  - `end_action=return` runs OS modules but skips the bare phase before takeover: CIA counters, even
+    stopped ones, do not reveal the original timer latches. HALT/REBOOT retain destructive-test coverage
+    for disposable environments; CIA restoration there is best-effort, not an exact recovery of OS timer
+    periods. Default halt resumes OS execution for the screen/mailbox, but does not promise unchanged
+    hardware state. A running desktop is not a safe target for HALT/REBOOT tests.
 - **Flags** (`AMT_MODULE` argument 4): `AMT_MF_LONG` (watchdog ×10, the 30-minute hard limit ×4), `AMT_MF_NEEDS_FPU` (one `module` skip without an FPU), `AMT_MF_OWNS_DISPLAY` (the module tests display, DMA or beam timing and gets the hardware to itself: the status screen is off while it runs). It is set on blitter, copper, display, dmacontention, interrupts, paula and timing.
 - **Status screen** (`disk/rt/screen.c`): 40×25 characters on one lores bitplane (8 KB of chip RAM, allocated after the pools and the bare stack; without it the disk runs without the screen), drawn with the ROM topaz 8 font, shown by the runtime's own copper list.
   - OS phase: a VERTB interrupt server at priority -120 sets COP1LC to that list and DMAEN|BPLEN|COPEN every frame.
@@ -173,6 +185,18 @@ The API is in `disk/rt/mod.h`, which is authoritative; read it. In short:
   - The disk number and group come from the build id, which the set build ends with `<n>/<N> <group>`.
 - **Results:** `amt_case()`, `amt_check32()`, or `amt_case_open()` + json_* + `amt_case_close()`. A failing case must carry `expect`, `got` and `why`, plus `in` (inputs) and `ctx` (opcode words, SR, …) so an AI can reproduce it without the disk.
 - **Services:** `amt_try()`/`amt_abort()` (nestable), `amt_vec_set()`, `amt_last_exc`, `amt_ticks()` (colour clocks from beam position + VBL), `amt_rand()` (seeded per module), `amt_hot()` (hot-loop repetition), `amt_chip_pool()`/`amt_any_pool()`, and `amt_probe_result` (`AMT_CPU()`, `AMT_FPU()`, `AMT_MMU()`).
+  The catch-all decodes bus/address-error SR/PC at offsets 8/10 only on a 68000; all 68010+ frames use
+  their standard SR/PC prefix at offsets 0/2. `amt_last_exc.frame` retains the first 16 raw words.
+  Modules with OS allocations spanning the bare phase register one non-null `amt_on_return(fn)` cleanup
+  callback; registration is idempotent and returns -1 if all 64 slots are occupied. On `end_action=return`,
+  callbacks run in reverse registration order after OS/display restoration, followed by pool and mailbox
+  release using their original allocation bases/sizes. An allocation failure also releases partial test
+  pools. Default halt keeps allocations and the mailbox alive for host observation.
+  If module cleanup cannot establish a safe idle hardware state, `amt_abort_fatal(code)` reports
+  `fatal_cleanup`, marks the mailbox aborted, disables interrupts/task scheduling and quarantines
+  in place. It never unwinds through `amt_try`, starts another module, or resumes the OS; the test
+  environment must be reset. It deliberately does not emit a normal `done` record or free buffers
+  that an unquiesced DMA engine might still access.
 
 ### Rules for every module
 1. **Expectations come from the architecture,** i.e. the M68000 PRM, the 68020/030/040/060 user manuals, the 6888x manual and the Amiga Hardware Reference Manual, **for the detected variant**. Never encode "what Amiberry does".
@@ -181,12 +205,23 @@ The API is in `disk/rt/mod.h`, which is authoritative; read it. In short:
 2. **Deterministic:** the same seed and the same CPU/FPU variant must give byte-identical records. That is how JIT-on vs JIT-off and emulator-vs-emulator get compared. So:
    - no timing-dependent values in pass/fail fields;
    - put timing measurements in `perf` records, or in `ctx`/`timing` fields that the host compares with tolerances.
-3. **The JIT runs the same tests:** never branch on "is a JIT active". Use `amt_hot()` (once, then `amt_hot_reps()` times) for every computational case where practical.
+3. **The JIT runs the same tests:** never branch on "is a JIT active". Use `amt_hot_checked()` where
+   the callback can validate each result against architectural expectations (return zero only when valid).
+   It checks iteration zero and `amt_hot_reps()` subsequent iterations. `amt_hot()` checks repeatability
+   only: an independently checked reference is still required. Establish warm-up coverage for each snippet,
+   not merely the enclosing dispatcher.
 4. **Safety (real hardware):**
    - Touch only memory from the pools, your own stack/BSS, the vector table through `amt_vec_set`, and the hardware the module tests.
-   - Leave the hardware as you found it. The runtime resets INTENA/INTREQ/DMACON/vectors after each module (and turns the status screen's DMA back on), but not CIA, the blitter, audio or the copper lists.
+   - Leave owned hardware in its initial test state. The runtime resets INTENA/INTREQ/DMACON/vectors
+     after each module, stops/masks the CIAs and turns the status screen's DMA back on. It does not
+     recover arbitrary CIA timer latches, blitter/audio registers or module copper lists.
    - A module without `AMT_MF_OWNS_DISPLAY` runs with the status screen's DMA on (DMAEN|BPLEN|COPEN, unless `noscreen`): it must not depend on DMA being off, and should leave DMACON's display bits, COP1LC and the display registers alone. A module that needs them, or whose results depend on the DMA load, sets the flag.
    - No writes to unmapped addresses unless `amt_par.flags & AMT_F_UNSAFE`.
+   - Autoconfig register/VRAM writes require `amt_board_claim()` on the canonical probe descriptor,
+     before any selector/unlock access. It checks live BoardList membership, identity/span and an
+     unbound ConfigDev, then consumes current `CDF_CONFIGME` under bare-phase task exclusion. Claims
+     remain reserved through HALT/REBOOT and may be reused by our later modules. `unsafe`/`net` cannot
+     override a driver claim; `amt_board_ok()` alone is only a structural/read-only guard.
 5. **Case ids** are stable snake_case strings, unique within the module, and never renumbered: they are baseline keys. When one case runs per variant, put the variant in the id only if the expectation differs.
 6. **Quick mode** (`AMT_QUICK()`) may run fewer iterations or operand sets, but should keep every case id present (fewer inputs per case).
 7. Each module ships `docs/cases/<module>.md`: one line per case giving its intent, the rule it checks (with a manual reference), and what a failure usually means.
@@ -213,8 +248,8 @@ The API is in `disk/rt/mod.h`, which is authoritative; read it. In short:
 | 16 | rtg | BARE | graphics cards, register level (disk: exp) |
 | 17 | expsound | BARE | sound cards, register level (disk: exp) |
 | 18 | network | BARE | network cards, register level (disk: exp) |
-| 19 | misc_hw | BARE/OS | RTC, Gayle/PCMCIA, Zorro autoconfig, Akiko, CDTV hardware (disk: exp) |
-| 20 | mmu | BARE | 030/040/060 MMU (disk: cpux) |
+| 19 | misc_hw | BARE | RTC, Gayle/PCMCIA, Akiko, CDTV hardware (disk: exp); Zorro autoconfig is module 24 |
+| 20 | mmu | BARE | 030/040/060 MMU (disk: mmu) |
 | 21 | memory | BARE | memory paths per bank type, widths, bank boundaries, RMW (disk: cpux) |
 | 22 | dispatch | BARE | seeded random code blocks, gencode.py (disk: cpux) |
 | 23 | dmacontention | BARE | CPU vs blitter/copper/bitplane/audio DMA (disk: cpux) |
@@ -326,7 +361,7 @@ The test ships as several ADFs, built by `make -C disk` (or `make -C disk set`) 
 | `amitorture-3-fpu.adf` | fpu | ~285 KB |
 | `amitorture-4-chip.adf` | display copper paula input | ~160 KB |
 | `amitorture-5-exp.adf` | rtg expsound network misc_hw misc_hw_os devio | ~195 KB |
-| `amitorture-6-cpux.adf` | memory memory_os dispatch dmacontention | ~210 KB |
+| `amitorture-6-cpux.adf` | memory memory_os dispatch dmacontention hostspeed | ~210 KB |
 | `amitorture-7-mmu.adf` | mmu | ~110 KB |
 
 - Each ADF is a complete payload (runtime + probe + its modules) and boots on its own, even on a 512 KB-chip Kickstart 1.x machine.
@@ -369,7 +404,8 @@ Runner notes (runner/amitorture/hostreq.py, docs/RUNNER.md "Host request channel
 - `audio_mark` is acked only when the launch captures audio (the default `--audio auto` captures every disk that contains an `audio_mark` request).
 - **Expectations in the marks.** The start mark may describe the tone with `expect_hz`, or `freq_mhz`, or `clock` + `period` + `samples`, and with `side`: `left`/`right` (the tone on that output alone), or `both` (a mono source: on both outputs, the quieter at least half the louder). The stop mark may repeat or override any of these. The host then reports `freq_ok` / `side_ok` in its analysis.
 
-The mailbox ring is 16384 bytes. The host must read `ring_size` from the header, never assume it.
+The mailbox ring size is defined by `MBOX_RING_SIZE` (`disk/rt/rt.h`, section 7 above).
+The host must read `ring_size` from the header, never assume it.
 
 ---------------------------------------------------------------------------
 ## 14. CLI start and CD boot (CD32, CDTV)

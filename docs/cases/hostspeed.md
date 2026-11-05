@@ -105,8 +105,8 @@ named code path first, then at the cycle charge (newcpu.cpp, the `cpu_cycles` of
 | `speed_div_l64` | DIVU.L / DIVS.L 64/32 | 68020-68040 | $12345678:$369D0368 / $55555556: a fixed point | m68k_divl 64-bit path |
 | `speed_bfextu` | BFEXTU (a5){d2:d3} | 68020+ | offset 5, width 19 | memory bit-field helpers |
 | `speed_bfffo` | BFFFO (a5){d2:d3} | 68020+ | as bfextu | bit-field find-first-one |
-| `speed_cas` | CAS.L, compare equal | 68020+, non-chip RAM | writes the same value back | CAS (an indivisible RMW cycle); on the JIT a fallback |
-| `speed_cas2` | CAS2.L | 68020-68040, non-chip RAM | both compare equal | CAS2 |
+| `speed_cas` | CAS.L, compare equal | 68020+, non-chip-bus RAM | writes the same value back | CAS (an indivisible RMW cycle); on the JIT a fallback |
+| `speed_cas2` | CAS2.L | 68020-68040, non-chip-bus RAM | both compare equal | CAS2 |
 | `speed_chk2` | CHK2.L (a5),d0 | 68020-68040 | 0 <= 500 <= 1000: no trap | CHK2/CMP2 bounds check |
 | `speed_pack_unpk` | PACK / UNPK register forms | 68020+ | sources unchanged | PACK/UNPK |
 | `speed_fadd` | FADD.X FPn,FPn | FPU | FPU reference: 1.5 + n x 0.5, exact | FPU dispatch (fpp.cpp fpuop_arithmetic) too slow for the charge |
@@ -126,5 +126,6 @@ Skipped, with a `speed` `skip` record (deterministic per CPU/FPU variant): 68020
 68000/010; on the 68060 what it traps as unimplemented integer instructions (MOVEP, CAS2, CHK2, 64-bit
 MUL/DIV: the 060 ISP emulates them on real hardware); on the 68040/68060 FPU what the FPSP would emulate
 (FMOD FREM FSCALE FGETEXP FGETMAN, the transcendentals, FMOVECR, packed decimal; FINT/FINTRZ on the 68040
-only; docs/cases/fpu.md "040/060 restrictions"); CAS/CAS2 without non-chip RAM (chip RAM has no
-indivisible read-modify-write cycle); every FPU block without an FPU.
+only; docs/cases/fpu.md "040/060 restrictions"); CAS/CAS2 without non-chip-bus RAM (chip RAM and
+slow RAM at $C00000-$DBFFFF, even when marked MEMF_FAST, have no indivisible read-modify-write
+cycle); every FPU block without an FPU.

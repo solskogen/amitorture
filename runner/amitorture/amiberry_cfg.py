@@ -128,6 +128,7 @@ COMMON = {
     "magic_mouse": "false",
     # CPU details shared by all entries
     "cpu_throttle": "0.0",
+    "warp": "false",
     "cpu_data_cache": "false",
     "cpu_no_unimplemented": "false",
     "fpu_no_unimplemented": "false",
@@ -173,6 +174,7 @@ VERIFY_IGNORE = {
 # (cfgfile_dwrite*): when one is missing from the dump, Amiberry resolved it
 # to this default. Used to see e.g. cpu_threaded=true silently reset.
 DWRITE_DEFAULTS = {
+    "warp": "false",
     "cpu_threaded": "false", "fpu_softfloat": "false", "mmu_model": "0", "fpu_model": "0",
     "debugging_features": "", "cpu_data_cache": "false", "fpu_strict": "false",
     "cpu_no_unimplemented": "false", "fpu_no_unimplemented": "false",
@@ -269,9 +271,27 @@ def verify(binary, config_path, env, timeout=60):
         elif line.strip() and not line.startswith(";"):
             notes.append(line.strip())   # e.g. fixup_prefs messages
     diffs = differences(wrote, resolved, notes)
-    return {"ok": p.returncode == 0 and not unknown, "returncode": p.returncode, "resolved_text": text,
+    missing = [k for k in ("cpu_model", "cachesize") if k not in resolved]
+    error = "configuration dump is missing " + ", ".join(missing) if missing else None
+    return {"ok": p.returncode == 0 and not unknown and error is None, "error": error,
+            "returncode": p.returncode, "resolved_text": text,
             "resolved": resolved, "differences": diffs, "unknown_options": unknown, "fixup_messages": notes,
             "stderr": err[-4000:]}
+
+
+def verification_error(ver):
+    if ver.get("ok"):
+        return None
+    details = []
+    if ver.get("error"):
+        details.append(ver["error"])
+    if ver.get("returncode") not in (None, 0):
+        details.append(f"--dump-config exited with code {ver['returncode']}")
+    if ver.get("unknown_options"):
+        details.append("unknown options: " + "; ".join(ver["unknown_options"]))
+    if ver.get("stderr"):
+        details.append(ver["stderr"].strip())
+    return "configuration verification failed" + (": " + "; ".join(details) if details else "")
 
 
 def differences(wrote, resolved, notes=()):

@@ -21,6 +21,7 @@
  * (the OS value). */
 #include <exec/devices.h>
 #include "paula.h"
+#include "hardware_audit.h"
 
 #define PRB_STEP   0x01
 #define PRB_DIR    0x02     /* 1 = outward (towards track 0) */
@@ -114,6 +115,7 @@ static ULONG drv_id(int d)
 
 static void step1(int out)
 {
+    UWORD sr;
     UBYTE b = out ? (UBYTE)(prb | PRB_DIR) : (UBYTE)(prb & ~PRB_DIR);
     if (b != prb) {
         /* direction change: let DIR settle a full step period before the
@@ -124,10 +126,13 @@ static void step1(int out)
     }
     prb_w((UBYTE)(prb & ~PRB_STEP));
     pa_wait_cc(16);
+    sr = amt_get_sr();
+    amt_set_sr(0x2700);
     prb_w(prb | PRB_STEP);
-    pa_wait_cc(PA_MS(4));               /* >= 3 ms step rate (HRM ch.8) */
     cur_cyl += out ? -1 : 1;
     rs_disp += out ? -1 : 1;
+    amt_set_sr(sr);
+    pa_wait_cc(PA_MS(4));               /* motion already completed, even on abort */
 }
 
 static void settle(void) { pa_wait_cc(PA_MS(20)); }   /* head settle >= 15 ms */
@@ -1204,7 +1209,9 @@ static void df1_tests(ULONG id1)
     if (ok) {
         read_track(159, &tr, &r);
         ok = (tr.good & 0x400) && sig_parse((const UBYTE *)secdata[10], &s1) && s1.lba == 1759 &&
-             s1.total == 1760;
+             hw_owner_match(s0.total, s0.first, s0.bsize, s0.kind,
+                            s1.total, s1.first, s1.bsize, s1.kind) &&
+             s0.first < s0.total - 1;
         for (i = 0; ok && i < 16; i++)
             if (s0.uuid[i] != s1.uuid[i])
                 ok = 0;
@@ -1412,8 +1419,12 @@ void pa_disk_restore(void)
     amt_irq_hook[5] = 0;
     if (!rs_active)
         return;
-    if (!(prb & PRB_STEP))
+    if (!(prb & PRB_STEP)) {
         prb_w(prb | PRB_STEP);          /* aborted inside a step pulse */
+        cur_cyl += (prb & PRB_DIR) ? -1 : 1;
+        rs_disp += (prb & PRB_DIR) ? -1 : 1;
+        pa_wait_cc(PA_MS(4));
+    }
     if (rs_drv >= 0 && rs_known && rs_disp != 0) {
         drv_select(rs_drv, 1);
         while (rs_disp < 0)

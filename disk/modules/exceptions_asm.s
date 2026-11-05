@@ -79,12 +79,30 @@ _xr_set_usp:
 ; complete one 68040 write-back from the copied format $7 frame: \1 status
 ; word, \2 address, \3 data (byte offsets in _xr_frame). WBnS bit 7 = valid,
 ; bits 6-5 size (00 long, 01 byte, 10 word, 11 line: not done here).
+; \4 marks WB1: memory-aligned data, unlike right-justified WB2/WB3.
 XWB	macro
 	move.w	_xr_frame+\1,d0
 	btst	#7,d0
 	beq.s	.n\@
 	move.l	_xr_frame+\2,a1
 	move.l	_xr_frame+\3,d1
+	if	\4
+	move.l	a1,d0
+	and.w	#3,d0
+	lsl.w	#3,d0
+	rol.l	d0,d1
+	move.w	_xr_frame+\1,d0
+	and.w	#$60,d0
+	beq.s	.wb1done\@
+	cmp.w	#$60,d0
+	beq.s	.n\@
+	swap	d1
+	cmp.w	#$20,d0
+	bne.s	.wb1done\@
+	lsr.w	#8,d1
+.wb1done\@:
+	move.w	_xr_frame+\1,d0
+	endif
 	and.w	#$60,d0
 	beq.s	.l\@
 	cmp.w	#$20,d0
@@ -205,9 +223,9 @@ xr_common:
 	and.w	#$f000,d0
 	cmp.w	#$7000,d0
 	bne.w	xr_resume
-	XWB	18,40,44		; WB1S, WB1A, WB1D
-	XWB	16,32,36		; WB2S, WB2A, WB2D
-	XWB	14,24,28		; WB3S, WB3A, WB3D
+	XWB	18,40,44,1		; WB1S, WB1A, WB1D
+	XWB	16,32,36,0		; WB2S, WB2A, WB2D
+	XWB	14,24,28,0		; WB3S, WB3A, WB3D
 xr_resume:
 	move.w	#$2700,sr
 	move.l	_xr_save_sp,sp

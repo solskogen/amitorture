@@ -38,7 +38,7 @@
 	xdef	_ir_do_chain,_ir_chain_start,_ir_chain_end,_ir_chain_t1,_ir_chain_t2,_ir_chain_t3
 	xdef	_ir_do_movem,_ir_movem_start,_ir_movem_end,_ir_movem_t1,_ir_movem_t2
 	xdef	_ir_st1,_ir_st2,_ir_st3,_ir_st_soft,_ir_st_cia,_ir_st_l2,_ir_st_vb
-	xdef	_ir_lat2,_ir_lat3,_ir_lat_n,_ir_lat_buf
+	xdef	_ir_lat2,_ir_lat3,_ir_lat_n,_ir_lat_buf,_ir_lat_overflow
 	xdef	_ir_settle,_ir_st_other,_ir_runaway,_ir_kbd_pend
 
 INTREQR	equ	$dff01e
@@ -369,6 +369,8 @@ _ir_st3:				; VERTB: count, then the runtime handler
 ; level 2: CIA-A timer A (continuous) counter at entry, then stop it
 _ir_lat2:
 	move.l	a0,-(sp)
+	cmp.w	#64,_ir_lat_n
+	bhs.s	.full
 	move.l	_ir_lat_p,a0
 	move.b	CIAA_TAHI,(a0)+
 	move.b	CIAA_TALO,(a0)+
@@ -384,17 +386,29 @@ _ir_lat2:
 	tst.w	INTREQR
 	move.l	(sp)+,a0
 	rte
+.full:	move.w	#1,_ir_lat_overflow
+	move.w	#$0008,INTENA
+	move.w	#$0008,INTREQ
+	move.l	(sp)+,a0
+	rte
 
 ; level 3: COPER from the copper: beam position at entry
 _ir_lat3:
 	move.l	a0,-(sp)
-	move.l	_ir_lat_p,a0
-	move.w	VHPOSR,(a0)
 	btst	#4,INTREQR+1
 	beq.s	.nc
+	cmp.w	#64,_ir_lat_n
+	bhs.s	.full
+	move.l	_ir_lat_p,a0
+	move.w	VHPOSR,(a0)
 	addq.l	#4,a0
 	move.l	a0,_ir_lat_p
 	addq.w	#1,_ir_lat_n
+	move.w	#$0010,INTREQ
+	move.w	#$0010,INTREQ
+	bra.s	.nc
+.full:	move.w	#1,_ir_lat_overflow
+	move.w	#$0010,INTENA
 	move.w	#$0010,INTREQ
 	move.w	#$0010,INTREQ
 .nc:	move.l	(sp)+,a0
@@ -420,6 +434,7 @@ _ir_seq:	ds.w	1
 _ir_snapdone:	ds.w	1
 _ir_snapsr:	ds.w	1
 _ir_lat_n:	ds.w	1
+_ir_lat_overflow: ds.w	1
 _ir_old27:	ds.l	1
 _ir_vertb_n:	ds.l	1
 _ir_phantom:	ds.l	1

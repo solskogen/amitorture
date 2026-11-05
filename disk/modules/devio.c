@@ -117,15 +117,24 @@ static ULONG to_eticks(ULONG dt)
     return (ULONG)(((unsigned long long)dt * ehz) / 1000000ULL);
 }
 
-static void timer_open(void)
+static int timer_open(void)
 {
-    port_init(&tport);
-    port_init(&cport);
+    timer_ok = have_eclock = 0;
+    clk_hz = 0;
+    if (!port_init(&tport))
+        return 0;
+    if (!port_init(&cport)) {
+        FreeSignal(tport.mp_SigBit);
+        return 0;
+    }
     memset(&treq, 0, sizeof treq);
     treq.tr_node.io_Message.mn_ReplyPort = &tport;
     treq.tr_node.io_Message.mn_Length = sizeof treq;
-    if (OpenDevice((CONST_STRPTR)TIMERNAME, UNIT_VBLANK, (struct IORequest *)&treq, 0) != 0)
-        return;
+    if (OpenDevice((CONST_STRPTR)TIMERNAME, UNIT_VBLANK, (struct IORequest *)&treq, 0) != 0) {
+        FreeSignal(cport.mp_SigBit);
+        FreeSignal(tport.mp_SigBit);
+        return 0;
+    }
     timer_ok = 1;
     creq = treq;
     creq.tr_node.io_Message.mn_ReplyPort = &cport;
@@ -139,6 +148,7 @@ static void timer_open(void)
     }
     if (!have_eclock)
         clk_hz = 1000000UL;
+    return 1;
 }
 
 static void timer_close(void)
@@ -1258,7 +1268,12 @@ void amt_run_devio(void)
         amt_case("setup", AMT_ST_UNTESTABLE, "no free signal for a message port");
         return;
     }
-    timer_open();
+    if (!timer_open()) {
+        FreeSignal(dport.mp_SigBit);
+        amt_case("setup", AMT_ST_UNTESTABLE,
+                 "timer.device or timeout message ports unavailable: no device I/O issued");
+        return;
+    }
     find_devices();
 
     /* what exists (deterministic per configuration) */
@@ -1316,8 +1331,6 @@ void amt_run_devio(void)
     timer_close();
     if (!hung)
         FreeSignal(dport.mp_SigBit);
-    if (tport.mp_SigBit)
-        FreeSignal(tport.mp_SigBit);
-    if (cport.mp_SigBit)
-        FreeSignal(cport.mp_SigBit);
+    FreeSignal(tport.mp_SigBit);
+    FreeSignal(cport.mp_SigBit);
 }

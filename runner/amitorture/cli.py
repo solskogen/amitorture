@@ -172,9 +172,13 @@ def validate(a, entries):
                 fh.write(text)
             v = amiberry_cfg.verify(binary, p, env)
             d = list(v.get("differences", []))
+            error = amiberry_cfg.verification_error(v)
             out.append({"id": e["id"], "adjusted": d, "unknown": v.get("unknown_options"),
-                        "messages": v.get("fixup_messages")})
-            if d or v.get("unknown_options"):
+                        "messages": v.get("fixup_messages"), "ok": v.get("ok"), "error": error,
+                        "returncode": v.get("returncode"), "stderr": v.get("stderr")})
+            if error:
+                print(f"{e['id']}: FAILED {error}")
+            elif d:
                 print(f"{e['id']}: ADJUSTED " + "; ".join(f"{x['option']} {x['wrote']}->{x['resolved']}"
                                                          + (f" ({' / '.join(x['because'])})" if x['because'] else "")
                                                          for x in d)
@@ -184,11 +188,13 @@ def validate(a, entries):
     finally:
         if not a.keep:
             _safe_rmtree(tmp, os.path.join(work, "tmp"))
-    n = sum(1 for x in out if x["adjusted"] or x["unknown"])
-    print(f"{len(out)} entries validated, {n} adjusted by the emulator")
+    failed = sum(1 for x in out if not x["ok"])
+    n = sum(1 for x in out if x["ok"] and x["adjusted"])
+    print(f"{len(out) - failed} entries validated, {n} adjusted by the emulator"
+          + (f", {failed} verification(s) failed" if failed else ""))
     if a.json:
         print(json.dumps(out, indent=1))
-    return EXIT_OK
+    return EXIT_ERROR if failed else EXIT_OK
 
 
 def parse_params(a):
@@ -225,7 +231,8 @@ def make_options(a, binary):
         narrow=not getattr(a, "no_narrow", False), narrow_budget=getattr(a, "narrow_budget", 0.0),
         narrow_reruns=getattr(a, "narrow_reruns", 3), narrow_binaries=getattr(a, "narrow_binary", None),
         baseline=getattr(a, "baseline", None), amiberry_src=a.amiberry_src, repro=not getattr(a, "no_repro", False),
-        xfail_path=a.xfail, audio=getattr(a, "audio", "auto"), ports=parse_ports(getattr(a, "ports", None)),
+        xfail_path=a.xfail, audio=getattr(a, "audio", "auto"), warp=getattr(a, "warp", None),
+        ports=parse_ports(getattr(a, "ports", None)),
         show=_check_show(a))
 
 
@@ -390,6 +397,11 @@ def _common(p, kick_required=True, param_defaults=True):
     p.add_argument("--audio", default="auto", choices=["auto", "on", "off"],
                    help="capture the emulator's audio with SDL's disk driver (auto: only disks that send "
                         "audio_mark requests)")
+    p.add_argument("--warp", choices=["off", "auto", "on"],
+                   help="off: normal pacing (default); auto: warp only CPU/FPU/MMU set disks, with normal "
+                        "pacing for all other disks and audio captures; on: force warp everywhere "
+                        "(experimental, invalidates audio/input/RTC/hostspeed tests). check inherits the "
+                        "baseline's policy unless specified. Cannot combine with --set warp=...")
     p.add_argument("--ports", metavar="LO-HI",
                    help="serial port range for the emulators (default $AMT_PORTS or 23540-23599)")
     p.add_argument("-q", "--quiet", action="store_true", help="no progress lines, only the final verdict")
@@ -500,13 +512,16 @@ def build_parser():
 
 
 def main(argv=None):
-    from .emulator import Interrupted
+    from .emulator import Interrupted, IsolationError
     a = build_parser().parse_args(argv)
     _install_interrupt_handler()
     try:
         if a.cmd != "repro" and getattr(a, "workdir", None):
             _setup_tmp(a.workdir)
         return a.fn(a)
+    except IsolationError as e:
+        print(f"amitorture: isolation violated: {e}", file=sys.stderr)
+        return EXIT_ISOLATION
     except RunnerError as e:
         print(f"amitorture: error: {e}", file=sys.stderr)
         return EXIT_ERROR
