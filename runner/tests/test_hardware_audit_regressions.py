@@ -504,7 +504,8 @@ int main(void) { scenario(16); scenario(PA_MS(4)); return 0; }
             self.assertLess(body.index("bhs.s\t.full"), body.index(store))
             self.assertIn("move.w\t#1,_ir_lat_overflow", body)
         paula = (MODULES / "paula_asm.s").read_text()
-        self.assertEqual(paula.count("move.w\t#255,d3"), 2)
+        # bounded (dbf d3): 65536 reads, enough for a fast core's CPU burst
+        self.assertEqual(paula.count("move.w\t#$ffff,d3"), 2)
         self.assertEqual(paula.count(".retry:\tdbf\td3,.t"), 2)
         self.assertEqual(paula.count("move.w\t#1,_pa_sample_invalid"), 2)
 
