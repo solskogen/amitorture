@@ -642,5 +642,129 @@
   "when": {},
   "tbd": false,
   "seen": "amitorture standard run 20261104-001719Z (chipset/board triage); see docs/findings/amiberry-2026-11-03.md"
+ },
+ "fpu.unimp_*": {
+  "ref": "finding F9",
+  "why": "040/060: unimplemented FPU instructions are emulated instead of taking the F-line/unimplemented trap (fpu_no_unimplemented off by default; by design, like C5)",
+  "configs": [
+   "*68040*",
+   "*68060*"
+  ],
+  "when": {
+   "fpu_softfloat": "true"
+  },
+  "tbd": false,
+  "seen": "amitorture softfloat triage 2026-11-05 (also fail on native, hidden there by the F2/F3 fpu.* entry); see docs/findings"
+ },
+ "fpu.unsupp_*": {
+  "ref": "finding F9",
+  "why": "040/060: unsupported data types (packed, denormal, unnormal) are handled instead of taking vector 55 (fpu_no_unimplemented off by default)",
+  "configs": [
+   "*68040*",
+   "*68060*"
+  ],
+  "when": {
+   "fpu_softfloat": "true"
+  },
+  "tbd": false,
+  "seen": "amitorture softfloat triage 2026-11-05 (also fail on native, hidden there by the F2/F3 fpu.* entry); see docs/findings"
+ },
+ "fpu.exc_*": {
+  "ref": "finding F5",
+  "why": "6888x: an enabled FPU exception enters the handler through vector 11 (F-line) instead of its own vector",
+  "configs": [
+   "*68020*",
+   "*68030*"
+  ],
+  "when": {
+   "fpu_softfloat": "true"
+  },
+  "tbd": false,
+  "seen": "amitorture softfloat triage 2026-11-05 (also fail on native, hidden there by the F2/F3 fpu.* entry); see docs/findings"
+ },
+ "fpu.exc_*_disabled_4060": {
+  "ref": "finding F12",
+  "why": "040/060: OVFL/UNFL with the exception enabled complete without trapping",
+  "configs": [
+   "*68040*",
+   "*68060*"
+  ],
+  "when": {
+   "fpu_softfloat": "true"
+  },
+  "tbd": false,
+  "seen": "amitorture softfloat triage 2026-11-05 (also fail on native, hidden there by the F2/F3 fpu.* entry); see docs/findings"
+ },
+ "fpu.arith_fsub": {
+  "ref": "finding F10",
+  "why": "6888x: FSUB of opposite infinities returns the wrong sign (+inf - (-inf) = -inf)",
+  "configs": [
+   "*68020*",
+   "*68030*"
+  ],
+  "when": {
+   "fpu_softfloat": "true"
+  },
+  "tbd": false,
+  "seen": "amitorture softfloat triage 2026-11-05 (also fail on native, hidden there by the F2/F3 fpu.* entry); see docs/findings"
+ },
+ "fpu.arith_fmod": {
+  "ref": "finding F6",
+  "why": "FMOD of +-0 by +-inf sets UNFL (and a quotient sign)",
+  "configs": "*",
+  "when": {
+   "fpu_softfloat": "true"
+  },
+  "tbd": false,
+  "seen": "amitorture softfloat triage 2026-11-05 (also fail on native, hidden there by the F2/F3 fpu.* entry); see docs/findings"
+ },
+ "fpu.arith_frem": {
+  "ref": "finding F6",
+  "why": "FREM of +-0 by +-inf sets UNFL (and a quotient sign)",
+  "configs": "*",
+  "when": {
+   "fpu_softfloat": "true"
+  },
+  "tbd": false,
+  "seen": "amitorture softfloat triage 2026-11-05 (also fail on native, hidden there by the F2/F3 fpu.* entry); see docs/findings"
+ },
+ "fpu.fline_*_6888x": {
+  "ref": "finding F11",
+  "why": "68881/68882 execute the 040/060-only opmodes (FSADD, FDMUL, FSSQRT...) instead of taking the F-line exception",
+  "configs": [
+   "*68020*",
+   "*68030*"
+  ],
+  "when": {
+   "fpu_softfloat": "true"
+  },
+  "tbd": false,
+  "seen": "amitorture softfloat triage 2026-11-05 (also fail on native, hidden there by the F2/F3 fpu.* entry); see docs/findings"
+ },
+ "fpu.frestore_bad_frame": {
+  "ref": "finding F13",
+  "why": "FRESTORE of an invalid frame: no format error (unclassified)",
+  "configs": [
+   "*68020*",
+   "*68030*"
+  ],
+  "when": {
+   "fpu_softfloat": "true"
+  },
+  "tbd": false,
+  "seen": "amitorture softfloat triage 2026-11-05 (also fail on native, hidden there by the F2/F3 fpu.* entry); see docs/findings"
+ },
+ "fpu.pred_ftrapcc": {
+  "ref": "finding F13",
+  "why": "FTRAPcc predicate/BSUN outcome differs (unclassified)",
+  "configs": [
+   "*68020*",
+   "*68030*"
+  ],
+  "when": {
+   "fpu_softfloat": "true"
+  },
+  "tbd": false,
+  "seen": "amitorture softfloat triage 2026-11-05 (also fail on native, hidden there by the F2/F3 fpu.* entry); see docs/findings"
  }
 }
