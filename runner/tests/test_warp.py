@@ -37,6 +37,17 @@ class Warp(unittest.TestCase):
         for info in (None, {}, {"build_id": "cpu"}, {"build_id": "rev mixed cpu"}):
             self.assertFalse(runner.disk_warp(self.opts(warp="auto"), self.entry, info)["effective"])
 
+    def test_auto_keeps_jit_entries_normally_paced(self):
+        jit = matrix.find("a4000-68040nommu-fast-jit")
+        self.assertNotEqual(str(jit["options"].get("cachesize", "0")), "0")
+        for group in ("cpu", "fpu", "mmu"):
+            with self.subTest(group=group):
+                w = runner.disk_warp(self.opts(warp="auto"), jit, self.info(group))
+                self.assertFalse(w["effective"])
+                self.assertIn("JIT", w["reason"])
+        # an explicit --warp on still forces it
+        self.assertTrue(runner.disk_warp(self.opts(warp="on"), jit, self.info("cpu"))["effective"])
+
     def test_allowlisted_disk_groups_contain_only_reviewed_functional_modules(self):
         makefile = (ROOT / "disk" / "Makefile").read_text()
         for group, module in (("cpu", "cpu_basic"), ("fpu", "fpu"), ("mmu", "mmu")):

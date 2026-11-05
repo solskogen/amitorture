@@ -85,7 +85,9 @@ How the runner uses it:
 
 ### Automatic warp
 
-`--warp auto` accelerates only the `cpu`, `fpu` and `mmu` set disks. The baked disk's
+`--warp auto` accelerates only the `cpu`, `fpu` and `mmu` set disks, and not on JIT entries (`cachesize`
+non-zero): with warp the JIT runs these disks slower (smoke on a Pi 500: 16-18 s -> 46-52 s per JIT entry,
+while the cycle-exact entries gained about 48 s). The baked disk's
 build id, not its filename, identifies its group; renamed set disks passed with `--adf`
 get the same policy. `core`, `chip`, `exp`, `cpux`, mixed/unknown disks, selftests and
 any launch requiring audio capture stay normally paced. `--audio off` does not make

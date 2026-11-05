@@ -561,9 +561,13 @@ def disk_warp(opts, entry, info, capture=False, extra=None):
         mode = "config" if "warp" in entry["options"] or "warp" in (extra or {}) else "off"
         reason = "explicit config option" if mode == "config" else "normal pacing by default"
     elif mode == "auto":
-        enabled = group in WARP_GROUPS and not capture and not opts.selftest
+        # JIT entries keep normal pacing: with warp the JIT runs these disks
+        # slower (smoke, Pi 500: cpu+fpu+mmu 16-18 s -> 46-52 s per entry)
+        jit = str(entry["options"].get("cachesize", "0")).strip() not in ("", "0")
+        enabled = group in WARP_GROUPS and not capture and not opts.selftest and not jit
         reason = ("audio capture requires normal pacing" if capture else
                   "selftest requires normal pacing" if opts.selftest else
+                  "JIT entry: warp slows the JIT down" if jit and group in WARP_GROUPS else
                   "functional set disk" if enabled else
                   "timing-sensitive or unclassified disk")
         if "warp" in (extra or {}):

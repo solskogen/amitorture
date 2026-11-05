@@ -50,7 +50,7 @@ python3 -m amitorture check    --amiberry /path/to/new/amiberry --kickstarts ~/A
 ```
 
 Emulators run headless; add `--show` to watch their windows. At most `nproc` emulators run at once, machine-wide.
-Add `--warp auto` to accelerate CPU/FPU/MMU set disks while keeping all other disks, including audio,
+Add `--warp auto` to accelerate CPU/FPU/MMU set disks (not on JIT entries, where warp is slower) while keeping all other disks, including audio,
 input, RTC and host-speed tests, normally paced. No tests are removed. `--warp off` uses normal pacing
 everywhere; `--warp on` is an experimental forced mode, not a correctness-equivalent run.
 Some timing-observation cases already vary between `pass` and `untestable` at normal
