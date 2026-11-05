@@ -552,8 +552,12 @@ class XfailLists(unittest.TestCase):
         from amitorture import xfail
         reg = xfail.load()
         self.assertIsInstance(reg["expsound.uaesnd_timer_irq"], list)
-        m = xfail.match(reg, "expsound.uaesnd_timer_irq", "a1200-snd-uaesndz2", {"ntsc": "false", "cpu_model": "68020"})
-        self.assertEqual(m["ref"], "finding S8")
+        m = xfail.match(reg, "expsound.uaesnd_timer_irq", "a500-snd-uaesndz2",
+                        {"ntsc": "false", "cpu_model": "68000", "cpu_compatible": "true"})
+        self.assertEqual(m["ref"], "finding S6")
+        # S8 (fixed in Amiberry 07708117f) is no longer registered
+        self.assertIsNone(xfail.match(reg, "expsound.uaesnd_timer_irq", "a1200-snd-uaesndz2",
+                                      {"ntsc": "false", "cpu_model": "68020"}))
 
 
 if __name__ == "__main__":

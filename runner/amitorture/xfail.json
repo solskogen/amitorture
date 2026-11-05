@@ -108,24 +108,6 @@
   "tbd": false,
   "seen": "amitorture milestone 2, 2026-11-03; see docs/findings/amiberry-2026-11-03.md"
  },
- "interrupts.storm_cia_timer": {
-  "ref": "finding H1",
-  "why": "CIA continuous timer period = latch instead of latch+1 in the non-cycle-accurate CIA path (cia.cpp CIA_update)",
-  "configs": "*",
-  "when": {
-   "cycle_exact": "!true"
-  },
-  "tbd": false,
-  "seen": "amitorture milestone 2, 2026-11-03; see docs/findings/amiberry-2026-11-03.md"
- },
- "cia.ciaa_tod_alarm_*": {
-  "ref": "finding H2",
-  "why": "CIA-A TOD alarm lost intermittently: the delayed TOD path increments with irq=false (cia.cpp cia_delayed_tod)",
-  "configs": "*",
-  "when": {},
-  "tbd": false,
-  "seen": "amitorture milestone 2, 2026-11-03; see docs/findings/amiberry-2026-11-03.md"
- },
  "exceptions.rte_format_invalid": {
   "ref": "finding C4",
   "why": "68060 RTE accepts format $1 (gencpu.cpp emits the throwaway-frame path for all cpu_level>=2)",
@@ -461,22 +443,6 @@
   "tbd": false,
   "seen": "amitorture standard run 20261104-001719Z (chipset/board triage); see docs/findings/amiberry-2026-11-03.md"
  },
- "expsound.*_needs_mce": {
-  "ref": "finding S1",
-  "why": "AD1848/CS4231 MCE protection not emulated: I8/I9/I28 writable without MCE (sndboard.cpp toccata_put)",
-  "configs": "*",
-  "when": {},
-  "tbd": false,
-  "seen": "amitorture standard run 20261104-001719Z (chipset/board triage); see docs/findings/amiberry-2026-11-03.md"
- },
- "expsound.prelude*_i25_readonly": {
-  "ref": "finding S2",
-  "why": "CS4231 I25 (version) register writable",
-  "configs": "*",
-  "when": {},
-  "tbd": false,
-  "seen": "amitorture standard run 20261104-001719Z (chipset/board triage); see docs/findings/amiberry-2026-11-03.md"
- },
  "expsound.uaesnd_play_irqs": {
   "ref": "finding S5",
   "why": "uaesnd Zorro II: sample sets in the board's own RAM rejected (default_check instead of sub_bank_check, sndboard.cpp ~1574): no stream starts",
@@ -545,16 +511,6 @@
    },
    "tbd": false,
    "seen": "amitorture standard run 20261104-001719Z (chipset/board triage); see docs/findings/amiberry-2026-11-03.md"
-  },
-  {
-   "ref": "finding S8",
-   "why": "sound-board clock scaled by 313/312 on PAL: 399 instead of 400 interrupts from the 200 Hz timer",
-   "configs": "*-snd-uaesnd*",
-   "when": {
-    "ntsc": "!true"
-   },
-   "tbd": false,
-   "seen": "amitorture audit 2026-11-04; see docs/findings/amiberry-2026-11-03.md"
   }
  ],
  "expsound.uaesnd_setptr_cleared": {
@@ -669,22 +625,6 @@
    "when": {},
    "tbd": false,
    "seen": "amitorture fix verification 2026-11-04 (Amiberry branch amitorture-fixes); see docs/findings/amiberry-2026-11-03.md"
-  },
-  {
-   "ref": "finding S9",
-   "why": "uaesnd mono stream with 35.B = 0 plays on the left channel only (side both)",
-   "configs": "*uaesnd*",
-   "when": {},
-   "tbd": false,
-   "seen": "amitorture fix verification 2026-11-04 (Amiberry branch amitorture-fixes); see docs/findings/amiberry-2026-11-03.md"
   }
- ],
- "host.tone_uaesnd_mono_paula": {
-  "ref": "finding S9",
-  "why": "a one-channel extra stream replaces the right output with the left mix: Paula's right channel goes silent while a mono uaesnd stream plays (audio.cpp do_extra_channels)",
-  "configs": "*uaesndz3*",
-  "when": {},
-  "tbd": false,
-  "seen": "amitorture fix verification 2026-11-04 (Amiberry branch amitorture-fixes); see docs/findings/amiberry-2026-11-03.md"
- }
+ ]
 }
