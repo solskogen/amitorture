@@ -837,11 +837,44 @@ static void beam_stamp(ULONG *fe, ULONG *line)
     *line = v;
 }
 
+/* Raster lines since the first stamp, counting each frame with its real
+ * length: with BPLCON0 LACE set the frames alternate long/short (PAL
+ * 313/312), so frame * 313 overcounts a line per short frame (seen on the
+ * CD32 while its boot display was still interlaced). A frame's type is
+ * VPOSR LOF (bit 15) sampled during it; frames passed between two stamps
+ * (rare: stamps are taken often) alternate if LOF has been seen toggling. */
+static ULONG ln_base, ln_f;
+static int ln_init, ln_lof, ln_lace;
+static int lof_toggles;                 /* LOF changes seen (reported in the TOD-rate cases) */
+
+static ULONG frame_lines(int lof) { return lof ? nlines : nlines - 1; }
+
 static ULONG line_now(void)
 {
     ULONG f, v;
+    int lof;
     beam_stamp(&f, &v);
-    return (ULONG)(UWORD)f * (UWORD)nlines + v;
+    lof = (CREG(R_VPOSR) & 0x8000) != 0;  /* LOF of the current frame */
+    if (!ln_init) {
+        ln_init = 1;
+        ln_base = 0;
+        ln_f = f;
+        ln_lof = lof;
+    }
+    while ((LONG)(f - ln_f) > 0) {
+        ln_base += frame_lines(ln_lof);
+        ln_f++;
+        if (ln_f == f) {
+            if (lof != ln_lof) {
+                ln_lace = 1;
+                lof_toggles++;
+            }
+            ln_lof = lof;
+        } else if (ln_lace) {
+            ln_lof = !ln_lof;
+        }
+    }
+    return ln_base + v;
 }
 
 static ULONG frame_now(void)
@@ -881,7 +914,11 @@ static void tod_dcase(const char *id, ULONG d, ULONG lo, ULONG hi, const char *w
     json_hexn("v1", v1, 6);
     json_obj_end();
     json_str("why", why);
-    json_str("window_note", "min/max come from beam stamps taken around the TOD accesses");
+    json_str("window_note", "min/max come from beam stamps taken around the TOD accesses; "
+             "each frame counts with its real length (LOF)");
+    json_obj("ctx");
+    json_int("lof_toggles", lof_toggles);   /* > 0: interlaced (alternating) frames in the window */
+    json_obj_end();
     amt_case_close();
 }
 
@@ -901,7 +938,9 @@ static void tod_tests(int b)
     };
     int i;
 
-    nlines = amt_probe_result.pal ? 313 : 263;
+    nlines = amt_probe_result.pal ? 313 : 263;   /* a long frame */
+    ln_init = ln_lace = 0;
+    lof_toggles = 0;
     cia_wr(c, C_CRB, 0);
     cia_wr(c, C_ICR, 0x7f);
 

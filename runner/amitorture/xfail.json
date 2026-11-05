@@ -585,14 +585,6 @@
   "tbd": false,
   "seen": "amitorture standard run 20261104-001719Z (chipset/board triage); see docs/findings/amiberry-2026-11-03.md"
  },
- "cia.ciab_tod_counts_hsync": {
-  "ref": "finding H5",
-  "why": "CD32: CIA-B TOD counts one HSYNC fewer than the beam over ~600 lines (598/599 for a 599..601 window), deterministic on cd32 fast and JIT; other machines pass with the same disk; cause not pinned (custom.cpp ciab_tod_maybe_inc cs_cd32cd branch / cia.cpp CIA_tod_handler)",
-  "configs": "cd32*",
-  "when": {},
-  "tbd": false,
-  "seen": "amitorture standard run 20261104-001719Z and triage rerun 20261104-054658Z; see docs/findings/amiberry-2026-11-03.md"
- },
  "devio.*_rw*_w2": {
   "ref": "finding D1 (check-on-hw)",
   "why": "A590/A2091 DMAC-01: word-aligned (2 mod 4) buffers corrupted, the transfer starts at addr&~3",
