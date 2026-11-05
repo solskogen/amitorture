@@ -669,7 +669,17 @@ int main(int argc, char **argv)
         self.assertNotIn("ZW(0x8c)", NET.lower().replace("zw", "ZW"))
         self.assertNotIn("CUSTOM_BASE + 0x0b0", SOUND)
         self.assertNotIn("CREG(0x0b", SOUND)
-        self.assertIn('"uaesnd_mono_paula_capture", AMT_ST_SKIP', SOUND)
+        # The Paula side of the uaesnd mono test lives in the module that owns
+        # Paula: it claims the board before any write and stops the stream
+        # after its amt_try, also after an abort.
+        self.assertNotIn("uaesnd_mono_paula_capture", SOUND)
+        paula = (ROOT / "disk/modules/paula.c").read_text()
+        mix = function(paula, "t_uaesnd_mono_mix")
+        self.assertLess(mix.index("amt_board_claim(bd)"), mix.index("es_wb("))
+        self.assertLess(mix.index("umono_base = bd->addr"), mix.index("UAESND_S_SETPTR), set)"))
+        run = paula[paula.index("void amt_run_paula(void)"):]
+        run = run[:run.index("\n}\n")]
+        self.assertLess(run.index("amt_try(t_uaesnd_mono_mix)"), run.index("umono_stop()"))
         self.assertIn("drained = -1", SOUND)
 
 

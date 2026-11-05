@@ -27,9 +27,12 @@
  * Audio data and disk buffers are in the chip pool. The module restores
  * ADKCON, the audio registers it used (volume 0, DMA off, requests clear),
  * CIA-A PRA bit 1, and the drive lines (see paula_disk.c). The serial UART
- * is the output channel and is not tested (UARTBRK is never set). */
+ * is the output channel and is not tested (UARTBRK is never set).
+ * With a uaesnd board present, uaesnd_mono_keeps_right claims it, plays a
+ * silent mono stream next to a Paula tone, and stops the stream again. */
 #include "paula.h"
 #include "hardware_audit.h"
+#include "uaesnd_hw.h"
 
 AMT_MODULE(paula, 14, AMT_PH_BARE, AMT_MF_OWNS_DISPLAY, 28672, 0);
 
@@ -963,6 +966,122 @@ static void t_host_tones(void)
     }
 }
 
+/* ---- a uaesnd mono stream must not take Paula off the right output.
+ * A silent, endlessly repeating mono stream (35.B = 0: left and right) runs
+ * on the uaesnd board while channel 1 (right output) plays a square tone
+ * between audio_mark start/stop (side right): the runner judges the right
+ * output as host.tone_uaesnd_mono_paula. Amiberry's mixer replaced the
+ * right side with the left mix while a one-channel stream played. Needs a
+ * uaesnd board in amt_probe_result.boards (claimed); skip without one.
+ * Note: here the stream takes a mixer path on which the old bug does not
+ * show (it passes on Amiberry bcea436dd too); in expsound's sequence it
+ * failed. The case still checks that Paula keeps its side next to a mono
+ * stream. */
+#define UMONO_ID "uaesnd_mono_keeps_right"
+static ULONG umono_base;             /* claimed board while the stream may run, else 0 */
+
+static void umono_stop(void)
+{
+    ULONG t0;
+    if (!umono_base)
+        return;
+    es_wl((volatile ULONG *)(umono_base + UAESND_STREAM0 + UAESND_S_SETPTR), 0);
+    es_wl((volatile ULONG *)(umono_base + UAESND_ENABLE), 0);
+    t0 = amt_frames_now();
+    while ((es_rb((volatile UBYTE *)(umono_base + UAESND_STREAM0 + UAESND_S_STATUS)) & 1) &&
+           amt_frames_now() - t0 < 25)
+        ;
+    umono_base = 0;
+}
+
+static void t_uaesnd_mono_mix(void)
+{
+    static char args[200];
+    const struct amt_probe_board *bd = 0;
+    UBYTE *tb = pa_chip + PA_AUDBUF_OFF + TONE_OFF;
+    const UWORD per = 254, vol = 64;
+    ULONG clk = amt_cck_hz(), fm, roff, rsize, ram, set, want;
+    int k, a1 = 0, a2 = 0;
+    char *p;
+    for (k = 0; k < amt_probe_result.n_boards && k < AMT_PROBE_BOARDS_MAX; k++)
+        if (amt_probe_result.boards[k].man == UAESND_MAN && amt_probe_result.boards[k].prod == UAESND_PROD) {
+            bd = &amt_probe_result.boards[k];
+            break;
+        }
+    if (!bd) {
+        amt_case(UMONO_ID, AMT_ST_SKIP, "no uaesnd board");
+        return;
+    }
+    if (!amt_board_ok(bd) || bd->size < 0x10000) {
+        amt_case(UMONO_ID, AMT_ST_UNTESTABLE, "uaesnd board fails amt_board_ok or is smaller than its aperture");
+        return;
+    }
+    if (!amt_board_claim(bd)) {
+        amt_case(UMONO_ID, AMT_ST_UNTESTABLE, "no exclusive live ConfigDev claim of the uaesnd board");
+        return;
+    }
+    roff = es_rl((volatile ULONG *)(bd->addr + UAESND_RAM_OFFSET));
+    rsize = es_rl((volatile ULONG *)(bd->addr + UAESND_RAM_SIZE));
+    want = uaesnd_ram_expected(bd->size);
+    if (roff != want || rsize != want || roff + rsize > bd->size) {
+        amt_case(UMONO_ID, AMT_ST_UNTESTABLE, "uaesnd RAM offset/size not as specified: not written");
+        return;
+    }
+    ram = bd->addr + roff;
+    for (k = 0; k < 2205; k++)
+        es_wb((volatile UBYTE *)(ram + 0x3000 + k), 0);
+    set = uaesnd_set_write(ram, 0x400, ram + 0x3000, 2205, 22050UL << 8, ram + 0x3000, 2205, 0xffff, 0, 0);
+    umono_base = bd->addr;
+    es_wl((volatile ULONG *)(bd->addr + UAESND_ENABLE), 1);
+    es_wl((volatile ULONG *)(bd->addr + UAESND_STREAM0 + UAESND_S_SETPTR), set);
+    pa_wait_cc(PA_MS(100));
+
+    for (k = 0; k < 32; k++)
+        tb[k] = (UBYTE)(k < 16 ? 96 : -96);
+    fm = (ULONG)(((unsigned long long)clk * 1000ULL) / ((ULONG)per * 32UL));
+    p = pa_cat(args, "{\"edge\":\"start\",");
+    p = jkv(p, "ch", 1, 0);
+    p = jkv(p, "period", per, 0);
+    p = jkv(p, "vol", vol, 0);
+    p = jkv(p, "samples", 32, 0);
+    p = jkv(p, "clock", clk, 0);
+    p = jkv(p, "freq_mhz", fm, 0);
+    p = jkv(p, "tol_pct", 2, 0);
+    p = jkv(p, "ms", 500, 0);
+    pa_cat(p, "\"wave\":\"square\",\"side\":\"right\"}");
+    aud_quiet();
+    ch_setup(1, (ULONG)tb, 16, per, vol);
+    a1 = amt_request("audio_mark", "uaesnd_mono_paula", args, amt_secs(10));
+    if (a1) {
+        CREG(R_DMACON) = 0x8202;              /* DMAEN | AUD1EN */
+        pa_wait_cc(PA_MS(500));
+        CREG(R_DMACON) = 0x0002;
+        AUDVOL(1) = 0;
+        a2 = amt_request("audio_mark", "uaesnd_mono_paula", "{\"edge\":\"stop\"}", amt_secs(10));
+    }
+    aud_quiet();
+    umono_stop();
+    if (!a1 || !a2) {
+        amt_case_open(UMONO_ID, AMT_ST_UNTESTABLE);
+        json_str("why", "host did not act on request audio_mark");
+        json_int("start_acked", a1);
+        amt_case_close();
+        return;
+    }
+    amt_case_open(UMONO_ID, AMT_ST_PASS);
+    json_obj("in");
+    json_hex("board", bd->addr);
+    json_str("stream", "silent 8-bit signed mono, repeat -1, 35.B = 0 (left and right)");
+    json_int("ch", 1);
+    json_int("period", per);
+    json_int("freq_mhz", (long)fm);
+    json_str("side", "right");
+    json_obj_end();
+    json_str("note", "informational: the runner judges the capture as host.tone_uaesnd_mono_paula "
+             "(the Paula tone must be on the right output while the mono stream plays)");
+    amt_case_close();
+}
+
 void pa_audio_tests(void)
 {
     old28 = amt_vec_set(28, pa_l4);
@@ -1008,6 +1127,10 @@ void amt_run_paula(void)
         amt_vec_set(28, old28);
     }
     aud_quiet();
+    if (!code)
+        code = amt_try(t_uaesnd_mono_mix);
+    aud_quiet();
+    umono_stop();
     CREG(R_ADKCON) = 0x7fff;
     CREG(R_ADKCON) = 0x8000 | (adk0 & 0x7fff);
     if (code) {

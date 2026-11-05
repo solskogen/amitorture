@@ -536,7 +536,11 @@ def hardware_entries(full=False):
                 # expsound probes the clockport only with the unsafe flag (on a
                 # real A1200 nothing may be there); this entry configures the card
                 e["flags"] = ["unsafe"]
-            _board_only(e, ["expsound"])
+            _board_only(e, ["expsound", "paula"] if name.startswith("uaesnd") else ["expsound"])
+            if name.startswith("uaesnd"):
+                # paula's uaesnd_mono_keeps_right (a Paula tone next to a
+                # uaesnd mono stream) is on the chip disk
+                e["disk_groups"] = e["disk_groups"] + ["chip"]
             out.append(e)
             if model != "A500" and bus != "pci":
                 e["jit_capable"] = True

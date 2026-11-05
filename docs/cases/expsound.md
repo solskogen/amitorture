@@ -117,7 +117,6 @@ cycles; the spec states that 68000/010 word accesses are supported.
 | `diag_start_stop` | one playback adds 1 to $00A8 and 1 to $00AC (diagnostics capability only) | spec diagnostics block | counters wrong (or the playback never started) |
 | `audio_capture` | `audio_mark` around `play_irqs` (informational); the start mark describes the tone (square wave, 50 frames per cycle at 22050 Hz: `freq_mhz` 441000, `tol_pct` 2, `ms` 200), judged by the runner as the pseudo case `host.tone_uaesnd_play` | CONTRACT section 13; docs/schema.md 5.1 | (pseudo case) wrong playback rate, or the stream not mixed |
 | `mono_active` | silent repeating mono must start and remain active ($0193 bit 0) at every poll through a 25-frame observation window | uaesnd play-active status | mono never started or stopped early |
-| `mono_paula_capture` | skip: the runtime does not obtain exclusive AUD1 ownership or provide genuine restoration/reinitialisation of its write-only registers. No Paula registers are changed and no host capture is claimed | ownership limitation; `mono_active` is readiness evidence, not the mixer oracle | |
 | `repeat_irqs` | 2205 frames + repeat count 2 (1102 frames), 34.B = repeat|end: status & $86 = $84, $84, $82 | spec: repeat count, 34.B bit 2; bits 0/3 are set whenever their condition occurs, so they are masked | repeat count off by one |
 | `invalid_set` | flags = 1 (must be 0): no start, $0193 bit 0 = 0, and with diagnostics $00A0 += 1, $00B8 = 1 | spec: validation, last error 1 = invalid set | invalid sets played |
 

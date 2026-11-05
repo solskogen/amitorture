@@ -24,6 +24,7 @@
 #include "mod.h"
 #include "cia_hw.h"
 #include "expsound_hw.h"
+#include "uaesnd_hw.h"
 
 AMT_MODULE(expsound, 17, AMT_PH_BARE, 0, 0, 0);
 
@@ -31,8 +32,8 @@ AMT_MODULE(expsound, 17, AMT_PH_BARE, 0, 0, 0);
 #define PROD_TOCCATA    12
 #define MAN_ACT         16945
 #define PROD_PRELUDE    1
-#define MAN_UAE         6502
-#define PROD_UAESND     2
+#define MAN_UAE         UAESND_MAN
+#define PROD_UAESND     UAESND_PROD
 
 #define INT_EXTER 0x2000
 
@@ -1110,28 +1111,11 @@ static int u_active_for(ULONG n)
     return active;
 }
 
-/* sample set structure (40 bytes) at RAM offset `so` */
+/* sample set structure (48 bytes) at RAM offset `so` (uaesnd_hw.h) */
 static ULONG u_set(ULONG so, ULONG data, LONG len, ULONG freq, ULONG rep, LONG replen,
                    UWORD repcnt, UWORD flags, UBYTE intr)
 {
-    volatile UBYTE *p = (volatile UBYTE *)(UR + so);
-    int i;
-    for (i = 0; i < 48; i += 4)
-        es_wl((volatile ULONG *)(p + i), 0);
-    es_ww((volatile UWORD *)(p + 0), flags);
-    es_ww((volatile UWORD *)(p + 2), 0);
-    es_wl((volatile ULONG *)(p + 4), data);
-    es_wl((volatile ULONG *)(p + 8), (ULONG)len);
-    es_wl((volatile ULONG *)(p + 12), freq);
-    es_wl((volatile ULONG *)(p + 16), rep);
-    es_wl((volatile ULONG *)(p + 20), (ULONG)replen);
-    es_ww((volatile UWORD *)(p + 24), repcnt);
-    es_ww((volatile UWORD *)(p + 26), 0x2000);   /* volume 8192/32768 */
-    es_wl((volatile ULONG *)(p + 28), 0);         /* next: none */
-    es_wb(p + 32, 1);                             /* mono */
-    es_wb(p + 33, 0x40);                          /* 8-bit signed */
-    es_wb(p + 34, intr);
-    return UR + so;
+    return uaesnd_set_write(UR, so, data, len, freq, rep, replen, repcnt, flags, intr);
 }
 
 static void u_seq_case(const char *id, const UBYTE *exp, int n, UBYTE mask, const char *why, ULONG setaddr)
@@ -1222,7 +1206,7 @@ static void uaesnd_board(const struct amt_probe_board *bd)
          "streams", 8, v, 0);
     roff = es_rl(UL(0x90));
     rsize = es_rl(UL(0x94));
-    a = uz3 ? 0x800000 : 0x8000;
+    a = uaesnd_ram_expected(bd->size);
     urep("uaesnd_info_ram", roff == a && rsize == a,
          uz3 ? "Z3 board: 8 MB RAM in the upper half: $0090.L offset $800000, $0094.L size $800000"
              : "Z2 board: 32 KB RAM at $8000-$FFFF: $0090.L offset $8000, $0094.L size $8000",
@@ -1487,8 +1471,8 @@ static void uaesnd_board(const struct amt_probe_board *bd)
     }
 
     /* Confirm silent mono playback independently of any host audio request.
-     * The mixer/Paula oracle requires ownership of write-only AUD1 state,
-     * which the current bare runtime does not provide. */
+     * Whether Paula survives next to such a stream is tested by the paula
+     * module, which owns Paula (uaesnd_mono_keeps_right). */
     {
         int active;
         for (k = 0; k < 2205; k++)
@@ -1503,8 +1487,6 @@ static void uaesnd_board(const struct amt_probe_board *bd)
              "active_throughout", 1, active, "$F0=1; $180=set; check $193 bit 0 for 25 frames");
         es_wl(UL(S0 + 0x80), 0);
         u_wait_frames(2);
-        amt_case("uaesnd_mono_paula_capture", AMT_ST_SKIP,
-                 "no exclusive AUD1 ownership/reinitialisation; write-only Paula channel state cannot be restored");
     }
 }
 
