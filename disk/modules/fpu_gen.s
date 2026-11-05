@@ -1903,6 +1903,1158 @@ pr_3_31:
 	fmove.l	fpsr,d1
 	move.l	_fpu_trapcnt,d0
 	rts
+pr_4_0:
+	fmove.l	d0,fpsr
+	moveq	#0,d0
+	moveq	#0,d2
+	move.w	#$15,ccr
+	dc.w	$f242,0		; FScc D2
+	dc.w	$42c0		; move ccr,d0
+	move.w	#$0a,ccr
+	dc.w	$f242,0		; FScc D2
+	dc.w	$42c2		; move ccr,d2
+	fmove.l	fpsr,d1
+	lsl.w	#8,d0
+	or.w	d2,d0
+	rts
+pr_4_1:
+	fmove.l	d0,fpsr
+	moveq	#0,d0
+	moveq	#0,d2
+	move.w	#$15,ccr
+	dc.w	$f242,1		; FScc D2
+	dc.w	$42c0		; move ccr,d0
+	move.w	#$0a,ccr
+	dc.w	$f242,1		; FScc D2
+	dc.w	$42c2		; move ccr,d2
+	fmove.l	fpsr,d1
+	lsl.w	#8,d0
+	or.w	d2,d0
+	rts
+pr_4_2:
+	fmove.l	d0,fpsr
+	moveq	#0,d0
+	moveq	#0,d2
+	move.w	#$15,ccr
+	dc.w	$f242,2		; FScc D2
+	dc.w	$42c0		; move ccr,d0
+	move.w	#$0a,ccr
+	dc.w	$f242,2		; FScc D2
+	dc.w	$42c2		; move ccr,d2
+	fmove.l	fpsr,d1
+	lsl.w	#8,d0
+	or.w	d2,d0
+	rts
+pr_4_3:
+	fmove.l	d0,fpsr
+	moveq	#0,d0
+	moveq	#0,d2
+	move.w	#$15,ccr
+	dc.w	$f242,3		; FScc D2
+	dc.w	$42c0		; move ccr,d0
+	move.w	#$0a,ccr
+	dc.w	$f242,3		; FScc D2
+	dc.w	$42c2		; move ccr,d2
+	fmove.l	fpsr,d1
+	lsl.w	#8,d0
+	or.w	d2,d0
+	rts
+pr_4_4:
+	fmove.l	d0,fpsr
+	moveq	#0,d0
+	moveq	#0,d2
+	move.w	#$15,ccr
+	dc.w	$f242,4		; FScc D2
+	dc.w	$42c0		; move ccr,d0
+	move.w	#$0a,ccr
+	dc.w	$f242,4		; FScc D2
+	dc.w	$42c2		; move ccr,d2
+	fmove.l	fpsr,d1
+	lsl.w	#8,d0
+	or.w	d2,d0
+	rts
+pr_4_5:
+	fmove.l	d0,fpsr
+	moveq	#0,d0
+	moveq	#0,d2
+	move.w	#$15,ccr
+	dc.w	$f242,5		; FScc D2
+	dc.w	$42c0		; move ccr,d0
+	move.w	#$0a,ccr
+	dc.w	$f242,5		; FScc D2
+	dc.w	$42c2		; move ccr,d2
+	fmove.l	fpsr,d1
+	lsl.w	#8,d0
+	or.w	d2,d0
+	rts
+pr_4_6:
+	fmove.l	d0,fpsr
+	moveq	#0,d0
+	moveq	#0,d2
+	move.w	#$15,ccr
+	dc.w	$f242,6		; FScc D2
+	dc.w	$42c0		; move ccr,d0
+	move.w	#$0a,ccr
+	dc.w	$f242,6		; FScc D2
+	dc.w	$42c2		; move ccr,d2
+	fmove.l	fpsr,d1
+	lsl.w	#8,d0
+	or.w	d2,d0
+	rts
+pr_4_7:
+	fmove.l	d0,fpsr
+	moveq	#0,d0
+	moveq	#0,d2
+	move.w	#$15,ccr
+	dc.w	$f242,7		; FScc D2
+	dc.w	$42c0		; move ccr,d0
+	move.w	#$0a,ccr
+	dc.w	$f242,7		; FScc D2
+	dc.w	$42c2		; move ccr,d2
+	fmove.l	fpsr,d1
+	lsl.w	#8,d0
+	or.w	d2,d0
+	rts
+pr_4_8:
+	fmove.l	d0,fpsr
+	moveq	#0,d0
+	moveq	#0,d2
+	move.w	#$15,ccr
+	dc.w	$f242,8		; FScc D2
+	dc.w	$42c0		; move ccr,d0
+	move.w	#$0a,ccr
+	dc.w	$f242,8		; FScc D2
+	dc.w	$42c2		; move ccr,d2
+	fmove.l	fpsr,d1
+	lsl.w	#8,d0
+	or.w	d2,d0
+	rts
+pr_4_9:
+	fmove.l	d0,fpsr
+	moveq	#0,d0
+	moveq	#0,d2
+	move.w	#$15,ccr
+	dc.w	$f242,9		; FScc D2
+	dc.w	$42c0		; move ccr,d0
+	move.w	#$0a,ccr
+	dc.w	$f242,9		; FScc D2
+	dc.w	$42c2		; move ccr,d2
+	fmove.l	fpsr,d1
+	lsl.w	#8,d0
+	or.w	d2,d0
+	rts
+pr_4_10:
+	fmove.l	d0,fpsr
+	moveq	#0,d0
+	moveq	#0,d2
+	move.w	#$15,ccr
+	dc.w	$f242,10		; FScc D2
+	dc.w	$42c0		; move ccr,d0
+	move.w	#$0a,ccr
+	dc.w	$f242,10		; FScc D2
+	dc.w	$42c2		; move ccr,d2
+	fmove.l	fpsr,d1
+	lsl.w	#8,d0
+	or.w	d2,d0
+	rts
+pr_4_11:
+	fmove.l	d0,fpsr
+	moveq	#0,d0
+	moveq	#0,d2
+	move.w	#$15,ccr
+	dc.w	$f242,11		; FScc D2
+	dc.w	$42c0		; move ccr,d0
+	move.w	#$0a,ccr
+	dc.w	$f242,11		; FScc D2
+	dc.w	$42c2		; move ccr,d2
+	fmove.l	fpsr,d1
+	lsl.w	#8,d0
+	or.w	d2,d0
+	rts
+pr_4_12:
+	fmove.l	d0,fpsr
+	moveq	#0,d0
+	moveq	#0,d2
+	move.w	#$15,ccr
+	dc.w	$f242,12		; FScc D2
+	dc.w	$42c0		; move ccr,d0
+	move.w	#$0a,ccr
+	dc.w	$f242,12		; FScc D2
+	dc.w	$42c2		; move ccr,d2
+	fmove.l	fpsr,d1
+	lsl.w	#8,d0
+	or.w	d2,d0
+	rts
+pr_4_13:
+	fmove.l	d0,fpsr
+	moveq	#0,d0
+	moveq	#0,d2
+	move.w	#$15,ccr
+	dc.w	$f242,13		; FScc D2
+	dc.w	$42c0		; move ccr,d0
+	move.w	#$0a,ccr
+	dc.w	$f242,13		; FScc D2
+	dc.w	$42c2		; move ccr,d2
+	fmove.l	fpsr,d1
+	lsl.w	#8,d0
+	or.w	d2,d0
+	rts
+pr_4_14:
+	fmove.l	d0,fpsr
+	moveq	#0,d0
+	moveq	#0,d2
+	move.w	#$15,ccr
+	dc.w	$f242,14		; FScc D2
+	dc.w	$42c0		; move ccr,d0
+	move.w	#$0a,ccr
+	dc.w	$f242,14		; FScc D2
+	dc.w	$42c2		; move ccr,d2
+	fmove.l	fpsr,d1
+	lsl.w	#8,d0
+	or.w	d2,d0
+	rts
+pr_4_15:
+	fmove.l	d0,fpsr
+	moveq	#0,d0
+	moveq	#0,d2
+	move.w	#$15,ccr
+	dc.w	$f242,15		; FScc D2
+	dc.w	$42c0		; move ccr,d0
+	move.w	#$0a,ccr
+	dc.w	$f242,15		; FScc D2
+	dc.w	$42c2		; move ccr,d2
+	fmove.l	fpsr,d1
+	lsl.w	#8,d0
+	or.w	d2,d0
+	rts
+pr_4_16:
+	fmove.l	d0,fpsr
+	moveq	#0,d0
+	moveq	#0,d2
+	move.w	#$15,ccr
+	dc.w	$f242,16		; FScc D2
+	dc.w	$42c0		; move ccr,d0
+	move.w	#$0a,ccr
+	dc.w	$f242,16		; FScc D2
+	dc.w	$42c2		; move ccr,d2
+	fmove.l	fpsr,d1
+	lsl.w	#8,d0
+	or.w	d2,d0
+	rts
+pr_4_17:
+	fmove.l	d0,fpsr
+	moveq	#0,d0
+	moveq	#0,d2
+	move.w	#$15,ccr
+	dc.w	$f242,17		; FScc D2
+	dc.w	$42c0		; move ccr,d0
+	move.w	#$0a,ccr
+	dc.w	$f242,17		; FScc D2
+	dc.w	$42c2		; move ccr,d2
+	fmove.l	fpsr,d1
+	lsl.w	#8,d0
+	or.w	d2,d0
+	rts
+pr_4_18:
+	fmove.l	d0,fpsr
+	moveq	#0,d0
+	moveq	#0,d2
+	move.w	#$15,ccr
+	dc.w	$f242,18		; FScc D2
+	dc.w	$42c0		; move ccr,d0
+	move.w	#$0a,ccr
+	dc.w	$f242,18		; FScc D2
+	dc.w	$42c2		; move ccr,d2
+	fmove.l	fpsr,d1
+	lsl.w	#8,d0
+	or.w	d2,d0
+	rts
+pr_4_19:
+	fmove.l	d0,fpsr
+	moveq	#0,d0
+	moveq	#0,d2
+	move.w	#$15,ccr
+	dc.w	$f242,19		; FScc D2
+	dc.w	$42c0		; move ccr,d0
+	move.w	#$0a,ccr
+	dc.w	$f242,19		; FScc D2
+	dc.w	$42c2		; move ccr,d2
+	fmove.l	fpsr,d1
+	lsl.w	#8,d0
+	or.w	d2,d0
+	rts
+pr_4_20:
+	fmove.l	d0,fpsr
+	moveq	#0,d0
+	moveq	#0,d2
+	move.w	#$15,ccr
+	dc.w	$f242,20		; FScc D2
+	dc.w	$42c0		; move ccr,d0
+	move.w	#$0a,ccr
+	dc.w	$f242,20		; FScc D2
+	dc.w	$42c2		; move ccr,d2
+	fmove.l	fpsr,d1
+	lsl.w	#8,d0
+	or.w	d2,d0
+	rts
+pr_4_21:
+	fmove.l	d0,fpsr
+	moveq	#0,d0
+	moveq	#0,d2
+	move.w	#$15,ccr
+	dc.w	$f242,21		; FScc D2
+	dc.w	$42c0		; move ccr,d0
+	move.w	#$0a,ccr
+	dc.w	$f242,21		; FScc D2
+	dc.w	$42c2		; move ccr,d2
+	fmove.l	fpsr,d1
+	lsl.w	#8,d0
+	or.w	d2,d0
+	rts
+pr_4_22:
+	fmove.l	d0,fpsr
+	moveq	#0,d0
+	moveq	#0,d2
+	move.w	#$15,ccr
+	dc.w	$f242,22		; FScc D2
+	dc.w	$42c0		; move ccr,d0
+	move.w	#$0a,ccr
+	dc.w	$f242,22		; FScc D2
+	dc.w	$42c2		; move ccr,d2
+	fmove.l	fpsr,d1
+	lsl.w	#8,d0
+	or.w	d2,d0
+	rts
+pr_4_23:
+	fmove.l	d0,fpsr
+	moveq	#0,d0
+	moveq	#0,d2
+	move.w	#$15,ccr
+	dc.w	$f242,23		; FScc D2
+	dc.w	$42c0		; move ccr,d0
+	move.w	#$0a,ccr
+	dc.w	$f242,23		; FScc D2
+	dc.w	$42c2		; move ccr,d2
+	fmove.l	fpsr,d1
+	lsl.w	#8,d0
+	or.w	d2,d0
+	rts
+pr_4_24:
+	fmove.l	d0,fpsr
+	moveq	#0,d0
+	moveq	#0,d2
+	move.w	#$15,ccr
+	dc.w	$f242,24		; FScc D2
+	dc.w	$42c0		; move ccr,d0
+	move.w	#$0a,ccr
+	dc.w	$f242,24		; FScc D2
+	dc.w	$42c2		; move ccr,d2
+	fmove.l	fpsr,d1
+	lsl.w	#8,d0
+	or.w	d2,d0
+	rts
+pr_4_25:
+	fmove.l	d0,fpsr
+	moveq	#0,d0
+	moveq	#0,d2
+	move.w	#$15,ccr
+	dc.w	$f242,25		; FScc D2
+	dc.w	$42c0		; move ccr,d0
+	move.w	#$0a,ccr
+	dc.w	$f242,25		; FScc D2
+	dc.w	$42c2		; move ccr,d2
+	fmove.l	fpsr,d1
+	lsl.w	#8,d0
+	or.w	d2,d0
+	rts
+pr_4_26:
+	fmove.l	d0,fpsr
+	moveq	#0,d0
+	moveq	#0,d2
+	move.w	#$15,ccr
+	dc.w	$f242,26		; FScc D2
+	dc.w	$42c0		; move ccr,d0
+	move.w	#$0a,ccr
+	dc.w	$f242,26		; FScc D2
+	dc.w	$42c2		; move ccr,d2
+	fmove.l	fpsr,d1
+	lsl.w	#8,d0
+	or.w	d2,d0
+	rts
+pr_4_27:
+	fmove.l	d0,fpsr
+	moveq	#0,d0
+	moveq	#0,d2
+	move.w	#$15,ccr
+	dc.w	$f242,27		; FScc D2
+	dc.w	$42c0		; move ccr,d0
+	move.w	#$0a,ccr
+	dc.w	$f242,27		; FScc D2
+	dc.w	$42c2		; move ccr,d2
+	fmove.l	fpsr,d1
+	lsl.w	#8,d0
+	or.w	d2,d0
+	rts
+pr_4_28:
+	fmove.l	d0,fpsr
+	moveq	#0,d0
+	moveq	#0,d2
+	move.w	#$15,ccr
+	dc.w	$f242,28		; FScc D2
+	dc.w	$42c0		; move ccr,d0
+	move.w	#$0a,ccr
+	dc.w	$f242,28		; FScc D2
+	dc.w	$42c2		; move ccr,d2
+	fmove.l	fpsr,d1
+	lsl.w	#8,d0
+	or.w	d2,d0
+	rts
+pr_4_29:
+	fmove.l	d0,fpsr
+	moveq	#0,d0
+	moveq	#0,d2
+	move.w	#$15,ccr
+	dc.w	$f242,29		; FScc D2
+	dc.w	$42c0		; move ccr,d0
+	move.w	#$0a,ccr
+	dc.w	$f242,29		; FScc D2
+	dc.w	$42c2		; move ccr,d2
+	fmove.l	fpsr,d1
+	lsl.w	#8,d0
+	or.w	d2,d0
+	rts
+pr_4_30:
+	fmove.l	d0,fpsr
+	moveq	#0,d0
+	moveq	#0,d2
+	move.w	#$15,ccr
+	dc.w	$f242,30		; FScc D2
+	dc.w	$42c0		; move ccr,d0
+	move.w	#$0a,ccr
+	dc.w	$f242,30		; FScc D2
+	dc.w	$42c2		; move ccr,d2
+	fmove.l	fpsr,d1
+	lsl.w	#8,d0
+	or.w	d2,d0
+	rts
+pr_4_31:
+	fmove.l	d0,fpsr
+	moveq	#0,d0
+	moveq	#0,d2
+	move.w	#$15,ccr
+	dc.w	$f242,31		; FScc D2
+	dc.w	$42c0		; move ccr,d0
+	move.w	#$0a,ccr
+	dc.w	$f242,31		; FScc D2
+	dc.w	$42c2		; move ccr,d2
+	fmove.l	fpsr,d1
+	lsl.w	#8,d0
+	or.w	d2,d0
+	rts
+pr_5_0:
+	fmove.l	d0,fpsr
+	moveq	#0,d0
+	moveq	#0,d2
+	move.w	#$15,ccr
+	dc.w	$f280+0		; FBcc.W
+	dc.w	pr_5_0_t0-*
+	dc.w	$42c0		; untaken: move ccr,d0
+	bra.s	pr_5_0_n0
+pr_5_0_t0:	dc.w	$42c0	; taken: move ccr,d0
+pr_5_0_n0:
+	move.w	#$0a,ccr
+	dc.w	$f280+0		; FBcc.W
+	dc.w	pr_5_0_t1-*
+	dc.w	$42c2		; untaken: move ccr,d2
+	bra.s	pr_5_0_n1
+pr_5_0_t1:	dc.w	$42c2	; taken: move ccr,d2
+pr_5_0_n1:
+	fmove.l	fpsr,d1
+	lsl.w	#8,d0
+	or.w	d2,d0
+	rts
+pr_5_1:
+	fmove.l	d0,fpsr
+	moveq	#0,d0
+	moveq	#0,d2
+	move.w	#$15,ccr
+	dc.w	$f280+1		; FBcc.W
+	dc.w	pr_5_1_t0-*
+	dc.w	$42c0		; untaken: move ccr,d0
+	bra.s	pr_5_1_n0
+pr_5_1_t0:	dc.w	$42c0	; taken: move ccr,d0
+pr_5_1_n0:
+	move.w	#$0a,ccr
+	dc.w	$f280+1		; FBcc.W
+	dc.w	pr_5_1_t1-*
+	dc.w	$42c2		; untaken: move ccr,d2
+	bra.s	pr_5_1_n1
+pr_5_1_t1:	dc.w	$42c2	; taken: move ccr,d2
+pr_5_1_n1:
+	fmove.l	fpsr,d1
+	lsl.w	#8,d0
+	or.w	d2,d0
+	rts
+pr_5_2:
+	fmove.l	d0,fpsr
+	moveq	#0,d0
+	moveq	#0,d2
+	move.w	#$15,ccr
+	dc.w	$f280+2		; FBcc.W
+	dc.w	pr_5_2_t0-*
+	dc.w	$42c0		; untaken: move ccr,d0
+	bra.s	pr_5_2_n0
+pr_5_2_t0:	dc.w	$42c0	; taken: move ccr,d0
+pr_5_2_n0:
+	move.w	#$0a,ccr
+	dc.w	$f280+2		; FBcc.W
+	dc.w	pr_5_2_t1-*
+	dc.w	$42c2		; untaken: move ccr,d2
+	bra.s	pr_5_2_n1
+pr_5_2_t1:	dc.w	$42c2	; taken: move ccr,d2
+pr_5_2_n1:
+	fmove.l	fpsr,d1
+	lsl.w	#8,d0
+	or.w	d2,d0
+	rts
+pr_5_3:
+	fmove.l	d0,fpsr
+	moveq	#0,d0
+	moveq	#0,d2
+	move.w	#$15,ccr
+	dc.w	$f280+3		; FBcc.W
+	dc.w	pr_5_3_t0-*
+	dc.w	$42c0		; untaken: move ccr,d0
+	bra.s	pr_5_3_n0
+pr_5_3_t0:	dc.w	$42c0	; taken: move ccr,d0
+pr_5_3_n0:
+	move.w	#$0a,ccr
+	dc.w	$f280+3		; FBcc.W
+	dc.w	pr_5_3_t1-*
+	dc.w	$42c2		; untaken: move ccr,d2
+	bra.s	pr_5_3_n1
+pr_5_3_t1:	dc.w	$42c2	; taken: move ccr,d2
+pr_5_3_n1:
+	fmove.l	fpsr,d1
+	lsl.w	#8,d0
+	or.w	d2,d0
+	rts
+pr_5_4:
+	fmove.l	d0,fpsr
+	moveq	#0,d0
+	moveq	#0,d2
+	move.w	#$15,ccr
+	dc.w	$f280+4		; FBcc.W
+	dc.w	pr_5_4_t0-*
+	dc.w	$42c0		; untaken: move ccr,d0
+	bra.s	pr_5_4_n0
+pr_5_4_t0:	dc.w	$42c0	; taken: move ccr,d0
+pr_5_4_n0:
+	move.w	#$0a,ccr
+	dc.w	$f280+4		; FBcc.W
+	dc.w	pr_5_4_t1-*
+	dc.w	$42c2		; untaken: move ccr,d2
+	bra.s	pr_5_4_n1
+pr_5_4_t1:	dc.w	$42c2	; taken: move ccr,d2
+pr_5_4_n1:
+	fmove.l	fpsr,d1
+	lsl.w	#8,d0
+	or.w	d2,d0
+	rts
+pr_5_5:
+	fmove.l	d0,fpsr
+	moveq	#0,d0
+	moveq	#0,d2
+	move.w	#$15,ccr
+	dc.w	$f280+5		; FBcc.W
+	dc.w	pr_5_5_t0-*
+	dc.w	$42c0		; untaken: move ccr,d0
+	bra.s	pr_5_5_n0
+pr_5_5_t0:	dc.w	$42c0	; taken: move ccr,d0
+pr_5_5_n0:
+	move.w	#$0a,ccr
+	dc.w	$f280+5		; FBcc.W
+	dc.w	pr_5_5_t1-*
+	dc.w	$42c2		; untaken: move ccr,d2
+	bra.s	pr_5_5_n1
+pr_5_5_t1:	dc.w	$42c2	; taken: move ccr,d2
+pr_5_5_n1:
+	fmove.l	fpsr,d1
+	lsl.w	#8,d0
+	or.w	d2,d0
+	rts
+pr_5_6:
+	fmove.l	d0,fpsr
+	moveq	#0,d0
+	moveq	#0,d2
+	move.w	#$15,ccr
+	dc.w	$f280+6		; FBcc.W
+	dc.w	pr_5_6_t0-*
+	dc.w	$42c0		; untaken: move ccr,d0
+	bra.s	pr_5_6_n0
+pr_5_6_t0:	dc.w	$42c0	; taken: move ccr,d0
+pr_5_6_n0:
+	move.w	#$0a,ccr
+	dc.w	$f280+6		; FBcc.W
+	dc.w	pr_5_6_t1-*
+	dc.w	$42c2		; untaken: move ccr,d2
+	bra.s	pr_5_6_n1
+pr_5_6_t1:	dc.w	$42c2	; taken: move ccr,d2
+pr_5_6_n1:
+	fmove.l	fpsr,d1
+	lsl.w	#8,d0
+	or.w	d2,d0
+	rts
+pr_5_7:
+	fmove.l	d0,fpsr
+	moveq	#0,d0
+	moveq	#0,d2
+	move.w	#$15,ccr
+	dc.w	$f280+7		; FBcc.W
+	dc.w	pr_5_7_t0-*
+	dc.w	$42c0		; untaken: move ccr,d0
+	bra.s	pr_5_7_n0
+pr_5_7_t0:	dc.w	$42c0	; taken: move ccr,d0
+pr_5_7_n0:
+	move.w	#$0a,ccr
+	dc.w	$f280+7		; FBcc.W
+	dc.w	pr_5_7_t1-*
+	dc.w	$42c2		; untaken: move ccr,d2
+	bra.s	pr_5_7_n1
+pr_5_7_t1:	dc.w	$42c2	; taken: move ccr,d2
+pr_5_7_n1:
+	fmove.l	fpsr,d1
+	lsl.w	#8,d0
+	or.w	d2,d0
+	rts
+pr_5_8:
+	fmove.l	d0,fpsr
+	moveq	#0,d0
+	moveq	#0,d2
+	move.w	#$15,ccr
+	dc.w	$f280+8		; FBcc.W
+	dc.w	pr_5_8_t0-*
+	dc.w	$42c0		; untaken: move ccr,d0
+	bra.s	pr_5_8_n0
+pr_5_8_t0:	dc.w	$42c0	; taken: move ccr,d0
+pr_5_8_n0:
+	move.w	#$0a,ccr
+	dc.w	$f280+8		; FBcc.W
+	dc.w	pr_5_8_t1-*
+	dc.w	$42c2		; untaken: move ccr,d2
+	bra.s	pr_5_8_n1
+pr_5_8_t1:	dc.w	$42c2	; taken: move ccr,d2
+pr_5_8_n1:
+	fmove.l	fpsr,d1
+	lsl.w	#8,d0
+	or.w	d2,d0
+	rts
+pr_5_9:
+	fmove.l	d0,fpsr
+	moveq	#0,d0
+	moveq	#0,d2
+	move.w	#$15,ccr
+	dc.w	$f280+9		; FBcc.W
+	dc.w	pr_5_9_t0-*
+	dc.w	$42c0		; untaken: move ccr,d0
+	bra.s	pr_5_9_n0
+pr_5_9_t0:	dc.w	$42c0	; taken: move ccr,d0
+pr_5_9_n0:
+	move.w	#$0a,ccr
+	dc.w	$f280+9		; FBcc.W
+	dc.w	pr_5_9_t1-*
+	dc.w	$42c2		; untaken: move ccr,d2
+	bra.s	pr_5_9_n1
+pr_5_9_t1:	dc.w	$42c2	; taken: move ccr,d2
+pr_5_9_n1:
+	fmove.l	fpsr,d1
+	lsl.w	#8,d0
+	or.w	d2,d0
+	rts
+pr_5_10:
+	fmove.l	d0,fpsr
+	moveq	#0,d0
+	moveq	#0,d2
+	move.w	#$15,ccr
+	dc.w	$f280+10		; FBcc.W
+	dc.w	pr_5_10_t0-*
+	dc.w	$42c0		; untaken: move ccr,d0
+	bra.s	pr_5_10_n0
+pr_5_10_t0:	dc.w	$42c0	; taken: move ccr,d0
+pr_5_10_n0:
+	move.w	#$0a,ccr
+	dc.w	$f280+10		; FBcc.W
+	dc.w	pr_5_10_t1-*
+	dc.w	$42c2		; untaken: move ccr,d2
+	bra.s	pr_5_10_n1
+pr_5_10_t1:	dc.w	$42c2	; taken: move ccr,d2
+pr_5_10_n1:
+	fmove.l	fpsr,d1
+	lsl.w	#8,d0
+	or.w	d2,d0
+	rts
+pr_5_11:
+	fmove.l	d0,fpsr
+	moveq	#0,d0
+	moveq	#0,d2
+	move.w	#$15,ccr
+	dc.w	$f280+11		; FBcc.W
+	dc.w	pr_5_11_t0-*
+	dc.w	$42c0		; untaken: move ccr,d0
+	bra.s	pr_5_11_n0
+pr_5_11_t0:	dc.w	$42c0	; taken: move ccr,d0
+pr_5_11_n0:
+	move.w	#$0a,ccr
+	dc.w	$f280+11		; FBcc.W
+	dc.w	pr_5_11_t1-*
+	dc.w	$42c2		; untaken: move ccr,d2
+	bra.s	pr_5_11_n1
+pr_5_11_t1:	dc.w	$42c2	; taken: move ccr,d2
+pr_5_11_n1:
+	fmove.l	fpsr,d1
+	lsl.w	#8,d0
+	or.w	d2,d0
+	rts
+pr_5_12:
+	fmove.l	d0,fpsr
+	moveq	#0,d0
+	moveq	#0,d2
+	move.w	#$15,ccr
+	dc.w	$f280+12		; FBcc.W
+	dc.w	pr_5_12_t0-*
+	dc.w	$42c0		; untaken: move ccr,d0
+	bra.s	pr_5_12_n0
+pr_5_12_t0:	dc.w	$42c0	; taken: move ccr,d0
+pr_5_12_n0:
+	move.w	#$0a,ccr
+	dc.w	$f280+12		; FBcc.W
+	dc.w	pr_5_12_t1-*
+	dc.w	$42c2		; untaken: move ccr,d2
+	bra.s	pr_5_12_n1
+pr_5_12_t1:	dc.w	$42c2	; taken: move ccr,d2
+pr_5_12_n1:
+	fmove.l	fpsr,d1
+	lsl.w	#8,d0
+	or.w	d2,d0
+	rts
+pr_5_13:
+	fmove.l	d0,fpsr
+	moveq	#0,d0
+	moveq	#0,d2
+	move.w	#$15,ccr
+	dc.w	$f280+13		; FBcc.W
+	dc.w	pr_5_13_t0-*
+	dc.w	$42c0		; untaken: move ccr,d0
+	bra.s	pr_5_13_n0
+pr_5_13_t0:	dc.w	$42c0	; taken: move ccr,d0
+pr_5_13_n0:
+	move.w	#$0a,ccr
+	dc.w	$f280+13		; FBcc.W
+	dc.w	pr_5_13_t1-*
+	dc.w	$42c2		; untaken: move ccr,d2
+	bra.s	pr_5_13_n1
+pr_5_13_t1:	dc.w	$42c2	; taken: move ccr,d2
+pr_5_13_n1:
+	fmove.l	fpsr,d1
+	lsl.w	#8,d0
+	or.w	d2,d0
+	rts
+pr_5_14:
+	fmove.l	d0,fpsr
+	moveq	#0,d0
+	moveq	#0,d2
+	move.w	#$15,ccr
+	dc.w	$f280+14		; FBcc.W
+	dc.w	pr_5_14_t0-*
+	dc.w	$42c0		; untaken: move ccr,d0
+	bra.s	pr_5_14_n0
+pr_5_14_t0:	dc.w	$42c0	; taken: move ccr,d0
+pr_5_14_n0:
+	move.w	#$0a,ccr
+	dc.w	$f280+14		; FBcc.W
+	dc.w	pr_5_14_t1-*
+	dc.w	$42c2		; untaken: move ccr,d2
+	bra.s	pr_5_14_n1
+pr_5_14_t1:	dc.w	$42c2	; taken: move ccr,d2
+pr_5_14_n1:
+	fmove.l	fpsr,d1
+	lsl.w	#8,d0
+	or.w	d2,d0
+	rts
+pr_5_15:
+	fmove.l	d0,fpsr
+	moveq	#0,d0
+	moveq	#0,d2
+	move.w	#$15,ccr
+	dc.w	$f280+15		; FBcc.W
+	dc.w	pr_5_15_t0-*
+	dc.w	$42c0		; untaken: move ccr,d0
+	bra.s	pr_5_15_n0
+pr_5_15_t0:	dc.w	$42c0	; taken: move ccr,d0
+pr_5_15_n0:
+	move.w	#$0a,ccr
+	dc.w	$f280+15		; FBcc.W
+	dc.w	pr_5_15_t1-*
+	dc.w	$42c2		; untaken: move ccr,d2
+	bra.s	pr_5_15_n1
+pr_5_15_t1:	dc.w	$42c2	; taken: move ccr,d2
+pr_5_15_n1:
+	fmove.l	fpsr,d1
+	lsl.w	#8,d0
+	or.w	d2,d0
+	rts
+pr_5_16:
+	fmove.l	d0,fpsr
+	moveq	#0,d0
+	moveq	#0,d2
+	move.w	#$15,ccr
+	dc.w	$f280+16		; FBcc.W
+	dc.w	pr_5_16_t0-*
+	dc.w	$42c0		; untaken: move ccr,d0
+	bra.s	pr_5_16_n0
+pr_5_16_t0:	dc.w	$42c0	; taken: move ccr,d0
+pr_5_16_n0:
+	move.w	#$0a,ccr
+	dc.w	$f280+16		; FBcc.W
+	dc.w	pr_5_16_t1-*
+	dc.w	$42c2		; untaken: move ccr,d2
+	bra.s	pr_5_16_n1
+pr_5_16_t1:	dc.w	$42c2	; taken: move ccr,d2
+pr_5_16_n1:
+	fmove.l	fpsr,d1
+	lsl.w	#8,d0
+	or.w	d2,d0
+	rts
+pr_5_17:
+	fmove.l	d0,fpsr
+	moveq	#0,d0
+	moveq	#0,d2
+	move.w	#$15,ccr
+	dc.w	$f280+17		; FBcc.W
+	dc.w	pr_5_17_t0-*
+	dc.w	$42c0		; untaken: move ccr,d0
+	bra.s	pr_5_17_n0
+pr_5_17_t0:	dc.w	$42c0	; taken: move ccr,d0
+pr_5_17_n0:
+	move.w	#$0a,ccr
+	dc.w	$f280+17		; FBcc.W
+	dc.w	pr_5_17_t1-*
+	dc.w	$42c2		; untaken: move ccr,d2
+	bra.s	pr_5_17_n1
+pr_5_17_t1:	dc.w	$42c2	; taken: move ccr,d2
+pr_5_17_n1:
+	fmove.l	fpsr,d1
+	lsl.w	#8,d0
+	or.w	d2,d0
+	rts
+pr_5_18:
+	fmove.l	d0,fpsr
+	moveq	#0,d0
+	moveq	#0,d2
+	move.w	#$15,ccr
+	dc.w	$f280+18		; FBcc.W
+	dc.w	pr_5_18_t0-*
+	dc.w	$42c0		; untaken: move ccr,d0
+	bra.s	pr_5_18_n0
+pr_5_18_t0:	dc.w	$42c0	; taken: move ccr,d0
+pr_5_18_n0:
+	move.w	#$0a,ccr
+	dc.w	$f280+18		; FBcc.W
+	dc.w	pr_5_18_t1-*
+	dc.w	$42c2		; untaken: move ccr,d2
+	bra.s	pr_5_18_n1
+pr_5_18_t1:	dc.w	$42c2	; taken: move ccr,d2
+pr_5_18_n1:
+	fmove.l	fpsr,d1
+	lsl.w	#8,d0
+	or.w	d2,d0
+	rts
+pr_5_19:
+	fmove.l	d0,fpsr
+	moveq	#0,d0
+	moveq	#0,d2
+	move.w	#$15,ccr
+	dc.w	$f280+19		; FBcc.W
+	dc.w	pr_5_19_t0-*
+	dc.w	$42c0		; untaken: move ccr,d0
+	bra.s	pr_5_19_n0
+pr_5_19_t0:	dc.w	$42c0	; taken: move ccr,d0
+pr_5_19_n0:
+	move.w	#$0a,ccr
+	dc.w	$f280+19		; FBcc.W
+	dc.w	pr_5_19_t1-*
+	dc.w	$42c2		; untaken: move ccr,d2
+	bra.s	pr_5_19_n1
+pr_5_19_t1:	dc.w	$42c2	; taken: move ccr,d2
+pr_5_19_n1:
+	fmove.l	fpsr,d1
+	lsl.w	#8,d0
+	or.w	d2,d0
+	rts
+pr_5_20:
+	fmove.l	d0,fpsr
+	moveq	#0,d0
+	moveq	#0,d2
+	move.w	#$15,ccr
+	dc.w	$f280+20		; FBcc.W
+	dc.w	pr_5_20_t0-*
+	dc.w	$42c0		; untaken: move ccr,d0
+	bra.s	pr_5_20_n0
+pr_5_20_t0:	dc.w	$42c0	; taken: move ccr,d0
+pr_5_20_n0:
+	move.w	#$0a,ccr
+	dc.w	$f280+20		; FBcc.W
+	dc.w	pr_5_20_t1-*
+	dc.w	$42c2		; untaken: move ccr,d2
+	bra.s	pr_5_20_n1
+pr_5_20_t1:	dc.w	$42c2	; taken: move ccr,d2
+pr_5_20_n1:
+	fmove.l	fpsr,d1
+	lsl.w	#8,d0
+	or.w	d2,d0
+	rts
+pr_5_21:
+	fmove.l	d0,fpsr
+	moveq	#0,d0
+	moveq	#0,d2
+	move.w	#$15,ccr
+	dc.w	$f280+21		; FBcc.W
+	dc.w	pr_5_21_t0-*
+	dc.w	$42c0		; untaken: move ccr,d0
+	bra.s	pr_5_21_n0
+pr_5_21_t0:	dc.w	$42c0	; taken: move ccr,d0
+pr_5_21_n0:
+	move.w	#$0a,ccr
+	dc.w	$f280+21		; FBcc.W
+	dc.w	pr_5_21_t1-*
+	dc.w	$42c2		; untaken: move ccr,d2
+	bra.s	pr_5_21_n1
+pr_5_21_t1:	dc.w	$42c2	; taken: move ccr,d2
+pr_5_21_n1:
+	fmove.l	fpsr,d1
+	lsl.w	#8,d0
+	or.w	d2,d0
+	rts
+pr_5_22:
+	fmove.l	d0,fpsr
+	moveq	#0,d0
+	moveq	#0,d2
+	move.w	#$15,ccr
+	dc.w	$f280+22		; FBcc.W
+	dc.w	pr_5_22_t0-*
+	dc.w	$42c0		; untaken: move ccr,d0
+	bra.s	pr_5_22_n0
+pr_5_22_t0:	dc.w	$42c0	; taken: move ccr,d0
+pr_5_22_n0:
+	move.w	#$0a,ccr
+	dc.w	$f280+22		; FBcc.W
+	dc.w	pr_5_22_t1-*
+	dc.w	$42c2		; untaken: move ccr,d2
+	bra.s	pr_5_22_n1
+pr_5_22_t1:	dc.w	$42c2	; taken: move ccr,d2
+pr_5_22_n1:
+	fmove.l	fpsr,d1
+	lsl.w	#8,d0
+	or.w	d2,d0
+	rts
+pr_5_23:
+	fmove.l	d0,fpsr
+	moveq	#0,d0
+	moveq	#0,d2
+	move.w	#$15,ccr
+	dc.w	$f280+23		; FBcc.W
+	dc.w	pr_5_23_t0-*
+	dc.w	$42c0		; untaken: move ccr,d0
+	bra.s	pr_5_23_n0
+pr_5_23_t0:	dc.w	$42c0	; taken: move ccr,d0
+pr_5_23_n0:
+	move.w	#$0a,ccr
+	dc.w	$f280+23		; FBcc.W
+	dc.w	pr_5_23_t1-*
+	dc.w	$42c2		; untaken: move ccr,d2
+	bra.s	pr_5_23_n1
+pr_5_23_t1:	dc.w	$42c2	; taken: move ccr,d2
+pr_5_23_n1:
+	fmove.l	fpsr,d1
+	lsl.w	#8,d0
+	or.w	d2,d0
+	rts
+pr_5_24:
+	fmove.l	d0,fpsr
+	moveq	#0,d0
+	moveq	#0,d2
+	move.w	#$15,ccr
+	dc.w	$f280+24		; FBcc.W
+	dc.w	pr_5_24_t0-*
+	dc.w	$42c0		; untaken: move ccr,d0
+	bra.s	pr_5_24_n0
+pr_5_24_t0:	dc.w	$42c0	; taken: move ccr,d0
+pr_5_24_n0:
+	move.w	#$0a,ccr
+	dc.w	$f280+24		; FBcc.W
+	dc.w	pr_5_24_t1-*
+	dc.w	$42c2		; untaken: move ccr,d2
+	bra.s	pr_5_24_n1
+pr_5_24_t1:	dc.w	$42c2	; taken: move ccr,d2
+pr_5_24_n1:
+	fmove.l	fpsr,d1
+	lsl.w	#8,d0
+	or.w	d2,d0
+	rts
+pr_5_25:
+	fmove.l	d0,fpsr
+	moveq	#0,d0
+	moveq	#0,d2
+	move.w	#$15,ccr
+	dc.w	$f280+25		; FBcc.W
+	dc.w	pr_5_25_t0-*
+	dc.w	$42c0		; untaken: move ccr,d0
+	bra.s	pr_5_25_n0
+pr_5_25_t0:	dc.w	$42c0	; taken: move ccr,d0
+pr_5_25_n0:
+	move.w	#$0a,ccr
+	dc.w	$f280+25		; FBcc.W
+	dc.w	pr_5_25_t1-*
+	dc.w	$42c2		; untaken: move ccr,d2
+	bra.s	pr_5_25_n1
+pr_5_25_t1:	dc.w	$42c2	; taken: move ccr,d2
+pr_5_25_n1:
+	fmove.l	fpsr,d1
+	lsl.w	#8,d0
+	or.w	d2,d0
+	rts
+pr_5_26:
+	fmove.l	d0,fpsr
+	moveq	#0,d0
+	moveq	#0,d2
+	move.w	#$15,ccr
+	dc.w	$f280+26		; FBcc.W
+	dc.w	pr_5_26_t0-*
+	dc.w	$42c0		; untaken: move ccr,d0
+	bra.s	pr_5_26_n0
+pr_5_26_t0:	dc.w	$42c0	; taken: move ccr,d0
+pr_5_26_n0:
+	move.w	#$0a,ccr
+	dc.w	$f280+26		; FBcc.W
+	dc.w	pr_5_26_t1-*
+	dc.w	$42c2		; untaken: move ccr,d2
+	bra.s	pr_5_26_n1
+pr_5_26_t1:	dc.w	$42c2	; taken: move ccr,d2
+pr_5_26_n1:
+	fmove.l	fpsr,d1
+	lsl.w	#8,d0
+	or.w	d2,d0
+	rts
+pr_5_27:
+	fmove.l	d0,fpsr
+	moveq	#0,d0
+	moveq	#0,d2
+	move.w	#$15,ccr
+	dc.w	$f280+27		; FBcc.W
+	dc.w	pr_5_27_t0-*
+	dc.w	$42c0		; untaken: move ccr,d0
+	bra.s	pr_5_27_n0
+pr_5_27_t0:	dc.w	$42c0	; taken: move ccr,d0
+pr_5_27_n0:
+	move.w	#$0a,ccr
+	dc.w	$f280+27		; FBcc.W
+	dc.w	pr_5_27_t1-*
+	dc.w	$42c2		; untaken: move ccr,d2
+	bra.s	pr_5_27_n1
+pr_5_27_t1:	dc.w	$42c2	; taken: move ccr,d2
+pr_5_27_n1:
+	fmove.l	fpsr,d1
+	lsl.w	#8,d0
+	or.w	d2,d0
+	rts
+pr_5_28:
+	fmove.l	d0,fpsr
+	moveq	#0,d0
+	moveq	#0,d2
+	move.w	#$15,ccr
+	dc.w	$f280+28		; FBcc.W
+	dc.w	pr_5_28_t0-*
+	dc.w	$42c0		; untaken: move ccr,d0
+	bra.s	pr_5_28_n0
+pr_5_28_t0:	dc.w	$42c0	; taken: move ccr,d0
+pr_5_28_n0:
+	move.w	#$0a,ccr
+	dc.w	$f280+28		; FBcc.W
+	dc.w	pr_5_28_t1-*
+	dc.w	$42c2		; untaken: move ccr,d2
+	bra.s	pr_5_28_n1
+pr_5_28_t1:	dc.w	$42c2	; taken: move ccr,d2
+pr_5_28_n1:
+	fmove.l	fpsr,d1
+	lsl.w	#8,d0
+	or.w	d2,d0
+	rts
+pr_5_29:
+	fmove.l	d0,fpsr
+	moveq	#0,d0
+	moveq	#0,d2
+	move.w	#$15,ccr
+	dc.w	$f280+29		; FBcc.W
+	dc.w	pr_5_29_t0-*
+	dc.w	$42c0		; untaken: move ccr,d0
+	bra.s	pr_5_29_n0
+pr_5_29_t0:	dc.w	$42c0	; taken: move ccr,d0
+pr_5_29_n0:
+	move.w	#$0a,ccr
+	dc.w	$f280+29		; FBcc.W
+	dc.w	pr_5_29_t1-*
+	dc.w	$42c2		; untaken: move ccr,d2
+	bra.s	pr_5_29_n1
+pr_5_29_t1:	dc.w	$42c2	; taken: move ccr,d2
+pr_5_29_n1:
+	fmove.l	fpsr,d1
+	lsl.w	#8,d0
+	or.w	d2,d0
+	rts
+pr_5_30:
+	fmove.l	d0,fpsr
+	moveq	#0,d0
+	moveq	#0,d2
+	move.w	#$15,ccr
+	dc.w	$f280+30		; FBcc.W
+	dc.w	pr_5_30_t0-*
+	dc.w	$42c0		; untaken: move ccr,d0
+	bra.s	pr_5_30_n0
+pr_5_30_t0:	dc.w	$42c0	; taken: move ccr,d0
+pr_5_30_n0:
+	move.w	#$0a,ccr
+	dc.w	$f280+30		; FBcc.W
+	dc.w	pr_5_30_t1-*
+	dc.w	$42c2		; untaken: move ccr,d2
+	bra.s	pr_5_30_n1
+pr_5_30_t1:	dc.w	$42c2	; taken: move ccr,d2
+pr_5_30_n1:
+	fmove.l	fpsr,d1
+	lsl.w	#8,d0
+	or.w	d2,d0
+	rts
+pr_5_31:
+	fmove.l	d0,fpsr
+	moveq	#0,d0
+	moveq	#0,d2
+	move.w	#$15,ccr
+	dc.w	$f280+31		; FBcc.W
+	dc.w	pr_5_31_t0-*
+	dc.w	$42c0		; untaken: move ccr,d0
+	bra.s	pr_5_31_n0
+pr_5_31_t0:	dc.w	$42c0	; taken: move ccr,d0
+pr_5_31_n0:
+	move.w	#$0a,ccr
+	dc.w	$f280+31		; FBcc.W
+	dc.w	pr_5_31_t1-*
+	dc.w	$42c2		; untaken: move ccr,d2
+	bra.s	pr_5_31_n1
+pr_5_31_t1:	dc.w	$42c2	; taken: move ccr,d2
+pr_5_31_n1:
+	fmove.l	fpsr,d1
+	lsl.w	#8,d0
+	or.w	d2,d0
+	rts
 	section	.data,data
 _fpu_optab:
 	dc.l	op_0
@@ -2213,6 +3365,70 @@ _fpu_predtab:
 	dc.l	pr_3_29
 	dc.l	pr_3_30
 	dc.l	pr_3_31
+	dc.l	pr_4_0
+	dc.l	pr_4_1
+	dc.l	pr_4_2
+	dc.l	pr_4_3
+	dc.l	pr_4_4
+	dc.l	pr_4_5
+	dc.l	pr_4_6
+	dc.l	pr_4_7
+	dc.l	pr_4_8
+	dc.l	pr_4_9
+	dc.l	pr_4_10
+	dc.l	pr_4_11
+	dc.l	pr_4_12
+	dc.l	pr_4_13
+	dc.l	pr_4_14
+	dc.l	pr_4_15
+	dc.l	pr_4_16
+	dc.l	pr_4_17
+	dc.l	pr_4_18
+	dc.l	pr_4_19
+	dc.l	pr_4_20
+	dc.l	pr_4_21
+	dc.l	pr_4_22
+	dc.l	pr_4_23
+	dc.l	pr_4_24
+	dc.l	pr_4_25
+	dc.l	pr_4_26
+	dc.l	pr_4_27
+	dc.l	pr_4_28
+	dc.l	pr_4_29
+	dc.l	pr_4_30
+	dc.l	pr_4_31
+	dc.l	pr_5_0
+	dc.l	pr_5_1
+	dc.l	pr_5_2
+	dc.l	pr_5_3
+	dc.l	pr_5_4
+	dc.l	pr_5_5
+	dc.l	pr_5_6
+	dc.l	pr_5_7
+	dc.l	pr_5_8
+	dc.l	pr_5_9
+	dc.l	pr_5_10
+	dc.l	pr_5_11
+	dc.l	pr_5_12
+	dc.l	pr_5_13
+	dc.l	pr_5_14
+	dc.l	pr_5_15
+	dc.l	pr_5_16
+	dc.l	pr_5_17
+	dc.l	pr_5_18
+	dc.l	pr_5_19
+	dc.l	pr_5_20
+	dc.l	pr_5_21
+	dc.l	pr_5_22
+	dc.l	pr_5_23
+	dc.l	pr_5_24
+	dc.l	pr_5_25
+	dc.l	pr_5_26
+	dc.l	pr_5_27
+	dc.l	pr_5_28
+	dc.l	pr_5_29
+	dc.l	pr_5_30
+	dc.l	pr_5_31
 _fpu_pred_truth:
 	dc.w	$0000
 	dc.w	$f0f0

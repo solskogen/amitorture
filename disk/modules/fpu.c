@@ -354,6 +354,93 @@ static ULONG pred_sweep(ULONG iter)
     return h;
 }
 
+/* pred_ccr: FScc and FBcc must not change the integer CCR (PRM: condition
+ * codes not affected). The stubs (families 4 FScc, 5 FBcc) set CCR $15,
+ * then $0A, before the instruction and read it right after (FBcc on the
+ * taken and on the untaken path): $150a when kept. A JIT that keeps the
+ * 68k CCR in the host flags can lose it there, so the sweep also runs in
+ * the hot loop and every iteration is checked. */
+#define PRED_CCR_KEPT 0x150aUL
+static int ccr_fams[2], ccr_nfams;
+static ULONG ccr_bad, ccr_bfam, ccr_bp, ccr_bi, ccr_got;
+static long ccr_iter;
+
+static ULONG pred_ccr_sweep(ULONG iter)
+{
+    ULONG p, i, h = 0;
+    int f;
+    for (f = 0; f < ccr_nfams; f++)
+        for (p = 0; p < 32; p++)
+            for (i = 0; i < 16; i++) {
+                ULONG r;
+                if (!cc_valid(i))
+                    continue;
+                r = fpu_pred((ULONG)ccr_fams[f] * 32 + p, i << 24) & 0xffff;
+                if (r != PRED_CCR_KEPT) {
+                    if (!ccr_bad) {
+                        ccr_bfam = (ULONG)ccr_fams[f]; ccr_bp = p; ccr_bi = i; ccr_got = r; ccr_iter = (long)iter;
+                    }
+                    ccr_bad++;
+                }
+                h = ((h << 3) | (h >> 29)) ^ r;
+            }
+    return h;
+}
+
+static void case_pred_ccr(int fscc)
+{
+    ULONG first = 0, badh = 0;
+    long r;
+    ccr_nfams = 0;
+    if (fscc)
+        ccr_fams[ccr_nfams++] = 4;
+    ccr_fams[ccr_nfams++] = 5;
+    ccr_bad = 0;
+    ccr_iter = -1;
+    pred_ccr_sweep(0xffffffffUL);            /* once directly (interpreted) */
+    r = amt_hot(pred_ccr_sweep, amt_hot_reps() / 10, &first, &badh);
+    if (!ccr_bad && r < 0) {
+        amt_case("pred_ccr", AMT_ST_PASS, 0);
+        return;
+    }
+    amt_case_open("pred_ccr", AMT_ST_FAIL);
+    if (ccr_bad) {
+        json_obj("in");
+        json_str("insn", ccr_bfam == 4 ? "fscc d2" : "fbcc.w");
+        json_str("predicate", pred_names[ccr_bp]);
+        json_int("pred", (long)ccr_bp);
+        json_hex("fpsr", ccr_bi << 24);
+        json_str("ccr_before", "15 then 0a");
+        json_obj_end();
+        json_obj("expect");
+        json_hex("ccr", PRED_CCR_KEPT);
+        json_obj_end();
+        json_obj("got");
+        json_hex("ccr", ccr_got);
+        json_obj_end();
+        json_str("why", "FScc/FBcc changed the integer CCR (PRM FScc/FBcc: condition codes not affected); "
+                        "ccr = CCR after the instruction with $15 before << 8 | with $0A before "
+                        "(FBcc: read on the taken or the untaken path)");
+        json_obj("ctx");
+        json_int("bad", (long)ccr_bad);
+        json_int("iteration", ccr_iter);     /* -1: the first, direct sweep */
+        json_str("fams", ccr_nfams == 2 ? "FScc FBcc" : "FBcc");
+        if (r >= 0)
+            json_int("hot_iteration", r);
+        json_obj_end();
+    } else {
+        json_obj("expect");
+        json_hex("hash", first);
+        json_obj_end();
+        json_obj("got");
+        json_hex("hash", badh);
+        json_int("iteration", r);
+        json_obj_end();
+        json_str("why", "the CCR sweep changed on a later repetition (interpreter vs JIT)");
+    }
+    amt_case_close();
+}
+
 static void run_pred(int fam)
 {
     ULONG p, i, nbad = 0, first = 0, badh = 0;
@@ -941,6 +1028,7 @@ void amt_run_fpu(void)
     for (i = 0; i < 4; i++)
         if (i == 0 || !is060 || (amt_par.flags & AMT_F_FPUCOMPAT))
             run_pred((int)i);
+    case_pred_ccr(!is060 || (amt_par.flags & AMT_F_FPUCOMPAT));
     case_fmovem();
     run_traps();
     run_excs();

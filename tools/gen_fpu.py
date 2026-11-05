@@ -1396,6 +1396,7 @@ def main():
         w(f"\tmoveq\t#{1 if kind == 'reg' else 0},d1")
         w("\trts")
     # predicate stubs: d0 = FPSR in; out d0 = result, d1 = FPSR after
+    # (families 4/5: FScc/FBcc with the integer CCR checked, see below)
     for fam in range(4):
         for p in range(32):
             lab = f"pr_{fam}_{p}"
@@ -1445,6 +1446,35 @@ def main():
                 w("\tfmove.l\tfpsr,d1")
                 w("\tmove.l\t_fpu_trapcnt,d0")
                 w("\trts")
+    # CCR stubs (pred_ccr): FScc D2 (family 4) and FBcc.W (family 5) do not
+    # change the integer CCR. Each runs twice, with CCR $15 (X Z C) and $0A
+    # (N V) before it; MOVE CCR,Dn ($42c0+n, 68010+) right after it, before
+    # anything else can touch the flags (FBcc: on the taken and on the
+    # untaken path, i.e. after the end of a JIT block). Out d0 =
+    # CCR1 << 8 | CCR2, $150a when kept; d1 = FPSR after.
+    for fam in (4, 5):
+        for p in range(32):
+            lab = f"pr_{fam}_{p}"
+            w(f"{lab}:")
+            w("\tfmove.l\td0,fpsr")
+            w("\tmoveq\t#0,d0")
+            w("\tmoveq\t#0,d2")
+            for n, (ccr, reg) in enumerate(((0x15, 0), (0x0A, 2))):
+                w(f"\tmove.w\t#${ccr:02x},ccr")
+                if fam == 4:
+                    w(f"\tdc.w\t$f242,{p}\t\t; FScc D2")
+                    w(f"\tdc.w\t$42c{reg}\t\t; move ccr,d{reg}")
+                else:
+                    w(f"\tdc.w\t$f280+{p}\t\t; FBcc.W")
+                    w(f"\tdc.w\t{lab}_t{n}-*")
+                    w(f"\tdc.w\t$42c{reg}\t\t; untaken: move ccr,d{reg}")
+                    w(f"\tbra.s\t{lab}_n{n}")
+                    w(f"{lab}_t{n}:\tdc.w\t$42c{reg}\t; taken: move ccr,d{reg}")
+                    w(f"{lab}_n{n}:")
+            w("\tfmove.l\tfpsr,d1")
+            w("\tlsl.w\t#8,d0")
+            w("\tor.w\td2,d0")
+            w("\trts")
     w("\tsection\t.data,data")
     w("_fpu_optab:")
     for i in range(len(OPS)):
@@ -1453,7 +1483,7 @@ def main():
     for i in range(len(OPS)):
         w(f"\tdc.l\topn_{i}")
     w("_fpu_predtab:")
-    for fam in range(4):
+    for fam in range(6):
         for p in range(32):
             w(f"\tdc.l\tpr_{fam}_{p}")
     w("_fpu_pred_truth:")
