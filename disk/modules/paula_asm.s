@@ -34,7 +34,10 @@ PA_LOGN	equ	96
 
 _pa_l4:
 	movem.l	d0-d3/a0-a1,-(sp)
-	move.w	#255,d3
+	move.w	#$ffff,d3		; retry bound: a cycle-exact CPU leaves the wrap
+				; window in a retry or two; a fast core reads the beam
+				; without chipset time passing (CPU bursts), so allow
+				; enough reads for its burst to end
 .t:	move.w	$dff004,d0
 	move.w	$dff006,d1
 	move.w	$dff004,d2
@@ -122,7 +125,10 @@ _pa_stamp_write:
 ; a0 = entry; trashes d0/d1/d2 (d2 saved)
 stamp:
 	movem.l	d2-d3,-(sp)
-	move.w	#255,d3
+	move.w	#$ffff,d3		; retry bound: a cycle-exact CPU leaves the wrap
+				; window in a retry or two; a fast core reads the beam
+				; without chipset time passing (CPU bursts), so allow
+				; enough reads for its burst to end
 .t:	move.w	$dff004,d0
 	move.w	$dff006,d1
 	move.w	$dff004,d2
