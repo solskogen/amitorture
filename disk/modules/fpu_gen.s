@@ -3493,7 +3493,7 @@ _fpu_pred_truth:
 	dc.w	$0f0f
 	dc.w	$ffff
 _fpu_trapcnt:	dc.l	0
-_fpu_n_groups:	dc.l	56
+_fpu_n_groups:	dc.l	57
 _fpu_groups:
 	dc.l	gn_0,gv_0,5,15
 	dc.l	gn_1,gv_1,5,15
@@ -3507,50 +3507,51 @@ _fpu_groups:
 	dc.l	gn_9,gv_9,46,15
 	dc.l	gn_10,gv_10,63,15
 	dc.l	gn_11,gv_11,63,15
-	dc.l	gn_12,gv_12,16,15
-	dc.l	gn_13,gv_13,35,3
-	dc.l	gn_14,gv_14,6,15
-	dc.l	gn_15,gv_15,12,15
-	dc.l	gn_16,gv_16,65,15
-	dc.l	gn_17,gv_17,10,15
-	dc.l	gn_18,gv_18,108,15
-	dc.l	gn_19,gv_19,88,15
-	dc.l	gn_20,gv_20,100,15
-	dc.l	gn_21,gv_21,121,15
-	dc.l	gn_22,gv_22,45,15
-	dc.l	gn_23,gv_23,66,15
-	dc.l	gn_24,gv_24,9,15
+	dc.l	gn_12,gv_12,19,15
+	dc.l	gn_13,gv_13,16,15
+	dc.l	gn_14,gv_14,35,3
+	dc.l	gn_15,gv_15,6,15
+	dc.l	gn_16,gv_16,12,15
+	dc.l	gn_17,gv_17,65,15
+	dc.l	gn_18,gv_18,10,15
+	dc.l	gn_19,gv_19,108,15
+	dc.l	gn_20,gv_20,88,15
+	dc.l	gn_21,gv_21,100,15
+	dc.l	gn_22,gv_22,121,15
+	dc.l	gn_23,gv_23,45,15
+	dc.l	gn_24,gv_24,66,15
 	dc.l	gn_25,gv_25,9,15
-	dc.l	gn_26,gv_26,60,11
-	dc.l	gn_27,gv_27,30,11
-	dc.l	gn_28,gv_28,11,3
-	dc.l	gn_29,gv_29,10,3
-	dc.l	gn_30,gv_30,72,3
-	dc.l	gn_31,gv_31,78,3
+	dc.l	gn_26,gv_26,9,15
+	dc.l	gn_27,gv_27,60,11
+	dc.l	gn_28,gv_28,30,11
+	dc.l	gn_29,gv_29,11,3
+	dc.l	gn_30,gv_30,10,3
+	dc.l	gn_31,gv_31,72,3
 	dc.l	gn_32,gv_32,78,3
-	dc.l	gn_33,gv_33,60,15
-	dc.l	gn_34,gv_34,13,15
-	dc.l	gn_35,gv_35,104,12
-	dc.l	gn_36,gv_36,14,3
-	dc.l	gn_37,gv_37,11,3
+	dc.l	gn_33,gv_33,78,3
+	dc.l	gn_34,gv_34,60,15
+	dc.l	gn_35,gv_35,13,15
+	dc.l	gn_36,gv_36,104,12
+	dc.l	gn_37,gv_37,14,3
 	dc.l	gn_38,gv_38,11,3
-	dc.l	gn_39,gv_39,14,3
-	dc.l	gn_40,gv_40,10,3
-	dc.l	gn_41,gv_41,9,3
-	dc.l	gn_42,gv_42,15,3
-	dc.l	gn_43,gv_43,10,3
+	dc.l	gn_39,gv_39,11,3
+	dc.l	gn_40,gv_40,14,3
+	dc.l	gn_41,gv_41,10,3
+	dc.l	gn_42,gv_42,9,3
+	dc.l	gn_43,gv_43,15,3
 	dc.l	gn_44,gv_44,10,3
-	dc.l	gn_45,gv_45,13,3
-	dc.l	gn_46,gv_46,8,3
+	dc.l	gn_45,gv_45,10,3
+	dc.l	gn_46,gv_46,13,3
 	dc.l	gn_47,gv_47,8,3
 	dc.l	gn_48,gv_48,8,3
-	dc.l	gn_49,gv_49,15,3
-	dc.l	gn_50,gv_50,14,3
-	dc.l	gn_51,gv_51,16,3
-	dc.l	gn_52,gv_52,14,3
-	dc.l	gn_53,gv_53,16,3
-	dc.l	gn_54,gv_54,10,3
-	dc.l	gn_55,gv_55,28,3
+	dc.l	gn_49,gv_49,8,3
+	dc.l	gn_50,gv_50,15,3
+	dc.l	gn_51,gv_51,14,3
+	dc.l	gn_52,gv_52,16,3
+	dc.l	gn_53,gv_53,14,3
+	dc.l	gn_54,gv_54,16,3
+	dc.l	gn_55,gv_55,10,3
+	dc.l	gn_56,gv_56,28,3
 	cnop	0,4
 gv_0:
 	dc.w	54,15
@@ -7204,114 +7205,287 @@ gv_11:
 	dc.l	wy_11_62
 	cnop	0,4
 gv_12:
-	dc.w	66,15
-	dc.l	$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
+	dc.w	0,15
+	dc.l	$00007f00
+	dc.l	$3fff0000,$c0000000,$00000000
+	dc.l	$40000000,$90000000,$00000000
+	dc.l	$40000000,$f0000000,$00000000
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_12_0
-	dc.w	66,15
-	dc.l	$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$80000000,$00000000,$00000000
+	dc.w	1,15
+	dc.l	$00007f00
+	dc.l	$3fff0000,$c0000000,$00000000
+	dc.l	$40000000,$90000000,$00000000
+	dc.l	$3ffe0000,$c0000000,$00000000
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_12_1
-	dc.w	66,15
-	dc.l	$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$7fff0000,$00000000,$00000000
+	dc.w	2,15
+	dc.l	$00007f00
+	dc.l	$3fff0000,$c0000000,$00000000
+	dc.l	$40000000,$90000000,$00000000
+	dc.l	$40000000,$d8000000,$00000000
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_12_2
-	dc.w	66,15
-	dc.l	$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$ffff0000,$00000000,$00000000
+	dc.w	3,15
+	dc.l	$00007f00
+	dc.l	$3fff0000,$c0000000,$00000000
+	dc.l	$40000000,$90000000,$00000000
+	dc.l	$3fff0000,$c0000000,$00000000
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_12_3
-	dc.w	66,15
-	dc.l	$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$00000000,$ffffffff
+	dc.w	4,15
+	dc.l	$00007f00
+	dc.l	$3fff0000,$c0000000,$00000000
+	dc.l	$40000000,$90000000,$00000000
+	dc.l	$40000000,$90000000,$00000000
+	dc.l	$00000000,$fdffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_12_4
-	dc.w	66,15
-	dc.l	$00000040
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
+	dc.w	19,15
+	dc.l	$00007f00
+	dc.l	$40000000,$90000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3fff0000,$c0000000,$00000000
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_12_5
-	dc.w	66,15
-	dc.l	$00000080
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
+	dc.w	18,15
+	dc.l	$00007f00
+	dc.l	$3fff0000,$c0000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3fff0000,$c0000000,$00000000
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_12_6
-	dc.w	66,15
-	dc.l	$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000008
-	dc.l	$3fff0000,$80000000,$00000008
+	dc.w	20,15
+	dc.l	$00007f00
+	dc.l	$bfff0000,$c0000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3fff0000,$c0000000,$00000000
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_12_7
-	dc.w	66,15
-	dc.l	$00000040
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000008
-	dc.l	$3fff0000,$80000000,$00000008
-	dc.l	$00000000,$ffffffff
+	dc.w	21,15
+	dc.l	$00007f00
+	dc.l	$3fff0000,$c0000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$bfff0000,$c0000000,$00000000
+	dc.l	$08000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_12_8
-	dc.w	66,15
-	dc.l	$00000080
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000008
-	dc.l	$3fff0000,$80000000,$00000008
-	dc.l	$00000000,$ffffffff
+	dc.w	34,15
+	dc.l	$00007f00
+	dc.l	$bfff0000,$c0000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$08000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_12_9
-	dc.w	66,15
-	dc.l	$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$7ffe0000,$ffffffff,$ffffffff
-	dc.l	$7ffe0000,$ffffffff,$ffffffff
-	dc.l	$00000000,$ffffffff
+	dc.w	56,15
+	dc.l	$00007f00
+	dc.l	$fffffff9,$00000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$c0010000,$e0000000,$00000000
+	dc.l	$08000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_12_10
-	dc.w	66,15
-	dc.l	$00000040
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$7ffe0000,$ffffffff,$ffffffff
-	dc.l	$7ffe0000,$ffffffff,$ffffffff
+	dc.w	55,15
+	dc.l	$00007f00
+	dc.l	$00070000,$00000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_12_11
+	dc.w	54,15
+	dc.l	$00007f00
+	dc.l	$f9000000,$00000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$c0010000,$e0000000,$00000000
+	dc.l	$08000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_12_12
+	dc.w	57,15
+	dc.l	$00007f00
+	dc.l	$3fc00000,$00000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3fff0000,$c0000000,$00000000
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_12_13
+	dc.w	58,15
+	dc.l	$00007f00
+	dc.l	$c0020000,$00000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$c0000000,$90000000,$00000000
+	dc.l	$08000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_12_14
+	dc.w	59,15
+	dc.l	$00007f00
+	dc.l	$3ffe0000,$a0000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3ffe0000,$a0000000,$00000000
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_12_15
+	dc.w	63,15
+	dc.l	$00007f00
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$c0020000,$c0000000,$00000000
+	dc.l	$fffffff4,$00000000,$00000000
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_12_16
+	dc.w	64,15
+	dc.l	$00007f00
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$3fff0000,$c0000000,$00000000
+	dc.l	$3fc00000,$00000000,$00000000
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_12_17
+	dc.w	65,15
+	dc.l	$00007f00
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$c0000000,$90000000,$00000000
+	dc.l	$c0020000,$00000000,$00000000
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_12_18
+	cnop	0,4
+gv_13:
+	dc.w	66,15
+	dc.l	$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_13_0
+	dc.w	66,15
+	dc.l	$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_13_1
+	dc.w	66,15
+	dc.l	$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_13_2
+	dc.w	66,15
+	dc.l	$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_13_3
+	dc.w	66,15
+	dc.l	$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_13_4
+	dc.w	66,15
+	dc.l	$00000040
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_13_5
+	dc.w	66,15
+	dc.l	$00000080
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_13_6
+	dc.w	66,15
+	dc.l	$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000008
+	dc.l	$3fff0000,$80000000,$00000008
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_13_7
+	dc.w	66,15
+	dc.l	$00000040
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000008
+	dc.l	$3fff0000,$80000000,$00000008
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_13_8
+	dc.w	66,15
+	dc.l	$00000080
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000008
+	dc.l	$3fff0000,$80000000,$00000008
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_13_9
+	dc.w	66,15
+	dc.l	$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$7ffe0000,$ffffffff,$ffffffff
+	dc.l	$7ffe0000,$ffffffff,$ffffffff
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_13_10
+	dc.w	66,15
+	dc.l	$00000040
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$7ffe0000,$ffffffff,$ffffffff
+	dc.l	$7ffe0000,$ffffffff,$ffffffff
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_13_11
 	dc.w	66,15
 	dc.l	$00000080
 	dc.l	$00000000,$00000000,$00000000
@@ -7320,7 +7494,7 @@ gv_12:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_12_12
+	dc.l	wy_13_12
 	dc.w	66,15
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
@@ -7329,7 +7503,7 @@ gv_12:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_12_13
+	dc.l	wy_13_13
 	dc.w	66,15
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
@@ -7338,7 +7512,7 @@ gv_12:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_12_14
+	dc.l	wy_13_14
 	dc.w	66,15
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
@@ -7347,9 +7521,9 @@ gv_12:
 	dc.l	$00004080,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_12_15
+	dc.l	wy_13_15
 	cnop	0,4
-gv_13:
+gv_14:
 	dc.w	67,3
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
@@ -7358,7 +7532,7 @@ gv_13:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_13_0
+	dc.l	wy_14_0
 	dc.w	70,3
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
@@ -7367,7 +7541,7 @@ gv_13:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_13_1
+	dc.l	wy_14_1
 	dc.w	68,3
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
@@ -7376,7 +7550,7 @@ gv_13:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_13_2
+	dc.l	wy_14_2
 	dc.w	68,3
 	dc.l	$00000010
 	dc.l	$00000000,$00000000,$00000000
@@ -7385,7 +7559,7 @@ gv_13:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_13_3
+	dc.l	wy_14_3
 	dc.w	68,3
 	dc.l	$00000020
 	dc.l	$00000000,$00000000,$00000000
@@ -7394,7 +7568,7 @@ gv_13:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_13_4
+	dc.l	wy_14_4
 	dc.w	68,3
 	dc.l	$00000030
 	dc.l	$00000000,$00000000,$00000000
@@ -7403,7 +7577,7 @@ gv_13:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_13_5
+	dc.l	wy_14_5
 	dc.w	70,3
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
@@ -7412,7 +7586,7 @@ gv_13:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_13_6
+	dc.l	wy_14_6
 	dc.w	70,3
 	dc.l	$00000010
 	dc.l	$00000000,$00000000,$00000000
@@ -7421,7 +7595,7 @@ gv_13:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_13_7
+	dc.l	wy_14_7
 	dc.w	70,3
 	dc.l	$00000020
 	dc.l	$00000000,$00000000,$00000000
@@ -7430,7 +7604,7 @@ gv_13:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_13_8
+	dc.l	wy_14_8
 	dc.w	70,3
 	dc.l	$00000030
 	dc.l	$00000000,$00000000,$00000000
@@ -7439,7 +7613,7 @@ gv_13:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_13_9
+	dc.l	wy_14_9
 	dc.w	68,3
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
@@ -7448,7 +7622,7 @@ gv_13:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_13_10
+	dc.l	wy_14_10
 	dc.w	68,3
 	dc.l	$00000010
 	dc.l	$00000000,$00000000,$00000000
@@ -7457,7 +7631,7 @@ gv_13:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_13_11
+	dc.l	wy_14_11
 	dc.w	68,3
 	dc.l	$00000020
 	dc.l	$00000000,$00000000,$00000000
@@ -7466,7 +7640,7 @@ gv_13:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_13_12
+	dc.l	wy_14_12
 	dc.w	68,3
 	dc.l	$00000030
 	dc.l	$00000000,$00000000,$00000000
@@ -7475,7 +7649,7 @@ gv_13:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_13_13
+	dc.l	wy_14_13
 	dc.w	69,3
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
@@ -7484,7 +7658,7 @@ gv_13:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_13_14
+	dc.l	wy_14_14
 	dc.w	69,3
 	dc.l	$00000010
 	dc.l	$00000000,$00000000,$00000000
@@ -7493,7 +7667,7 @@ gv_13:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_13_15
+	dc.l	wy_14_15
 	dc.w	69,3
 	dc.l	$00000020
 	dc.l	$00000000,$00000000,$00000000
@@ -7502,7 +7676,7 @@ gv_13:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_13_16
+	dc.l	wy_14_16
 	dc.w	69,3
 	dc.l	$00000030
 	dc.l	$00000000,$00000000,$00000000
@@ -7511,7 +7685,7 @@ gv_13:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_13_17
+	dc.l	wy_14_17
 	dc.w	68,3
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
@@ -7520,7 +7694,7 @@ gv_13:
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_13_18
+	dc.l	wy_14_18
 	dc.w	68,3
 	dc.l	$00000010
 	dc.l	$00000000,$00000000,$00000000
@@ -7529,7 +7703,7 @@ gv_13:
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_13_19
+	dc.l	wy_14_19
 	dc.w	68,3
 	dc.l	$00000020
 	dc.l	$00000000,$00000000,$00000000
@@ -7538,7 +7712,7 @@ gv_13:
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_13_20
+	dc.l	wy_14_20
 	dc.w	68,3
 	dc.l	$00000030
 	dc.l	$00000000,$00000000,$00000000
@@ -7547,7 +7721,7 @@ gv_13:
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_13_21
+	dc.l	wy_14_21
 	dc.w	70,3
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
@@ -7556,7 +7730,7 @@ gv_13:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_13_22
+	dc.l	wy_14_22
 	dc.w	70,3
 	dc.l	$00000010
 	dc.l	$00000000,$00000000,$00000000
@@ -7565,7 +7739,7 @@ gv_13:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_13_23
+	dc.l	wy_14_23
 	dc.w	70,3
 	dc.l	$00000020
 	dc.l	$00000000,$00000000,$00000000
@@ -7574,7 +7748,7 @@ gv_13:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_13_24
+	dc.l	wy_14_24
 	dc.w	70,3
 	dc.l	$00000030
 	dc.l	$00000000,$00000000,$00000000
@@ -7583,7 +7757,7 @@ gv_13:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_13_25
+	dc.l	wy_14_25
 	dc.w	67,3
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
@@ -7592,7 +7766,7 @@ gv_13:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_13_26
+	dc.l	wy_14_26
 	dc.w	67,3
 	dc.l	$00000010
 	dc.l	$00000000,$00000000,$00000000
@@ -7601,7 +7775,7 @@ gv_13:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_13_27
+	dc.l	wy_14_27
 	dc.w	67,3
 	dc.l	$00000020
 	dc.l	$00000000,$00000000,$00000000
@@ -7610,7 +7784,7 @@ gv_13:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_13_28
+	dc.l	wy_14_28
 	dc.w	67,3
 	dc.l	$00000030
 	dc.l	$00000000,$00000000,$00000000
@@ -7619,7 +7793,7 @@ gv_13:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_13_29
+	dc.l	wy_14_29
 	dc.w	69,3
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
@@ -7628,7 +7802,7 @@ gv_13:
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_13_30
+	dc.l	wy_14_30
 	dc.w	69,3
 	dc.l	$00000010
 	dc.l	$00000000,$00000000,$00000000
@@ -7637,7 +7811,7 @@ gv_13:
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_13_31
+	dc.l	wy_14_31
 	dc.w	69,3
 	dc.l	$00000020
 	dc.l	$00000000,$00000000,$00000000
@@ -7646,7 +7820,7 @@ gv_13:
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_13_32
+	dc.l	wy_14_32
 	dc.w	69,3
 	dc.l	$00000030
 	dc.l	$00000000,$00000000,$00000000
@@ -7655,7 +7829,7 @@ gv_13:
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_13_33
+	dc.l	wy_14_33
 	dc.w	68,3
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
@@ -7664,9 +7838,9 @@ gv_13:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_13_34
+	dc.l	wy_14_34
 	cnop	0,4
-gv_14:
+gv_15:
 	dc.w	71,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$00000000,$00000000
@@ -7675,7 +7849,7 @@ gv_14:
 	dc.l	$02000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_14_0
+	dc.l	wy_15_0
 	dc.w	71,15
 	dc.l	$00000000
 	dc.l	$ffff0000,$00000000,$00000000
@@ -7684,7 +7858,7 @@ gv_14:
 	dc.l	$0a000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_14_1
+	dc.l	wy_15_1
 	dc.w	71,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$c0000000,$00000000
@@ -7693,7 +7867,7 @@ gv_14:
 	dc.l	$01000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_14_2
+	dc.l	wy_15_2
 	dc.w	71,15
 	dc.l	$00000000
 	dc.l	$ffff0000,$c0000000,$00000000
@@ -7702,7 +7876,7 @@ gv_14:
 	dc.l	$09000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_14_3
+	dc.l	wy_15_3
 	dc.w	71,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$ffffffff,$ffffffff
@@ -7711,7 +7885,7 @@ gv_14:
 	dc.l	$01000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_14_4
+	dc.l	wy_15_4
 	dc.w	71,15
 	dc.l	$00000000
 	dc.l	$ffff0000,$ffffffff,$ffffffff
@@ -7720,9 +7894,9 @@ gv_14:
 	dc.l	$09000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_14_5
+	dc.l	wy_15_5
 	cnop	0,4
-gv_15:
+gv_16:
 	dc.w	71,15
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
@@ -7731,7 +7905,7 @@ gv_15:
 	dc.l	$04000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_15_0
+	dc.l	wy_16_0
 	dc.w	71,15
 	dc.l	$00000000
 	dc.l	$80000000,$00000000,$00000000
@@ -7740,7 +7914,7 @@ gv_15:
 	dc.l	$0c000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_15_1
+	dc.l	wy_16_1
 	dc.w	71,15
 	dc.l	$00000000
 	dc.l	$3fff0000,$80000000,$00000000
@@ -7749,7 +7923,7 @@ gv_15:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_15_2
+	dc.l	wy_16_2
 	dc.w	71,15
 	dc.l	$00000000
 	dc.l	$7ffe0000,$ffffffff,$ffffffff
@@ -7758,7 +7932,7 @@ gv_15:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_15_3
+	dc.l	wy_16_3
 	dc.w	71,15
 	dc.l	$00000000
 	dc.l	$fffe0000,$ffffffff,$ffffffff
@@ -7767,7 +7941,7 @@ gv_15:
 	dc.l	$08000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_15_4
+	dc.l	wy_16_4
 	dc.w	71,15
 	dc.l	$00000000
 	dc.l	$00010000,$80000000,$00000000
@@ -7776,7 +7950,7 @@ gv_15:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_15_5
+	dc.l	wy_16_5
 	dc.w	71,15
 	dc.l	$00000000
 	dc.l	$00010000,$c0000000,$00000000
@@ -7785,7 +7959,7 @@ gv_15:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_15_6
+	dc.l	wy_16_6
 	dc.w	71,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$a0000000,$00000000
@@ -7794,7 +7968,7 @@ gv_15:
 	dc.l	$01000080,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_15_7
+	dc.l	wy_16_7
 	dc.w	71,3
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000001
@@ -7803,7 +7977,7 @@ gv_15:
 	dc.l	$00000000,$fffff7d7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_15_8
+	dc.l	wy_16_8
 	dc.w	71,3
 	dc.l	$00000000
 	dc.l	$80000000,$40000000,$00000000
@@ -7812,7 +7986,7 @@ gv_15:
 	dc.l	$08000000,$fffff7d7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_15_9
+	dc.l	wy_16_9
 	dc.w	71,3
 	dc.l	$00000000
 	dc.l	$00000000,$7fffffff,$ffffffff
@@ -7821,7 +7995,7 @@ gv_15:
 	dc.l	$00000000,$fffff7d7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_15_10
+	dc.l	wy_16_10
 	dc.w	71,3
 	dc.l	$00000000
 	dc.l	$3fff0000,$40000000,$00000000
@@ -7830,117 +8004,117 @@ gv_15:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_15_11
-	cnop	0,4
-gv_16:
-	dc.w	4,15
-	dc.l	$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$04000000,$f5ffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_16_0
-	dc.w	4,15
-	dc.l	$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$04000000,$f5ffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_16_1
-	dc.w	4,15
-	dc.l	$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$08000000,$fdffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_16_2
-	dc.w	4,15
-	dc.l	$00000000
-	dc.l	$bfff0000,$80000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$00000000,$fdffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_16_3
-	dc.w	4,15
-	dc.l	$00000000
-	dc.l	$40000000,$80000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$08000000,$fdffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_16_4
-	dc.w	4,15
-	dc.l	$00000000
-	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$08000000,$fdffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_16_5
-	dc.w	4,15
-	dc.l	$00000000
-	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$00000000,$fdffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_16_6
-	dc.w	4,15
-	dc.l	$00000000
-	dc.l	$7fff0000,$c0000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$01000000,$f5ffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_16_7
-	dc.w	4,15
-	dc.l	$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$04000000,$f5ffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_16_8
-	dc.w	4,15
-	dc.l	$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$04000000,$f5ffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_16_9
-	dc.w	4,15
-	dc.l	$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$08000000,$fdffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_16_10
-	dc.w	4,15
-	dc.l	$00000000
-	dc.l	$bfff0000,$80000000,$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$00000000,$fdffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_16_11
+	cnop	0,4
+gv_17:
+	dc.w	4,15
+	dc.l	$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$04000000,$f5ffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_17_0
+	dc.w	4,15
+	dc.l	$00000000
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$04000000,$f5ffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_17_1
+	dc.w	4,15
+	dc.l	$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$08000000,$fdffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_17_2
+	dc.w	4,15
+	dc.l	$00000000
+	dc.l	$bfff0000,$80000000,$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$00000000,$fdffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_17_3
+	dc.w	4,15
+	dc.l	$00000000
+	dc.l	$40000000,$80000000,$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$08000000,$fdffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_17_4
+	dc.w	4,15
+	dc.l	$00000000
+	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$08000000,$fdffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_17_5
+	dc.w	4,15
+	dc.l	$00000000
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$00000000,$fdffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_17_6
+	dc.w	4,15
+	dc.l	$00000000
+	dc.l	$7fff0000,$c0000000,$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$01000000,$f5ffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_17_7
+	dc.w	4,15
+	dc.l	$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$04000000,$f5ffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_17_8
+	dc.w	4,15
+	dc.l	$00000000
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$04000000,$f5ffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_17_9
+	dc.w	4,15
+	dc.l	$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$08000000,$fdffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_17_10
+	dc.w	4,15
+	dc.l	$00000000
+	dc.l	$bfff0000,$80000000,$00000000
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$00000000,$fdffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_17_11
 	dc.w	4,15
 	dc.l	$00000000
 	dc.l	$40000000,$80000000,$00000000
@@ -7949,7 +8123,7 @@ gv_16:
 	dc.l	$08000000,$fdffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_16_12
+	dc.l	wy_17_12
 	dc.w	4,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$00000000,$00000000
@@ -7958,7 +8132,7 @@ gv_16:
 	dc.l	$08000000,$fdffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_16_13
+	dc.l	wy_17_13
 	dc.w	4,15
 	dc.l	$00000000
 	dc.l	$ffff0000,$00000000,$00000000
@@ -7967,7 +8141,7 @@ gv_16:
 	dc.l	$00000000,$fdffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_16_14
+	dc.l	wy_17_14
 	dc.w	4,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$c0000000,$00000000
@@ -7976,7 +8150,7 @@ gv_16:
 	dc.l	$01000000,$f5ffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_16_15
+	dc.l	wy_17_15
 	dc.w	4,15
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
@@ -7985,7 +8159,7 @@ gv_16:
 	dc.l	$00000000,$fdffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_16_16
+	dc.l	wy_17_16
 	dc.w	4,15
 	dc.l	$00000000
 	dc.l	$80000000,$00000000,$00000000
@@ -7994,7 +8168,7 @@ gv_16:
 	dc.l	$00000000,$fdffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_16_17
+	dc.l	wy_17_17
 	dc.w	4,15
 	dc.l	$00000000
 	dc.l	$3fff0000,$80000000,$00000000
@@ -8003,7 +8177,7 @@ gv_16:
 	dc.l	$04000000,$fdffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_16_18
+	dc.l	wy_17_18
 	dc.w	4,15
 	dc.l	$00000000
 	dc.l	$bfff0000,$80000000,$00000000
@@ -8012,7 +8186,7 @@ gv_16:
 	dc.l	$00000000,$fdffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_16_19
+	dc.l	wy_17_19
 	dc.w	4,15
 	dc.l	$00000000
 	dc.l	$40000000,$80000000,$00000000
@@ -8021,7 +8195,7 @@ gv_16:
 	dc.l	$08000000,$fdffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_16_20
+	dc.l	wy_17_20
 	dc.w	4,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$00000000,$00000000
@@ -8030,7 +8204,7 @@ gv_16:
 	dc.l	$08000000,$fdffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_16_21
+	dc.l	wy_17_21
 	dc.w	4,15
 	dc.l	$00000000
 	dc.l	$ffff0000,$00000000,$00000000
@@ -8039,7 +8213,7 @@ gv_16:
 	dc.l	$00000000,$fdffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_16_22
+	dc.l	wy_17_22
 	dc.w	4,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$c0000000,$00000000
@@ -8048,7 +8222,7 @@ gv_16:
 	dc.l	$01000000,$f5ffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_16_23
+	dc.l	wy_17_23
 	dc.w	4,15
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
@@ -8057,7 +8231,7 @@ gv_16:
 	dc.l	$08000000,$fdffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_16_24
+	dc.l	wy_17_24
 	dc.w	4,15
 	dc.l	$00000000
 	dc.l	$80000000,$00000000,$00000000
@@ -8066,7 +8240,7 @@ gv_16:
 	dc.l	$08000000,$fdffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_16_25
+	dc.l	wy_17_25
 	dc.w	4,15
 	dc.l	$00000000
 	dc.l	$3fff0000,$80000000,$00000000
@@ -8075,7 +8249,7 @@ gv_16:
 	dc.l	$08000000,$fdffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_16_26
+	dc.l	wy_17_26
 	dc.w	4,15
 	dc.l	$00000000
 	dc.l	$bfff0000,$80000000,$00000000
@@ -8084,7 +8258,7 @@ gv_16:
 	dc.l	$04000000,$fdffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_16_27
+	dc.l	wy_17_27
 	dc.w	4,15
 	dc.l	$00000000
 	dc.l	$40000000,$80000000,$00000000
@@ -8093,7 +8267,7 @@ gv_16:
 	dc.l	$08000000,$fdffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_16_28
+	dc.l	wy_17_28
 	dc.w	4,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$00000000,$00000000
@@ -8102,7 +8276,7 @@ gv_16:
 	dc.l	$08000000,$fdffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_16_29
+	dc.l	wy_17_29
 	dc.w	4,15
 	dc.l	$00000000
 	dc.l	$ffff0000,$00000000,$00000000
@@ -8111,7 +8285,7 @@ gv_16:
 	dc.l	$00000000,$fdffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_16_30
+	dc.l	wy_17_30
 	dc.w	4,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$c0000000,$00000000
@@ -8120,7 +8294,7 @@ gv_16:
 	dc.l	$01000000,$f5ffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_16_31
+	dc.l	wy_17_31
 	dc.w	4,15
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
@@ -8129,7 +8303,7 @@ gv_16:
 	dc.l	$00000000,$fdffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_16_32
+	dc.l	wy_17_32
 	dc.w	4,15
 	dc.l	$00000000
 	dc.l	$80000000,$00000000,$00000000
@@ -8138,7 +8312,7 @@ gv_16:
 	dc.l	$00000000,$fdffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_16_33
+	dc.l	wy_17_33
 	dc.w	4,15
 	dc.l	$00000000
 	dc.l	$3fff0000,$80000000,$00000000
@@ -8147,7 +8321,7 @@ gv_16:
 	dc.l	$00000000,$fdffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_16_34
+	dc.l	wy_17_34
 	dc.w	4,15
 	dc.l	$00000000
 	dc.l	$bfff0000,$80000000,$00000000
@@ -8156,7 +8330,7 @@ gv_16:
 	dc.l	$00000000,$fdffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_16_35
+	dc.l	wy_17_35
 	dc.w	4,15
 	dc.l	$00000000
 	dc.l	$40000000,$80000000,$00000000
@@ -8165,7 +8339,7 @@ gv_16:
 	dc.l	$04000000,$fdffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_16_36
+	dc.l	wy_17_36
 	dc.w	4,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$00000000,$00000000
@@ -8174,7 +8348,7 @@ gv_16:
 	dc.l	$08000000,$fdffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_16_37
+	dc.l	wy_17_37
 	dc.w	4,15
 	dc.l	$00000000
 	dc.l	$ffff0000,$00000000,$00000000
@@ -8183,7 +8357,7 @@ gv_16:
 	dc.l	$00000000,$fdffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_16_38
+	dc.l	wy_17_38
 	dc.w	4,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$c0000000,$00000000
@@ -8192,7 +8366,7 @@ gv_16:
 	dc.l	$01000000,$f5ffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_16_39
+	dc.l	wy_17_39
 	dc.w	4,15
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
@@ -8201,7 +8375,7 @@ gv_16:
 	dc.l	$00000000,$fdffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_16_40
+	dc.l	wy_17_40
 	dc.w	4,15
 	dc.l	$00000000
 	dc.l	$80000000,$00000000,$00000000
@@ -8210,7 +8384,7 @@ gv_16:
 	dc.l	$00000000,$fdffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_16_41
+	dc.l	wy_17_41
 	dc.w	4,15
 	dc.l	$00000000
 	dc.l	$3fff0000,$80000000,$00000000
@@ -8219,7 +8393,7 @@ gv_16:
 	dc.l	$00000000,$fdffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_16_42
+	dc.l	wy_17_42
 	dc.w	4,15
 	dc.l	$00000000
 	dc.l	$bfff0000,$80000000,$00000000
@@ -8228,7 +8402,7 @@ gv_16:
 	dc.l	$00000000,$fdffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_16_43
+	dc.l	wy_17_43
 	dc.w	4,15
 	dc.l	$00000000
 	dc.l	$40000000,$80000000,$00000000
@@ -8237,7 +8411,7 @@ gv_16:
 	dc.l	$00000000,$fdffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_16_44
+	dc.l	wy_17_44
 	dc.w	4,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$00000000,$00000000
@@ -8246,7 +8420,7 @@ gv_16:
 	dc.l	$04000000,$fdffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_16_45
+	dc.l	wy_17_45
 	dc.w	4,15
 	dc.l	$00000000
 	dc.l	$ffff0000,$00000000,$00000000
@@ -8255,7 +8429,7 @@ gv_16:
 	dc.l	$00000000,$fdffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_16_46
+	dc.l	wy_17_46
 	dc.w	4,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$c0000000,$00000000
@@ -8264,7 +8438,7 @@ gv_16:
 	dc.l	$01000000,$f5ffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_16_47
+	dc.l	wy_17_47
 	dc.w	4,15
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
@@ -8273,7 +8447,7 @@ gv_16:
 	dc.l	$08000000,$fdffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_16_48
+	dc.l	wy_17_48
 	dc.w	4,15
 	dc.l	$00000000
 	dc.l	$80000000,$00000000,$00000000
@@ -8282,7 +8456,7 @@ gv_16:
 	dc.l	$08000000,$fdffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_16_49
+	dc.l	wy_17_49
 	dc.w	4,15
 	dc.l	$00000000
 	dc.l	$3fff0000,$80000000,$00000000
@@ -8291,7 +8465,7 @@ gv_16:
 	dc.l	$08000000,$fdffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_16_50
+	dc.l	wy_17_50
 	dc.w	4,15
 	dc.l	$00000000
 	dc.l	$bfff0000,$80000000,$00000000
@@ -8300,7 +8474,7 @@ gv_16:
 	dc.l	$08000000,$fdffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_16_51
+	dc.l	wy_17_51
 	dc.w	4,15
 	dc.l	$00000000
 	dc.l	$40000000,$80000000,$00000000
@@ -8309,7 +8483,7 @@ gv_16:
 	dc.l	$08000000,$fdffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_16_52
+	dc.l	wy_17_52
 	dc.w	4,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$00000000,$00000000
@@ -8318,7 +8492,7 @@ gv_16:
 	dc.l	$08000000,$fdffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_16_53
+	dc.l	wy_17_53
 	dc.w	4,15
 	dc.l	$00000000
 	dc.l	$ffff0000,$00000000,$00000000
@@ -8327,7 +8501,7 @@ gv_16:
 	dc.l	$0c000000,$fdffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_16_54
+	dc.l	wy_17_54
 	dc.w	4,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$c0000000,$00000000
@@ -8336,7 +8510,7 @@ gv_16:
 	dc.l	$01000000,$f5ffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_16_55
+	dc.l	wy_17_55
 	dc.w	4,15
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
@@ -8345,7 +8519,7 @@ gv_16:
 	dc.l	$01000000,$f5ffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_16_56
+	dc.l	wy_17_56
 	dc.w	4,15
 	dc.l	$00000000
 	dc.l	$80000000,$00000000,$00000000
@@ -8354,7 +8528,7 @@ gv_16:
 	dc.l	$01000000,$f5ffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_16_57
+	dc.l	wy_17_57
 	dc.w	4,15
 	dc.l	$00000000
 	dc.l	$3fff0000,$80000000,$00000000
@@ -8363,7 +8537,7 @@ gv_16:
 	dc.l	$01000000,$f5ffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_16_58
+	dc.l	wy_17_58
 	dc.w	4,15
 	dc.l	$00000000
 	dc.l	$bfff0000,$80000000,$00000000
@@ -8372,7 +8546,7 @@ gv_16:
 	dc.l	$01000000,$f5ffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_16_59
+	dc.l	wy_17_59
 	dc.w	4,15
 	dc.l	$00000000
 	dc.l	$40000000,$80000000,$00000000
@@ -8381,7 +8555,7 @@ gv_16:
 	dc.l	$01000000,$f5ffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_16_60
+	dc.l	wy_17_60
 	dc.w	4,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$00000000,$00000000
@@ -8390,7 +8564,7 @@ gv_16:
 	dc.l	$01000000,$f5ffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_16_61
+	dc.l	wy_17_61
 	dc.w	4,15
 	dc.l	$00000000
 	dc.l	$ffff0000,$00000000,$00000000
@@ -8399,7 +8573,7 @@ gv_16:
 	dc.l	$01000000,$f5ffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_16_62
+	dc.l	wy_17_62
 	dc.w	4,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$c0000000,$00000000
@@ -8408,7 +8582,7 @@ gv_16:
 	dc.l	$01000000,$f5ffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_16_63
+	dc.l	wy_17_63
 	dc.w	4,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$a0000000,$00000000
@@ -8417,9 +8591,9 @@ gv_16:
 	dc.l	$01004080,$f5ffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_16_64
+	dc.l	wy_17_64
 	cnop	0,4
-gv_17:
+gv_18:
 	dc.w	34,15
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
@@ -8428,7 +8602,7 @@ gv_17:
 	dc.l	$04000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_17_0
+	dc.l	wy_18_0
 	dc.w	34,15
 	dc.l	$00000000
 	dc.l	$80000000,$00000000,$00000000
@@ -8437,7 +8611,7 @@ gv_17:
 	dc.l	$0c000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_17_1
+	dc.l	wy_18_1
 	dc.w	34,15
 	dc.l	$00000000
 	dc.l	$3fff0000,$80000000,$00000000
@@ -8446,7 +8620,7 @@ gv_17:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_17_2
+	dc.l	wy_18_2
 	dc.w	34,15
 	dc.l	$00000000
 	dc.l	$bfff0000,$80000000,$00000000
@@ -8455,7 +8629,7 @@ gv_17:
 	dc.l	$08000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_17_3
+	dc.l	wy_18_3
 	dc.w	34,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$00000000,$00000000
@@ -8464,7 +8638,7 @@ gv_17:
 	dc.l	$02000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_17_4
+	dc.l	wy_18_4
 	dc.w	34,15
 	dc.l	$00000000
 	dc.l	$ffff0000,$00000000,$00000000
@@ -8473,7 +8647,7 @@ gv_17:
 	dc.l	$0a000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_17_5
+	dc.l	wy_18_5
 	dc.w	34,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$c0000000,$00000000
@@ -8482,7 +8656,7 @@ gv_17:
 	dc.l	$01000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_17_6
+	dc.l	wy_18_6
 	dc.w	34,15
 	dc.l	$00000000
 	dc.l	$ffff0000,$c0000000,$00000000
@@ -8491,7 +8665,7 @@ gv_17:
 	dc.l	$09000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_17_7
+	dc.l	wy_18_7
 	dc.w	34,15
 	dc.l	$00000000
 	dc.l	$7ffe0000,$ffffffff,$ffffffff
@@ -8500,7 +8674,7 @@ gv_17:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_17_8
+	dc.l	wy_18_8
 	dc.w	34,15
 	dc.l	$00000000
 	dc.l	$00010000,$80000000,$00000000
@@ -8509,984 +8683,10 @@ gv_17:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_17_9
-	cnop	0,4
-gv_18:
-	dc.w	0,15
-	dc.l	$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$04000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_0
-	dc.w	0,15
-	dc.l	$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$04000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_1
-	dc.w	0,15
-	dc.l	$00000000
-	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$02000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_2
-	dc.w	0,15
-	dc.l	$00000000
-	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$0a000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_3
-	dc.w	0,15
-	dc.l	$00000000
-	dc.l	$7fff0000,$c0000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$7fff0000,$c0000000,$00000000
-	dc.l	$01000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_4
-	dc.w	0,15
-	dc.l	$00000000
-	dc.l	$7fff0000,$a0000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$7fff0000,$e0000000,$00000000
-	dc.l	$01004080,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_5
-	dc.w	0,15
-	dc.l	$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$00000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_6
-	dc.w	0,15
-	dc.l	$00000000
-	dc.l	$c0000000,$c0000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$c0000000,$c0000000,$00000000
-	dc.l	$08000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_7
-	dc.w	0,15
-	dc.l	$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$04000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_8
-	dc.w	0,15
-	dc.l	$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$0c000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_18_9
-	dc.w	0,15
-	dc.l	$00000000
-	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$02000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_10
-	dc.w	0,15
-	dc.l	$00000000
-	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$0a000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_11
-	dc.w	0,15
-	dc.l	$00000000
-	dc.l	$7fff0000,$c0000000,$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$7fff0000,$c0000000,$00000000
-	dc.l	$01000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_12
-	dc.w	0,15
-	dc.l	$00000000
-	dc.l	$7fff0000,$a0000000,$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$7fff0000,$e0000000,$00000000
-	dc.l	$01004080,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_13
-	dc.w	0,15
-	dc.l	$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$00000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_14
-	dc.w	0,15
-	dc.l	$00000000
-	dc.l	$c0000000,$c0000000,$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$c0000000,$c0000000,$00000000
-	dc.l	$08000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_15
-	dc.w	0,15
-	dc.l	$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$02000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_16
-	dc.w	0,15
-	dc.l	$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$02000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_17
-	dc.w	0,15
-	dc.l	$00000000
-	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$02000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_18
-	dc.w	0,15
-	dc.l	$00000000
-	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$7fff0000,$ffffffff,$ffffffff
-	dc.l	$01002080,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_19
-	dc.w	0,15
-	dc.l	$00000000
-	dc.l	$7fff0000,$c0000000,$00000000
-	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$7fff0000,$c0000000,$00000000
-	dc.l	$01000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_20
-	dc.w	0,15
-	dc.l	$00000000
-	dc.l	$7fff0000,$a0000000,$00000000
-	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$7fff0000,$e0000000,$00000000
-	dc.l	$01004080,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_21
-	dc.w	0,15
-	dc.l	$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$02000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_22
-	dc.w	0,15
-	dc.l	$00000000
-	dc.l	$c0000000,$c0000000,$00000000
-	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$02000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_23
-	dc.w	0,15
-	dc.l	$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$0a000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_24
-	dc.w	0,15
-	dc.l	$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$0a000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_25
-	dc.w	0,15
-	dc.l	$00000000
-	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$7fff0000,$ffffffff,$ffffffff
-	dc.l	$01002080,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_26
-	dc.w	0,15
-	dc.l	$00000000
-	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$0a000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_27
-	dc.w	0,15
-	dc.l	$00000000
-	dc.l	$7fff0000,$c0000000,$00000000
-	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$7fff0000,$c0000000,$00000000
-	dc.l	$01000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_28
-	dc.w	0,15
-	dc.l	$00000000
-	dc.l	$7fff0000,$a0000000,$00000000
-	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$7fff0000,$e0000000,$00000000
-	dc.l	$01004080,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_29
-	dc.w	0,15
-	dc.l	$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$0a000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_30
-	dc.w	0,15
-	dc.l	$00000000
-	dc.l	$c0000000,$c0000000,$00000000
-	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$0a000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_31
-	dc.w	0,15
-	dc.l	$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$7fff0000,$c0000000,$00000000
-	dc.l	$7fff0000,$c0000000,$00000000
-	dc.l	$01000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_32
-	dc.w	0,15
-	dc.l	$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$7fff0000,$c0000000,$00000000
-	dc.l	$7fff0000,$c0000000,$00000000
-	dc.l	$01000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_33
-	dc.w	0,15
-	dc.l	$00000000
-	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$7fff0000,$c0000000,$00000000
-	dc.l	$7fff0000,$c0000000,$00000000
-	dc.l	$01000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_34
-	dc.w	0,15
-	dc.l	$00000000
-	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$7fff0000,$c0000000,$00000000
-	dc.l	$7fff0000,$c0000000,$00000000
-	dc.l	$01000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_35
-	dc.w	0,15
-	dc.l	$00000000
-	dc.l	$7fff0000,$c0000000,$00000000
-	dc.l	$7fff0000,$c0000000,$00000000
-	dc.l	$7fff0000,$c0000000,$00000000
-	dc.l	$01000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_36
-	dc.w	0,15
-	dc.l	$00000000
-	dc.l	$7fff0000,$a0000000,$00000000
-	dc.l	$7fff0000,$c0000000,$00000000
-	dc.l	$7fff0000,$c0000000,$00000000
-	dc.l	$01004080,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_37
-	dc.w	0,15
-	dc.l	$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$7fff0000,$c0000000,$00000000
-	dc.l	$7fff0000,$c0000000,$00000000
-	dc.l	$01000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_38
-	dc.w	0,15
-	dc.l	$00000000
-	dc.l	$c0000000,$c0000000,$00000000
-	dc.l	$7fff0000,$c0000000,$00000000
-	dc.l	$7fff0000,$c0000000,$00000000
-	dc.l	$01000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_39
-	dc.w	0,15
-	dc.l	$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$7fff0000,$a0000000,$00000000
-	dc.l	$7fff0000,$e0000000,$00000000
-	dc.l	$01004080,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_40
-	dc.w	0,15
-	dc.l	$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$7fff0000,$a0000000,$00000000
-	dc.l	$7fff0000,$e0000000,$00000000
-	dc.l	$01004080,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_41
-	dc.w	0,15
-	dc.l	$00000000
-	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$7fff0000,$a0000000,$00000000
-	dc.l	$7fff0000,$e0000000,$00000000
-	dc.l	$01004080,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_42
-	dc.w	0,15
-	dc.l	$00000000
-	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$7fff0000,$a0000000,$00000000
-	dc.l	$7fff0000,$e0000000,$00000000
-	dc.l	$01004080,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_43
-	dc.w	0,15
-	dc.l	$00000000
-	dc.l	$7fff0000,$c0000000,$00000000
-	dc.l	$7fff0000,$a0000000,$00000000
-	dc.l	$7fff0000,$e0000000,$00000000
-	dc.l	$01004080,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_44
-	dc.w	0,15
-	dc.l	$00000000
-	dc.l	$7fff0000,$a0000000,$00000000
-	dc.l	$7fff0000,$a0000000,$00000000
-	dc.l	$7fff0000,$e0000000,$00000000
-	dc.l	$01004080,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_45
-	dc.w	0,15
-	dc.l	$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$7fff0000,$a0000000,$00000000
-	dc.l	$7fff0000,$e0000000,$00000000
-	dc.l	$01004080,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_46
-	dc.w	0,15
-	dc.l	$00000000
-	dc.l	$c0000000,$c0000000,$00000000
-	dc.l	$7fff0000,$a0000000,$00000000
-	dc.l	$7fff0000,$e0000000,$00000000
-	dc.l	$01004080,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_47
-	dc.w	0,15
-	dc.l	$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$00000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_48
-	dc.w	0,15
-	dc.l	$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$00000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_49
-	dc.w	0,15
-	dc.l	$00000000
-	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$02000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_50
-	dc.w	0,15
-	dc.l	$00000000
-	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$0a000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_51
-	dc.w	0,15
-	dc.l	$00000000
-	dc.l	$7fff0000,$c0000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$7fff0000,$c0000000,$00000000
-	dc.l	$01000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_52
-	dc.w	0,15
-	dc.l	$00000000
-	dc.l	$7fff0000,$a0000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$7fff0000,$e0000000,$00000000
-	dc.l	$01004080,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_53
-	dc.w	0,15
-	dc.l	$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$40000000,$80000000,$00000000
-	dc.l	$00000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_54
-	dc.w	0,15
-	dc.l	$00000000
-	dc.l	$c0000000,$c0000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$c0000000,$80000000,$00000000
-	dc.l	$08000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_55
-	dc.w	0,15
-	dc.l	$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$c0000000,$c0000000,$00000000
-	dc.l	$c0000000,$c0000000,$00000000
-	dc.l	$08000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_56
-	dc.w	0,15
-	dc.l	$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$c0000000,$c0000000,$00000000
-	dc.l	$c0000000,$c0000000,$00000000
-	dc.l	$08000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_57
-	dc.w	0,15
-	dc.l	$00000000
-	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$c0000000,$c0000000,$00000000
-	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$02000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_58
-	dc.w	0,15
-	dc.l	$00000000
-	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$c0000000,$c0000000,$00000000
-	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$0a000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_59
-	dc.w	0,15
-	dc.l	$00000000
-	dc.l	$7fff0000,$c0000000,$00000000
-	dc.l	$c0000000,$c0000000,$00000000
-	dc.l	$7fff0000,$c0000000,$00000000
-	dc.l	$01000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_60
-	dc.w	0,15
-	dc.l	$00000000
-	dc.l	$7fff0000,$a0000000,$00000000
-	dc.l	$c0000000,$c0000000,$00000000
-	dc.l	$7fff0000,$e0000000,$00000000
-	dc.l	$01004080,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_61
-	dc.w	0,15
-	dc.l	$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$c0000000,$c0000000,$00000000
-	dc.l	$c0000000,$80000000,$00000000
-	dc.l	$08000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_62
-	dc.w	0,15
-	dc.l	$00000000
-	dc.l	$c0000000,$c0000000,$00000000
-	dc.l	$c0000000,$c0000000,$00000000
-	dc.l	$c0010000,$c0000000,$00000000
-	dc.l	$08000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_63
-	dc.w	0,15
-	dc.l	$00000000
-	dc.l	$3fbf0000,$80000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_64
-	dc.w	0,15
-	dc.l	$00000010
-	dc.l	$3fbf0000,$80000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_65
-	dc.w	0,15
-	dc.l	$00000020
-	dc.l	$3fbf0000,$80000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_66
-	dc.w	0,15
-	dc.l	$00000030
-	dc.l	$3fbf0000,$80000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000001
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_67
-	dc.w	0,15
-	dc.l	$00000000
-	dc.l	$3fbf0000,$80000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000001
-	dc.l	$3fff0000,$80000000,$00000002
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_68
-	dc.w	0,15
-	dc.l	$00000010
-	dc.l	$3fbf0000,$80000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000001
-	dc.l	$3fff0000,$80000000,$00000001
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_69
-	dc.w	0,15
-	dc.l	$00000020
-	dc.l	$3fbf0000,$80000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000001
-	dc.l	$3fff0000,$80000000,$00000001
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_70
-	dc.w	0,15
-	dc.l	$00000030
-	dc.l	$3fbf0000,$80000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000001
-	dc.l	$3fff0000,$80000000,$00000002
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_71
-	dc.w	0,15
-	dc.l	$00000040
-	dc.l	$3fe70000,$80000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_72
-	dc.w	0,15
-	dc.l	$00000050
-	dc.l	$3fe70000,$80000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_73
-	dc.w	0,15
-	dc.l	$00000060
-	dc.l	$3fe70000,$80000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_74
-	dc.w	0,15
-	dc.l	$00000070
-	dc.l	$3fe70000,$80000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3fff0000,$80000100,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_75
-	dc.w	0,15
-	dc.l	$00000080
-	dc.l	$3fca0000,$80000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_76
-	dc.w	0,15
-	dc.l	$00000090
-	dc.l	$3fca0000,$80000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_77
-	dc.w	0,15
-	dc.l	$000000a0
-	dc.l	$3fca0000,$80000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_78
-	dc.w	0,15
-	dc.l	$000000b0
-	dc.l	$3fca0000,$80000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000800
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_79
-	dc.w	0,15
-	dc.l	$00000000
-	dc.l	$3fbe0000,$c0000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_80
-	dc.w	0,15
-	dc.l	$00000010
-	dc.l	$3fbe0000,$c0000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_81
-	dc.w	0,15
-	dc.l	$00000020
-	dc.l	$3fbe0000,$c0000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_82
-	dc.w	0,15
-	dc.l	$00000030
-	dc.l	$3fbe0000,$c0000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000001
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_83
-	dc.w	0,15
-	dc.l	$00000000
-	dc.l	$bfff0000,$80000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$04000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_84
-	dc.w	0,15
-	dc.l	$00000010
-	dc.l	$bfff0000,$80000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$04000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_85
-	dc.w	0,15
-	dc.l	$00000020
-	dc.l	$bfff0000,$80000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$0c000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_86
-	dc.w	0,15
-	dc.l	$00000030
-	dc.l	$bfff0000,$80000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$04000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_87
-	dc.w	0,3
-	dc.l	$00000000
-	dc.l	$7ffe0000,$ffffffff,$ffffffff
-	dc.l	$7ffe0000,$ffffffff,$ffffffff
-	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$02001248,$fffffdd7
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_88
-	dc.w	0,3
-	dc.l	$00000010
-	dc.l	$7ffe0000,$ffffffff,$ffffffff
-	dc.l	$7ffe0000,$ffffffff,$ffffffff
-	dc.l	$7ffe0000,$ffffffff,$ffffffff
-	dc.l	$00001248,$fffffdd7
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_89
-	dc.w	0,3
-	dc.l	$00000020
-	dc.l	$7ffe0000,$ffffffff,$ffffffff
-	dc.l	$7ffe0000,$ffffffff,$ffffffff
-	dc.l	$7ffe0000,$ffffffff,$ffffffff
-	dc.l	$00001248,$fffffdd7
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_90
-	dc.w	0,3
-	dc.l	$00000030
-	dc.l	$7ffe0000,$ffffffff,$ffffffff
-	dc.l	$7ffe0000,$ffffffff,$ffffffff
-	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$02001248,$fffffdd7
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_91
-	dc.w	0,3
-	dc.l	$00000000
-	dc.l	$fffe0000,$ffffffff,$ffffffff
-	dc.l	$fffe0000,$ffffffff,$ffffffff
-	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$0a001248,$fffffdd7
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_92
-	dc.w	0,3
-	dc.l	$00000010
-	dc.l	$fffe0000,$ffffffff,$ffffffff
-	dc.l	$fffe0000,$ffffffff,$ffffffff
-	dc.l	$fffe0000,$ffffffff,$ffffffff
-	dc.l	$08001248,$fffffdd7
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_93
-	dc.w	0,3
-	dc.l	$00000020
-	dc.l	$fffe0000,$ffffffff,$ffffffff
-	dc.l	$fffe0000,$ffffffff,$ffffffff
-	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$0a001248,$fffffdd7
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_94
-	dc.w	0,3
-	dc.l	$00000030
-	dc.l	$fffe0000,$ffffffff,$ffffffff
-	dc.l	$fffe0000,$ffffffff,$ffffffff
-	dc.l	$fffe0000,$ffffffff,$ffffffff
-	dc.l	$08001248,$fffffdd7
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_95
-	dc.w	0,15
-	dc.l	$00000000
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$3ffe0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$00000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_96
-	dc.w	0,15
-	dc.l	$00000040
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$3ffe0000,$aaaaab00,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_97
-	dc.w	0,15
-	dc.l	$00000080
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$3ffe0000,$aaaaaaaa,$aaaaa800
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_98
-	dc.w	0,15
-	dc.l	$00000010
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$3ffe0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$00000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_99
-	dc.w	0,15
-	dc.l	$00000050
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$3ffe0000,$aaaaaa00,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_100
-	dc.w	0,15
-	dc.l	$00000090
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$3ffe0000,$aaaaaaaa,$aaaaa800
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_101
-	dc.w	0,15
-	dc.l	$00000020
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$3ffe0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$00000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_102
-	dc.w	0,15
-	dc.l	$00000060
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$3ffe0000,$aaaaaa00,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_103
-	dc.w	0,15
-	dc.l	$000000a0
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$3ffe0000,$aaaaaaaa,$aaaaa800
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_104
-	dc.w	0,15
-	dc.l	$00000030
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$3ffe0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$00000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_105
-	dc.w	0,15
-	dc.l	$00000070
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$3ffe0000,$aaaaab00,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_106
-	dc.w	0,15
-	dc.l	$000000b0
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$3ffe0000,$aaaaaaaa,$aaaab000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_18_107
 	cnop	0,4
 gv_19:
-	dc.w	1,15
+	dc.w	0,15
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$00000000,$00000000,$00000000
@@ -9495,7 +8695,7 @@ gv_19:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_19_0
-	dc.w	1,15
+	dc.w	0,15
 	dc.l	$00000000
 	dc.l	$80000000,$00000000,$00000000
 	dc.l	$00000000,$00000000,$00000000
@@ -9504,25 +8704,25 @@ gv_19:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_19_1
-	dc.w	1,15
+	dc.w	0,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$0a000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_19_2
-	dc.w	1,15
-	dc.l	$00000000
-	dc.l	$ffff0000,$00000000,$00000000
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$7fff0000,$00000000,$00000000
 	dc.l	$02000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_19_2
+	dc.w	0,15
+	dc.l	$00000000
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$0a000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_19_3
-	dc.w	1,15
+	dc.w	0,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$c0000000,$00000000
 	dc.l	$00000000,$00000000,$00000000
@@ -9531,7 +8731,7 @@ gv_19:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_19_4
-	dc.w	1,15
+	dc.w	0,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$a0000000,$00000000
 	dc.l	$00000000,$00000000,$00000000
@@ -9540,61 +8740,61 @@ gv_19:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_19_5
-	dc.w	1,15
+	dc.w	0,15
 	dc.l	$00000000
 	dc.l	$3fff0000,$80000000,$00000000
 	dc.l	$00000000,$00000000,$00000000
-	dc.l	$bfff0000,$80000000,$00000000
-	dc.l	$08000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_19_6
-	dc.w	1,15
-	dc.l	$00000000
-	dc.l	$c0000000,$c0000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$40000000,$c0000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_19_7
-	dc.w	1,15
+	dc.l	wy_19_6
+	dc.w	0,15
 	dc.l	$00000000
+	dc.l	$c0000000,$c0000000,$00000000
 	dc.l	$00000000,$00000000,$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$0c000000,$ffffffff
+	dc.l	$c0000000,$c0000000,$00000000
+	dc.l	$08000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_19_8
-	dc.w	1,15
+	dc.l	wy_19_7
+	dc.w	0,15
 	dc.l	$00000000
-	dc.l	$80000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000
 	dc.l	$80000000,$00000000,$00000000
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$04000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_19_9
-	dc.w	1,15
+	dc.l	wy_19_8
+	dc.w	0,15
 	dc.l	$00000000
-	dc.l	$7fff0000,$00000000,$00000000
 	dc.l	$80000000,$00000000,$00000000
-	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$0a000000,$ffffffff
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$0c000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_19_10
-	dc.w	1,15
+	dc.l	wy_19_9
+	dc.w	0,15
 	dc.l	$00000000
-	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$7fff0000,$00000000,$00000000
 	dc.l	$80000000,$00000000,$00000000
 	dc.l	$7fff0000,$00000000,$00000000
 	dc.l	$02000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_19_10
+	dc.w	0,15
+	dc.l	$00000000
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$0a000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_19_11
-	dc.w	1,15
+	dc.w	0,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$c0000000,$00000000
 	dc.l	$80000000,$00000000,$00000000
@@ -9603,7 +8803,7 @@ gv_19:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_19_12
-	dc.w	1,15
+	dc.w	0,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$a0000000,$00000000
 	dc.l	$80000000,$00000000,$00000000
@@ -9612,25 +8812,25 @@ gv_19:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_19_13
-	dc.w	1,15
+	dc.w	0,15
 	dc.l	$00000000
 	dc.l	$3fff0000,$80000000,$00000000
 	dc.l	$80000000,$00000000,$00000000
-	dc.l	$bfff0000,$80000000,$00000000
-	dc.l	$08000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_19_14
-	dc.w	1,15
-	dc.l	$00000000
-	dc.l	$c0000000,$c0000000,$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$40000000,$c0000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_19_14
+	dc.w	0,15
+	dc.l	$00000000
+	dc.l	$c0000000,$c0000000,$00000000
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$c0000000,$c0000000,$00000000
+	dc.l	$08000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_19_15
-	dc.w	1,15
+	dc.w	0,15
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$7fff0000,$00000000,$00000000
@@ -9639,7 +8839,7 @@ gv_19:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_19_16
-	dc.w	1,15
+	dc.w	0,15
 	dc.l	$00000000
 	dc.l	$80000000,$00000000,$00000000
 	dc.l	$7fff0000,$00000000,$00000000
@@ -9648,25 +8848,25 @@ gv_19:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_19_17
-	dc.w	1,15
+	dc.w	0,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$7fff0000,$ffffffff,$ffffffff
-	dc.l	$01002080,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_19_18
-	dc.w	1,15
-	dc.l	$00000000
-	dc.l	$ffff0000,$00000000,$00000000
 	dc.l	$7fff0000,$00000000,$00000000
 	dc.l	$7fff0000,$00000000,$00000000
 	dc.l	$02000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_19_18
+	dc.w	0,15
+	dc.l	$00000000
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$7fff0000,$ffffffff,$ffffffff
+	dc.l	$01002080,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_19_19
-	dc.w	1,15
+	dc.w	0,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$c0000000,$00000000
 	dc.l	$7fff0000,$00000000,$00000000
@@ -9675,7 +8875,7 @@ gv_19:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_19_20
-	dc.w	1,15
+	dc.w	0,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$a0000000,$00000000
 	dc.l	$7fff0000,$00000000,$00000000
@@ -9684,7 +8884,7 @@ gv_19:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_19_21
-	dc.w	1,15
+	dc.w	0,15
 	dc.l	$00000000
 	dc.l	$3fff0000,$80000000,$00000000
 	dc.l	$7fff0000,$00000000,$00000000
@@ -9693,7 +8893,7 @@ gv_19:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_19_22
-	dc.w	1,15
+	dc.w	0,15
 	dc.l	$00000000
 	dc.l	$c0000000,$c0000000,$00000000
 	dc.l	$7fff0000,$00000000,$00000000
@@ -9702,7 +8902,7 @@ gv_19:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_19_23
-	dc.w	1,15
+	dc.w	0,15
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffff0000,$00000000,$00000000
@@ -9711,7 +8911,7 @@ gv_19:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_19_24
-	dc.w	1,15
+	dc.w	0,15
 	dc.l	$00000000
 	dc.l	$80000000,$00000000,$00000000
 	dc.l	$ffff0000,$00000000,$00000000
@@ -9720,25 +8920,25 @@ gv_19:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_19_25
-	dc.w	1,15
+	dc.w	0,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$0a000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_19_26
-	dc.w	1,15
-	dc.l	$00000000
-	dc.l	$ffff0000,$00000000,$00000000
 	dc.l	$ffff0000,$00000000,$00000000
 	dc.l	$7fff0000,$ffffffff,$ffffffff
 	dc.l	$01002080,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_19_26
+	dc.w	0,15
+	dc.l	$00000000
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$0a000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_19_27
-	dc.w	1,15
+	dc.w	0,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$c0000000,$00000000
 	dc.l	$ffff0000,$00000000,$00000000
@@ -9747,7 +8947,7 @@ gv_19:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_19_28
-	dc.w	1,15
+	dc.w	0,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$a0000000,$00000000
 	dc.l	$ffff0000,$00000000,$00000000
@@ -9756,7 +8956,7 @@ gv_19:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_19_29
-	dc.w	1,15
+	dc.w	0,15
 	dc.l	$00000000
 	dc.l	$3fff0000,$80000000,$00000000
 	dc.l	$ffff0000,$00000000,$00000000
@@ -9765,7 +8965,7 @@ gv_19:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_19_30
-	dc.w	1,15
+	dc.w	0,15
 	dc.l	$00000000
 	dc.l	$c0000000,$c0000000,$00000000
 	dc.l	$ffff0000,$00000000,$00000000
@@ -9774,7 +8974,7 @@ gv_19:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_19_31
-	dc.w	1,15
+	dc.w	0,15
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$7fff0000,$c0000000,$00000000
@@ -9783,7 +8983,7 @@ gv_19:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_19_32
-	dc.w	1,15
+	dc.w	0,15
 	dc.l	$00000000
 	dc.l	$80000000,$00000000,$00000000
 	dc.l	$7fff0000,$c0000000,$00000000
@@ -9792,7 +8992,7 @@ gv_19:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_19_33
-	dc.w	1,15
+	dc.w	0,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$00000000,$00000000
 	dc.l	$7fff0000,$c0000000,$00000000
@@ -9801,7 +9001,7 @@ gv_19:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_19_34
-	dc.w	1,15
+	dc.w	0,15
 	dc.l	$00000000
 	dc.l	$ffff0000,$00000000,$00000000
 	dc.l	$7fff0000,$c0000000,$00000000
@@ -9810,7 +9010,7 @@ gv_19:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_19_35
-	dc.w	1,15
+	dc.w	0,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$c0000000,$00000000
 	dc.l	$7fff0000,$c0000000,$00000000
@@ -9819,7 +9019,7 @@ gv_19:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_19_36
-	dc.w	1,15
+	dc.w	0,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$a0000000,$00000000
 	dc.l	$7fff0000,$c0000000,$00000000
@@ -9828,7 +9028,7 @@ gv_19:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_19_37
-	dc.w	1,15
+	dc.w	0,15
 	dc.l	$00000000
 	dc.l	$3fff0000,$80000000,$00000000
 	dc.l	$7fff0000,$c0000000,$00000000
@@ -9837,7 +9037,7 @@ gv_19:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_19_38
-	dc.w	1,15
+	dc.w	0,15
 	dc.l	$00000000
 	dc.l	$c0000000,$c0000000,$00000000
 	dc.l	$7fff0000,$c0000000,$00000000
@@ -9846,7 +9046,7 @@ gv_19:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_19_39
-	dc.w	1,15
+	dc.w	0,15
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$7fff0000,$a0000000,$00000000
@@ -9855,7 +9055,7 @@ gv_19:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_19_40
-	dc.w	1,15
+	dc.w	0,15
 	dc.l	$00000000
 	dc.l	$80000000,$00000000,$00000000
 	dc.l	$7fff0000,$a0000000,$00000000
@@ -9864,7 +9064,7 @@ gv_19:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_19_41
-	dc.w	1,15
+	dc.w	0,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$00000000,$00000000
 	dc.l	$7fff0000,$a0000000,$00000000
@@ -9873,7 +9073,7 @@ gv_19:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_19_42
-	dc.w	1,15
+	dc.w	0,15
 	dc.l	$00000000
 	dc.l	$ffff0000,$00000000,$00000000
 	dc.l	$7fff0000,$a0000000,$00000000
@@ -9882,7 +9082,7 @@ gv_19:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_19_43
-	dc.w	1,15
+	dc.w	0,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$c0000000,$00000000
 	dc.l	$7fff0000,$a0000000,$00000000
@@ -9891,7 +9091,7 @@ gv_19:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_19_44
-	dc.w	1,15
+	dc.w	0,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$a0000000,$00000000
 	dc.l	$7fff0000,$a0000000,$00000000
@@ -9900,7 +9100,7 @@ gv_19:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_19_45
-	dc.w	1,15
+	dc.w	0,15
 	dc.l	$00000000
 	dc.l	$3fff0000,$80000000,$00000000
 	dc.l	$7fff0000,$a0000000,$00000000
@@ -9909,7 +9109,7 @@ gv_19:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_19_46
-	dc.w	1,15
+	dc.w	0,15
 	dc.l	$00000000
 	dc.l	$c0000000,$c0000000,$00000000
 	dc.l	$7fff0000,$a0000000,$00000000
@@ -9918,7 +9118,7 @@ gv_19:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_19_47
-	dc.w	1,15
+	dc.w	0,15
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$3fff0000,$80000000,$00000000
@@ -9927,7 +9127,7 @@ gv_19:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_19_48
-	dc.w	1,15
+	dc.w	0,15
 	dc.l	$00000000
 	dc.l	$80000000,$00000000,$00000000
 	dc.l	$3fff0000,$80000000,$00000000
@@ -9936,25 +9136,25 @@ gv_19:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_19_49
-	dc.w	1,15
+	dc.w	0,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$0a000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_19_50
-	dc.w	1,15
-	dc.l	$00000000
-	dc.l	$ffff0000,$00000000,$00000000
 	dc.l	$3fff0000,$80000000,$00000000
 	dc.l	$7fff0000,$00000000,$00000000
 	dc.l	$02000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_19_50
+	dc.w	0,15
+	dc.l	$00000000
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$0a000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_19_51
-	dc.w	1,15
+	dc.w	0,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$c0000000,$00000000
 	dc.l	$3fff0000,$80000000,$00000000
@@ -9963,7 +9163,7 @@ gv_19:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_19_52
-	dc.w	1,15
+	dc.w	0,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$a0000000,$00000000
 	dc.l	$3fff0000,$80000000,$00000000
@@ -9972,25 +9172,25 @@ gv_19:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_19_53
-	dc.w	1,15
+	dc.w	0,15
 	dc.l	$00000000
 	dc.l	$3fff0000,$80000000,$00000000
 	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$04000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_19_54
-	dc.w	1,15
-	dc.l	$00000000
-	dc.l	$c0000000,$c0000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$40010000,$80000000,$00000000
+	dc.l	$40000000,$80000000,$00000000
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_19_54
+	dc.w	0,15
+	dc.l	$00000000
+	dc.l	$c0000000,$c0000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$c0000000,$80000000,$00000000
+	dc.l	$08000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_19_55
-	dc.w	1,15
+	dc.w	0,15
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$c0000000,$c0000000,$00000000
@@ -9999,7 +9199,7 @@ gv_19:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_19_56
-	dc.w	1,15
+	dc.w	0,15
 	dc.l	$00000000
 	dc.l	$80000000,$00000000,$00000000
 	dc.l	$c0000000,$c0000000,$00000000
@@ -10008,25 +9208,25 @@ gv_19:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_19_57
-	dc.w	1,15
+	dc.w	0,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$c0000000,$c0000000,$00000000
-	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$0a000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_19_58
-	dc.w	1,15
-	dc.l	$00000000
-	dc.l	$ffff0000,$00000000,$00000000
 	dc.l	$c0000000,$c0000000,$00000000
 	dc.l	$7fff0000,$00000000,$00000000
 	dc.l	$02000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_19_58
+	dc.w	0,15
+	dc.l	$00000000
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$c0000000,$c0000000,$00000000
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$0a000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_19_59
-	dc.w	1,15
+	dc.w	0,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$c0000000,$00000000
 	dc.l	$c0000000,$c0000000,$00000000
@@ -10035,7 +9235,7 @@ gv_19:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_19_60
-	dc.w	1,15
+	dc.w	0,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$a0000000,$00000000
 	dc.l	$c0000000,$c0000000,$00000000
@@ -10044,243 +9244,423 @@ gv_19:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_19_61
-	dc.w	1,15
+	dc.w	0,15
 	dc.l	$00000000
 	dc.l	$3fff0000,$80000000,$00000000
 	dc.l	$c0000000,$c0000000,$00000000
-	dc.l	$c0010000,$80000000,$00000000
+	dc.l	$c0000000,$80000000,$00000000
 	dc.l	$08000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_19_62
-	dc.w	1,15
+	dc.w	0,15
 	dc.l	$00000000
 	dc.l	$c0000000,$c0000000,$00000000
 	dc.l	$c0000000,$c0000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$04000000,$ffffffff
+	dc.l	$c0010000,$c0000000,$00000000
+	dc.l	$08000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_19_63
-	dc.w	1,15
+	dc.w	0,15
 	dc.l	$00000000
-	dc.l	$3fbe0000,$80000000,$00000000
+	dc.l	$3fbf0000,$80000000,$00000000
 	dc.l	$3fff0000,$80000000,$00000000
 	dc.l	$3fff0000,$80000000,$00000000
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_19_64
-	dc.w	1,15
+	dc.w	0,15
 	dc.l	$00000010
-	dc.l	$3fbe0000,$80000000,$00000000
+	dc.l	$3fbf0000,$80000000,$00000000
 	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3ffe0000,$ffffffff,$ffffffff
+	dc.l	$3fff0000,$80000000,$00000000
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_19_65
-	dc.w	1,15
+	dc.w	0,15
 	dc.l	$00000020
-	dc.l	$3fbe0000,$80000000,$00000000
+	dc.l	$3fbf0000,$80000000,$00000000
 	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3ffe0000,$ffffffff,$ffffffff
+	dc.l	$3fff0000,$80000000,$00000000
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_19_66
-	dc.w	1,15
+	dc.w	0,15
 	dc.l	$00000030
-	dc.l	$3fbe0000,$80000000,$00000000
+	dc.l	$3fbf0000,$80000000,$00000000
 	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000001
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_19_67
-	dc.w	1,15
+	dc.w	0,15
 	dc.l	$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$04000000,$ffffffff
+	dc.l	$3fbf0000,$80000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000001
+	dc.l	$3fff0000,$80000000,$00000002
+	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_19_68
-	dc.w	1,15
+	dc.w	0,15
 	dc.l	$00000010
+	dc.l	$3fbf0000,$80000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000001
+	dc.l	$3fff0000,$80000000,$00000001
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_19_69
+	dc.w	0,15
+	dc.l	$00000020
+	dc.l	$3fbf0000,$80000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000001
+	dc.l	$3fff0000,$80000000,$00000001
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_19_70
+	dc.w	0,15
+	dc.l	$00000030
+	dc.l	$3fbf0000,$80000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000001
+	dc.l	$3fff0000,$80000000,$00000002
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_19_71
+	dc.w	0,15
+	dc.l	$00000040
+	dc.l	$3fe70000,$80000000,$00000000
 	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_19_72
+	dc.w	0,15
+	dc.l	$00000050
+	dc.l	$3fe70000,$80000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_19_73
+	dc.w	0,15
+	dc.l	$00000060
+	dc.l	$3fe70000,$80000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_19_74
+	dc.w	0,15
+	dc.l	$00000070
+	dc.l	$3fe70000,$80000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3fff0000,$80000100,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_19_75
+	dc.w	0,15
+	dc.l	$00000080
+	dc.l	$3fca0000,$80000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_19_76
+	dc.w	0,15
+	dc.l	$00000090
+	dc.l	$3fca0000,$80000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_19_77
+	dc.w	0,15
+	dc.l	$000000a0
+	dc.l	$3fca0000,$80000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_19_78
+	dc.w	0,15
+	dc.l	$000000b0
+	dc.l	$3fca0000,$80000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000800
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_19_79
+	dc.w	0,15
+	dc.l	$00000000
+	dc.l	$3fbe0000,$c0000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_19_80
+	dc.w	0,15
+	dc.l	$00000010
+	dc.l	$3fbe0000,$c0000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_19_81
+	dc.w	0,15
+	dc.l	$00000020
+	dc.l	$3fbe0000,$c0000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_19_82
+	dc.w	0,15
+	dc.l	$00000030
+	dc.l	$3fbe0000,$c0000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000001
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_19_83
+	dc.w	0,15
+	dc.l	$00000000
+	dc.l	$bfff0000,$80000000,$00000000
 	dc.l	$3fff0000,$80000000,$00000000
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$04000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_19_69
-	dc.w	1,15
-	dc.l	$00000020
+	dc.l	wy_19_84
+	dc.w	0,15
+	dc.l	$00000010
+	dc.l	$bfff0000,$80000000,$00000000
 	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$04000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_19_85
+	dc.w	0,15
+	dc.l	$00000020
+	dc.l	$bfff0000,$80000000,$00000000
 	dc.l	$3fff0000,$80000000,$00000000
 	dc.l	$80000000,$00000000,$00000000
 	dc.l	$0c000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_19_70
-	dc.w	1,15
+	dc.l	wy_19_86
+	dc.w	0,15
 	dc.l	$00000030
-	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$bfff0000,$80000000,$00000000
 	dc.l	$3fff0000,$80000000,$00000000
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$04000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_19_71
-	dc.w	1,3
-	dc.l	$00000000
-	dc.l	$fffe0000,$ffffffff,$ffffffff
-	dc.l	$7ffe0000,$ffffffff,$ffffffff
-	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$02001248,$fffffdd7
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_19_72
-	dc.w	1,3
-	dc.l	$00000010
-	dc.l	$fffe0000,$ffffffff,$ffffffff
-	dc.l	$7ffe0000,$ffffffff,$ffffffff
-	dc.l	$7ffe0000,$ffffffff,$ffffffff
-	dc.l	$00001248,$fffffdd7
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_19_73
-	dc.w	1,3
-	dc.l	$00000020
-	dc.l	$fffe0000,$ffffffff,$ffffffff
-	dc.l	$7ffe0000,$ffffffff,$ffffffff
-	dc.l	$7ffe0000,$ffffffff,$ffffffff
-	dc.l	$00001248,$fffffdd7
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_19_74
-	dc.w	1,3
-	dc.l	$00000030
-	dc.l	$fffe0000,$ffffffff,$ffffffff
-	dc.l	$7ffe0000,$ffffffff,$ffffffff
-	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$02001248,$fffffdd7
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_19_75
-	dc.w	1,15
-	dc.l	$00000000
-	dc.l	$3ffe0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaaa
-	dc.l	$00000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_19_76
-	dc.w	1,15
-	dc.l	$00000040
-	dc.l	$3ffe0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3ffd0000,$aaaaab00,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_19_77
-	dc.w	1,15
-	dc.l	$00000080
-	dc.l	$3ffe0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaa800
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_19_78
-	dc.w	1,15
-	dc.l	$00000010
-	dc.l	$3ffe0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaaa
-	dc.l	$00000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_19_79
-	dc.w	1,15
-	dc.l	$00000050
-	dc.l	$3ffe0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3ffd0000,$aaaaaa00,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_19_80
-	dc.w	1,15
-	dc.l	$00000090
-	dc.l	$3ffe0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaa800
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_19_81
-	dc.w	1,15
-	dc.l	$00000020
-	dc.l	$3ffe0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaaa
-	dc.l	$00000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_19_82
-	dc.w	1,15
-	dc.l	$00000060
-	dc.l	$3ffe0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3ffd0000,$aaaaaa00,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_19_83
-	dc.w	1,15
-	dc.l	$000000a0
-	dc.l	$3ffe0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaa800
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_19_84
-	dc.w	1,15
-	dc.l	$00000030
-	dc.l	$3ffe0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaaa
-	dc.l	$00000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_19_85
-	dc.w	1,15
-	dc.l	$00000070
-	dc.l	$3ffe0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3ffd0000,$aaaaab00,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_19_86
-	dc.w	1,15
-	dc.l	$000000b0
-	dc.l	$3ffe0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaab000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_19_87
+	dc.w	0,3
+	dc.l	$00000000
+	dc.l	$7ffe0000,$ffffffff,$ffffffff
+	dc.l	$7ffe0000,$ffffffff,$ffffffff
+	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$02001248,$fffffdd7
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_19_88
+	dc.w	0,3
+	dc.l	$00000010
+	dc.l	$7ffe0000,$ffffffff,$ffffffff
+	dc.l	$7ffe0000,$ffffffff,$ffffffff
+	dc.l	$7ffe0000,$ffffffff,$ffffffff
+	dc.l	$00001248,$fffffdd7
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_19_89
+	dc.w	0,3
+	dc.l	$00000020
+	dc.l	$7ffe0000,$ffffffff,$ffffffff
+	dc.l	$7ffe0000,$ffffffff,$ffffffff
+	dc.l	$7ffe0000,$ffffffff,$ffffffff
+	dc.l	$00001248,$fffffdd7
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_19_90
+	dc.w	0,3
+	dc.l	$00000030
+	dc.l	$7ffe0000,$ffffffff,$ffffffff
+	dc.l	$7ffe0000,$ffffffff,$ffffffff
+	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$02001248,$fffffdd7
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_19_91
+	dc.w	0,3
+	dc.l	$00000000
+	dc.l	$fffe0000,$ffffffff,$ffffffff
+	dc.l	$fffe0000,$ffffffff,$ffffffff
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$0a001248,$fffffdd7
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_19_92
+	dc.w	0,3
+	dc.l	$00000010
+	dc.l	$fffe0000,$ffffffff,$ffffffff
+	dc.l	$fffe0000,$ffffffff,$ffffffff
+	dc.l	$fffe0000,$ffffffff,$ffffffff
+	dc.l	$08001248,$fffffdd7
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_19_93
+	dc.w	0,3
+	dc.l	$00000020
+	dc.l	$fffe0000,$ffffffff,$ffffffff
+	dc.l	$fffe0000,$ffffffff,$ffffffff
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$0a001248,$fffffdd7
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_19_94
+	dc.w	0,3
+	dc.l	$00000030
+	dc.l	$fffe0000,$ffffffff,$ffffffff
+	dc.l	$fffe0000,$ffffffff,$ffffffff
+	dc.l	$fffe0000,$ffffffff,$ffffffff
+	dc.l	$08001248,$fffffdd7
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_19_95
+	dc.w	0,15
+	dc.l	$00000000
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$3ffe0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_19_96
+	dc.w	0,15
+	dc.l	$00000040
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$3ffe0000,$aaaaab00,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_19_97
+	dc.w	0,15
+	dc.l	$00000080
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$3ffe0000,$aaaaaaaa,$aaaaa800
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_19_98
+	dc.w	0,15
+	dc.l	$00000010
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$3ffe0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_19_99
+	dc.w	0,15
+	dc.l	$00000050
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$3ffe0000,$aaaaaa00,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_19_100
+	dc.w	0,15
+	dc.l	$00000090
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$3ffe0000,$aaaaaaaa,$aaaaa800
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_19_101
+	dc.w	0,15
+	dc.l	$00000020
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$3ffe0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_19_102
+	dc.w	0,15
+	dc.l	$00000060
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$3ffe0000,$aaaaaa00,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_19_103
+	dc.w	0,15
+	dc.l	$000000a0
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$3ffe0000,$aaaaaaaa,$aaaaa800
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_19_104
+	dc.w	0,15
+	dc.l	$00000030
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$3ffe0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_19_105
+	dc.w	0,15
+	dc.l	$00000070
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$3ffe0000,$aaaaab00,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_19_106
+	dc.w	0,15
+	dc.l	$000000b0
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$3ffe0000,$aaaaaaaa,$aaaab000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_19_107
 	cnop	0,4
 gv_20:
-	dc.w	2,15
+	dc.w	1,15
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$00000000,$00000000,$00000000
@@ -10289,34 +9669,34 @@ gv_20:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_20_0
-	dc.w	2,15
+	dc.w	1,15
 	dc.l	$00000000
 	dc.l	$80000000,$00000000,$00000000
 	dc.l	$00000000,$00000000,$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$0c000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$04000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_20_1
-	dc.w	2,15
+	dc.w	1,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$00000000,$00000000
 	dc.l	$00000000,$00000000,$00000000
-	dc.l	$7fff0000,$ffffffff,$ffffffff
-	dc.l	$01002080,$ffffffff
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$0a000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_20_2
-	dc.w	2,15
+	dc.w	1,15
 	dc.l	$00000000
 	dc.l	$ffff0000,$00000000,$00000000
 	dc.l	$00000000,$00000000,$00000000
-	dc.l	$7fff0000,$ffffffff,$ffffffff
-	dc.l	$01002080,$ffffffff
+	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$02000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_20_3
-	dc.w	2,15
+	dc.w	1,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$c0000000,$00000000
 	dc.l	$00000000,$00000000,$00000000
@@ -10325,7 +9705,7 @@ gv_20:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_20_4
-	dc.w	2,15
+	dc.w	1,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$a0000000,$00000000
 	dc.l	$00000000,$00000000,$00000000
@@ -10334,25 +9714,25 @@ gv_20:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_20_5
-	dc.w	2,15
+	dc.w	1,15
 	dc.l	$00000000
 	dc.l	$3fff0000,$80000000,$00000000
 	dc.l	$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$04000000,$ffffffff
+	dc.l	$bfff0000,$80000000,$00000000
+	dc.l	$08000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_20_6
-	dc.w	2,15
+	dc.w	1,15
 	dc.l	$00000000
 	dc.l	$c0000000,$c0000000,$00000000
 	dc.l	$00000000,$00000000,$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$0c000000,$ffffffff
+	dc.l	$40000000,$c0000000,$00000000
+	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_20_7
-	dc.w	2,15
+	dc.w	1,15
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$80000000,$00000000,$00000000
@@ -10361,7 +9741,7 @@ gv_20:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_20_8
-	dc.w	2,15
+	dc.w	1,15
 	dc.l	$00000000
 	dc.l	$80000000,$00000000,$00000000
 	dc.l	$80000000,$00000000,$00000000
@@ -10370,25 +9750,25 @@ gv_20:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_20_9
-	dc.w	2,15
+	dc.w	1,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$00000000,$00000000
 	dc.l	$80000000,$00000000,$00000000
-	dc.l	$7fff0000,$ffffffff,$ffffffff
-	dc.l	$01002080,$ffffffff
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$0a000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_20_10
-	dc.w	2,15
+	dc.w	1,15
 	dc.l	$00000000
 	dc.l	$ffff0000,$00000000,$00000000
 	dc.l	$80000000,$00000000,$00000000
-	dc.l	$7fff0000,$ffffffff,$ffffffff
-	dc.l	$01002080,$ffffffff
+	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$02000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_20_11
-	dc.w	2,15
+	dc.w	1,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$c0000000,$00000000
 	dc.l	$80000000,$00000000,$00000000
@@ -10397,7 +9777,7 @@ gv_20:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_20_12
-	dc.w	2,15
+	dc.w	1,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$a0000000,$00000000
 	dc.l	$80000000,$00000000,$00000000
@@ -10406,61 +9786,61 @@ gv_20:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_20_13
-	dc.w	2,15
+	dc.w	1,15
 	dc.l	$00000000
 	dc.l	$3fff0000,$80000000,$00000000
 	dc.l	$80000000,$00000000,$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$0c000000,$ffffffff
+	dc.l	$bfff0000,$80000000,$00000000
+	dc.l	$08000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_20_14
-	dc.w	2,15
+	dc.w	1,15
 	dc.l	$00000000
 	dc.l	$c0000000,$c0000000,$00000000
 	dc.l	$80000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$04000000,$ffffffff
+	dc.l	$40000000,$c0000000,$00000000
+	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_20_15
-	dc.w	2,15
+	dc.w	1,15
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
-	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$7fff0000,$ffffffff,$ffffffff
-	dc.l	$01002080,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_20_16
-	dc.w	2,15
-	dc.l	$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$7fff0000,$ffffffff,$ffffffff
-	dc.l	$01002080,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_20_17
-	dc.w	2,15
-	dc.l	$00000000
-	dc.l	$7fff0000,$00000000,$00000000
 	dc.l	$7fff0000,$00000000,$00000000
 	dc.l	$7fff0000,$00000000,$00000000
 	dc.l	$02000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_20_16
+	dc.w	1,15
+	dc.l	$00000000
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$02000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_20_17
+	dc.w	1,15
+	dc.l	$00000000
+	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$7fff0000,$ffffffff,$ffffffff
+	dc.l	$01002080,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_20_18
-	dc.w	2,15
+	dc.w	1,15
 	dc.l	$00000000
 	dc.l	$ffff0000,$00000000,$00000000
 	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$0a000000,$ffffffff
+	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$02000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_20_19
-	dc.w	2,15
+	dc.w	1,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$c0000000,$00000000
 	dc.l	$7fff0000,$00000000,$00000000
@@ -10469,7 +9849,7 @@ gv_20:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_20_20
-	dc.w	2,15
+	dc.w	1,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$a0000000,$00000000
 	dc.l	$7fff0000,$00000000,$00000000
@@ -10478,7 +9858,7 @@ gv_20:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_20_21
-	dc.w	2,15
+	dc.w	1,15
 	dc.l	$00000000
 	dc.l	$3fff0000,$80000000,$00000000
 	dc.l	$7fff0000,$00000000,$00000000
@@ -10487,34 +9867,34 @@ gv_20:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_20_22
-	dc.w	2,15
+	dc.w	1,15
 	dc.l	$00000000
 	dc.l	$c0000000,$c0000000,$00000000
 	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$02000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_20_23
+	dc.w	1,15
+	dc.l	$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffff0000,$00000000,$00000000
 	dc.l	$ffff0000,$00000000,$00000000
 	dc.l	$0a000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_20_23
-	dc.w	2,15
-	dc.l	$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$7fff0000,$ffffffff,$ffffffff
-	dc.l	$01002080,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_20_24
-	dc.w	2,15
+	dc.w	1,15
 	dc.l	$00000000
 	dc.l	$80000000,$00000000,$00000000
 	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$7fff0000,$ffffffff,$ffffffff
-	dc.l	$01002080,$ffffffff
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$0a000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_20_25
-	dc.w	2,15
+	dc.w	1,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$00000000,$00000000
 	dc.l	$ffff0000,$00000000,$00000000
@@ -10523,16 +9903,16 @@ gv_20:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_20_26
-	dc.w	2,15
+	dc.w	1,15
 	dc.l	$00000000
 	dc.l	$ffff0000,$00000000,$00000000
 	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$02000000,$ffffffff
+	dc.l	$7fff0000,$ffffffff,$ffffffff
+	dc.l	$01002080,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_20_27
-	dc.w	2,15
+	dc.w	1,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$c0000000,$00000000
 	dc.l	$ffff0000,$00000000,$00000000
@@ -10541,7 +9921,7 @@ gv_20:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_20_28
-	dc.w	2,15
+	dc.w	1,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$a0000000,$00000000
 	dc.l	$ffff0000,$00000000,$00000000
@@ -10550,7 +9930,7 @@ gv_20:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_20_29
-	dc.w	2,15
+	dc.w	1,15
 	dc.l	$00000000
 	dc.l	$3fff0000,$80000000,$00000000
 	dc.l	$ffff0000,$00000000,$00000000
@@ -10559,16 +9939,16 @@ gv_20:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_20_30
-	dc.w	2,15
+	dc.w	1,15
 	dc.l	$00000000
 	dc.l	$c0000000,$c0000000,$00000000
 	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$02000000,$ffffffff
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$0a000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_20_31
-	dc.w	2,15
+	dc.w	1,15
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$7fff0000,$c0000000,$00000000
@@ -10577,7 +9957,7 @@ gv_20:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_20_32
-	dc.w	2,15
+	dc.w	1,15
 	dc.l	$00000000
 	dc.l	$80000000,$00000000,$00000000
 	dc.l	$7fff0000,$c0000000,$00000000
@@ -10586,7 +9966,7 @@ gv_20:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_20_33
-	dc.w	2,15
+	dc.w	1,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$00000000,$00000000
 	dc.l	$7fff0000,$c0000000,$00000000
@@ -10595,7 +9975,7 @@ gv_20:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_20_34
-	dc.w	2,15
+	dc.w	1,15
 	dc.l	$00000000
 	dc.l	$ffff0000,$00000000,$00000000
 	dc.l	$7fff0000,$c0000000,$00000000
@@ -10604,7 +9984,7 @@ gv_20:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_20_35
-	dc.w	2,15
+	dc.w	1,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$c0000000,$00000000
 	dc.l	$7fff0000,$c0000000,$00000000
@@ -10613,7 +9993,7 @@ gv_20:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_20_36
-	dc.w	2,15
+	dc.w	1,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$a0000000,$00000000
 	dc.l	$7fff0000,$c0000000,$00000000
@@ -10622,7 +10002,7 @@ gv_20:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_20_37
-	dc.w	2,15
+	dc.w	1,15
 	dc.l	$00000000
 	dc.l	$3fff0000,$80000000,$00000000
 	dc.l	$7fff0000,$c0000000,$00000000
@@ -10631,7 +10011,7 @@ gv_20:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_20_38
-	dc.w	2,15
+	dc.w	1,15
 	dc.l	$00000000
 	dc.l	$c0000000,$c0000000,$00000000
 	dc.l	$7fff0000,$c0000000,$00000000
@@ -10640,7 +10020,7 @@ gv_20:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_20_39
-	dc.w	2,15
+	dc.w	1,15
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$7fff0000,$a0000000,$00000000
@@ -10649,7 +10029,7 @@ gv_20:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_20_40
-	dc.w	2,15
+	dc.w	1,15
 	dc.l	$00000000
 	dc.l	$80000000,$00000000,$00000000
 	dc.l	$7fff0000,$a0000000,$00000000
@@ -10658,7 +10038,7 @@ gv_20:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_20_41
-	dc.w	2,15
+	dc.w	1,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$00000000,$00000000
 	dc.l	$7fff0000,$a0000000,$00000000
@@ -10667,7 +10047,7 @@ gv_20:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_20_42
-	dc.w	2,15
+	dc.w	1,15
 	dc.l	$00000000
 	dc.l	$ffff0000,$00000000,$00000000
 	dc.l	$7fff0000,$a0000000,$00000000
@@ -10676,7 +10056,7 @@ gv_20:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_20_43
-	dc.w	2,15
+	dc.w	1,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$c0000000,$00000000
 	dc.l	$7fff0000,$a0000000,$00000000
@@ -10685,7 +10065,7 @@ gv_20:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_20_44
-	dc.w	2,15
+	dc.w	1,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$a0000000,$00000000
 	dc.l	$7fff0000,$a0000000,$00000000
@@ -10694,7 +10074,7 @@ gv_20:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_20_45
-	dc.w	2,15
+	dc.w	1,15
 	dc.l	$00000000
 	dc.l	$3fff0000,$80000000,$00000000
 	dc.l	$7fff0000,$a0000000,$00000000
@@ -10703,7 +10083,7 @@ gv_20:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_20_46
-	dc.w	2,15
+	dc.w	1,15
 	dc.l	$00000000
 	dc.l	$c0000000,$c0000000,$00000000
 	dc.l	$7fff0000,$a0000000,$00000000
@@ -10712,43 +10092,43 @@ gv_20:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_20_47
-	dc.w	2,15
+	dc.w	1,15
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$04000000,$ffffffff
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_20_48
-	dc.w	2,15
+	dc.w	1,15
 	dc.l	$00000000
 	dc.l	$80000000,$00000000,$00000000
 	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$0c000000,$ffffffff
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_20_49
-	dc.w	2,15
+	dc.w	1,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$02000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_20_50
-	dc.w	2,15
-	dc.l	$00000000
-	dc.l	$ffff0000,$00000000,$00000000
 	dc.l	$3fff0000,$80000000,$00000000
 	dc.l	$ffff0000,$00000000,$00000000
 	dc.l	$0a000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_20_50
+	dc.w	1,15
+	dc.l	$00000000
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$02000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_20_51
-	dc.w	2,15
+	dc.w	1,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$c0000000,$00000000
 	dc.l	$3fff0000,$80000000,$00000000
@@ -10757,7 +10137,7 @@ gv_20:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_20_52
-	dc.w	2,15
+	dc.w	1,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$a0000000,$00000000
 	dc.l	$3fff0000,$80000000,$00000000
@@ -10766,43 +10146,43 @@ gv_20:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_20_53
-	dc.w	2,15
+	dc.w	1,15
 	dc.l	$00000000
 	dc.l	$3fff0000,$80000000,$00000000
 	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$00000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_20_54
-	dc.w	2,15
-	dc.l	$00000000
-	dc.l	$c0000000,$c0000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$c0000000,$c0000000,$00000000
-	dc.l	$08000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_20_55
-	dc.w	2,15
-	dc.l	$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$c0000000,$c0000000,$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$0c000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_20_56
-	dc.w	2,15
-	dc.l	$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$c0000000,$c0000000,$00000000
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$04000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_20_54
+	dc.w	1,15
+	dc.l	$00000000
+	dc.l	$c0000000,$c0000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$40010000,$80000000,$00000000
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_20_55
+	dc.w	1,15
+	dc.l	$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$c0000000,$c0000000,$00000000
+	dc.l	$c0000000,$c0000000,$00000000
+	dc.l	$08000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_20_56
+	dc.w	1,15
+	dc.l	$00000000
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$c0000000,$c0000000,$00000000
+	dc.l	$c0000000,$c0000000,$00000000
+	dc.l	$08000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_20_57
-	dc.w	2,15
+	dc.w	1,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$00000000,$00000000
 	dc.l	$c0000000,$c0000000,$00000000
@@ -10811,7 +10191,7 @@ gv_20:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_20_58
-	dc.w	2,15
+	dc.w	1,15
 	dc.l	$00000000
 	dc.l	$ffff0000,$00000000,$00000000
 	dc.l	$c0000000,$c0000000,$00000000
@@ -10820,7 +10200,7 @@ gv_20:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_20_59
-	dc.w	2,15
+	dc.w	1,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$c0000000,$00000000
 	dc.l	$c0000000,$c0000000,$00000000
@@ -10829,7 +10209,7 @@ gv_20:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_20_60
-	dc.w	2,15
+	dc.w	1,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$a0000000,$00000000
 	dc.l	$c0000000,$c0000000,$00000000
@@ -10838,387 +10218,279 @@ gv_20:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_20_61
-	dc.w	2,15
+	dc.w	1,15
 	dc.l	$00000000
 	dc.l	$3fff0000,$80000000,$00000000
 	dc.l	$c0000000,$c0000000,$00000000
-	dc.l	$c0000000,$c0000000,$00000000
+	dc.l	$c0010000,$80000000,$00000000
 	dc.l	$08000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_20_62
-	dc.w	2,15
+	dc.w	1,15
 	dc.l	$00000000
 	dc.l	$c0000000,$c0000000,$00000000
 	dc.l	$c0000000,$c0000000,$00000000
-	dc.l	$40020000,$90000000,$00000000
-	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$04000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_20_63
-	dc.w	2,15
+	dc.w	1,15
 	dc.l	$00000000
-	dc.l	$3fff0000,$80000000,$80000000
-	dc.l	$3fff0000,$80000000,$80000000
-	dc.l	$3fff0000,$80000001,$00000000
+	dc.l	$3fbe0000,$80000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_20_64
-	dc.w	2,15
+	dc.w	1,15
 	dc.l	$00000010
-	dc.l	$3fff0000,$80000000,$80000000
-	dc.l	$3fff0000,$80000000,$80000000
-	dc.l	$3fff0000,$80000001,$00000000
+	dc.l	$3fbe0000,$80000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3ffe0000,$ffffffff,$ffffffff
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_20_65
-	dc.w	2,15
+	dc.w	1,15
 	dc.l	$00000020
-	dc.l	$3fff0000,$80000000,$80000000
-	dc.l	$3fff0000,$80000000,$80000000
-	dc.l	$3fff0000,$80000001,$00000000
+	dc.l	$3fbe0000,$80000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3ffe0000,$ffffffff,$ffffffff
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_20_66
-	dc.w	2,15
+	dc.w	1,15
 	dc.l	$00000030
-	dc.l	$3fff0000,$80000000,$80000000
-	dc.l	$3fff0000,$80000000,$80000000
-	dc.l	$3fff0000,$80000001,$00000001
+	dc.l	$3fbe0000,$80000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_20_67
-	dc.w	2,15
-	dc.l	$00000040
-	dc.l	$3fff0000,$80080000,$00000000
-	dc.l	$3fff0000,$80080000,$00000000
-	dc.l	$3fff0000,$80100000,$00000000
-	dc.l	$00000208,$ffffffff
+	dc.w	1,15
+	dc.l	$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$04000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_20_68
-	dc.w	2,15
-	dc.l	$00000050
-	dc.l	$3fff0000,$80080000,$00000000
-	dc.l	$3fff0000,$80080000,$00000000
-	dc.l	$3fff0000,$80100000,$00000000
-	dc.l	$00000208,$ffffffff
+	dc.w	1,15
+	dc.l	$00000010
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$04000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_20_69
-	dc.w	2,15
-	dc.l	$00000060
-	dc.l	$3fff0000,$80080000,$00000000
-	dc.l	$3fff0000,$80080000,$00000000
-	dc.l	$3fff0000,$80100000,$00000000
-	dc.l	$00000208,$ffffffff
+	dc.w	1,15
+	dc.l	$00000020
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$0c000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_20_70
-	dc.w	2,15
-	dc.l	$00000070
-	dc.l	$3fff0000,$80080000,$00000000
-	dc.l	$3fff0000,$80080000,$00000000
-	dc.l	$3fff0000,$80100100,$00000000
-	dc.l	$00000208,$ffffffff
+	dc.w	1,15
+	dc.l	$00000030
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$04000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_20_71
-	dc.w	2,15
+	dc.w	1,3
 	dc.l	$00000000
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$40000000,$c0000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$00000208,$ffffffff
+	dc.l	$fffe0000,$ffffffff,$ffffffff
+	dc.l	$7ffe0000,$ffffffff,$ffffffff
+	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$02001248,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_20_72
-	dc.w	2,15
-	dc.l	$00000040
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$40000000,$c0000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$00000208,$ffffffff
+	dc.w	1,3
+	dc.l	$00000010
+	dc.l	$fffe0000,$ffffffff,$ffffffff
+	dc.l	$7ffe0000,$ffffffff,$ffffffff
+	dc.l	$7ffe0000,$ffffffff,$ffffffff
+	dc.l	$00001248,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_20_73
-	dc.w	2,15
-	dc.l	$00000080
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$40000000,$c0000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$00000208,$ffffffff
+	dc.w	1,3
+	dc.l	$00000020
+	dc.l	$fffe0000,$ffffffff,$ffffffff
+	dc.l	$7ffe0000,$ffffffff,$ffffffff
+	dc.l	$7ffe0000,$ffffffff,$ffffffff
+	dc.l	$00001248,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_20_74
-	dc.w	2,15
-	dc.l	$00000010
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$40000000,$c0000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$00000208,$ffffffff
+	dc.w	1,3
+	dc.l	$00000030
+	dc.l	$fffe0000,$ffffffff,$ffffffff
+	dc.l	$7ffe0000,$ffffffff,$ffffffff
+	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$02001248,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_20_75
-	dc.w	2,15
-	dc.l	$00000050
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$40000000,$c0000000,$00000000
+	dc.w	1,15
+	dc.l	$00000000
+	dc.l	$3ffe0000,$aaaaaaaa,$aaaaaaab
 	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$00000208,$ffffffff
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaaa
+	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_20_76
-	dc.w	2,15
-	dc.l	$00000090
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$40000000,$c0000000,$00000000
+	dc.w	1,15
+	dc.l	$00000040
+	dc.l	$3ffe0000,$aaaaaaaa,$aaaaaaab
 	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3ffd0000,$aaaaab00,$00000000
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_20_77
-	dc.w	2,15
-	dc.l	$00000020
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$40000000,$c0000000,$00000000
+	dc.w	1,15
+	dc.l	$00000080
+	dc.l	$3ffe0000,$aaaaaaaa,$aaaaaaab
 	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaa800
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_20_78
-	dc.w	2,15
-	dc.l	$00000060
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$40000000,$c0000000,$00000000
+	dc.w	1,15
+	dc.l	$00000010
+	dc.l	$3ffe0000,$aaaaaaaa,$aaaaaaab
 	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$00000208,$ffffffff
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaaa
+	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_20_79
-	dc.w	2,15
-	dc.l	$000000a0
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$40000000,$c0000000,$00000000
+	dc.w	1,15
+	dc.l	$00000050
+	dc.l	$3ffe0000,$aaaaaaaa,$aaaaaaab
 	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3ffd0000,$aaaaaa00,$00000000
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_20_80
-	dc.w	2,15
-	dc.l	$00000030
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$40000000,$c0000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000001
+	dc.w	1,15
+	dc.l	$00000090
+	dc.l	$3ffe0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaa800
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_20_81
-	dc.w	2,15
-	dc.l	$00000070
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$40000000,$c0000000,$00000000
-	dc.l	$3fff0000,$80000100,$00000000
-	dc.l	$00000208,$ffffffff
+	dc.w	1,15
+	dc.l	$00000020
+	dc.l	$3ffe0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaaa
+	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_20_82
-	dc.w	2,15
-	dc.l	$000000b0
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$40000000,$c0000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000800
+	dc.w	1,15
+	dc.l	$00000060
+	dc.l	$3ffe0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3ffd0000,$aaaaaa00,$00000000
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_20_83
-	dc.w	2,3
-	dc.l	$00000000
-	dc.l	$7e7f0000,$80000000,$00000000
-	dc.l	$7e7f0000,$80000000,$00000000
-	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$02001248,$fffffdd7
+	dc.w	1,15
+	dc.l	$000000a0
+	dc.l	$3ffe0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaa800
+	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_20_84
-	dc.w	2,3
-	dc.l	$00000010
-	dc.l	$7e7f0000,$80000000,$00000000
-	dc.l	$7e7f0000,$80000000,$00000000
-	dc.l	$7ffe0000,$ffffffff,$ffffffff
-	dc.l	$00001248,$fffffdd7
+	dc.w	1,15
+	dc.l	$00000030
+	dc.l	$3ffe0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaaa
+	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_20_85
-	dc.w	2,3
-	dc.l	$00000020
-	dc.l	$7e7f0000,$80000000,$00000000
-	dc.l	$7e7f0000,$80000000,$00000000
-	dc.l	$7ffe0000,$ffffffff,$ffffffff
-	dc.l	$00001248,$fffffdd7
+	dc.w	1,15
+	dc.l	$00000070
+	dc.l	$3ffe0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3ffd0000,$aaaaab00,$00000000
+	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_20_86
-	dc.w	2,3
-	dc.l	$00000030
-	dc.l	$7e7f0000,$80000000,$00000000
-	dc.l	$7e7f0000,$80000000,$00000000
-	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$02001248,$fffffdd7
+	dc.w	1,15
+	dc.l	$000000b0
+	dc.l	$3ffe0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaab000
+	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_20_87
-	dc.w	2,3
-	dc.l	$00000000
-	dc.l	$fe7f0000,$80000000,$00000000
-	dc.l	$7e7f0000,$80000000,$00000000
-	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$0a001248,$fffffdd7
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_20_88
-	dc.w	2,3
-	dc.l	$00000010
-	dc.l	$fe7f0000,$80000000,$00000000
-	dc.l	$7e7f0000,$80000000,$00000000
-	dc.l	$fffe0000,$ffffffff,$ffffffff
-	dc.l	$08001248,$fffffdd7
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_20_89
-	dc.w	2,3
-	dc.l	$00000020
-	dc.l	$fe7f0000,$80000000,$00000000
-	dc.l	$7e7f0000,$80000000,$00000000
-	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$0a001248,$fffffdd7
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_20_90
-	dc.w	2,3
-	dc.l	$00000030
-	dc.l	$fe7f0000,$80000000,$00000000
-	dc.l	$7e7f0000,$80000000,$00000000
-	dc.l	$fffe0000,$ffffffff,$ffffffff
-	dc.l	$08001248,$fffffdd7
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_20_91
-	dc.w	2,3
-	dc.l	$00000000
-	dc.l	$18ef0000,$80000000,$00000000
-	dc.l	$18ef0000,$80000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$04000a28,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_20_92
-	dc.w	2,3
-	dc.l	$00000000
-	dc.l	$98ef0000,$80000000,$00000000
-	dc.l	$18ef0000,$80000000,$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$0c000a28,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_20_93
-	dc.w	2,3
-	dc.l	$00000010
-	dc.l	$18ef0000,$80000000,$00000000
-	dc.l	$18ef0000,$80000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$04000a28,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_20_94
-	dc.w	2,3
-	dc.l	$00000010
-	dc.l	$98ef0000,$80000000,$00000000
-	dc.l	$18ef0000,$80000000,$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$0c000a28,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_20_95
-	dc.w	2,3
-	dc.l	$00000020
-	dc.l	$18ef0000,$80000000,$00000000
-	dc.l	$18ef0000,$80000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$04000a28,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_20_96
-	dc.w	2,3
-	dc.l	$00000020
-	dc.l	$98ef0000,$80000000,$00000000
-	dc.l	$18ef0000,$80000000,$00000000
-	dc.l	$80000000,$00000000,$00000001
-	dc.l	$08000a28,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_20_97
-	dc.w	2,3
-	dc.l	$00000030
-	dc.l	$18ef0000,$80000000,$00000000
-	dc.l	$18ef0000,$80000000,$00000000
-	dc.l	$00000000,$00000000,$00000001
-	dc.l	$00000a28,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_20_98
-	dc.w	2,3
-	dc.l	$00000030
-	dc.l	$98ef0000,$80000000,$00000000
-	dc.l	$18ef0000,$80000000,$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$0c000a28,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_20_99
 	cnop	0,4
 gv_21:
-	dc.w	3,15
+	dc.w	2,15
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$7fff0000,$ffffffff,$ffffffff
-	dc.l	$01002080,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_21_0
-	dc.w	3,15
-	dc.l	$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$7fff0000,$ffffffff,$ffffffff
-	dc.l	$01002080,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_21_1
-	dc.w	3,15
-	dc.l	$00000000
-	dc.l	$7fff0000,$00000000,$00000000
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$04000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_21_2
-	dc.w	3,15
+	dc.l	wy_21_0
+	dc.w	2,15
 	dc.l	$00000000
-	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$80000000,$00000000,$00000000
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$80000000,$00000000,$00000000
 	dc.l	$0c000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_21_1
+	dc.w	2,15
+	dc.l	$00000000
+	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$7fff0000,$ffffffff,$ffffffff
+	dc.l	$01002080,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_21_2
+	dc.w	2,15
+	dc.l	$00000000
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$7fff0000,$ffffffff,$ffffffff
+	dc.l	$01002080,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_21_3
-	dc.w	3,15
+	dc.w	2,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$c0000000,$00000000
 	dc.l	$00000000,$00000000,$00000000
@@ -11227,7 +10499,7 @@ gv_21:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_21_4
-	dc.w	3,15
+	dc.w	2,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$a0000000,$00000000
 	dc.l	$00000000,$00000000,$00000000
@@ -11236,7 +10508,7 @@ gv_21:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_21_5
-	dc.w	3,15
+	dc.w	2,15
 	dc.l	$00000000
 	dc.l	$3fff0000,$80000000,$00000000
 	dc.l	$00000000,$00000000,$00000000
@@ -11245,7 +10517,7 @@ gv_21:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_21_6
-	dc.w	3,15
+	dc.w	2,15
 	dc.l	$00000000
 	dc.l	$c0000000,$c0000000,$00000000
 	dc.l	$00000000,$00000000,$00000000
@@ -11254,43 +10526,43 @@ gv_21:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_21_7
-	dc.w	3,15
+	dc.w	2,15
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$7fff0000,$ffffffff,$ffffffff
-	dc.l	$01002080,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_21_8
-	dc.w	3,15
-	dc.l	$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$7fff0000,$ffffffff,$ffffffff
-	dc.l	$01002080,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_21_9
-	dc.w	3,15
-	dc.l	$00000000
-	dc.l	$7fff0000,$00000000,$00000000
 	dc.l	$80000000,$00000000,$00000000
 	dc.l	$80000000,$00000000,$00000000
 	dc.l	$0c000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_21_10
-	dc.w	3,15
+	dc.l	wy_21_8
+	dc.w	2,15
 	dc.l	$00000000
-	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$80000000,$00000000,$00000000
 	dc.l	$80000000,$00000000,$00000000
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$04000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_21_9
+	dc.w	2,15
+	dc.l	$00000000
+	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$7fff0000,$ffffffff,$ffffffff
+	dc.l	$01002080,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_21_10
+	dc.w	2,15
+	dc.l	$00000000
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$7fff0000,$ffffffff,$ffffffff
+	dc.l	$01002080,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_21_11
-	dc.w	3,15
+	dc.w	2,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$c0000000,$00000000
 	dc.l	$80000000,$00000000,$00000000
@@ -11299,7 +10571,7 @@ gv_21:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_21_12
-	dc.w	3,15
+	dc.w	2,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$a0000000,$00000000
 	dc.l	$80000000,$00000000,$00000000
@@ -11308,7 +10580,7 @@ gv_21:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_21_13
-	dc.w	3,15
+	dc.w	2,15
 	dc.l	$00000000
 	dc.l	$3fff0000,$80000000,$00000000
 	dc.l	$80000000,$00000000,$00000000
@@ -11317,7 +10589,7 @@ gv_21:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_21_14
-	dc.w	3,15
+	dc.w	2,15
 	dc.l	$00000000
 	dc.l	$c0000000,$c0000000,$00000000
 	dc.l	$80000000,$00000000,$00000000
@@ -11326,43 +10598,43 @@ gv_21:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_21_15
-	dc.w	3,15
+	dc.w	2,15
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
+	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$7fff0000,$ffffffff,$ffffffff
+	dc.l	$01002080,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_21_16
+	dc.w	2,15
+	dc.l	$00000000
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$7fff0000,$ffffffff,$ffffffff
+	dc.l	$01002080,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_21_17
+	dc.w	2,15
+	dc.l	$00000000
+	dc.l	$7fff0000,$00000000,$00000000
 	dc.l	$7fff0000,$00000000,$00000000
 	dc.l	$7fff0000,$00000000,$00000000
 	dc.l	$02000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_21_16
-	dc.w	3,15
+	dc.l	wy_21_18
+	dc.w	2,15
 	dc.l	$00000000
-	dc.l	$80000000,$00000000,$00000000
+	dc.l	$ffff0000,$00000000,$00000000
 	dc.l	$7fff0000,$00000000,$00000000
 	dc.l	$ffff0000,$00000000,$00000000
 	dc.l	$0a000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_21_17
-	dc.w	3,15
-	dc.l	$00000000
-	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$7fff0000,$ffffffff,$ffffffff
-	dc.l	$01002080,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_21_18
-	dc.w	3,15
-	dc.l	$00000000
-	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$7fff0000,$ffffffff,$ffffffff
-	dc.l	$01002080,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_21_19
-	dc.w	3,15
+	dc.w	2,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$c0000000,$00000000
 	dc.l	$7fff0000,$00000000,$00000000
@@ -11371,7 +10643,7 @@ gv_21:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_21_20
-	dc.w	3,15
+	dc.w	2,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$a0000000,$00000000
 	dc.l	$7fff0000,$00000000,$00000000
@@ -11380,7 +10652,7 @@ gv_21:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_21_21
-	dc.w	3,15
+	dc.w	2,15
 	dc.l	$00000000
 	dc.l	$3fff0000,$80000000,$00000000
 	dc.l	$7fff0000,$00000000,$00000000
@@ -11389,7 +10661,7 @@ gv_21:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_21_22
-	dc.w	3,15
+	dc.w	2,15
 	dc.l	$00000000
 	dc.l	$c0000000,$c0000000,$00000000
 	dc.l	$7fff0000,$00000000,$00000000
@@ -11398,43 +10670,43 @@ gv_21:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_21_23
-	dc.w	3,15
+	dc.w	2,15
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$7fff0000,$ffffffff,$ffffffff
+	dc.l	$01002080,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_21_24
+	dc.w	2,15
+	dc.l	$00000000
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$7fff0000,$ffffffff,$ffffffff
+	dc.l	$01002080,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_21_25
+	dc.w	2,15
+	dc.l	$00000000
+	dc.l	$7fff0000,$00000000,$00000000
 	dc.l	$ffff0000,$00000000,$00000000
 	dc.l	$ffff0000,$00000000,$00000000
 	dc.l	$0a000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_21_24
-	dc.w	3,15
+	dc.l	wy_21_26
+	dc.w	2,15
 	dc.l	$00000000
-	dc.l	$80000000,$00000000,$00000000
+	dc.l	$ffff0000,$00000000,$00000000
 	dc.l	$ffff0000,$00000000,$00000000
 	dc.l	$7fff0000,$00000000,$00000000
 	dc.l	$02000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_21_25
-	dc.w	3,15
-	dc.l	$00000000
-	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$7fff0000,$ffffffff,$ffffffff
-	dc.l	$01002080,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_21_26
-	dc.w	3,15
-	dc.l	$00000000
-	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$7fff0000,$ffffffff,$ffffffff
-	dc.l	$01002080,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_21_27
-	dc.w	3,15
+	dc.w	2,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$c0000000,$00000000
 	dc.l	$ffff0000,$00000000,$00000000
@@ -11443,7 +10715,7 @@ gv_21:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_21_28
-	dc.w	3,15
+	dc.w	2,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$a0000000,$00000000
 	dc.l	$ffff0000,$00000000,$00000000
@@ -11452,7 +10724,7 @@ gv_21:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_21_29
-	dc.w	3,15
+	dc.w	2,15
 	dc.l	$00000000
 	dc.l	$3fff0000,$80000000,$00000000
 	dc.l	$ffff0000,$00000000,$00000000
@@ -11461,7 +10733,7 @@ gv_21:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_21_30
-	dc.w	3,15
+	dc.w	2,15
 	dc.l	$00000000
 	dc.l	$c0000000,$c0000000,$00000000
 	dc.l	$ffff0000,$00000000,$00000000
@@ -11470,7 +10742,7 @@ gv_21:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_21_31
-	dc.w	3,15
+	dc.w	2,15
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$7fff0000,$c0000000,$00000000
@@ -11479,7 +10751,7 @@ gv_21:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_21_32
-	dc.w	3,15
+	dc.w	2,15
 	dc.l	$00000000
 	dc.l	$80000000,$00000000,$00000000
 	dc.l	$7fff0000,$c0000000,$00000000
@@ -11488,7 +10760,7 @@ gv_21:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_21_33
-	dc.w	3,15
+	dc.w	2,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$00000000,$00000000
 	dc.l	$7fff0000,$c0000000,$00000000
@@ -11497,7 +10769,7 @@ gv_21:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_21_34
-	dc.w	3,15
+	dc.w	2,15
 	dc.l	$00000000
 	dc.l	$ffff0000,$00000000,$00000000
 	dc.l	$7fff0000,$c0000000,$00000000
@@ -11506,7 +10778,7 @@ gv_21:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_21_35
-	dc.w	3,15
+	dc.w	2,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$c0000000,$00000000
 	dc.l	$7fff0000,$c0000000,$00000000
@@ -11515,7 +10787,7 @@ gv_21:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_21_36
-	dc.w	3,15
+	dc.w	2,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$a0000000,$00000000
 	dc.l	$7fff0000,$c0000000,$00000000
@@ -11524,7 +10796,7 @@ gv_21:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_21_37
-	dc.w	3,15
+	dc.w	2,15
 	dc.l	$00000000
 	dc.l	$3fff0000,$80000000,$00000000
 	dc.l	$7fff0000,$c0000000,$00000000
@@ -11533,7 +10805,7 @@ gv_21:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_21_38
-	dc.w	3,15
+	dc.w	2,15
 	dc.l	$00000000
 	dc.l	$c0000000,$c0000000,$00000000
 	dc.l	$7fff0000,$c0000000,$00000000
@@ -11542,7 +10814,7 @@ gv_21:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_21_39
-	dc.w	3,15
+	dc.w	2,15
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$7fff0000,$a0000000,$00000000
@@ -11551,7 +10823,7 @@ gv_21:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_21_40
-	dc.w	3,15
+	dc.w	2,15
 	dc.l	$00000000
 	dc.l	$80000000,$00000000,$00000000
 	dc.l	$7fff0000,$a0000000,$00000000
@@ -11560,7 +10832,7 @@ gv_21:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_21_41
-	dc.w	3,15
+	dc.w	2,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$00000000,$00000000
 	dc.l	$7fff0000,$a0000000,$00000000
@@ -11569,7 +10841,7 @@ gv_21:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_21_42
-	dc.w	3,15
+	dc.w	2,15
 	dc.l	$00000000
 	dc.l	$ffff0000,$00000000,$00000000
 	dc.l	$7fff0000,$a0000000,$00000000
@@ -11578,7 +10850,7 @@ gv_21:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_21_43
-	dc.w	3,15
+	dc.w	2,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$c0000000,$00000000
 	dc.l	$7fff0000,$a0000000,$00000000
@@ -11587,7 +10859,7 @@ gv_21:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_21_44
-	dc.w	3,15
+	dc.w	2,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$a0000000,$00000000
 	dc.l	$7fff0000,$a0000000,$00000000
@@ -11596,7 +10868,7 @@ gv_21:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_21_45
-	dc.w	3,15
+	dc.w	2,15
 	dc.l	$00000000
 	dc.l	$3fff0000,$80000000,$00000000
 	dc.l	$7fff0000,$a0000000,$00000000
@@ -11605,7 +10877,7 @@ gv_21:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_21_46
-	dc.w	3,15
+	dc.w	2,15
 	dc.l	$00000000
 	dc.l	$c0000000,$c0000000,$00000000
 	dc.l	$7fff0000,$a0000000,$00000000
@@ -11614,43 +10886,43 @@ gv_21:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_21_47
-	dc.w	3,15
+	dc.w	2,15
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$02000410,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_21_48
-	dc.w	3,15
-	dc.l	$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$0a000410,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_21_49
-	dc.w	3,15
-	dc.l	$00000000
-	dc.l	$7fff0000,$00000000,$00000000
 	dc.l	$3fff0000,$80000000,$00000000
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$04000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_21_50
-	dc.w	3,15
+	dc.l	wy_21_48
+	dc.w	2,15
 	dc.l	$00000000
-	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$80000000,$00000000,$00000000
 	dc.l	$3fff0000,$80000000,$00000000
 	dc.l	$80000000,$00000000,$00000000
 	dc.l	$0c000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_21_49
+	dc.w	2,15
+	dc.l	$00000000
+	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$02000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_21_50
+	dc.w	2,15
+	dc.l	$00000000
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$0a000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_21_51
-	dc.w	3,15
+	dc.w	2,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$c0000000,$00000000
 	dc.l	$3fff0000,$80000000,$00000000
@@ -11659,7 +10931,7 @@ gv_21:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_21_52
-	dc.w	3,15
+	dc.w	2,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$a0000000,$00000000
 	dc.l	$3fff0000,$80000000,$00000000
@@ -11668,7 +10940,7 @@ gv_21:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_21_53
-	dc.w	3,15
+	dc.w	2,15
 	dc.l	$00000000
 	dc.l	$3fff0000,$80000000,$00000000
 	dc.l	$3fff0000,$80000000,$00000000
@@ -11677,52 +10949,52 @@ gv_21:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_21_54
-	dc.w	3,15
+	dc.w	2,15
 	dc.l	$00000000
 	dc.l	$c0000000,$c0000000,$00000000
 	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$bffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$08000208,$ffffffff
+	dc.l	$c0000000,$c0000000,$00000000
+	dc.l	$08000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_21_55
-	dc.w	3,15
+	dc.w	2,15
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
-	dc.l	$c0000000,$c0000000,$00000000
-	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$0a000410,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_21_56
-	dc.w	3,15
-	dc.l	$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$c0000000,$c0000000,$00000000
-	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$02000410,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_21_57
-	dc.w	3,15
-	dc.l	$00000000
-	dc.l	$7fff0000,$00000000,$00000000
 	dc.l	$c0000000,$c0000000,$00000000
 	dc.l	$80000000,$00000000,$00000000
 	dc.l	$0c000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_21_58
-	dc.w	3,15
+	dc.l	wy_21_56
+	dc.w	2,15
 	dc.l	$00000000
-	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$80000000,$00000000,$00000000
 	dc.l	$c0000000,$c0000000,$00000000
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$04000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_21_57
+	dc.w	2,15
+	dc.l	$00000000
+	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$c0000000,$c0000000,$00000000
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$0a000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_21_58
+	dc.w	2,15
+	dc.l	$00000000
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$c0000000,$c0000000,$00000000
+	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$02000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_21_59
-	dc.w	3,15
+	dc.w	2,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$c0000000,$00000000
 	dc.l	$c0000000,$c0000000,$00000000
@@ -11731,7 +11003,7 @@ gv_21:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_21_60
-	dc.w	3,15
+	dc.w	2,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$a0000000,$00000000
 	dc.l	$c0000000,$c0000000,$00000000
@@ -11740,7 +11012,7 @@ gv_21:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_21_61
-	dc.w	3,15
+	dc.w	2,15
 	dc.l	$00000000
 	dc.l	$3fff0000,$80000000,$00000000
 	dc.l	$c0000000,$c0000000,$00000000
@@ -11749,6 +11021,908 @@ gv_21:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_21_62
+	dc.w	2,15
+	dc.l	$00000000
+	dc.l	$c0000000,$c0000000,$00000000
+	dc.l	$c0000000,$c0000000,$00000000
+	dc.l	$40020000,$90000000,$00000000
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_21_63
+	dc.w	2,15
+	dc.l	$00000000
+	dc.l	$3fff0000,$80000000,$80000000
+	dc.l	$3fff0000,$80000000,$80000000
+	dc.l	$3fff0000,$80000001,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_21_64
+	dc.w	2,15
+	dc.l	$00000010
+	dc.l	$3fff0000,$80000000,$80000000
+	dc.l	$3fff0000,$80000000,$80000000
+	dc.l	$3fff0000,$80000001,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_21_65
+	dc.w	2,15
+	dc.l	$00000020
+	dc.l	$3fff0000,$80000000,$80000000
+	dc.l	$3fff0000,$80000000,$80000000
+	dc.l	$3fff0000,$80000001,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_21_66
+	dc.w	2,15
+	dc.l	$00000030
+	dc.l	$3fff0000,$80000000,$80000000
+	dc.l	$3fff0000,$80000000,$80000000
+	dc.l	$3fff0000,$80000001,$00000001
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_21_67
+	dc.w	2,15
+	dc.l	$00000040
+	dc.l	$3fff0000,$80080000,$00000000
+	dc.l	$3fff0000,$80080000,$00000000
+	dc.l	$3fff0000,$80100000,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_21_68
+	dc.w	2,15
+	dc.l	$00000050
+	dc.l	$3fff0000,$80080000,$00000000
+	dc.l	$3fff0000,$80080000,$00000000
+	dc.l	$3fff0000,$80100000,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_21_69
+	dc.w	2,15
+	dc.l	$00000060
+	dc.l	$3fff0000,$80080000,$00000000
+	dc.l	$3fff0000,$80080000,$00000000
+	dc.l	$3fff0000,$80100000,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_21_70
+	dc.w	2,15
+	dc.l	$00000070
+	dc.l	$3fff0000,$80080000,$00000000
+	dc.l	$3fff0000,$80080000,$00000000
+	dc.l	$3fff0000,$80100100,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_21_71
+	dc.w	2,15
+	dc.l	$00000000
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$40000000,$c0000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_21_72
+	dc.w	2,15
+	dc.l	$00000040
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$40000000,$c0000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_21_73
+	dc.w	2,15
+	dc.l	$00000080
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$40000000,$c0000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_21_74
+	dc.w	2,15
+	dc.l	$00000010
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$40000000,$c0000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_21_75
+	dc.w	2,15
+	dc.l	$00000050
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$40000000,$c0000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_21_76
+	dc.w	2,15
+	dc.l	$00000090
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$40000000,$c0000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_21_77
+	dc.w	2,15
+	dc.l	$00000020
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$40000000,$c0000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_21_78
+	dc.w	2,15
+	dc.l	$00000060
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$40000000,$c0000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_21_79
+	dc.w	2,15
+	dc.l	$000000a0
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$40000000,$c0000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_21_80
+	dc.w	2,15
+	dc.l	$00000030
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$40000000,$c0000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000001
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_21_81
+	dc.w	2,15
+	dc.l	$00000070
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$40000000,$c0000000,$00000000
+	dc.l	$3fff0000,$80000100,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_21_82
+	dc.w	2,15
+	dc.l	$000000b0
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$40000000,$c0000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000800
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_21_83
+	dc.w	2,3
+	dc.l	$00000000
+	dc.l	$7e7f0000,$80000000,$00000000
+	dc.l	$7e7f0000,$80000000,$00000000
+	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$02001248,$fffffdd7
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_21_84
+	dc.w	2,3
+	dc.l	$00000010
+	dc.l	$7e7f0000,$80000000,$00000000
+	dc.l	$7e7f0000,$80000000,$00000000
+	dc.l	$7ffe0000,$ffffffff,$ffffffff
+	dc.l	$00001248,$fffffdd7
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_21_85
+	dc.w	2,3
+	dc.l	$00000020
+	dc.l	$7e7f0000,$80000000,$00000000
+	dc.l	$7e7f0000,$80000000,$00000000
+	dc.l	$7ffe0000,$ffffffff,$ffffffff
+	dc.l	$00001248,$fffffdd7
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_21_86
+	dc.w	2,3
+	dc.l	$00000030
+	dc.l	$7e7f0000,$80000000,$00000000
+	dc.l	$7e7f0000,$80000000,$00000000
+	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$02001248,$fffffdd7
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_21_87
+	dc.w	2,3
+	dc.l	$00000000
+	dc.l	$fe7f0000,$80000000,$00000000
+	dc.l	$7e7f0000,$80000000,$00000000
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$0a001248,$fffffdd7
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_21_88
+	dc.w	2,3
+	dc.l	$00000010
+	dc.l	$fe7f0000,$80000000,$00000000
+	dc.l	$7e7f0000,$80000000,$00000000
+	dc.l	$fffe0000,$ffffffff,$ffffffff
+	dc.l	$08001248,$fffffdd7
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_21_89
+	dc.w	2,3
+	dc.l	$00000020
+	dc.l	$fe7f0000,$80000000,$00000000
+	dc.l	$7e7f0000,$80000000,$00000000
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$0a001248,$fffffdd7
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_21_90
+	dc.w	2,3
+	dc.l	$00000030
+	dc.l	$fe7f0000,$80000000,$00000000
+	dc.l	$7e7f0000,$80000000,$00000000
+	dc.l	$fffe0000,$ffffffff,$ffffffff
+	dc.l	$08001248,$fffffdd7
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_21_91
+	dc.w	2,3
+	dc.l	$00000000
+	dc.l	$18ef0000,$80000000,$00000000
+	dc.l	$18ef0000,$80000000,$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$04000a28,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_21_92
+	dc.w	2,3
+	dc.l	$00000000
+	dc.l	$98ef0000,$80000000,$00000000
+	dc.l	$18ef0000,$80000000,$00000000
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$0c000a28,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_21_93
+	dc.w	2,3
+	dc.l	$00000010
+	dc.l	$18ef0000,$80000000,$00000000
+	dc.l	$18ef0000,$80000000,$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$04000a28,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_21_94
+	dc.w	2,3
+	dc.l	$00000010
+	dc.l	$98ef0000,$80000000,$00000000
+	dc.l	$18ef0000,$80000000,$00000000
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$0c000a28,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_21_95
+	dc.w	2,3
+	dc.l	$00000020
+	dc.l	$18ef0000,$80000000,$00000000
+	dc.l	$18ef0000,$80000000,$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$04000a28,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_21_96
+	dc.w	2,3
+	dc.l	$00000020
+	dc.l	$98ef0000,$80000000,$00000000
+	dc.l	$18ef0000,$80000000,$00000000
+	dc.l	$80000000,$00000000,$00000001
+	dc.l	$08000a28,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_21_97
+	dc.w	2,3
+	dc.l	$00000030
+	dc.l	$18ef0000,$80000000,$00000000
+	dc.l	$18ef0000,$80000000,$00000000
+	dc.l	$00000000,$00000000,$00000001
+	dc.l	$00000a28,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_21_98
+	dc.w	2,3
+	dc.l	$00000030
+	dc.l	$98ef0000,$80000000,$00000000
+	dc.l	$18ef0000,$80000000,$00000000
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$0c000a28,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_21_99
+	cnop	0,4
+gv_22:
+	dc.w	3,15
+	dc.l	$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$7fff0000,$ffffffff,$ffffffff
+	dc.l	$01002080,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_22_0
+	dc.w	3,15
+	dc.l	$00000000
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$7fff0000,$ffffffff,$ffffffff
+	dc.l	$01002080,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_22_1
+	dc.w	3,15
+	dc.l	$00000000
+	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$04000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_22_2
+	dc.w	3,15
+	dc.l	$00000000
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$0c000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_22_3
+	dc.w	3,15
+	dc.l	$00000000
+	dc.l	$7fff0000,$c0000000,$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$7fff0000,$c0000000,$00000000
+	dc.l	$01000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_22_4
+	dc.w	3,15
+	dc.l	$00000000
+	dc.l	$7fff0000,$a0000000,$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$7fff0000,$e0000000,$00000000
+	dc.l	$01004080,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_22_5
+	dc.w	3,15
+	dc.l	$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$04000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_22_6
+	dc.w	3,15
+	dc.l	$00000000
+	dc.l	$c0000000,$c0000000,$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$0c000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_22_7
+	dc.w	3,15
+	dc.l	$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$7fff0000,$ffffffff,$ffffffff
+	dc.l	$01002080,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_22_8
+	dc.w	3,15
+	dc.l	$00000000
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$7fff0000,$ffffffff,$ffffffff
+	dc.l	$01002080,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_22_9
+	dc.w	3,15
+	dc.l	$00000000
+	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$0c000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_22_10
+	dc.w	3,15
+	dc.l	$00000000
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$04000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_22_11
+	dc.w	3,15
+	dc.l	$00000000
+	dc.l	$7fff0000,$c0000000,$00000000
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$7fff0000,$c0000000,$00000000
+	dc.l	$01000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_22_12
+	dc.w	3,15
+	dc.l	$00000000
+	dc.l	$7fff0000,$a0000000,$00000000
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$7fff0000,$e0000000,$00000000
+	dc.l	$01004080,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_22_13
+	dc.w	3,15
+	dc.l	$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$0c000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_22_14
+	dc.w	3,15
+	dc.l	$00000000
+	dc.l	$c0000000,$c0000000,$00000000
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$04000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_22_15
+	dc.w	3,15
+	dc.l	$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$02000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_22_16
+	dc.w	3,15
+	dc.l	$00000000
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$0a000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_22_17
+	dc.w	3,15
+	dc.l	$00000000
+	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$7fff0000,$ffffffff,$ffffffff
+	dc.l	$01002080,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_22_18
+	dc.w	3,15
+	dc.l	$00000000
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$7fff0000,$ffffffff,$ffffffff
+	dc.l	$01002080,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_22_19
+	dc.w	3,15
+	dc.l	$00000000
+	dc.l	$7fff0000,$c0000000,$00000000
+	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$7fff0000,$c0000000,$00000000
+	dc.l	$01000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_22_20
+	dc.w	3,15
+	dc.l	$00000000
+	dc.l	$7fff0000,$a0000000,$00000000
+	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$7fff0000,$e0000000,$00000000
+	dc.l	$01004080,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_22_21
+	dc.w	3,15
+	dc.l	$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$02000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_22_22
+	dc.w	3,15
+	dc.l	$00000000
+	dc.l	$c0000000,$c0000000,$00000000
+	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$0a000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_22_23
+	dc.w	3,15
+	dc.l	$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$0a000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_22_24
+	dc.w	3,15
+	dc.l	$00000000
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$02000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_22_25
+	dc.w	3,15
+	dc.l	$00000000
+	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$7fff0000,$ffffffff,$ffffffff
+	dc.l	$01002080,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_22_26
+	dc.w	3,15
+	dc.l	$00000000
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$7fff0000,$ffffffff,$ffffffff
+	dc.l	$01002080,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_22_27
+	dc.w	3,15
+	dc.l	$00000000
+	dc.l	$7fff0000,$c0000000,$00000000
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$7fff0000,$c0000000,$00000000
+	dc.l	$01000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_22_28
+	dc.w	3,15
+	dc.l	$00000000
+	dc.l	$7fff0000,$a0000000,$00000000
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$7fff0000,$e0000000,$00000000
+	dc.l	$01004080,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_22_29
+	dc.w	3,15
+	dc.l	$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$0a000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_22_30
+	dc.w	3,15
+	dc.l	$00000000
+	dc.l	$c0000000,$c0000000,$00000000
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$02000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_22_31
+	dc.w	3,15
+	dc.l	$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$7fff0000,$c0000000,$00000000
+	dc.l	$7fff0000,$c0000000,$00000000
+	dc.l	$01000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_22_32
+	dc.w	3,15
+	dc.l	$00000000
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$7fff0000,$c0000000,$00000000
+	dc.l	$7fff0000,$c0000000,$00000000
+	dc.l	$01000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_22_33
+	dc.w	3,15
+	dc.l	$00000000
+	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$7fff0000,$c0000000,$00000000
+	dc.l	$7fff0000,$c0000000,$00000000
+	dc.l	$01000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_22_34
+	dc.w	3,15
+	dc.l	$00000000
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$7fff0000,$c0000000,$00000000
+	dc.l	$7fff0000,$c0000000,$00000000
+	dc.l	$01000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_22_35
+	dc.w	3,15
+	dc.l	$00000000
+	dc.l	$7fff0000,$c0000000,$00000000
+	dc.l	$7fff0000,$c0000000,$00000000
+	dc.l	$7fff0000,$c0000000,$00000000
+	dc.l	$01000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_22_36
+	dc.w	3,15
+	dc.l	$00000000
+	dc.l	$7fff0000,$a0000000,$00000000
+	dc.l	$7fff0000,$c0000000,$00000000
+	dc.l	$7fff0000,$c0000000,$00000000
+	dc.l	$01004080,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_22_37
+	dc.w	3,15
+	dc.l	$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$7fff0000,$c0000000,$00000000
+	dc.l	$7fff0000,$c0000000,$00000000
+	dc.l	$01000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_22_38
+	dc.w	3,15
+	dc.l	$00000000
+	dc.l	$c0000000,$c0000000,$00000000
+	dc.l	$7fff0000,$c0000000,$00000000
+	dc.l	$7fff0000,$c0000000,$00000000
+	dc.l	$01000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_22_39
+	dc.w	3,15
+	dc.l	$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$7fff0000,$a0000000,$00000000
+	dc.l	$7fff0000,$e0000000,$00000000
+	dc.l	$01004080,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_22_40
+	dc.w	3,15
+	dc.l	$00000000
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$7fff0000,$a0000000,$00000000
+	dc.l	$7fff0000,$e0000000,$00000000
+	dc.l	$01004080,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_22_41
+	dc.w	3,15
+	dc.l	$00000000
+	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$7fff0000,$a0000000,$00000000
+	dc.l	$7fff0000,$e0000000,$00000000
+	dc.l	$01004080,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_22_42
+	dc.w	3,15
+	dc.l	$00000000
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$7fff0000,$a0000000,$00000000
+	dc.l	$7fff0000,$e0000000,$00000000
+	dc.l	$01004080,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_22_43
+	dc.w	3,15
+	dc.l	$00000000
+	dc.l	$7fff0000,$c0000000,$00000000
+	dc.l	$7fff0000,$a0000000,$00000000
+	dc.l	$7fff0000,$e0000000,$00000000
+	dc.l	$01004080,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_22_44
+	dc.w	3,15
+	dc.l	$00000000
+	dc.l	$7fff0000,$a0000000,$00000000
+	dc.l	$7fff0000,$a0000000,$00000000
+	dc.l	$7fff0000,$e0000000,$00000000
+	dc.l	$01004080,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_22_45
+	dc.w	3,15
+	dc.l	$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$7fff0000,$a0000000,$00000000
+	dc.l	$7fff0000,$e0000000,$00000000
+	dc.l	$01004080,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_22_46
+	dc.w	3,15
+	dc.l	$00000000
+	dc.l	$c0000000,$c0000000,$00000000
+	dc.l	$7fff0000,$a0000000,$00000000
+	dc.l	$7fff0000,$e0000000,$00000000
+	dc.l	$01004080,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_22_47
+	dc.w	3,15
+	dc.l	$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$02000410,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_22_48
+	dc.w	3,15
+	dc.l	$00000000
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$0a000410,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_22_49
+	dc.w	3,15
+	dc.l	$00000000
+	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$04000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_22_50
+	dc.w	3,15
+	dc.l	$00000000
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$0c000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_22_51
+	dc.w	3,15
+	dc.l	$00000000
+	dc.l	$7fff0000,$c0000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$7fff0000,$c0000000,$00000000
+	dc.l	$01000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_22_52
+	dc.w	3,15
+	dc.l	$00000000
+	dc.l	$7fff0000,$a0000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$7fff0000,$e0000000,$00000000
+	dc.l	$01004080,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_22_53
+	dc.w	3,15
+	dc.l	$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_22_54
+	dc.w	3,15
+	dc.l	$00000000
+	dc.l	$c0000000,$c0000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$bffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$08000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_22_55
+	dc.w	3,15
+	dc.l	$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$c0000000,$c0000000,$00000000
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$0a000410,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_22_56
+	dc.w	3,15
+	dc.l	$00000000
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$c0000000,$c0000000,$00000000
+	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$02000410,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_22_57
+	dc.w	3,15
+	dc.l	$00000000
+	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$c0000000,$c0000000,$00000000
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$0c000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_22_58
+	dc.w	3,15
+	dc.l	$00000000
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$c0000000,$c0000000,$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$04000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_22_59
+	dc.w	3,15
+	dc.l	$00000000
+	dc.l	$7fff0000,$c0000000,$00000000
+	dc.l	$c0000000,$c0000000,$00000000
+	dc.l	$7fff0000,$c0000000,$00000000
+	dc.l	$01000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_22_60
+	dc.w	3,15
+	dc.l	$00000000
+	dc.l	$7fff0000,$a0000000,$00000000
+	dc.l	$c0000000,$c0000000,$00000000
+	dc.l	$7fff0000,$e0000000,$00000000
+	dc.l	$01004080,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_22_61
+	dc.w	3,15
+	dc.l	$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$c0000000,$c0000000,$00000000
+	dc.l	$c0000000,$c0000000,$00000000
+	dc.l	$08000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_22_62
 	dc.w	3,15
 	dc.l	$00000000
 	dc.l	$c0000000,$c0000000,$00000000
@@ -11757,7 +11931,7 @@ gv_21:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_21_63
+	dc.l	wy_22_63
 	dc.w	3,15
 	dc.l	$00000000
 	dc.l	$40000000,$c0000000,$00000000
@@ -11766,7 +11940,7 @@ gv_21:
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_21_64
+	dc.l	wy_22_64
 	dc.w	3,15
 	dc.l	$00000040
 	dc.l	$40000000,$c0000000,$00000000
@@ -11775,7 +11949,7 @@ gv_21:
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_21_65
+	dc.l	wy_22_65
 	dc.w	3,15
 	dc.l	$00000080
 	dc.l	$40000000,$c0000000,$00000000
@@ -11784,7 +11958,7 @@ gv_21:
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_21_66
+	dc.l	wy_22_66
 	dc.w	3,15
 	dc.l	$00000010
 	dc.l	$40000000,$c0000000,$00000000
@@ -11793,7 +11967,7 @@ gv_21:
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_21_67
+	dc.l	wy_22_67
 	dc.w	3,15
 	dc.l	$00000050
 	dc.l	$40000000,$c0000000,$00000000
@@ -11802,7 +11976,7 @@ gv_21:
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_21_68
+	dc.l	wy_22_68
 	dc.w	3,15
 	dc.l	$00000090
 	dc.l	$40000000,$c0000000,$00000000
@@ -11811,7 +11985,7 @@ gv_21:
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_21_69
+	dc.l	wy_22_69
 	dc.w	3,15
 	dc.l	$00000020
 	dc.l	$40000000,$c0000000,$00000000
@@ -11820,7 +11994,7 @@ gv_21:
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_21_70
+	dc.l	wy_22_70
 	dc.w	3,15
 	dc.l	$00000060
 	dc.l	$40000000,$c0000000,$00000000
@@ -11829,7 +12003,7 @@ gv_21:
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_21_71
+	dc.l	wy_22_71
 	dc.w	3,15
 	dc.l	$000000a0
 	dc.l	$40000000,$c0000000,$00000000
@@ -11838,7 +12012,7 @@ gv_21:
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_21_72
+	dc.l	wy_22_72
 	dc.w	3,15
 	dc.l	$00000030
 	dc.l	$40000000,$c0000000,$00000000
@@ -11847,7 +12021,7 @@ gv_21:
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_21_73
+	dc.l	wy_22_73
 	dc.w	3,15
 	dc.l	$00000070
 	dc.l	$40000000,$c0000000,$00000000
@@ -11856,7 +12030,7 @@ gv_21:
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_21_74
+	dc.l	wy_22_74
 	dc.w	3,15
 	dc.l	$000000b0
 	dc.l	$40000000,$c0000000,$00000000
@@ -11865,7 +12039,7 @@ gv_21:
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_21_75
+	dc.l	wy_22_75
 	dc.w	3,15
 	dc.l	$00000000
 	dc.l	$40000000,$c0000000,$00000000
@@ -11874,7 +12048,7 @@ gv_21:
 	dc.l	$08000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_21_76
+	dc.l	wy_22_76
 	dc.w	3,15
 	dc.l	$00000040
 	dc.l	$40000000,$c0000000,$00000000
@@ -11883,7 +12057,7 @@ gv_21:
 	dc.l	$08000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_21_77
+	dc.l	wy_22_77
 	dc.w	3,15
 	dc.l	$00000080
 	dc.l	$40000000,$c0000000,$00000000
@@ -11892,7 +12066,7 @@ gv_21:
 	dc.l	$08000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_21_78
+	dc.l	wy_22_78
 	dc.w	3,15
 	dc.l	$00000010
 	dc.l	$40000000,$c0000000,$00000000
@@ -11901,7 +12075,7 @@ gv_21:
 	dc.l	$08000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_21_79
+	dc.l	wy_22_79
 	dc.w	3,15
 	dc.l	$00000050
 	dc.l	$40000000,$c0000000,$00000000
@@ -11910,7 +12084,7 @@ gv_21:
 	dc.l	$08000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_21_80
+	dc.l	wy_22_80
 	dc.w	3,15
 	dc.l	$00000090
 	dc.l	$40000000,$c0000000,$00000000
@@ -11919,7 +12093,7 @@ gv_21:
 	dc.l	$08000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_21_81
+	dc.l	wy_22_81
 	dc.w	3,15
 	dc.l	$00000020
 	dc.l	$40000000,$c0000000,$00000000
@@ -11928,7 +12102,7 @@ gv_21:
 	dc.l	$08000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_21_82
+	dc.l	wy_22_82
 	dc.w	3,15
 	dc.l	$00000060
 	dc.l	$40000000,$c0000000,$00000000
@@ -11937,7 +12111,7 @@ gv_21:
 	dc.l	$08000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_21_83
+	dc.l	wy_22_83
 	dc.w	3,15
 	dc.l	$000000a0
 	dc.l	$40000000,$c0000000,$00000000
@@ -11946,7 +12120,7 @@ gv_21:
 	dc.l	$08000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_21_84
+	dc.l	wy_22_84
 	dc.w	3,15
 	dc.l	$00000030
 	dc.l	$40000000,$c0000000,$00000000
@@ -11955,7 +12129,7 @@ gv_21:
 	dc.l	$08000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_21_85
+	dc.l	wy_22_85
 	dc.w	3,15
 	dc.l	$00000070
 	dc.l	$40000000,$c0000000,$00000000
@@ -11964,7 +12138,7 @@ gv_21:
 	dc.l	$08000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_21_86
+	dc.l	wy_22_86
 	dc.w	3,15
 	dc.l	$000000b0
 	dc.l	$40000000,$c0000000,$00000000
@@ -11973,7 +12147,7 @@ gv_21:
 	dc.l	$08000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_21_87
+	dc.l	wy_22_87
 	dc.w	3,15
 	dc.l	$00000000
 	dc.l	$40000000,$c0000000,$00000000
@@ -11982,7 +12156,7 @@ gv_21:
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_21_88
+	dc.l	wy_22_88
 	dc.w	3,15
 	dc.l	$00000040
 	dc.l	$40000000,$c0000000,$00000000
@@ -11991,7 +12165,7 @@ gv_21:
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_21_89
+	dc.l	wy_22_89
 	dc.w	3,15
 	dc.l	$00000080
 	dc.l	$40000000,$c0000000,$00000000
@@ -12000,7 +12174,7 @@ gv_21:
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_21_90
+	dc.l	wy_22_90
 	dc.w	3,15
 	dc.l	$00000010
 	dc.l	$40000000,$c0000000,$00000000
@@ -12009,7 +12183,7 @@ gv_21:
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_21_91
+	dc.l	wy_22_91
 	dc.w	3,15
 	dc.l	$00000050
 	dc.l	$40000000,$c0000000,$00000000
@@ -12018,7 +12192,7 @@ gv_21:
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_21_92
+	dc.l	wy_22_92
 	dc.w	3,15
 	dc.l	$00000090
 	dc.l	$40000000,$c0000000,$00000000
@@ -12027,7 +12201,7 @@ gv_21:
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_21_93
+	dc.l	wy_22_93
 	dc.w	3,15
 	dc.l	$00000020
 	dc.l	$40000000,$c0000000,$00000000
@@ -12036,7 +12210,7 @@ gv_21:
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_21_94
+	dc.l	wy_22_94
 	dc.w	3,15
 	dc.l	$00000060
 	dc.l	$40000000,$c0000000,$00000000
@@ -12045,7 +12219,7 @@ gv_21:
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_21_95
+	dc.l	wy_22_95
 	dc.w	3,15
 	dc.l	$000000a0
 	dc.l	$40000000,$c0000000,$00000000
@@ -12054,7 +12228,7 @@ gv_21:
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_21_96
+	dc.l	wy_22_96
 	dc.w	3,15
 	dc.l	$00000030
 	dc.l	$40000000,$c0000000,$00000000
@@ -12063,7 +12237,7 @@ gv_21:
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_21_97
+	dc.l	wy_22_97
 	dc.w	3,15
 	dc.l	$00000070
 	dc.l	$40000000,$c0000000,$00000000
@@ -12072,7 +12246,7 @@ gv_21:
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_21_98
+	dc.l	wy_22_98
 	dc.w	3,15
 	dc.l	$000000b0
 	dc.l	$40000000,$c0000000,$00000000
@@ -12081,7 +12255,7 @@ gv_21:
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_21_99
+	dc.l	wy_22_99
 	dc.w	3,15
 	dc.l	$00000000
 	dc.l	$40020000,$a0000000,$00000000
@@ -12090,7 +12264,7 @@ gv_21:
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_21_100
+	dc.l	wy_22_100
 	dc.w	3,15
 	dc.l	$00000040
 	dc.l	$40020000,$a0000000,$00000000
@@ -12099,7 +12273,7 @@ gv_21:
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_21_101
+	dc.l	wy_22_101
 	dc.w	3,15
 	dc.l	$00000080
 	dc.l	$40020000,$a0000000,$00000000
@@ -12108,7 +12282,7 @@ gv_21:
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_21_102
+	dc.l	wy_22_102
 	dc.w	3,15
 	dc.l	$00000010
 	dc.l	$40020000,$a0000000,$00000000
@@ -12117,7 +12291,7 @@ gv_21:
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_21_103
+	dc.l	wy_22_103
 	dc.w	3,15
 	dc.l	$00000050
 	dc.l	$40020000,$a0000000,$00000000
@@ -12126,7 +12300,7 @@ gv_21:
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_21_104
+	dc.l	wy_22_104
 	dc.w	3,15
 	dc.l	$00000090
 	dc.l	$40020000,$a0000000,$00000000
@@ -12135,7 +12309,7 @@ gv_21:
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_21_105
+	dc.l	wy_22_105
 	dc.w	3,15
 	dc.l	$00000020
 	dc.l	$40020000,$a0000000,$00000000
@@ -12144,7 +12318,7 @@ gv_21:
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_21_106
+	dc.l	wy_22_106
 	dc.w	3,15
 	dc.l	$00000060
 	dc.l	$40020000,$a0000000,$00000000
@@ -12153,7 +12327,7 @@ gv_21:
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_21_107
+	dc.l	wy_22_107
 	dc.w	3,15
 	dc.l	$000000a0
 	dc.l	$40020000,$a0000000,$00000000
@@ -12162,7 +12336,7 @@ gv_21:
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_21_108
+	dc.l	wy_22_108
 	dc.w	3,15
 	dc.l	$00000030
 	dc.l	$40020000,$a0000000,$00000000
@@ -12171,7 +12345,7 @@ gv_21:
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_21_109
+	dc.l	wy_22_109
 	dc.w	3,15
 	dc.l	$00000070
 	dc.l	$40020000,$a0000000,$00000000
@@ -12180,7 +12354,7 @@ gv_21:
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_21_110
+	dc.l	wy_22_110
 	dc.w	3,15
 	dc.l	$000000b0
 	dc.l	$40020000,$a0000000,$00000000
@@ -12189,7 +12363,7 @@ gv_21:
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_21_111
+	dc.l	wy_22_111
 	dc.w	3,15
 	dc.l	$00000000
 	dc.l	$40010000,$e0000000,$00000000
@@ -12198,7 +12372,7 @@ gv_21:
 	dc.l	$08000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_21_112
+	dc.l	wy_22_112
 	dc.w	3,15
 	dc.l	$00000010
 	dc.l	$40010000,$e0000000,$00000000
@@ -12207,7 +12381,7 @@ gv_21:
 	dc.l	$08000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_21_113
+	dc.l	wy_22_113
 	dc.w	3,15
 	dc.l	$00000020
 	dc.l	$40010000,$e0000000,$00000000
@@ -12216,7 +12390,7 @@ gv_21:
 	dc.l	$08000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_21_114
+	dc.l	wy_22_114
 	dc.w	3,15
 	dc.l	$00000030
 	dc.l	$40010000,$e0000000,$00000000
@@ -12225,7 +12399,7 @@ gv_21:
 	dc.l	$08000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_21_115
+	dc.l	wy_22_115
 	dc.w	3,3
 	dc.l	$00000000
 	dc.l	$017f0000,$80000000,$00000000
@@ -12234,7 +12408,7 @@ gv_21:
 	dc.l	$02001248,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_21_116
+	dc.l	wy_22_116
 	dc.w	3,3
 	dc.l	$00000010
 	dc.l	$017f0000,$80000000,$00000000
@@ -12243,7 +12417,7 @@ gv_21:
 	dc.l	$00001248,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_21_117
+	dc.l	wy_22_117
 	dc.w	3,3
 	dc.l	$00000020
 	dc.l	$017f0000,$80000000,$00000000
@@ -12252,7 +12426,7 @@ gv_21:
 	dc.l	$00001248,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_21_118
+	dc.l	wy_22_118
 	dc.w	3,3
 	dc.l	$00000030
 	dc.l	$017f0000,$80000000,$00000000
@@ -12261,7 +12435,7 @@ gv_21:
 	dc.l	$02001248,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_21_119
+	dc.l	wy_22_119
 	dc.w	3,15
 	dc.l	$00000000
 	dc.l	$40010000,$80000000,$00000000
@@ -12270,417 +12444,10 @@ gv_21:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_21_120
-	cnop	0,4
-gv_22:
-	dc.w	19,15
-	dc.l	$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$04000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_22_0
-	dc.w	19,15
-	dc.l	$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$0c000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_22_1
-	dc.w	19,15
-	dc.l	$00000000
-	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$02000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_22_2
-	dc.w	19,15
-	dc.l	$00000000
-	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$7fff0000,$ffffffff,$ffffffff
-	dc.l	$01002080,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_22_3
-	dc.w	19,15
-	dc.l	$00000000
-	dc.l	$7fff0000,$c0000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$7fff0000,$c0000000,$00000000
-	dc.l	$01000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_22_4
-	dc.w	19,15
-	dc.l	$00000000
-	dc.l	$7fff0000,$a0000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$7fff0000,$e0000000,$00000000
-	dc.l	$01004080,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_22_5
-	dc.w	19,15
-	dc.l	$00000000
-	dc.l	$bfff0000,$80000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$7fff0000,$ffffffff,$ffffffff
-	dc.l	$01002080,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_22_6
-	dc.w	19,15
-	dc.l	$00000000
-	dc.l	$40010000,$80000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$40000000,$80000000,$00000000
-	dc.l	$00000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_22_7
-	dc.w	19,15
-	dc.l	$00000000
-	dc.l	$40000000,$90000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$c0000000,$00000000
-	dc.l	$00000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_22_8
-	dc.w	19,15
-	dc.l	$00000000
-	dc.l	$40000000,$80000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$b504f333,$f9de6484
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_22_9
-	dc.w	19,15
-	dc.l	$00000000
-	dc.l	$40000000,$c0000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$ddb3d742,$c265539e
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_22_10
-	dc.w	19,15
-	dc.l	$00000000
-	dc.l	$3ffe0000,$80000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3ffe0000,$b504f333,$f9de6484
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_22_11
-	dc.w	19,15
-	dc.l	$00000040
-	dc.l	$40000000,$80000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$b504f300,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_22_12
-	dc.w	19,15
-	dc.l	$00000040
-	dc.l	$40000000,$c0000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$ddb3d700,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_22_13
-	dc.w	19,15
-	dc.l	$00000040
-	dc.l	$3ffe0000,$80000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3ffe0000,$b504f300,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_22_14
-	dc.w	19,15
-	dc.l	$00000080
-	dc.l	$40000000,$80000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$b504f333,$f9de6800
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_22_15
-	dc.w	19,15
-	dc.l	$00000080
-	dc.l	$40000000,$c0000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$ddb3d742,$c2655000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_22_16
-	dc.w	19,15
-	dc.l	$00000080
-	dc.l	$3ffe0000,$80000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3ffe0000,$b504f333,$f9de6800
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_22_17
-	dc.w	19,15
-	dc.l	$00000010
-	dc.l	$40000000,$80000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$b504f333,$f9de6484
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_22_18
-	dc.w	19,15
-	dc.l	$00000010
-	dc.l	$40000000,$c0000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$ddb3d742,$c265539d
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_22_19
-	dc.w	19,15
-	dc.l	$00000010
-	dc.l	$3ffe0000,$80000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3ffe0000,$b504f333,$f9de6484
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_22_20
-	dc.w	19,15
-	dc.l	$00000050
-	dc.l	$40000000,$80000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$b504f300,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_22_21
-	dc.w	19,15
-	dc.l	$00000050
-	dc.l	$40000000,$c0000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$ddb3d700,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_22_22
-	dc.w	19,15
-	dc.l	$00000050
-	dc.l	$3ffe0000,$80000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3ffe0000,$b504f300,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_22_23
-	dc.w	19,15
-	dc.l	$00000090
-	dc.l	$40000000,$80000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$b504f333,$f9de6000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_22_24
-	dc.w	19,15
-	dc.l	$00000090
-	dc.l	$40000000,$c0000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$ddb3d742,$c2655000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_22_25
-	dc.w	19,15
-	dc.l	$00000090
-	dc.l	$3ffe0000,$80000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3ffe0000,$b504f333,$f9de6000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_22_26
-	dc.w	19,15
-	dc.l	$00000020
-	dc.l	$40000000,$80000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$b504f333,$f9de6484
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_22_27
-	dc.w	19,15
-	dc.l	$00000020
-	dc.l	$40000000,$c0000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$ddb3d742,$c265539d
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_22_28
-	dc.w	19,15
-	dc.l	$00000020
-	dc.l	$3ffe0000,$80000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3ffe0000,$b504f333,$f9de6484
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_22_29
-	dc.w	19,15
-	dc.l	$00000060
-	dc.l	$40000000,$80000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$b504f300,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_22_30
-	dc.w	19,15
-	dc.l	$00000060
-	dc.l	$40000000,$c0000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$ddb3d700,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_22_31
-	dc.w	19,15
-	dc.l	$00000060
-	dc.l	$3ffe0000,$80000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3ffe0000,$b504f300,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_22_32
-	dc.w	19,15
-	dc.l	$000000a0
-	dc.l	$40000000,$80000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$b504f333,$f9de6000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_22_33
-	dc.w	19,15
-	dc.l	$000000a0
-	dc.l	$40000000,$c0000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$ddb3d742,$c2655000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_22_34
-	dc.w	19,15
-	dc.l	$000000a0
-	dc.l	$3ffe0000,$80000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3ffe0000,$b504f333,$f9de6000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_22_35
-	dc.w	19,15
-	dc.l	$00000030
-	dc.l	$40000000,$80000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$b504f333,$f9de6485
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_22_36
-	dc.w	19,15
-	dc.l	$00000030
-	dc.l	$40000000,$c0000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$ddb3d742,$c265539e
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_22_37
-	dc.w	19,15
-	dc.l	$00000030
-	dc.l	$3ffe0000,$80000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3ffe0000,$b504f333,$f9de6485
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_22_38
-	dc.w	19,15
-	dc.l	$00000070
-	dc.l	$40000000,$80000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$b504f400,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_22_39
-	dc.w	19,15
-	dc.l	$00000070
-	dc.l	$40000000,$c0000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$ddb3d800,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_22_40
-	dc.w	19,15
-	dc.l	$00000070
-	dc.l	$3ffe0000,$80000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3ffe0000,$b504f400,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_22_41
-	dc.w	19,15
-	dc.l	$000000b0
-	dc.l	$40000000,$80000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$b504f333,$f9de6800
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_22_42
-	dc.w	19,15
-	dc.l	$000000b0
-	dc.l	$40000000,$c0000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$ddb3d742,$c2655800
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_22_43
-	dc.w	19,15
-	dc.l	$000000b0
-	dc.l	$3ffe0000,$80000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3ffe0000,$b504f333,$f9de6800
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_22_44
+	dc.l	wy_22_120
 	cnop	0,4
 gv_23:
-	dc.w	18,15
+	dc.w	19,15
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
@@ -12689,7 +12456,7 @@ gv_23:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_23_0
-	dc.w	18,15
+	dc.w	19,15
 	dc.l	$00000000
 	dc.l	$80000000,$00000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
@@ -12698,7 +12465,7 @@ gv_23:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_23_1
-	dc.w	18,15
+	dc.w	19,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$00000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
@@ -12707,16 +12474,16 @@ gv_23:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_23_2
-	dc.w	18,15
+	dc.w	19,15
 	dc.l	$00000000
 	dc.l	$ffff0000,$00000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$0a000000,$ffffffff
+	dc.l	$7fff0000,$ffffffff,$ffffffff
+	dc.l	$01002080,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_23_3
-	dc.w	18,15
+	dc.w	19,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$c0000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
@@ -12725,7 +12492,7 @@ gv_23:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_23_4
-	dc.w	18,15
+	dc.w	19,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$a0000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
@@ -12734,549 +12501,360 @@ gv_23:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_23_5
-	dc.w	18,15
+	dc.w	19,15
 	dc.l	$00000000
-	dc.l	$3fff0000,$80000080,$00000008
+	dc.l	$bfff0000,$80000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$80000080,$00000008
-	dc.l	$00000000,$ffffffff
+	dc.l	$7fff0000,$ffffffff,$ffffffff
+	dc.l	$01002080,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_23_6
-	dc.w	18,15
+	dc.w	19,15
 	dc.l	$00000000
-	dc.l	$bfff0000,$80000000,$00000408
+	dc.l	$40010000,$80000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$bfff0000,$80000000,$00000408
-	dc.l	$08000000,$ffffffff
+	dc.l	$40000000,$80000000,$00000000
+	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_23_7
-	dc.w	18,15
+	dc.w	19,15
 	dc.l	$00000000
-	dc.l	$3fff0000,$80000080,$00000000
+	dc.l	$40000000,$90000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$80000080,$00000000
+	dc.l	$3fff0000,$c0000000,$00000000
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_23_8
-	dc.w	18,15
+	dc.w	19,15
 	dc.l	$00000000
-	dc.l	$3fff0000,$800000c0,$00000000
+	dc.l	$40000000,$80000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$800000c0,$00000000
-	dc.l	$00000000,$ffffffff
+	dc.l	$3fff0000,$b504f333,$f9de6484
+	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_23_9
-	dc.w	18,15
+	dc.w	19,15
 	dc.l	$00000000
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$40000000,$c0000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$00000000,$ffffffff
+	dc.l	$3fff0000,$ddb3d742,$c265539e
+	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_23_10
-	dc.w	18,15
-	dc.l	$00000040
-	dc.l	$3fff0000,$80000080,$00000008
+	dc.w	19,15
+	dc.l	$00000000
+	dc.l	$3ffe0000,$80000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$80000100,$00000000
+	dc.l	$3ffe0000,$b504f333,$f9de6484
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_23_11
-	dc.w	18,15
+	dc.w	19,15
 	dc.l	$00000040
-	dc.l	$bfff0000,$80000000,$00000408
+	dc.l	$40000000,$80000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$bfff0000,$80000000,$00000000
-	dc.l	$08000208,$ffffffff
+	dc.l	$3fff0000,$b504f300,$00000000
+	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_23_12
-	dc.w	18,15
+	dc.w	19,15
 	dc.l	$00000040
-	dc.l	$3fff0000,$80000080,$00000000
+	dc.l	$40000000,$c0000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3fff0000,$ddb3d700,$00000000
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_23_13
-	dc.w	18,15
+	dc.w	19,15
 	dc.l	$00000040
-	dc.l	$3fff0000,$800000c0,$00000000
+	dc.l	$3ffe0000,$80000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$80000100,$00000000
+	dc.l	$3ffe0000,$b504f300,$00000000
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_23_14
-	dc.w	18,15
-	dc.l	$00000040
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.w	19,15
+	dc.l	$00000080
+	dc.l	$40000000,$80000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3ffd0000,$aaaaab00,$00000000
+	dc.l	$3fff0000,$b504f333,$f9de6800
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_23_15
-	dc.w	18,15
+	dc.w	19,15
 	dc.l	$00000080
-	dc.l	$3fff0000,$80000080,$00000008
+	dc.l	$40000000,$c0000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$80000080,$00000000
+	dc.l	$3fff0000,$ddb3d742,$c2655000
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_23_16
-	dc.w	18,15
+	dc.w	19,15
 	dc.l	$00000080
-	dc.l	$bfff0000,$80000000,$00000408
+	dc.l	$3ffe0000,$80000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$bfff0000,$80000000,$00000800
-	dc.l	$08000208,$ffffffff
+	dc.l	$3ffe0000,$b504f333,$f9de6800
+	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_23_17
-	dc.w	18,15
-	dc.l	$00000080
-	dc.l	$3fff0000,$80000080,$00000000
+	dc.w	19,15
+	dc.l	$00000010
+	dc.l	$40000000,$80000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$80000080,$00000000
-	dc.l	$00000000,$ffffffff
+	dc.l	$3fff0000,$b504f333,$f9de6484
+	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_23_18
-	dc.w	18,15
-	dc.l	$00000080
-	dc.l	$3fff0000,$800000c0,$00000000
+	dc.w	19,15
+	dc.l	$00000010
+	dc.l	$40000000,$c0000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$800000c0,$00000000
-	dc.l	$00000000,$ffffffff
+	dc.l	$3fff0000,$ddb3d742,$c265539d
+	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_23_19
-	dc.w	18,15
-	dc.l	$00000080
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.w	19,15
+	dc.l	$00000010
+	dc.l	$3ffe0000,$80000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaa800
+	dc.l	$3ffe0000,$b504f333,$f9de6484
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_23_20
-	dc.w	18,15
-	dc.l	$00000010
-	dc.l	$3fff0000,$80000080,$00000008
+	dc.w	19,15
+	dc.l	$00000050
+	dc.l	$40000000,$80000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$80000080,$00000008
-	dc.l	$00000000,$ffffffff
+	dc.l	$3fff0000,$b504f300,$00000000
+	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_23_21
-	dc.w	18,15
-	dc.l	$00000010
-	dc.l	$bfff0000,$80000000,$00000408
+	dc.w	19,15
+	dc.l	$00000050
+	dc.l	$40000000,$c0000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$bfff0000,$80000000,$00000408
-	dc.l	$08000000,$ffffffff
+	dc.l	$3fff0000,$ddb3d700,$00000000
+	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_23_22
-	dc.w	18,15
-	dc.l	$00000010
-	dc.l	$3fff0000,$80000080,$00000000
+	dc.w	19,15
+	dc.l	$00000050
+	dc.l	$3ffe0000,$80000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$80000080,$00000000
-	dc.l	$00000000,$ffffffff
+	dc.l	$3ffe0000,$b504f300,$00000000
+	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_23_23
-	dc.w	18,15
-	dc.l	$00000010
-	dc.l	$3fff0000,$800000c0,$00000000
+	dc.w	19,15
+	dc.l	$00000090
+	dc.l	$40000000,$80000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$800000c0,$00000000
-	dc.l	$00000000,$ffffffff
+	dc.l	$3fff0000,$b504f333,$f9de6000
+	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_23_24
-	dc.w	18,15
-	dc.l	$00000010
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.w	19,15
+	dc.l	$00000090
+	dc.l	$40000000,$c0000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$00000000,$ffffffff
+	dc.l	$3fff0000,$ddb3d742,$c2655000
+	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_23_25
-	dc.w	18,15
-	dc.l	$00000050
-	dc.l	$3fff0000,$80000080,$00000008
+	dc.w	19,15
+	dc.l	$00000090
+	dc.l	$3ffe0000,$80000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3ffe0000,$b504f333,$f9de6000
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_23_26
-	dc.w	18,15
-	dc.l	$00000050
-	dc.l	$bfff0000,$80000000,$00000408
+	dc.w	19,15
+	dc.l	$00000020
+	dc.l	$40000000,$80000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$bfff0000,$80000000,$00000000
-	dc.l	$08000208,$ffffffff
+	dc.l	$3fff0000,$b504f333,$f9de6484
+	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_23_27
-	dc.w	18,15
-	dc.l	$00000050
-	dc.l	$3fff0000,$80000080,$00000000
+	dc.w	19,15
+	dc.l	$00000020
+	dc.l	$40000000,$c0000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3fff0000,$ddb3d742,$c265539d
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_23_28
-	dc.w	18,15
-	dc.l	$00000050
-	dc.l	$3fff0000,$800000c0,$00000000
+	dc.w	19,15
+	dc.l	$00000020
+	dc.l	$3ffe0000,$80000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3ffe0000,$b504f333,$f9de6484
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_23_29
-	dc.w	18,15
-	dc.l	$00000050
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.w	19,15
+	dc.l	$00000060
+	dc.l	$40000000,$80000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3ffd0000,$aaaaaa00,$00000000
+	dc.l	$3fff0000,$b504f300,$00000000
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_23_30
-	dc.w	18,15
-	dc.l	$00000090
-	dc.l	$3fff0000,$80000080,$00000008
+	dc.w	19,15
+	dc.l	$00000060
+	dc.l	$40000000,$c0000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$80000080,$00000000
+	dc.l	$3fff0000,$ddb3d700,$00000000
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_23_31
-	dc.w	18,15
-	dc.l	$00000090
-	dc.l	$bfff0000,$80000000,$00000408
+	dc.w	19,15
+	dc.l	$00000060
+	dc.l	$3ffe0000,$80000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$bfff0000,$80000000,$00000000
-	dc.l	$08000208,$ffffffff
+	dc.l	$3ffe0000,$b504f300,$00000000
+	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_23_32
-	dc.w	18,15
-	dc.l	$00000090
-	dc.l	$3fff0000,$80000080,$00000000
+	dc.w	19,15
+	dc.l	$000000a0
+	dc.l	$40000000,$80000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$80000080,$00000000
-	dc.l	$00000000,$ffffffff
+	dc.l	$3fff0000,$b504f333,$f9de6000
+	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_23_33
-	dc.w	18,15
-	dc.l	$00000090
-	dc.l	$3fff0000,$800000c0,$00000000
+	dc.w	19,15
+	dc.l	$000000a0
+	dc.l	$40000000,$c0000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$800000c0,$00000000
-	dc.l	$00000000,$ffffffff
+	dc.l	$3fff0000,$ddb3d742,$c2655000
+	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_23_34
-	dc.w	18,15
-	dc.l	$00000090
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.w	19,15
+	dc.l	$000000a0
+	dc.l	$3ffe0000,$80000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaa800
+	dc.l	$3ffe0000,$b504f333,$f9de6000
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_23_35
-	dc.w	18,15
-	dc.l	$00000020
-	dc.l	$3fff0000,$80000080,$00000008
+	dc.w	19,15
+	dc.l	$00000030
+	dc.l	$40000000,$80000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$80000080,$00000008
-	dc.l	$00000000,$ffffffff
+	dc.l	$3fff0000,$b504f333,$f9de6485
+	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_23_36
-	dc.w	18,15
-	dc.l	$00000020
-	dc.l	$bfff0000,$80000000,$00000408
+	dc.w	19,15
+	dc.l	$00000030
+	dc.l	$40000000,$c0000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$bfff0000,$80000000,$00000408
-	dc.l	$08000000,$ffffffff
+	dc.l	$3fff0000,$ddb3d742,$c265539e
+	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_23_37
-	dc.w	18,15
-	dc.l	$00000020
-	dc.l	$3fff0000,$80000080,$00000000
+	dc.w	19,15
+	dc.l	$00000030
+	dc.l	$3ffe0000,$80000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$80000080,$00000000
-	dc.l	$00000000,$ffffffff
+	dc.l	$3ffe0000,$b504f333,$f9de6485
+	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_23_38
-	dc.w	18,15
-	dc.l	$00000020
-	dc.l	$3fff0000,$800000c0,$00000000
+	dc.w	19,15
+	dc.l	$00000070
+	dc.l	$40000000,$80000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$800000c0,$00000000
-	dc.l	$00000000,$ffffffff
+	dc.l	$3fff0000,$b504f400,$00000000
+	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_23_39
-	dc.w	18,15
-	dc.l	$00000020
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.w	19,15
+	dc.l	$00000070
+	dc.l	$40000000,$c0000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$00000000,$ffffffff
+	dc.l	$3fff0000,$ddb3d800,$00000000
+	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_23_40
-	dc.w	18,15
-	dc.l	$00000060
-	dc.l	$3fff0000,$80000080,$00000008
+	dc.w	19,15
+	dc.l	$00000070
+	dc.l	$3ffe0000,$80000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3ffe0000,$b504f400,$00000000
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_23_41
-	dc.w	18,15
-	dc.l	$00000060
-	dc.l	$bfff0000,$80000000,$00000408
+	dc.w	19,15
+	dc.l	$000000b0
+	dc.l	$40000000,$80000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$bfff0000,$80000100,$00000000
-	dc.l	$08000208,$ffffffff
+	dc.l	$3fff0000,$b504f333,$f9de6800
+	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_23_42
-	dc.w	18,15
-	dc.l	$00000060
-	dc.l	$3fff0000,$80000080,$00000000
+	dc.w	19,15
+	dc.l	$000000b0
+	dc.l	$40000000,$c0000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3fff0000,$ddb3d742,$c2655800
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_23_43
-	dc.w	18,15
-	dc.l	$00000060
-	dc.l	$3fff0000,$800000c0,$00000000
+	dc.w	19,15
+	dc.l	$000000b0
+	dc.l	$3ffe0000,$80000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3ffe0000,$b504f333,$f9de6800
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_23_44
-	dc.w	18,15
-	dc.l	$00000060
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3ffd0000,$aaaaaa00,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_23_45
-	dc.w	18,15
-	dc.l	$000000a0
-	dc.l	$3fff0000,$80000080,$00000008
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$80000080,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_23_46
-	dc.w	18,15
-	dc.l	$000000a0
-	dc.l	$bfff0000,$80000000,$00000408
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$bfff0000,$80000000,$00000800
-	dc.l	$08000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_23_47
-	dc.w	18,15
-	dc.l	$000000a0
-	dc.l	$3fff0000,$80000080,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$80000080,$00000000
-	dc.l	$00000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_23_48
-	dc.w	18,15
-	dc.l	$000000a0
-	dc.l	$3fff0000,$800000c0,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$800000c0,$00000000
-	dc.l	$00000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_23_49
-	dc.w	18,15
-	dc.l	$000000a0
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaa800
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_23_50
-	dc.w	18,15
-	dc.l	$00000030
-	dc.l	$3fff0000,$80000080,$00000008
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$80000080,$00000008
-	dc.l	$00000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_23_51
-	dc.w	18,15
-	dc.l	$00000030
-	dc.l	$bfff0000,$80000000,$00000408
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$bfff0000,$80000000,$00000408
-	dc.l	$08000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_23_52
-	dc.w	18,15
-	dc.l	$00000030
-	dc.l	$3fff0000,$80000080,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$80000080,$00000000
-	dc.l	$00000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_23_53
-	dc.w	18,15
-	dc.l	$00000030
-	dc.l	$3fff0000,$800000c0,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$800000c0,$00000000
-	dc.l	$00000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_23_54
-	dc.w	18,15
-	dc.l	$00000030
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$00000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_23_55
-	dc.w	18,15
-	dc.l	$00000070
-	dc.l	$3fff0000,$80000080,$00000008
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$80000100,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_23_56
-	dc.w	18,15
-	dc.l	$00000070
-	dc.l	$bfff0000,$80000000,$00000408
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$bfff0000,$80000000,$00000000
-	dc.l	$08000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_23_57
-	dc.w	18,15
-	dc.l	$00000070
-	dc.l	$3fff0000,$80000080,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$80000100,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_23_58
-	dc.w	18,15
-	dc.l	$00000070
-	dc.l	$3fff0000,$800000c0,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$80000100,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_23_59
-	dc.w	18,15
-	dc.l	$00000070
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3ffd0000,$aaaaab00,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_23_60
-	dc.w	18,15
-	dc.l	$000000b0
-	dc.l	$3fff0000,$80000080,$00000008
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$80000080,$00000800
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_23_61
-	dc.w	18,15
-	dc.l	$000000b0
-	dc.l	$bfff0000,$80000000,$00000408
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$bfff0000,$80000000,$00000000
-	dc.l	$08000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_23_62
-	dc.w	18,15
-	dc.l	$000000b0
-	dc.l	$3fff0000,$80000080,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$80000080,$00000000
-	dc.l	$00000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_23_63
-	dc.w	18,15
-	dc.l	$000000b0
-	dc.l	$3fff0000,$800000c0,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$800000c0,$00000000
-	dc.l	$00000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_23_64
-	dc.w	18,15
-	dc.l	$000000b0
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaab000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_23_65
 	cnop	0,4
 gv_24:
-	dc.w	20,15
+	dc.w	18,15
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
@@ -13285,16 +12863,16 @@ gv_24:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_24_0
-	dc.w	20,15
+	dc.w	18,15
 	dc.l	$00000000
 	dc.l	$80000000,$00000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$04000000,$ffffffff
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$0c000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_24_1
-	dc.w	20,15
+	dc.w	18,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$00000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
@@ -13303,72 +12881,585 @@ gv_24:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_24_2
-	dc.w	20,15
+	dc.w	18,15
 	dc.l	$00000000
 	dc.l	$ffff0000,$00000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$02000000,$ffffffff
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$0a000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_24_3
-	dc.w	20,15
+	dc.w	18,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$c0000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
 	dc.l	$7fff0000,$c0000000,$00000000
-	dc.l	$01000000,$f7ffffff
+	dc.l	$01000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
-	dc.l	$7fffffff,$ffffffff,$ffffffff
+	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_24_4
-	dc.w	20,15
+	dc.w	18,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$a0000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
 	dc.l	$7fff0000,$e0000000,$00000000
-	dc.l	$01004080,$f7ffffff
+	dc.l	$01004080,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
-	dc.l	$7fffffff,$ffffffff,$ffffffff
+	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_24_5
-	dc.w	20,15
+	dc.w	18,15
 	dc.l	$00000000
-	dc.l	$bfff0000,$80000000,$00000000
+	dc.l	$3fff0000,$80000080,$00000008
 	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3fff0000,$80000080,$00000008
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_24_6
-	dc.w	20,15
+	dc.w	18,15
 	dc.l	$00000000
-	dc.l	$40010000,$a0000000,$00000000
+	dc.l	$bfff0000,$80000000,$00000408
 	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$40010000,$a0000000,$00000000
-	dc.l	$00000000,$ffffffff
+	dc.l	$bfff0000,$80000000,$00000408
+	dc.l	$08000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_24_7
-	dc.w	20,15
+	dc.w	18,15
+	dc.l	$00000000
+	dc.l	$3fff0000,$80000080,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3fff0000,$80000080,$00000000
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_24_8
+	dc.w	18,15
+	dc.l	$00000000
+	dc.l	$3fff0000,$800000c0,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3fff0000,$800000c0,$00000000
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_24_9
+	dc.w	18,15
+	dc.l	$00000000
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_24_10
+	dc.w	18,15
 	dc.l	$00000040
-	dc.l	$bfff0000,$80000002,$00000000
+	dc.l	$3fff0000,$80000080,$00000008
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3fff0000,$80000100,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_24_11
+	dc.w	18,15
+	dc.l	$00000040
+	dc.l	$bfff0000,$80000000,$00000408
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$bfff0000,$80000000,$00000000
+	dc.l	$08000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_24_12
+	dc.w	18,15
+	dc.l	$00000040
+	dc.l	$3fff0000,$80000080,$00000000
 	dc.l	$40010000,$e0000000,$00000000
 	dc.l	$3fff0000,$80000000,$00000000
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_24_8
+	dc.l	wy_24_13
+	dc.w	18,15
+	dc.l	$00000040
+	dc.l	$3fff0000,$800000c0,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3fff0000,$80000100,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_24_14
+	dc.w	18,15
+	dc.l	$00000040
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3ffd0000,$aaaaab00,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_24_15
+	dc.w	18,15
+	dc.l	$00000080
+	dc.l	$3fff0000,$80000080,$00000008
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3fff0000,$80000080,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_24_16
+	dc.w	18,15
+	dc.l	$00000080
+	dc.l	$bfff0000,$80000000,$00000408
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$bfff0000,$80000000,$00000800
+	dc.l	$08000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_24_17
+	dc.w	18,15
+	dc.l	$00000080
+	dc.l	$3fff0000,$80000080,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3fff0000,$80000080,$00000000
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_24_18
+	dc.w	18,15
+	dc.l	$00000080
+	dc.l	$3fff0000,$800000c0,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3fff0000,$800000c0,$00000000
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_24_19
+	dc.w	18,15
+	dc.l	$00000080
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaa800
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_24_20
+	dc.w	18,15
+	dc.l	$00000010
+	dc.l	$3fff0000,$80000080,$00000008
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3fff0000,$80000080,$00000008
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_24_21
+	dc.w	18,15
+	dc.l	$00000010
+	dc.l	$bfff0000,$80000000,$00000408
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$bfff0000,$80000000,$00000408
+	dc.l	$08000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_24_22
+	dc.w	18,15
+	dc.l	$00000010
+	dc.l	$3fff0000,$80000080,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3fff0000,$80000080,$00000000
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_24_23
+	dc.w	18,15
+	dc.l	$00000010
+	dc.l	$3fff0000,$800000c0,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3fff0000,$800000c0,$00000000
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_24_24
+	dc.w	18,15
+	dc.l	$00000010
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_24_25
+	dc.w	18,15
+	dc.l	$00000050
+	dc.l	$3fff0000,$80000080,$00000008
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_24_26
+	dc.w	18,15
+	dc.l	$00000050
+	dc.l	$bfff0000,$80000000,$00000408
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$bfff0000,$80000000,$00000000
+	dc.l	$08000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_24_27
+	dc.w	18,15
+	dc.l	$00000050
+	dc.l	$3fff0000,$80000080,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_24_28
+	dc.w	18,15
+	dc.l	$00000050
+	dc.l	$3fff0000,$800000c0,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_24_29
+	dc.w	18,15
+	dc.l	$00000050
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3ffd0000,$aaaaaa00,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_24_30
+	dc.w	18,15
+	dc.l	$00000090
+	dc.l	$3fff0000,$80000080,$00000008
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3fff0000,$80000080,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_24_31
+	dc.w	18,15
+	dc.l	$00000090
+	dc.l	$bfff0000,$80000000,$00000408
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$bfff0000,$80000000,$00000000
+	dc.l	$08000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_24_32
+	dc.w	18,15
+	dc.l	$00000090
+	dc.l	$3fff0000,$80000080,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3fff0000,$80000080,$00000000
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_24_33
+	dc.w	18,15
+	dc.l	$00000090
+	dc.l	$3fff0000,$800000c0,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3fff0000,$800000c0,$00000000
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_24_34
+	dc.w	18,15
+	dc.l	$00000090
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaa800
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_24_35
+	dc.w	18,15
+	dc.l	$00000020
+	dc.l	$3fff0000,$80000080,$00000008
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3fff0000,$80000080,$00000008
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_24_36
+	dc.w	18,15
+	dc.l	$00000020
+	dc.l	$bfff0000,$80000000,$00000408
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$bfff0000,$80000000,$00000408
+	dc.l	$08000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_24_37
+	dc.w	18,15
+	dc.l	$00000020
+	dc.l	$3fff0000,$80000080,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3fff0000,$80000080,$00000000
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_24_38
+	dc.w	18,15
+	dc.l	$00000020
+	dc.l	$3fff0000,$800000c0,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3fff0000,$800000c0,$00000000
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_24_39
+	dc.w	18,15
+	dc.l	$00000020
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_24_40
+	dc.w	18,15
+	dc.l	$00000060
+	dc.l	$3fff0000,$80000080,$00000008
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_24_41
+	dc.w	18,15
+	dc.l	$00000060
+	dc.l	$bfff0000,$80000000,$00000408
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$bfff0000,$80000100,$00000000
+	dc.l	$08000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_24_42
+	dc.w	18,15
+	dc.l	$00000060
+	dc.l	$3fff0000,$80000080,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_24_43
+	dc.w	18,15
+	dc.l	$00000060
+	dc.l	$3fff0000,$800000c0,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_24_44
+	dc.w	18,15
+	dc.l	$00000060
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3ffd0000,$aaaaaa00,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_24_45
+	dc.w	18,15
+	dc.l	$000000a0
+	dc.l	$3fff0000,$80000080,$00000008
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3fff0000,$80000080,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_24_46
+	dc.w	18,15
+	dc.l	$000000a0
+	dc.l	$bfff0000,$80000000,$00000408
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$bfff0000,$80000000,$00000800
+	dc.l	$08000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_24_47
+	dc.w	18,15
+	dc.l	$000000a0
+	dc.l	$3fff0000,$80000080,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3fff0000,$80000080,$00000000
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_24_48
+	dc.w	18,15
+	dc.l	$000000a0
+	dc.l	$3fff0000,$800000c0,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3fff0000,$800000c0,$00000000
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_24_49
+	dc.w	18,15
+	dc.l	$000000a0
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaa800
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_24_50
+	dc.w	18,15
+	dc.l	$00000030
+	dc.l	$3fff0000,$80000080,$00000008
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3fff0000,$80000080,$00000008
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_24_51
+	dc.w	18,15
+	dc.l	$00000030
+	dc.l	$bfff0000,$80000000,$00000408
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$bfff0000,$80000000,$00000408
+	dc.l	$08000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_24_52
+	dc.w	18,15
+	dc.l	$00000030
+	dc.l	$3fff0000,$80000080,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3fff0000,$80000080,$00000000
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_24_53
+	dc.w	18,15
+	dc.l	$00000030
+	dc.l	$3fff0000,$800000c0,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3fff0000,$800000c0,$00000000
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_24_54
+	dc.w	18,15
+	dc.l	$00000030
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_24_55
+	dc.w	18,15
+	dc.l	$00000070
+	dc.l	$3fff0000,$80000080,$00000008
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3fff0000,$80000100,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_24_56
+	dc.w	18,15
+	dc.l	$00000070
+	dc.l	$bfff0000,$80000000,$00000408
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$bfff0000,$80000000,$00000000
+	dc.l	$08000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_24_57
+	dc.w	18,15
+	dc.l	$00000070
+	dc.l	$3fff0000,$80000080,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3fff0000,$80000100,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_24_58
+	dc.w	18,15
+	dc.l	$00000070
+	dc.l	$3fff0000,$800000c0,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3fff0000,$80000100,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_24_59
+	dc.w	18,15
+	dc.l	$00000070
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3ffd0000,$aaaaab00,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_24_60
+	dc.w	18,15
+	dc.l	$000000b0
+	dc.l	$3fff0000,$80000080,$00000008
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3fff0000,$80000080,$00000800
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_24_61
+	dc.w	18,15
+	dc.l	$000000b0
+	dc.l	$bfff0000,$80000000,$00000408
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$bfff0000,$80000000,$00000000
+	dc.l	$08000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_24_62
+	dc.w	18,15
+	dc.l	$000000b0
+	dc.l	$3fff0000,$80000080,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3fff0000,$80000080,$00000000
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_24_63
+	dc.w	18,15
+	dc.l	$000000b0
+	dc.l	$3fff0000,$800000c0,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3fff0000,$800000c0,$00000000
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_24_64
+	dc.w	18,15
+	dc.l	$000000b0
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaab000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_24_65
 	cnop	0,4
 gv_25:
-	dc.w	21,15
+	dc.w	20,15
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$0c000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$04000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_25_0
-	dc.w	21,15
+	dc.w	20,15
 	dc.l	$00000000
 	dc.l	$80000000,$00000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
@@ -13377,16 +13468,16 @@ gv_25:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_25_1
-	dc.w	21,15
+	dc.w	20,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$00000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$0a000000,$ffffffff
+	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$02000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_25_2
-	dc.w	21,15
+	dc.w	20,15
 	dc.l	$00000000
 	dc.l	$ffff0000,$00000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
@@ -13395,7 +13486,7 @@ gv_25:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_25_3
-	dc.w	21,15
+	dc.w	20,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$c0000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
@@ -13404,7 +13495,7 @@ gv_25:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$7fffffff,$ffffffff,$ffffffff
 	dc.l	wy_25_4
-	dc.w	21,15
+	dc.w	20,15
 	dc.l	$00000000
 	dc.l	$7fff0000,$a0000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
@@ -13413,7 +13504,7 @@ gv_25:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$7fffffff,$ffffffff,$ffffffff
 	dc.l	wy_25_5
-	dc.w	21,15
+	dc.w	20,15
 	dc.l	$00000000
 	dc.l	$bfff0000,$80000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
@@ -13422,6 +13513,89 @@ gv_25:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_25_6
+	dc.w	20,15
+	dc.l	$00000000
+	dc.l	$40010000,$a0000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$40010000,$a0000000,$00000000
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_25_7
+	dc.w	20,15
+	dc.l	$00000040
+	dc.l	$bfff0000,$80000002,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_25_8
+	cnop	0,4
+gv_26:
+	dc.w	21,15
+	dc.l	$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$0c000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_26_0
+	dc.w	21,15
+	dc.l	$00000000
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$04000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_26_1
+	dc.w	21,15
+	dc.l	$00000000
+	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$0a000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_26_2
+	dc.w	21,15
+	dc.l	$00000000
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$02000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_26_3
+	dc.w	21,15
+	dc.l	$00000000
+	dc.l	$7fff0000,$c0000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$7fff0000,$c0000000,$00000000
+	dc.l	$01000000,$f7ffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$7fffffff,$ffffffff,$ffffffff
+	dc.l	wy_26_4
+	dc.w	21,15
+	dc.l	$00000000
+	dc.l	$7fff0000,$a0000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$7fff0000,$e0000000,$00000000
+	dc.l	$01004080,$f7ffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$7fffffff,$ffffffff,$ffffffff
+	dc.l	wy_26_5
+	dc.w	21,15
+	dc.l	$00000000
+	dc.l	$bfff0000,$80000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_26_6
 	dc.w	21,15
 	dc.l	$00000000
 	dc.l	$40010000,$a0000000,$00000000
@@ -13430,7 +13604,7 @@ gv_25:
 	dc.l	$08000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_25_7
+	dc.l	wy_26_7
 	dc.w	21,15
 	dc.l	$00000050
 	dc.l	$3fff0000,$80000002,$00000000
@@ -13439,552 +13613,10 @@ gv_25:
 	dc.l	$08000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_25_8
-	cnop	0,4
-gv_26:
-	dc.w	30,11
-	dc.l	$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$04000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_26_0
-	dc.w	30,11
-	dc.l	$00000010
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$04000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_26_1
-	dc.w	30,11
-	dc.l	$00000020
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$04000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_26_2
-	dc.w	30,11
-	dc.l	$00000030
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$04000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_26_3
-	dc.w	30,11
-	dc.l	$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$0c000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_26_4
-	dc.w	30,11
-	dc.l	$00000010
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$0c000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_26_5
-	dc.w	30,11
-	dc.l	$00000020
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$0c000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_26_6
-	dc.w	30,11
-	dc.l	$00000030
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$0c000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_26_7
-	dc.w	30,11
-	dc.l	$00000000
-	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$02000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_26_8
-	dc.w	30,11
-	dc.l	$00000010
-	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$02000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_26_9
-	dc.w	30,11
-	dc.l	$00000020
-	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$02000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_26_10
-	dc.w	30,11
-	dc.l	$00000030
-	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$02000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_26_11
-	dc.w	30,11
-	dc.l	$00000000
-	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$0a000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_26_12
-	dc.w	30,11
-	dc.l	$00000010
-	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$0a000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_26_13
-	dc.w	30,11
-	dc.l	$00000020
-	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$0a000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_26_14
-	dc.w	30,11
-	dc.l	$00000030
-	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$0a000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_26_15
-	dc.w	30,11
-	dc.l	$00000000
-	dc.l	$7fff0000,$c0000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$7fff0000,$c0000000,$00000000
-	dc.l	$01000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_26_16
-	dc.w	30,11
-	dc.l	$00000010
-	dc.l	$7fff0000,$c0000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$7fff0000,$c0000000,$00000000
-	dc.l	$01000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_26_17
-	dc.w	30,11
-	dc.l	$00000020
-	dc.l	$7fff0000,$c0000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$7fff0000,$c0000000,$00000000
-	dc.l	$01000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_26_18
-	dc.w	30,11
-	dc.l	$00000030
-	dc.l	$7fff0000,$c0000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$7fff0000,$c0000000,$00000000
-	dc.l	$01000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_26_19
-	dc.w	30,11
-	dc.l	$00000000
-	dc.l	$7fff0000,$a0000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$7fff0000,$e0000000,$00000000
-	dc.l	$01004080,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_26_20
-	dc.w	30,11
-	dc.l	$00000010
-	dc.l	$7fff0000,$a0000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$7fff0000,$e0000000,$00000000
-	dc.l	$01004080,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_26_21
-	dc.w	30,11
-	dc.l	$00000020
-	dc.l	$7fff0000,$a0000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$7fff0000,$e0000000,$00000000
-	dc.l	$01004080,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_26_22
-	dc.w	30,11
-	dc.l	$00000030
-	dc.l	$7fff0000,$a0000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$7fff0000,$e0000000,$00000000
-	dc.l	$01004080,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_26_23
-	dc.w	30,11
-	dc.l	$00000000
-	dc.l	$40000000,$a0000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$40000000,$80000000,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_26_24
-	dc.w	30,11
-	dc.l	$00000010
-	dc.l	$40000000,$a0000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$40000000,$80000000,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_26_25
-	dc.w	30,11
-	dc.l	$00000020
-	dc.l	$40000000,$a0000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$40000000,$80000000,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_26_26
-	dc.w	30,11
-	dc.l	$00000030
-	dc.l	$40000000,$a0000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$40000000,$c0000000,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_26_27
-	dc.w	30,11
-	dc.l	$00000000
-	dc.l	$40000000,$e0000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$40010000,$80000000,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_26_28
-	dc.w	30,11
-	dc.l	$00000010
-	dc.l	$40000000,$e0000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$40000000,$c0000000,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_26_29
-	dc.w	30,11
-	dc.l	$00000020
-	dc.l	$40000000,$e0000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$40000000,$c0000000,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_26_30
-	dc.w	30,11
-	dc.l	$00000030
-	dc.l	$40000000,$e0000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$40010000,$80000000,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_26_31
-	dc.w	30,11
-	dc.l	$00000000
-	dc.l	$c0000000,$a0000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$c0000000,$80000000,$00000000
-	dc.l	$08000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_26_32
-	dc.w	30,11
-	dc.l	$00000010
-	dc.l	$c0000000,$a0000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$c0000000,$80000000,$00000000
-	dc.l	$08000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_26_33
-	dc.w	30,11
-	dc.l	$00000020
-	dc.l	$c0000000,$a0000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$c0000000,$c0000000,$00000000
-	dc.l	$08000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_26_34
-	dc.w	30,11
-	dc.l	$00000030
-	dc.l	$c0000000,$a0000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$c0000000,$80000000,$00000000
-	dc.l	$08000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_26_35
-	dc.w	30,11
-	dc.l	$00000000
-	dc.l	$3ffe0000,$80000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$04000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_26_36
-	dc.w	30,11
-	dc.l	$00000010
-	dc.l	$3ffe0000,$80000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$04000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_26_37
-	dc.w	30,11
-	dc.l	$00000020
-	dc.l	$3ffe0000,$80000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$04000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_26_38
-	dc.w	30,11
-	dc.l	$00000030
-	dc.l	$3ffe0000,$80000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_26_39
-	dc.w	30,11
-	dc.l	$00000000
-	dc.l	$bffe0000,$80000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$0c000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_26_40
-	dc.w	30,11
-	dc.l	$00000010
-	dc.l	$bffe0000,$80000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$0c000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_26_41
-	dc.w	30,11
-	dc.l	$00000020
-	dc.l	$bffe0000,$80000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$bfff0000,$80000000,$00000000
-	dc.l	$08000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_26_42
-	dc.w	30,11
-	dc.l	$00000030
-	dc.l	$bffe0000,$80000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$0c000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_26_43
-	dc.w	30,11
-	dc.l	$00000000
-	dc.l	$40000000,$accccccc,$cccccccd
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$40000000,$c0000000,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_26_44
-	dc.w	30,11
-	dc.l	$00000010
-	dc.l	$40000000,$accccccc,$cccccccd
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$40000000,$80000000,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_26_45
-	dc.w	30,11
-	dc.l	$00000020
-	dc.l	$40000000,$accccccc,$cccccccd
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$40000000,$80000000,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_26_46
-	dc.w	30,11
-	dc.l	$00000030
-	dc.l	$40000000,$accccccc,$cccccccd
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$40000000,$c0000000,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_26_47
-	dc.w	30,11
-	dc.l	$00000000
-	dc.l	$c0000000,$accccccc,$cccccccd
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$c0000000,$c0000000,$00000000
-	dc.l	$08000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_26_48
-	dc.w	30,11
-	dc.l	$00000010
-	dc.l	$c0000000,$accccccc,$cccccccd
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$c0000000,$80000000,$00000000
-	dc.l	$08000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_26_49
-	dc.w	30,11
-	dc.l	$00000020
-	dc.l	$c0000000,$accccccc,$cccccccd
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$c0000000,$c0000000,$00000000
-	dc.l	$08000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_26_50
-	dc.w	30,11
-	dc.l	$00000030
-	dc.l	$c0000000,$accccccc,$cccccccd
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$c0000000,$80000000,$00000000
-	dc.l	$08000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_26_51
-	dc.w	30,11
-	dc.l	$00000000
-	dc.l	$40450000,$80000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$40450000,$80000000,$00000000
-	dc.l	$00000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_26_52
-	dc.w	30,11
-	dc.l	$00000010
-	dc.l	$40450000,$80000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$40450000,$80000000,$00000000
-	dc.l	$00000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_26_53
-	dc.w	30,11
-	dc.l	$00000020
-	dc.l	$40450000,$80000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$40450000,$80000000,$00000000
-	dc.l	$00000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_26_54
-	dc.w	30,11
-	dc.l	$00000030
-	dc.l	$40450000,$80000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$40450000,$80000000,$00000000
-	dc.l	$00000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_26_55
-	dc.w	30,11
-	dc.l	$00000000
-	dc.l	$3ffe0000,$c0000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_26_56
-	dc.w	30,11
-	dc.l	$00000010
-	dc.l	$3ffe0000,$c0000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$04000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_26_57
-	dc.w	30,11
-	dc.l	$00000020
-	dc.l	$3ffe0000,$c0000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$04000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_26_58
-	dc.w	30,11
-	dc.l	$00000030
-	dc.l	$3ffe0000,$c0000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_26_59
 	cnop	0,4
 gv_27:
-	dc.w	31,11
+	dc.w	30,11
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
@@ -13993,8 +13625,8 @@ gv_27:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_27_0
-	dc.w	31,11
-	dc.l	$00000030
+	dc.w	30,11
+	dc.l	$00000010
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
 	dc.l	$00000000,$00000000,$00000000
@@ -14002,16 +13634,52 @@ gv_27:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_27_1
-	dc.w	31,11
-	dc.l	$00000000
-	dc.l	$80000000,$00000000,$00000000
+	dc.w	30,11
+	dc.l	$00000020
+	dc.l	$00000000,$00000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$0c000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$04000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_27_2
-	dc.w	31,11
+	dc.w	30,11
+	dc.l	$00000030
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$04000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_27_3
+	dc.w	30,11
+	dc.l	$00000000
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$0c000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_27_4
+	dc.w	30,11
+	dc.l	$00000010
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$0c000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_27_5
+	dc.w	30,11
+	dc.l	$00000020
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$0c000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_27_6
+	dc.w	30,11
 	dc.l	$00000030
 	dc.l	$80000000,$00000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
@@ -14019,53 +13687,107 @@ gv_27:
 	dc.l	$0c000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_27_3
-	dc.w	31,11
-	dc.l	$00000000
-	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$02000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_27_4
-	dc.w	31,11
-	dc.l	$00000030
-	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$02000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_27_5
-	dc.w	31,11
-	dc.l	$00000000
-	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$0a000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_27_6
-	dc.w	31,11
-	dc.l	$00000030
-	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$0a000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_27_7
-	dc.w	31,11
+	dc.w	30,11
 	dc.l	$00000000
-	dc.l	$7fff0000,$c0000000,$00000000
+	dc.l	$7fff0000,$00000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$7fff0000,$c0000000,$00000000
-	dc.l	$01000000,$ffffffff
+	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$02000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_27_8
-	dc.w	31,11
+	dc.w	30,11
+	dc.l	$00000010
+	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$02000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_27_9
+	dc.w	30,11
+	dc.l	$00000020
+	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$02000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_27_10
+	dc.w	30,11
+	dc.l	$00000030
+	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$02000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_27_11
+	dc.w	30,11
+	dc.l	$00000000
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$0a000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_27_12
+	dc.w	30,11
+	dc.l	$00000010
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$0a000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_27_13
+	dc.w	30,11
+	dc.l	$00000020
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$0a000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_27_14
+	dc.w	30,11
+	dc.l	$00000030
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$0a000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_27_15
+	dc.w	30,11
+	dc.l	$00000000
+	dc.l	$7fff0000,$c0000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$7fff0000,$c0000000,$00000000
+	dc.l	$01000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_27_16
+	dc.w	30,11
+	dc.l	$00000010
+	dc.l	$7fff0000,$c0000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$7fff0000,$c0000000,$00000000
+	dc.l	$01000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_27_17
+	dc.w	30,11
+	dc.l	$00000020
+	dc.l	$7fff0000,$c0000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$7fff0000,$c0000000,$00000000
+	dc.l	$01000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_27_18
+	dc.w	30,11
 	dc.l	$00000030
 	dc.l	$7fff0000,$c0000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
@@ -14073,107 +13795,215 @@ gv_27:
 	dc.l	$01000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_27_9
-	dc.w	31,11
-	dc.l	$00000000
-	dc.l	$7fff0000,$a0000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$7fff0000,$e0000000,$00000000
-	dc.l	$01004080,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_27_10
-	dc.w	31,11
-	dc.l	$00000030
-	dc.l	$7fff0000,$a0000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$7fff0000,$e0000000,$00000000
-	dc.l	$01004080,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_27_11
-	dc.w	31,11
-	dc.l	$00000000
-	dc.l	$40000000,$a0000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$40000000,$80000000,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_27_12
-	dc.w	31,11
-	dc.l	$00000030
-	dc.l	$40000000,$a0000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$40000000,$80000000,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_27_13
-	dc.w	31,11
-	dc.l	$00000000
-	dc.l	$40000000,$e0000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$40000000,$c0000000,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_27_14
-	dc.w	31,11
-	dc.l	$00000030
-	dc.l	$40000000,$e0000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$40000000,$c0000000,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_27_15
-	dc.w	31,11
-	dc.l	$00000000
-	dc.l	$c0000000,$a0000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$c0000000,$80000000,$00000000
-	dc.l	$08000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_27_16
-	dc.w	31,11
-	dc.l	$00000030
-	dc.l	$c0000000,$a0000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$c0000000,$80000000,$00000000
-	dc.l	$08000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_27_17
-	dc.w	31,11
-	dc.l	$00000000
-	dc.l	$3ffe0000,$80000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$04000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_27_18
-	dc.w	31,11
-	dc.l	$00000030
-	dc.l	$3ffe0000,$80000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$04000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_27_19
-	dc.w	31,11
+	dc.w	30,11
 	dc.l	$00000000
-	dc.l	$bffe0000,$80000000,$00000000
+	dc.l	$7fff0000,$a0000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$0c000208,$ffffffff
+	dc.l	$7fff0000,$e0000000,$00000000
+	dc.l	$01004080,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_27_20
-	dc.w	31,11
+	dc.w	30,11
+	dc.l	$00000010
+	dc.l	$7fff0000,$a0000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$7fff0000,$e0000000,$00000000
+	dc.l	$01004080,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_27_21
+	dc.w	30,11
+	dc.l	$00000020
+	dc.l	$7fff0000,$a0000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$7fff0000,$e0000000,$00000000
+	dc.l	$01004080,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_27_22
+	dc.w	30,11
+	dc.l	$00000030
+	dc.l	$7fff0000,$a0000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$7fff0000,$e0000000,$00000000
+	dc.l	$01004080,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_27_23
+	dc.w	30,11
+	dc.l	$00000000
+	dc.l	$40000000,$a0000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$40000000,$80000000,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_27_24
+	dc.w	30,11
+	dc.l	$00000010
+	dc.l	$40000000,$a0000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$40000000,$80000000,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_27_25
+	dc.w	30,11
+	dc.l	$00000020
+	dc.l	$40000000,$a0000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$40000000,$80000000,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_27_26
+	dc.w	30,11
+	dc.l	$00000030
+	dc.l	$40000000,$a0000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$40000000,$c0000000,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_27_27
+	dc.w	30,11
+	dc.l	$00000000
+	dc.l	$40000000,$e0000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$40010000,$80000000,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_27_28
+	dc.w	30,11
+	dc.l	$00000010
+	dc.l	$40000000,$e0000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$40000000,$c0000000,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_27_29
+	dc.w	30,11
+	dc.l	$00000020
+	dc.l	$40000000,$e0000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$40000000,$c0000000,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_27_30
+	dc.w	30,11
+	dc.l	$00000030
+	dc.l	$40000000,$e0000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$40010000,$80000000,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_27_31
+	dc.w	30,11
+	dc.l	$00000000
+	dc.l	$c0000000,$a0000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$c0000000,$80000000,$00000000
+	dc.l	$08000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_27_32
+	dc.w	30,11
+	dc.l	$00000010
+	dc.l	$c0000000,$a0000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$c0000000,$80000000,$00000000
+	dc.l	$08000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_27_33
+	dc.w	30,11
+	dc.l	$00000020
+	dc.l	$c0000000,$a0000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$c0000000,$c0000000,$00000000
+	dc.l	$08000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_27_34
+	dc.w	30,11
+	dc.l	$00000030
+	dc.l	$c0000000,$a0000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$c0000000,$80000000,$00000000
+	dc.l	$08000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_27_35
+	dc.w	30,11
+	dc.l	$00000000
+	dc.l	$3ffe0000,$80000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$04000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_27_36
+	dc.w	30,11
+	dc.l	$00000010
+	dc.l	$3ffe0000,$80000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$04000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_27_37
+	dc.w	30,11
+	dc.l	$00000020
+	dc.l	$3ffe0000,$80000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$04000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_27_38
+	dc.w	30,11
+	dc.l	$00000030
+	dc.l	$3ffe0000,$80000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_27_39
+	dc.w	30,11
+	dc.l	$00000000
+	dc.l	$bffe0000,$80000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$0c000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_27_40
+	dc.w	30,11
+	dc.l	$00000010
+	dc.l	$bffe0000,$80000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$0c000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_27_41
+	dc.w	30,11
+	dc.l	$00000020
+	dc.l	$bffe0000,$80000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$bfff0000,$80000000,$00000000
+	dc.l	$08000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_27_42
+	dc.w	30,11
 	dc.l	$00000030
 	dc.l	$bffe0000,$80000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
@@ -14181,35 +14011,71 @@ gv_27:
 	dc.l	$0c000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_27_21
-	dc.w	31,11
+	dc.l	wy_27_43
+	dc.w	30,11
 	dc.l	$00000000
+	dc.l	$40000000,$accccccc,$cccccccd
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$40000000,$c0000000,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_27_44
+	dc.w	30,11
+	dc.l	$00000010
 	dc.l	$40000000,$accccccc,$cccccccd
 	dc.l	$40010000,$e0000000,$00000000
 	dc.l	$40000000,$80000000,$00000000
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_27_22
-	dc.w	31,11
-	dc.l	$00000030
+	dc.l	wy_27_45
+	dc.w	30,11
+	dc.l	$00000020
 	dc.l	$40000000,$accccccc,$cccccccd
 	dc.l	$40010000,$e0000000,$00000000
 	dc.l	$40000000,$80000000,$00000000
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_27_23
-	dc.w	31,11
+	dc.l	wy_27_46
+	dc.w	30,11
+	dc.l	$00000030
+	dc.l	$40000000,$accccccc,$cccccccd
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$40000000,$c0000000,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_27_47
+	dc.w	30,11
 	dc.l	$00000000
+	dc.l	$c0000000,$accccccc,$cccccccd
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$c0000000,$c0000000,$00000000
+	dc.l	$08000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_27_48
+	dc.w	30,11
+	dc.l	$00000010
 	dc.l	$c0000000,$accccccc,$cccccccd
 	dc.l	$40010000,$e0000000,$00000000
 	dc.l	$c0000000,$80000000,$00000000
 	dc.l	$08000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_27_24
-	dc.w	31,11
+	dc.l	wy_27_49
+	dc.w	30,11
+	dc.l	$00000020
+	dc.l	$c0000000,$accccccc,$cccccccd
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$c0000000,$c0000000,$00000000
+	dc.l	$08000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_27_50
+	dc.w	30,11
 	dc.l	$00000030
 	dc.l	$c0000000,$accccccc,$cccccccd
 	dc.l	$40010000,$e0000000,$00000000
@@ -14217,8 +14083,8 @@ gv_27:
 	dc.l	$08000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_27_25
-	dc.w	31,11
+	dc.l	wy_27_51
+	dc.w	30,11
 	dc.l	$00000000
 	dc.l	$40450000,$80000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
@@ -14226,8 +14092,26 @@ gv_27:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_27_26
-	dc.w	31,11
+	dc.l	wy_27_52
+	dc.w	30,11
+	dc.l	$00000010
+	dc.l	$40450000,$80000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$40450000,$80000000,$00000000
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_27_53
+	dc.w	30,11
+	dc.l	$00000020
+	dc.l	$40450000,$80000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$40450000,$80000000,$00000000
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_27_54
+	dc.w	30,11
 	dc.l	$00000030
 	dc.l	$40450000,$80000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
@@ -14235,28 +14119,46 @@ gv_27:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_27_27
-	dc.w	31,11
+	dc.l	wy_27_55
+	dc.w	30,11
 	dc.l	$00000000
 	dc.l	$3ffe0000,$c0000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$04000208,$ffffffff
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_27_28
-	dc.w	31,11
-	dc.l	$00000030
+	dc.l	wy_27_56
+	dc.w	30,11
+	dc.l	$00000010
 	dc.l	$3ffe0000,$c0000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$04000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_27_29
+	dc.l	wy_27_57
+	dc.w	30,11
+	dc.l	$00000020
+	dc.l	$3ffe0000,$c0000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$04000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_27_58
+	dc.w	30,11
+	dc.l	$00000030
+	dc.l	$3ffe0000,$c0000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_27_59
 	cnop	0,4
 gv_28:
-	dc.w	32,3
+	dc.w	31,11
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
@@ -14265,7 +14167,16 @@ gv_28:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_28_0
-	dc.w	32,3
+	dc.w	31,11
+	dc.l	$00000030
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$04000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_28_1
+	dc.w	31,11
 	dc.l	$00000000
 	dc.l	$80000000,$00000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
@@ -14273,26 +14184,53 @@ gv_28:
 	dc.l	$0c000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_28_1
-	dc.w	32,3
-	dc.l	$00000000
-	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$7fff0000,$ffffffff,$ffffffff
-	dc.l	$01002080,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_28_2
-	dc.w	32,3
-	dc.l	$00000000
-	dc.l	$ffff0000,$00000000,$00000000
+	dc.w	31,11
+	dc.l	$00000030
+	dc.l	$80000000,$00000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$7fff0000,$ffffffff,$ffffffff
-	dc.l	$01002080,$ffffffff
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$0c000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_28_3
-	dc.w	32,3
+	dc.w	31,11
+	dc.l	$00000000
+	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$02000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_28_4
+	dc.w	31,11
+	dc.l	$00000030
+	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$02000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_28_5
+	dc.w	31,11
+	dc.l	$00000000
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$0a000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_28_6
+	dc.w	31,11
+	dc.l	$00000030
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$0a000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_28_7
+	dc.w	31,11
 	dc.l	$00000000
 	dc.l	$7fff0000,$c0000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
@@ -14300,8 +14238,17 @@ gv_28:
 	dc.l	$01000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_28_4
-	dc.w	32,3
+	dc.l	wy_28_8
+	dc.w	31,11
+	dc.l	$00000030
+	dc.l	$7fff0000,$c0000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$7fff0000,$c0000000,$00000000
+	dc.l	$01000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_28_9
+	dc.w	31,11
 	dc.l	$00000000
 	dc.l	$7fff0000,$a0000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
@@ -14309,55 +14256,181 @@ gv_28:
 	dc.l	$01004080,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_28_5
-	dc.w	32,3
+	dc.l	wy_28_10
+	dc.w	31,11
+	dc.l	$00000030
+	dc.l	$7fff0000,$a0000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$7fff0000,$e0000000,$00000000
+	dc.l	$01004080,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_28_11
+	dc.w	31,11
 	dc.l	$00000000
-	dc.l	$40020000,$80000000,$00000000
+	dc.l	$40000000,$a0000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$40000000,$80000000,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_28_12
+	dc.w	31,11
+	dc.l	$00000030
+	dc.l	$40000000,$a0000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$40000000,$80000000,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_28_13
+	dc.w	31,11
+	dc.l	$00000000
+	dc.l	$40000000,$e0000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
 	dc.l	$40000000,$c0000000,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_28_14
+	dc.w	31,11
+	dc.l	$00000030
+	dc.l	$40000000,$e0000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$40000000,$c0000000,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_28_15
+	dc.w	31,11
+	dc.l	$00000000
+	dc.l	$c0000000,$a0000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$c0000000,$80000000,$00000000
+	dc.l	$08000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_28_16
+	dc.w	31,11
+	dc.l	$00000030
+	dc.l	$c0000000,$a0000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$c0000000,$80000000,$00000000
+	dc.l	$08000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_28_17
+	dc.w	31,11
+	dc.l	$00000000
+	dc.l	$3ffe0000,$80000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$04000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_28_18
+	dc.w	31,11
+	dc.l	$00000030
+	dc.l	$3ffe0000,$80000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$04000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_28_19
+	dc.w	31,11
+	dc.l	$00000000
+	dc.l	$bffe0000,$80000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$0c000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_28_20
+	dc.w	31,11
+	dc.l	$00000030
+	dc.l	$bffe0000,$80000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$0c000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_28_21
+	dc.w	31,11
+	dc.l	$00000000
+	dc.l	$40000000,$accccccc,$cccccccd
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$40000000,$80000000,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_28_22
+	dc.w	31,11
+	dc.l	$00000030
+	dc.l	$40000000,$accccccc,$cccccccd
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$40000000,$80000000,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_28_23
+	dc.w	31,11
+	dc.l	$00000000
+	dc.l	$c0000000,$accccccc,$cccccccd
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$c0000000,$80000000,$00000000
+	dc.l	$08000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_28_24
+	dc.w	31,11
+	dc.l	$00000030
+	dc.l	$c0000000,$accccccc,$cccccccd
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$c0000000,$80000000,$00000000
+	dc.l	$08000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_28_25
+	dc.w	31,11
+	dc.l	$00000000
+	dc.l	$40450000,$80000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$40450000,$80000000,$00000000
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_28_6
-	dc.w	32,3
+	dc.l	wy_28_26
+	dc.w	31,11
+	dc.l	$00000030
+	dc.l	$40450000,$80000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$40450000,$80000000,$00000000
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_28_27
+	dc.w	31,11
 	dc.l	$00000000
 	dc.l	$3ffe0000,$c0000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$bfff0000,$80000000,$00000000
-	dc.l	$08000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$04000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_28_7
-	dc.w	32,3
-	dc.l	$00000000
-	dc.l	$bfff0000,$80000000,$00000000
+	dc.l	wy_28_28
+	dc.w	31,11
+	dc.l	$00000030
+	dc.l	$3ffe0000,$c0000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
 	dc.l	$00000000,$00000000,$00000000
-	dc.l	$04000000,$ffffffff
+	dc.l	$04000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_28_8
-	dc.w	32,3
-	dc.l	$00000000
-	dc.l	$7ffe0000,$ffffffff,$ffffffff
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$400c0000,$fffc0000,$00000000
-	dc.l	$00000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_28_9
-	dc.w	32,3
-	dc.l	$00000000
-	dc.l	$017f0000,$80000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$c00c0000,$fa000000,$00000000
-	dc.l	$08000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_28_10
+	dc.l	wy_28_29
 	cnop	0,4
 gv_29:
-	dc.w	33,3
+	dc.w	32,3
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
@@ -14366,7 +14439,7 @@ gv_29:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_29_0
-	dc.w	33,3
+	dc.w	32,3
 	dc.l	$00000000
 	dc.l	$80000000,$00000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
@@ -14375,7 +14448,7 @@ gv_29:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_29_1
-	dc.w	33,3
+	dc.w	32,3
 	dc.l	$00000000
 	dc.l	$7fff0000,$00000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
@@ -14384,7 +14457,7 @@ gv_29:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_29_2
-	dc.w	33,3
+	dc.w	32,3
 	dc.l	$00000000
 	dc.l	$ffff0000,$00000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
@@ -14393,7 +14466,7 @@ gv_29:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_29_3
-	dc.w	33,3
+	dc.w	32,3
 	dc.l	$00000000
 	dc.l	$7fff0000,$c0000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
@@ -14402,7 +14475,7 @@ gv_29:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_29_4
-	dc.w	33,3
+	dc.w	32,3
 	dc.l	$00000000
 	dc.l	$7fff0000,$a0000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
@@ -14411,6 +14484,107 @@ gv_29:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_29_5
+	dc.w	32,3
+	dc.l	$00000000
+	dc.l	$40020000,$80000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$40000000,$c0000000,$00000000
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_29_6
+	dc.w	32,3
+	dc.l	$00000000
+	dc.l	$3ffe0000,$c0000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$bfff0000,$80000000,$00000000
+	dc.l	$08000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_29_7
+	dc.w	32,3
+	dc.l	$00000000
+	dc.l	$bfff0000,$80000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$04000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_29_8
+	dc.w	32,3
+	dc.l	$00000000
+	dc.l	$7ffe0000,$ffffffff,$ffffffff
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$400c0000,$fffc0000,$00000000
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_29_9
+	dc.w	32,3
+	dc.l	$00000000
+	dc.l	$017f0000,$80000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$c00c0000,$fa000000,$00000000
+	dc.l	$08000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_29_10
+	cnop	0,4
+gv_30:
+	dc.w	33,3
+	dc.l	$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$04000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_30_0
+	dc.w	33,3
+	dc.l	$00000000
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$0c000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_30_1
+	dc.w	33,3
+	dc.l	$00000000
+	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$7fff0000,$ffffffff,$ffffffff
+	dc.l	$01002080,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_30_2
+	dc.w	33,3
+	dc.l	$00000000
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$7fff0000,$ffffffff,$ffffffff
+	dc.l	$01002080,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_30_3
+	dc.w	33,3
+	dc.l	$00000000
+	dc.l	$7fff0000,$c0000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$7fff0000,$c0000000,$00000000
+	dc.l	$01000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_30_4
+	dc.w	33,3
+	dc.l	$00000000
+	dc.l	$7fff0000,$a0000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$7fff0000,$e0000000,$00000000
+	dc.l	$01004080,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_30_5
 	dc.w	33,3
 	dc.l	$00000000
 	dc.l	$40020000,$c0000000,$00000000
@@ -14419,7 +14593,7 @@ gv_29:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_29_6
+	dc.l	wy_30_6
 	dc.w	33,3
 	dc.l	$00000000
 	dc.l	$bffe0000,$c0000000,$00000000
@@ -14428,7 +14602,7 @@ gv_29:
 	dc.l	$08000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_29_7
+	dc.l	wy_30_7
 	dc.w	33,3
 	dc.l	$00000000
 	dc.l	$7ffe0000,$ffffffff,$ffffffff
@@ -14437,7 +14611,7 @@ gv_29:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_29_8
+	dc.l	wy_30_8
 	dc.w	33,3
 	dc.l	$00000000
 	dc.l	$01800000,$c0000000,$00000000
@@ -14446,99 +14620,99 @@ gv_29:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_29_9
-	cnop	0,4
-gv_30:
-	dc.w	9,3
-	dc.l	$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$04000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_30_0
-	dc.w	9,3
-	dc.l	$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$04000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_30_1
-	dc.w	9,3
-	dc.l	$00000000
-	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$7fff0000,$ffffffff,$ffffffff
-	dc.l	$01002080,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_30_2
-	dc.w	9,3
-	dc.l	$00000000
-	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$7fff0000,$ffffffff,$ffffffff
-	dc.l	$01002080,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_30_3
-	dc.w	9,3
-	dc.l	$00000000
-	dc.l	$7fff0000,$c0000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$7fff0000,$c0000000,$00000000
-	dc.l	$01000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_30_4
-	dc.w	9,3
-	dc.l	$00000000
-	dc.l	$7fff0000,$a0000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$7fff0000,$e0000000,$00000000
-	dc.l	$01004080,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_30_5
-	dc.w	9,3
-	dc.l	$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$04000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_30_6
-	dc.w	9,3
-	dc.l	$00000000
-	dc.l	$c0000000,$c0000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$04000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_30_7
-	dc.w	9,3
-	dc.l	$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$0c000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_30_8
-	dc.w	9,3
-	dc.l	$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$0c000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_30_9
+	cnop	0,4
+gv_31:
+	dc.w	9,3
+	dc.l	$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$04000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_31_0
+	dc.w	9,3
+	dc.l	$00000000
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$04000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_31_1
+	dc.w	9,3
+	dc.l	$00000000
+	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$7fff0000,$ffffffff,$ffffffff
+	dc.l	$01002080,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_31_2
+	dc.w	9,3
+	dc.l	$00000000
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$7fff0000,$ffffffff,$ffffffff
+	dc.l	$01002080,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_31_3
+	dc.w	9,3
+	dc.l	$00000000
+	dc.l	$7fff0000,$c0000000,$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$7fff0000,$c0000000,$00000000
+	dc.l	$01000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_31_4
+	dc.w	9,3
+	dc.l	$00000000
+	dc.l	$7fff0000,$a0000000,$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$7fff0000,$e0000000,$00000000
+	dc.l	$01004080,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_31_5
+	dc.w	9,3
+	dc.l	$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$04000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_31_6
+	dc.w	9,3
+	dc.l	$00000000
+	dc.l	$c0000000,$c0000000,$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$04000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_31_7
+	dc.w	9,3
+	dc.l	$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$0c000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_31_8
+	dc.w	9,3
+	dc.l	$00000000
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$0c000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_31_9
 	dc.w	9,3
 	dc.l	$00000000
 	dc.l	$7fff0000,$00000000,$00000000
@@ -14547,7 +14721,7 @@ gv_30:
 	dc.l	$01002080,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_30_10
+	dc.l	wy_31_10
 	dc.w	9,3
 	dc.l	$00000000
 	dc.l	$ffff0000,$00000000,$00000000
@@ -14556,7 +14730,7 @@ gv_30:
 	dc.l	$01002080,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_30_11
+	dc.l	wy_31_11
 	dc.w	9,3
 	dc.l	$00000000
 	dc.l	$7fff0000,$c0000000,$00000000
@@ -14565,7 +14739,7 @@ gv_30:
 	dc.l	$01000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_30_12
+	dc.l	wy_31_12
 	dc.w	9,3
 	dc.l	$00000000
 	dc.l	$7fff0000,$a0000000,$00000000
@@ -14574,7 +14748,7 @@ gv_30:
 	dc.l	$01004080,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_30_13
+	dc.l	wy_31_13
 	dc.w	9,3
 	dc.l	$00000000
 	dc.l	$3fff0000,$80000000,$00000000
@@ -14583,7 +14757,7 @@ gv_30:
 	dc.l	$0c000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_30_14
+	dc.l	wy_31_14
 	dc.w	9,3
 	dc.l	$00000000
 	dc.l	$c0000000,$c0000000,$00000000
@@ -14592,7 +14766,7 @@ gv_30:
 	dc.l	$0c000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_30_15
+	dc.l	wy_31_15
 	dc.w	9,3
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
@@ -14601,7 +14775,7 @@ gv_30:
 	dc.l	$02000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_30_16
+	dc.l	wy_31_16
 	dc.w	9,3
 	dc.l	$00000000
 	dc.l	$80000000,$00000000,$00000000
@@ -14610,7 +14784,7 @@ gv_30:
 	dc.l	$02000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_30_17
+	dc.l	wy_31_17
 	dc.w	9,3
 	dc.l	$00000000
 	dc.l	$7fff0000,$00000000,$00000000
@@ -14619,7 +14793,7 @@ gv_30:
 	dc.l	$01002080,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_30_18
+	dc.l	wy_31_18
 	dc.w	9,3
 	dc.l	$00000000
 	dc.l	$ffff0000,$00000000,$00000000
@@ -14628,7 +14802,7 @@ gv_30:
 	dc.l	$01002080,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_30_19
+	dc.l	wy_31_19
 	dc.w	9,3
 	dc.l	$00000000
 	dc.l	$7fff0000,$c0000000,$00000000
@@ -14637,7 +14811,7 @@ gv_30:
 	dc.l	$01000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_30_20
+	dc.l	wy_31_20
 	dc.w	9,3
 	dc.l	$00000000
 	dc.l	$7fff0000,$a0000000,$00000000
@@ -14646,7 +14820,7 @@ gv_30:
 	dc.l	$01004080,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_30_21
+	dc.l	wy_31_21
 	dc.w	9,3
 	dc.l	$00000000
 	dc.l	$3fff0000,$80000000,$00000000
@@ -14655,7 +14829,7 @@ gv_30:
 	dc.l	$02000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_30_22
+	dc.l	wy_31_22
 	dc.w	9,3
 	dc.l	$00000000
 	dc.l	$c0000000,$c0000000,$00000000
@@ -14664,7 +14838,7 @@ gv_30:
 	dc.l	$02000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_30_23
+	dc.l	wy_31_23
 	dc.w	9,3
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
@@ -14673,7 +14847,7 @@ gv_30:
 	dc.l	$0a000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_30_24
+	dc.l	wy_31_24
 	dc.w	9,3
 	dc.l	$00000000
 	dc.l	$80000000,$00000000,$00000000
@@ -14682,7 +14856,7 @@ gv_30:
 	dc.l	$0a000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_30_25
+	dc.l	wy_31_25
 	dc.w	9,3
 	dc.l	$00000000
 	dc.l	$7fff0000,$00000000,$00000000
@@ -14691,7 +14865,7 @@ gv_30:
 	dc.l	$01002080,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_30_26
+	dc.l	wy_31_26
 	dc.w	9,3
 	dc.l	$00000000
 	dc.l	$ffff0000,$00000000,$00000000
@@ -14700,7 +14874,7 @@ gv_30:
 	dc.l	$01002080,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_30_27
+	dc.l	wy_31_27
 	dc.w	9,3
 	dc.l	$00000000
 	dc.l	$7fff0000,$c0000000,$00000000
@@ -14709,7 +14883,7 @@ gv_30:
 	dc.l	$01000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_30_28
+	dc.l	wy_31_28
 	dc.w	9,3
 	dc.l	$00000000
 	dc.l	$7fff0000,$a0000000,$00000000
@@ -14718,7 +14892,7 @@ gv_30:
 	dc.l	$01004080,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_30_29
+	dc.l	wy_31_29
 	dc.w	9,3
 	dc.l	$00000000
 	dc.l	$3fff0000,$80000000,$00000000
@@ -14727,7 +14901,7 @@ gv_30:
 	dc.l	$0a000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_30_30
+	dc.l	wy_31_30
 	dc.w	9,3
 	dc.l	$00000000
 	dc.l	$c0000000,$c0000000,$00000000
@@ -14736,7 +14910,7 @@ gv_30:
 	dc.l	$0a000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_30_31
+	dc.l	wy_31_31
 	dc.w	9,3
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
@@ -14745,7 +14919,7 @@ gv_30:
 	dc.l	$01000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_30_32
+	dc.l	wy_31_32
 	dc.w	9,3
 	dc.l	$00000000
 	dc.l	$80000000,$00000000,$00000000
@@ -14754,7 +14928,7 @@ gv_30:
 	dc.l	$01000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_30_33
+	dc.l	wy_31_33
 	dc.w	9,3
 	dc.l	$00000000
 	dc.l	$7fff0000,$00000000,$00000000
@@ -14763,7 +14937,7 @@ gv_30:
 	dc.l	$01000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_30_34
+	dc.l	wy_31_34
 	dc.w	9,3
 	dc.l	$00000000
 	dc.l	$ffff0000,$00000000,$00000000
@@ -14772,7 +14946,7 @@ gv_30:
 	dc.l	$01000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_30_35
+	dc.l	wy_31_35
 	dc.w	9,3
 	dc.l	$00000000
 	dc.l	$7fff0000,$c0000000,$00000000
@@ -14781,7 +14955,7 @@ gv_30:
 	dc.l	$01000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_30_36
+	dc.l	wy_31_36
 	dc.w	9,3
 	dc.l	$00000000
 	dc.l	$7fff0000,$a0000000,$00000000
@@ -14790,7 +14964,7 @@ gv_30:
 	dc.l	$01004080,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_30_37
+	dc.l	wy_31_37
 	dc.w	9,3
 	dc.l	$00000000
 	dc.l	$3fff0000,$80000000,$00000000
@@ -14799,7 +14973,7 @@ gv_30:
 	dc.l	$01000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_30_38
+	dc.l	wy_31_38
 	dc.w	9,3
 	dc.l	$00000000
 	dc.l	$c0000000,$c0000000,$00000000
@@ -14808,7 +14982,7 @@ gv_30:
 	dc.l	$01000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_30_39
+	dc.l	wy_31_39
 	dc.w	9,3
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
@@ -14817,7 +14991,7 @@ gv_30:
 	dc.l	$01004080,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_30_40
+	dc.l	wy_31_40
 	dc.w	9,3
 	dc.l	$00000000
 	dc.l	$80000000,$00000000,$00000000
@@ -14826,7 +15000,7 @@ gv_30:
 	dc.l	$01004080,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_30_41
+	dc.l	wy_31_41
 	dc.w	9,3
 	dc.l	$00000000
 	dc.l	$7fff0000,$00000000,$00000000
@@ -14835,7 +15009,7 @@ gv_30:
 	dc.l	$01004080,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_30_42
+	dc.l	wy_31_42
 	dc.w	9,3
 	dc.l	$00000000
 	dc.l	$ffff0000,$00000000,$00000000
@@ -14844,7 +15018,7 @@ gv_30:
 	dc.l	$01004080,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_30_43
+	dc.l	wy_31_43
 	dc.w	9,3
 	dc.l	$00000000
 	dc.l	$7fff0000,$c0000000,$00000000
@@ -14853,7 +15027,7 @@ gv_30:
 	dc.l	$01004080,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_30_44
+	dc.l	wy_31_44
 	dc.w	9,3
 	dc.l	$00000000
 	dc.l	$7fff0000,$a0000000,$00000000
@@ -14862,7 +15036,7 @@ gv_30:
 	dc.l	$01004080,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_30_45
+	dc.l	wy_31_45
 	dc.w	9,3
 	dc.l	$00000000
 	dc.l	$3fff0000,$80000000,$00000000
@@ -14871,7 +15045,7 @@ gv_30:
 	dc.l	$01004080,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_30_46
+	dc.l	wy_31_46
 	dc.w	9,3
 	dc.l	$00000000
 	dc.l	$c0000000,$c0000000,$00000000
@@ -14880,7 +15054,7 @@ gv_30:
 	dc.l	$01004080,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_30_47
+	dc.l	wy_31_47
 	dc.w	9,3
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
@@ -14889,7 +15063,7 @@ gv_30:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_30_48
+	dc.l	wy_31_48
 	dc.w	9,3
 	dc.l	$00000000
 	dc.l	$80000000,$00000000,$00000000
@@ -14898,7 +15072,7 @@ gv_30:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_30_49
+	dc.l	wy_31_49
 	dc.w	9,3
 	dc.l	$00000000
 	dc.l	$7fff0000,$00000000,$00000000
@@ -14907,7 +15081,7 @@ gv_30:
 	dc.l	$01002080,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_30_50
+	dc.l	wy_31_50
 	dc.w	9,3
 	dc.l	$00000000
 	dc.l	$ffff0000,$00000000,$00000000
@@ -14916,7 +15090,7 @@ gv_30:
 	dc.l	$01002080,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_30_51
+	dc.l	wy_31_51
 	dc.w	9,3
 	dc.l	$00000000
 	dc.l	$7fff0000,$c0000000,$00000000
@@ -14925,7 +15099,7 @@ gv_30:
 	dc.l	$01000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_30_52
+	dc.l	wy_31_52
 	dc.w	9,3
 	dc.l	$00000000
 	dc.l	$7fff0000,$a0000000,$00000000
@@ -14934,7 +15108,7 @@ gv_30:
 	dc.l	$01004080,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_30_53
+	dc.l	wy_31_53
 	dc.w	9,3
 	dc.l	$00000000
 	dc.l	$3fff0000,$80000000,$00000000
@@ -14943,7 +15117,7 @@ gv_30:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_30_54
+	dc.l	wy_31_54
 	dc.w	9,3
 	dc.l	$00000000
 	dc.l	$c0000000,$c0000000,$00000000
@@ -14952,7 +15126,7 @@ gv_30:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_30_55
+	dc.l	wy_31_55
 	dc.w	9,3
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
@@ -14961,7 +15135,7 @@ gv_30:
 	dc.l	$08000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_30_56
+	dc.l	wy_31_56
 	dc.w	9,3
 	dc.l	$00000000
 	dc.l	$80000000,$00000000,$00000000
@@ -14970,7 +15144,7 @@ gv_30:
 	dc.l	$08000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_30_57
+	dc.l	wy_31_57
 	dc.w	9,3
 	dc.l	$00000000
 	dc.l	$7fff0000,$00000000,$00000000
@@ -14979,7 +15153,7 @@ gv_30:
 	dc.l	$01002080,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_30_58
+	dc.l	wy_31_58
 	dc.w	9,3
 	dc.l	$00000000
 	dc.l	$ffff0000,$00000000,$00000000
@@ -14988,7 +15162,7 @@ gv_30:
 	dc.l	$01002080,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_30_59
+	dc.l	wy_31_59
 	dc.w	9,3
 	dc.l	$00000000
 	dc.l	$7fff0000,$c0000000,$00000000
@@ -14997,7 +15171,7 @@ gv_30:
 	dc.l	$01000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_30_60
+	dc.l	wy_31_60
 	dc.w	9,3
 	dc.l	$00000000
 	dc.l	$7fff0000,$a0000000,$00000000
@@ -15006,7 +15180,7 @@ gv_30:
 	dc.l	$01004080,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_30_61
+	dc.l	wy_31_61
 	dc.w	9,3
 	dc.l	$00000000
 	dc.l	$3fff0000,$80000000,$00000000
@@ -15015,7 +15189,7 @@ gv_30:
 	dc.l	$08000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_30_62
+	dc.l	wy_31_62
 	dc.w	9,3
 	dc.l	$00000000
 	dc.l	$c0000000,$c0000000,$00000000
@@ -15024,7 +15198,7 @@ gv_30:
 	dc.l	$08000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_30_63
+	dc.l	wy_31_63
 	dc.w	9,3
 	dc.l	$00000000
 	dc.l	$40000000,$c0000000,$00000000
@@ -15033,7 +15207,7 @@ gv_30:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_30_64
+	dc.l	wy_31_64
 	dc.w	9,3
 	dc.l	$00000000
 	dc.l	$bfff0000,$80000000,$00000000
@@ -15042,7 +15216,7 @@ gv_30:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_30_65
+	dc.l	wy_31_65
 	dc.w	9,3
 	dc.l	$00000000
 	dc.l	$40000000,$accccccc,$cccccccd
@@ -15051,7 +15225,7 @@ gv_30:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_30_66
+	dc.l	wy_31_66
 	dc.w	9,3
 	dc.l	$00000000
 	dc.l	$c0000000,$accccccc,$cccccccd
@@ -15060,7 +15234,7 @@ gv_30:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_30_67
+	dc.l	wy_31_67
 	dc.w	9,3
 	dc.l	$00000000
 	dc.l	$400d0000,$9c400000,$00000000
@@ -15069,7 +15243,7 @@ gv_30:
 	dc.l	$02001248,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_30_68
+	dc.l	wy_31_68
 	dc.w	9,3
 	dc.l	$00000010
 	dc.l	$400d0000,$9c400000,$00000000
@@ -15078,7 +15252,7 @@ gv_30:
 	dc.l	$00001248,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_30_69
+	dc.l	wy_31_69
 	dc.w	9,3
 	dc.l	$00000020
 	dc.l	$400d0000,$9c400000,$00000000
@@ -15087,7 +15261,7 @@ gv_30:
 	dc.l	$00001248,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_30_70
+	dc.l	wy_31_70
 	dc.w	9,3
 	dc.l	$00000030
 	dc.l	$400d0000,$9c400000,$00000000
@@ -15096,714 +15270,10 @@ gv_30:
 	dc.l	$02001248,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_30_71
-	cnop	0,4
-gv_31:
-	dc.w	7,3
-	dc.l	$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$7fff0000,$ffffffff,$ffffffff
-	dc.l	$01002080,$ff00ffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_31_0
-	dc.w	7,3
-	dc.l	$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$7fff0000,$ffffffff,$ffffffff
-	dc.l	$01002080,$ff00ffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_31_1
-	dc.w	7,3
-	dc.l	$00000000
-	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$04000000,$ff7fffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_31_2
-	dc.w	7,3
-	dc.l	$00000000
-	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$04000000,$ff7fffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_31_3
-	dc.w	7,3
-	dc.l	$00000000
-	dc.l	$7fff0000,$c0000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$7fff0000,$c0000000,$00000000
-	dc.l	$01000000,$ff00ffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_31_4
-	dc.w	7,3
-	dc.l	$00000000
-	dc.l	$7fff0000,$a0000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$7fff0000,$e0000000,$00000000
-	dc.l	$01004080,$ff00ffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_31_5
-	dc.w	7,3
-	dc.l	$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$04000000,$ff7fffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_31_6
-	dc.w	7,3
-	dc.l	$00000000
-	dc.l	$c0000000,$c0000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$04000000,$ff7fffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_31_7
-	dc.w	7,3
-	dc.l	$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$7fff0000,$ffffffff,$ffffffff
-	dc.l	$01002080,$ff00ffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_31_8
-	dc.w	7,3
-	dc.l	$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$7fff0000,$ffffffff,$ffffffff
-	dc.l	$01002080,$ff00ffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_31_9
-	dc.w	7,3
-	dc.l	$00000000
-	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$0c000000,$ff7fffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_31_10
-	dc.w	7,3
-	dc.l	$00000000
-	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$0c000000,$ff7fffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_31_11
-	dc.w	7,3
-	dc.l	$00000000
-	dc.l	$7fff0000,$c0000000,$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$7fff0000,$c0000000,$00000000
-	dc.l	$01000000,$ff00ffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_31_12
-	dc.w	7,3
-	dc.l	$00000000
-	dc.l	$7fff0000,$a0000000,$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$7fff0000,$e0000000,$00000000
-	dc.l	$01004080,$ff00ffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_31_13
-	dc.w	7,3
-	dc.l	$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$0c000000,$ff7fffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_31_14
-	dc.w	7,3
-	dc.l	$00000000
-	dc.l	$c0000000,$c0000000,$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$0c000000,$ff7fffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_31_15
-	dc.w	7,3
-	dc.l	$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$7fff0000,$ffffffff,$ffffffff
-	dc.l	$01002080,$ff00ffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_31_16
-	dc.w	7,3
-	dc.l	$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$7fff0000,$ffffffff,$ffffffff
-	dc.l	$01002080,$ff00ffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_31_17
-	dc.w	7,3
-	dc.l	$00000000
-	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$7fff0000,$ffffffff,$ffffffff
-	dc.l	$01002080,$ff00ffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_31_18
-	dc.w	7,3
-	dc.l	$00000000
-	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$7fff0000,$ffffffff,$ffffffff
-	dc.l	$01002080,$ff00ffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_31_19
-	dc.w	7,3
-	dc.l	$00000000
-	dc.l	$7fff0000,$c0000000,$00000000
-	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$7fff0000,$c0000000,$00000000
-	dc.l	$01000000,$ff00ffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_31_20
-	dc.w	7,3
-	dc.l	$00000000
-	dc.l	$7fff0000,$a0000000,$00000000
-	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$7fff0000,$e0000000,$00000000
-	dc.l	$01004080,$ff00ffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_31_21
-	dc.w	7,3
-	dc.l	$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$7fff0000,$ffffffff,$ffffffff
-	dc.l	$01002080,$ff00ffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_31_22
-	dc.w	7,3
-	dc.l	$00000000
-	dc.l	$c0000000,$c0000000,$00000000
-	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$7fff0000,$ffffffff,$ffffffff
-	dc.l	$01002080,$ff00ffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_31_23
-	dc.w	7,3
-	dc.l	$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$7fff0000,$ffffffff,$ffffffff
-	dc.l	$01002080,$ff00ffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_31_24
-	dc.w	7,3
-	dc.l	$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$7fff0000,$ffffffff,$ffffffff
-	dc.l	$01002080,$ff00ffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_31_25
-	dc.w	7,3
-	dc.l	$00000000
-	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$7fff0000,$ffffffff,$ffffffff
-	dc.l	$01002080,$ff00ffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_31_26
-	dc.w	7,3
-	dc.l	$00000000
-	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$7fff0000,$ffffffff,$ffffffff
-	dc.l	$01002080,$ff00ffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_31_27
-	dc.w	7,3
-	dc.l	$00000000
-	dc.l	$7fff0000,$c0000000,$00000000
-	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$7fff0000,$c0000000,$00000000
-	dc.l	$01000000,$ff00ffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_31_28
-	dc.w	7,3
-	dc.l	$00000000
-	dc.l	$7fff0000,$a0000000,$00000000
-	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$7fff0000,$e0000000,$00000000
-	dc.l	$01004080,$ff00ffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_31_29
-	dc.w	7,3
-	dc.l	$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$7fff0000,$ffffffff,$ffffffff
-	dc.l	$01002080,$ff00ffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_31_30
-	dc.w	7,3
-	dc.l	$00000000
-	dc.l	$c0000000,$c0000000,$00000000
-	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$7fff0000,$ffffffff,$ffffffff
-	dc.l	$01002080,$ff00ffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_31_31
-	dc.w	7,3
-	dc.l	$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$7fff0000,$c0000000,$00000000
-	dc.l	$7fff0000,$c0000000,$00000000
-	dc.l	$01000000,$ff00ffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_31_32
-	dc.w	7,3
-	dc.l	$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$7fff0000,$c0000000,$00000000
-	dc.l	$7fff0000,$c0000000,$00000000
-	dc.l	$01000000,$ff00ffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_31_33
-	dc.w	7,3
-	dc.l	$00000000
-	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$7fff0000,$c0000000,$00000000
-	dc.l	$7fff0000,$c0000000,$00000000
-	dc.l	$01000000,$ff00ffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_31_34
-	dc.w	7,3
-	dc.l	$00000000
-	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$7fff0000,$c0000000,$00000000
-	dc.l	$7fff0000,$c0000000,$00000000
-	dc.l	$01000000,$ff00ffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_31_35
-	dc.w	7,3
-	dc.l	$00000000
-	dc.l	$7fff0000,$c0000000,$00000000
-	dc.l	$7fff0000,$c0000000,$00000000
-	dc.l	$7fff0000,$c0000000,$00000000
-	dc.l	$01000000,$ff00ffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_31_36
-	dc.w	7,3
-	dc.l	$00000000
-	dc.l	$7fff0000,$a0000000,$00000000
-	dc.l	$7fff0000,$c0000000,$00000000
-	dc.l	$7fff0000,$c0000000,$00000000
-	dc.l	$01004080,$ff00ffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_31_37
-	dc.w	7,3
-	dc.l	$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$7fff0000,$c0000000,$00000000
-	dc.l	$7fff0000,$c0000000,$00000000
-	dc.l	$01000000,$ff00ffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_31_38
-	dc.w	7,3
-	dc.l	$00000000
-	dc.l	$c0000000,$c0000000,$00000000
-	dc.l	$7fff0000,$c0000000,$00000000
-	dc.l	$7fff0000,$c0000000,$00000000
-	dc.l	$01000000,$ff00ffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_31_39
-	dc.w	7,3
-	dc.l	$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$7fff0000,$a0000000,$00000000
-	dc.l	$7fff0000,$e0000000,$00000000
-	dc.l	$01004080,$ff00ffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_31_40
-	dc.w	7,3
-	dc.l	$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$7fff0000,$a0000000,$00000000
-	dc.l	$7fff0000,$e0000000,$00000000
-	dc.l	$01004080,$ff00ffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_31_41
-	dc.w	7,3
-	dc.l	$00000000
-	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$7fff0000,$a0000000,$00000000
-	dc.l	$7fff0000,$e0000000,$00000000
-	dc.l	$01004080,$ff00ffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_31_42
-	dc.w	7,3
-	dc.l	$00000000
-	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$7fff0000,$a0000000,$00000000
-	dc.l	$7fff0000,$e0000000,$00000000
-	dc.l	$01004080,$ff00ffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_31_43
-	dc.w	7,3
-	dc.l	$00000000
-	dc.l	$7fff0000,$c0000000,$00000000
-	dc.l	$7fff0000,$a0000000,$00000000
-	dc.l	$7fff0000,$e0000000,$00000000
-	dc.l	$01004080,$ff00ffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_31_44
-	dc.w	7,3
-	dc.l	$00000000
-	dc.l	$7fff0000,$a0000000,$00000000
-	dc.l	$7fff0000,$a0000000,$00000000
-	dc.l	$7fff0000,$e0000000,$00000000
-	dc.l	$01004080,$ff00ffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_31_45
-	dc.w	7,3
-	dc.l	$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$7fff0000,$a0000000,$00000000
-	dc.l	$7fff0000,$e0000000,$00000000
-	dc.l	$01004080,$ff00ffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_31_46
-	dc.w	7,3
-	dc.l	$00000000
-	dc.l	$c0000000,$c0000000,$00000000
-	dc.l	$7fff0000,$a0000000,$00000000
-	dc.l	$7fff0000,$e0000000,$00000000
-	dc.l	$01004080,$ff00ffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_31_47
-	dc.w	7,3
-	dc.l	$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$7fff0000,$ffffffff,$ffffffff
-	dc.l	$01002080,$ff00ffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_31_48
-	dc.w	7,3
-	dc.l	$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$7fff0000,$ffffffff,$ffffffff
-	dc.l	$01002080,$ff00ffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_31_49
-	dc.w	7,3
-	dc.l	$00000000
-	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$00000000,$ff7fffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_31_50
-	dc.w	7,3
-	dc.l	$00000000
-	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$00000000,$ff7fffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_31_51
-	dc.w	7,3
-	dc.l	$00000000
-	dc.l	$7fff0000,$c0000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$7fff0000,$c0000000,$00000000
-	dc.l	$01000000,$ff00ffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_31_52
-	dc.w	7,3
-	dc.l	$00000000
-	dc.l	$7fff0000,$a0000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$7fff0000,$e0000000,$00000000
-	dc.l	$01004080,$ff00ffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_31_53
-	dc.w	7,3
-	dc.l	$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$04010000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_31_54
-	dc.w	7,3
-	dc.l	$00000000
-	dc.l	$c0000000,$c0000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$00800000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_31_55
-	dc.w	7,3
-	dc.l	$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$c0000000,$c0000000,$00000000
-	dc.l	$7fff0000,$ffffffff,$ffffffff
-	dc.l	$01002080,$ff00ffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_31_56
-	dc.w	7,3
-	dc.l	$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$c0000000,$c0000000,$00000000
-	dc.l	$7fff0000,$ffffffff,$ffffffff
-	dc.l	$01002080,$ff00ffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_31_57
-	dc.w	7,3
-	dc.l	$00000000
-	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$c0000000,$c0000000,$00000000
-	dc.l	$c0000000,$c0000000,$00000000
-	dc.l	$08000000,$ff7fffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_31_58
-	dc.w	7,3
-	dc.l	$00000000
-	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$c0000000,$c0000000,$00000000
-	dc.l	$c0000000,$c0000000,$00000000
-	dc.l	$08000000,$ff7fffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_31_59
-	dc.w	7,3
-	dc.l	$00000000
-	dc.l	$7fff0000,$c0000000,$00000000
-	dc.l	$c0000000,$c0000000,$00000000
-	dc.l	$7fff0000,$c0000000,$00000000
-	dc.l	$01000000,$ff00ffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_31_60
-	dc.w	7,3
-	dc.l	$00000000
-	dc.l	$7fff0000,$a0000000,$00000000
-	dc.l	$c0000000,$c0000000,$00000000
-	dc.l	$7fff0000,$e0000000,$00000000
-	dc.l	$01004080,$ff00ffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_31_61
-	dc.w	7,3
-	dc.l	$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$c0000000,$c0000000,$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$0c830000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_31_62
-	dc.w	7,3
-	dc.l	$00000000
-	dc.l	$c0000000,$c0000000,$00000000
-	dc.l	$c0000000,$c0000000,$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$0c010000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_31_63
-	dc.w	7,3
-	dc.l	$00000000
-	dc.l	$40000000,$80000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$00030000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_31_64
-	dc.w	7,3
-	dc.l	$00000000
-	dc.l	$40000000,$80000000,$00000000
-	dc.l	$c0010000,$e0000000,$00000000
-	dc.l	$bfff0000,$80000000,$00000000
-	dc.l	$08830000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_31_65
-	dc.w	7,3
-	dc.l	$00000000
-	dc.l	$c0000000,$80000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$00830000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_31_66
-	dc.w	7,3
-	dc.l	$00000000
-	dc.l	$c0000000,$80000000,$00000000
-	dc.l	$c0010000,$e0000000,$00000000
-	dc.l	$bfff0000,$80000000,$00000000
-	dc.l	$08030000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_31_67
-	dc.w	7,3
-	dc.l	$00000000
-	dc.l	$40000000,$80000000,$00000000
-	dc.l	$40010000,$a0000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$00020000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_31_68
-	dc.w	7,3
-	dc.l	$00000000
-	dc.l	$40000000,$80000000,$00000000
-	dc.l	$40010000,$80000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$04020000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_31_69
-	dc.w	7,3
-	dc.l	$00000000
-	dc.l	$40000000,$80000000,$00000000
-	dc.l	$c0010000,$80000000,$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$0c820000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_31_70
-	dc.w	7,3
-	dc.l	$00000000
-	dc.l	$3fff0000,$c0000000,$00000000
-	dc.l	$40010000,$b0000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$00030000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_31_71
-	dc.w	7,3
-	dc.l	$00000000
-	dc.l	$40000000,$c0000000,$00000000
-	dc.l	$40450000,$80000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$00550000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_31_72
-	dc.w	7,3
-	dc.l	$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$40450000,$80000000,$00000000
-	dc.l	$40000000,$80000000,$00000000
-	dc.l	$00120000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_31_73
-	dc.w	7,3
-	dc.l	$00000000
-	dc.l	$40000000,$c0000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$00000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_31_74
-	dc.w	7,3
-	dc.l	$00000000
-	dc.l	$40000000,$c0000000,$00000000
-	dc.l	$40000000,$80000000,$00000000
-	dc.l	$40000000,$80000000,$00000000
-	dc.l	$00000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_31_75
-	dc.w	7,3
-	dc.l	$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3fff0000,$c0000000,$00000000
-	dc.l	$3ffe0000,$80000000,$00000000
-	dc.l	$00010000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_31_76
-	dc.w	7,3
-	dc.l	$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$40000000,$a0000000,$00000000
-	dc.l	$3ffe0000,$80000000,$00000000
-	dc.l	$00020000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_31_77
 	cnop	0,4
 gv_32:
-	dc.w	8,3
+	dc.w	7,3
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$00000000,$00000000,$00000000
@@ -15812,7 +15282,7 @@ gv_32:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_32_0
-	dc.w	8,3
+	dc.w	7,3
 	dc.l	$00000000
 	dc.l	$80000000,$00000000,$00000000
 	dc.l	$00000000,$00000000,$00000000
@@ -15821,7 +15291,7 @@ gv_32:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_32_1
-	dc.w	8,3
+	dc.w	7,3
 	dc.l	$00000000
 	dc.l	$7fff0000,$00000000,$00000000
 	dc.l	$00000000,$00000000,$00000000
@@ -15830,7 +15300,7 @@ gv_32:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_32_2
-	dc.w	8,3
+	dc.w	7,3
 	dc.l	$00000000
 	dc.l	$ffff0000,$00000000,$00000000
 	dc.l	$00000000,$00000000,$00000000
@@ -15839,7 +15309,7 @@ gv_32:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_32_3
-	dc.w	8,3
+	dc.w	7,3
 	dc.l	$00000000
 	dc.l	$7fff0000,$c0000000,$00000000
 	dc.l	$00000000,$00000000,$00000000
@@ -15848,7 +15318,7 @@ gv_32:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_32_4
-	dc.w	8,3
+	dc.w	7,3
 	dc.l	$00000000
 	dc.l	$7fff0000,$a0000000,$00000000
 	dc.l	$00000000,$00000000,$00000000
@@ -15857,7 +15327,7 @@ gv_32:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_32_5
-	dc.w	8,3
+	dc.w	7,3
 	dc.l	$00000000
 	dc.l	$3fff0000,$80000000,$00000000
 	dc.l	$00000000,$00000000,$00000000
@@ -15866,7 +15336,7 @@ gv_32:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_32_6
-	dc.w	8,3
+	dc.w	7,3
 	dc.l	$00000000
 	dc.l	$c0000000,$c0000000,$00000000
 	dc.l	$00000000,$00000000,$00000000
@@ -15875,7 +15345,7 @@ gv_32:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_32_7
-	dc.w	8,3
+	dc.w	7,3
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$80000000,$00000000,$00000000
@@ -15884,7 +15354,7 @@ gv_32:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_32_8
-	dc.w	8,3
+	dc.w	7,3
 	dc.l	$00000000
 	dc.l	$80000000,$00000000,$00000000
 	dc.l	$80000000,$00000000,$00000000
@@ -15893,7 +15363,7 @@ gv_32:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_32_9
-	dc.w	8,3
+	dc.w	7,3
 	dc.l	$00000000
 	dc.l	$7fff0000,$00000000,$00000000
 	dc.l	$80000000,$00000000,$00000000
@@ -15902,7 +15372,7 @@ gv_32:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_32_10
-	dc.w	8,3
+	dc.w	7,3
 	dc.l	$00000000
 	dc.l	$ffff0000,$00000000,$00000000
 	dc.l	$80000000,$00000000,$00000000
@@ -15911,7 +15381,7 @@ gv_32:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_32_11
-	dc.w	8,3
+	dc.w	7,3
 	dc.l	$00000000
 	dc.l	$7fff0000,$c0000000,$00000000
 	dc.l	$80000000,$00000000,$00000000
@@ -15920,7 +15390,7 @@ gv_32:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_32_12
-	dc.w	8,3
+	dc.w	7,3
 	dc.l	$00000000
 	dc.l	$7fff0000,$a0000000,$00000000
 	dc.l	$80000000,$00000000,$00000000
@@ -15929,7 +15399,7 @@ gv_32:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_32_13
-	dc.w	8,3
+	dc.w	7,3
 	dc.l	$00000000
 	dc.l	$3fff0000,$80000000,$00000000
 	dc.l	$80000000,$00000000,$00000000
@@ -15938,7 +15408,7 @@ gv_32:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_32_14
-	dc.w	8,3
+	dc.w	7,3
 	dc.l	$00000000
 	dc.l	$c0000000,$c0000000,$00000000
 	dc.l	$80000000,$00000000,$00000000
@@ -15947,7 +15417,7 @@ gv_32:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_32_15
-	dc.w	8,3
+	dc.w	7,3
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$7fff0000,$00000000,$00000000
@@ -15956,7 +15426,7 @@ gv_32:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_32_16
-	dc.w	8,3
+	dc.w	7,3
 	dc.l	$00000000
 	dc.l	$80000000,$00000000,$00000000
 	dc.l	$7fff0000,$00000000,$00000000
@@ -15965,7 +15435,7 @@ gv_32:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_32_17
-	dc.w	8,3
+	dc.w	7,3
 	dc.l	$00000000
 	dc.l	$7fff0000,$00000000,$00000000
 	dc.l	$7fff0000,$00000000,$00000000
@@ -15974,7 +15444,7 @@ gv_32:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_32_18
-	dc.w	8,3
+	dc.w	7,3
 	dc.l	$00000000
 	dc.l	$ffff0000,$00000000,$00000000
 	dc.l	$7fff0000,$00000000,$00000000
@@ -15983,7 +15453,7 @@ gv_32:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_32_19
-	dc.w	8,3
+	dc.w	7,3
 	dc.l	$00000000
 	dc.l	$7fff0000,$c0000000,$00000000
 	dc.l	$7fff0000,$00000000,$00000000
@@ -15992,7 +15462,7 @@ gv_32:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_32_20
-	dc.w	8,3
+	dc.w	7,3
 	dc.l	$00000000
 	dc.l	$7fff0000,$a0000000,$00000000
 	dc.l	$7fff0000,$00000000,$00000000
@@ -16001,7 +15471,7 @@ gv_32:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_32_21
-	dc.w	8,3
+	dc.w	7,3
 	dc.l	$00000000
 	dc.l	$3fff0000,$80000000,$00000000
 	dc.l	$7fff0000,$00000000,$00000000
@@ -16010,7 +15480,7 @@ gv_32:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_32_22
-	dc.w	8,3
+	dc.w	7,3
 	dc.l	$00000000
 	dc.l	$c0000000,$c0000000,$00000000
 	dc.l	$7fff0000,$00000000,$00000000
@@ -16019,7 +15489,7 @@ gv_32:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_32_23
-	dc.w	8,3
+	dc.w	7,3
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffff0000,$00000000,$00000000
@@ -16028,7 +15498,7 @@ gv_32:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_32_24
-	dc.w	8,3
+	dc.w	7,3
 	dc.l	$00000000
 	dc.l	$80000000,$00000000,$00000000
 	dc.l	$ffff0000,$00000000,$00000000
@@ -16037,7 +15507,7 @@ gv_32:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_32_25
-	dc.w	8,3
+	dc.w	7,3
 	dc.l	$00000000
 	dc.l	$7fff0000,$00000000,$00000000
 	dc.l	$ffff0000,$00000000,$00000000
@@ -16046,7 +15516,7 @@ gv_32:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_32_26
-	dc.w	8,3
+	dc.w	7,3
 	dc.l	$00000000
 	dc.l	$ffff0000,$00000000,$00000000
 	dc.l	$ffff0000,$00000000,$00000000
@@ -16055,7 +15525,7 @@ gv_32:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_32_27
-	dc.w	8,3
+	dc.w	7,3
 	dc.l	$00000000
 	dc.l	$7fff0000,$c0000000,$00000000
 	dc.l	$ffff0000,$00000000,$00000000
@@ -16064,7 +15534,7 @@ gv_32:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_32_28
-	dc.w	8,3
+	dc.w	7,3
 	dc.l	$00000000
 	dc.l	$7fff0000,$a0000000,$00000000
 	dc.l	$ffff0000,$00000000,$00000000
@@ -16073,7 +15543,7 @@ gv_32:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_32_29
-	dc.w	8,3
+	dc.w	7,3
 	dc.l	$00000000
 	dc.l	$3fff0000,$80000000,$00000000
 	dc.l	$ffff0000,$00000000,$00000000
@@ -16082,7 +15552,7 @@ gv_32:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_32_30
-	dc.w	8,3
+	dc.w	7,3
 	dc.l	$00000000
 	dc.l	$c0000000,$c0000000,$00000000
 	dc.l	$ffff0000,$00000000,$00000000
@@ -16091,7 +15561,7 @@ gv_32:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_32_31
-	dc.w	8,3
+	dc.w	7,3
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$7fff0000,$c0000000,$00000000
@@ -16100,7 +15570,7 @@ gv_32:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_32_32
-	dc.w	8,3
+	dc.w	7,3
 	dc.l	$00000000
 	dc.l	$80000000,$00000000,$00000000
 	dc.l	$7fff0000,$c0000000,$00000000
@@ -16109,7 +15579,7 @@ gv_32:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_32_33
-	dc.w	8,3
+	dc.w	7,3
 	dc.l	$00000000
 	dc.l	$7fff0000,$00000000,$00000000
 	dc.l	$7fff0000,$c0000000,$00000000
@@ -16118,7 +15588,7 @@ gv_32:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_32_34
-	dc.w	8,3
+	dc.w	7,3
 	dc.l	$00000000
 	dc.l	$ffff0000,$00000000,$00000000
 	dc.l	$7fff0000,$c0000000,$00000000
@@ -16127,7 +15597,7 @@ gv_32:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_32_35
-	dc.w	8,3
+	dc.w	7,3
 	dc.l	$00000000
 	dc.l	$7fff0000,$c0000000,$00000000
 	dc.l	$7fff0000,$c0000000,$00000000
@@ -16136,7 +15606,7 @@ gv_32:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_32_36
-	dc.w	8,3
+	dc.w	7,3
 	dc.l	$00000000
 	dc.l	$7fff0000,$a0000000,$00000000
 	dc.l	$7fff0000,$c0000000,$00000000
@@ -16145,7 +15615,7 @@ gv_32:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_32_37
-	dc.w	8,3
+	dc.w	7,3
 	dc.l	$00000000
 	dc.l	$3fff0000,$80000000,$00000000
 	dc.l	$7fff0000,$c0000000,$00000000
@@ -16154,7 +15624,7 @@ gv_32:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_32_38
-	dc.w	8,3
+	dc.w	7,3
 	dc.l	$00000000
 	dc.l	$c0000000,$c0000000,$00000000
 	dc.l	$7fff0000,$c0000000,$00000000
@@ -16163,7 +15633,7 @@ gv_32:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_32_39
-	dc.w	8,3
+	dc.w	7,3
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$7fff0000,$a0000000,$00000000
@@ -16172,7 +15642,7 @@ gv_32:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_32_40
-	dc.w	8,3
+	dc.w	7,3
 	dc.l	$00000000
 	dc.l	$80000000,$00000000,$00000000
 	dc.l	$7fff0000,$a0000000,$00000000
@@ -16181,7 +15651,7 @@ gv_32:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_32_41
-	dc.w	8,3
+	dc.w	7,3
 	dc.l	$00000000
 	dc.l	$7fff0000,$00000000,$00000000
 	dc.l	$7fff0000,$a0000000,$00000000
@@ -16190,7 +15660,7 @@ gv_32:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_32_42
-	dc.w	8,3
+	dc.w	7,3
 	dc.l	$00000000
 	dc.l	$ffff0000,$00000000,$00000000
 	dc.l	$7fff0000,$a0000000,$00000000
@@ -16199,7 +15669,7 @@ gv_32:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_32_43
-	dc.w	8,3
+	dc.w	7,3
 	dc.l	$00000000
 	dc.l	$7fff0000,$c0000000,$00000000
 	dc.l	$7fff0000,$a0000000,$00000000
@@ -16208,7 +15678,7 @@ gv_32:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_32_44
-	dc.w	8,3
+	dc.w	7,3
 	dc.l	$00000000
 	dc.l	$7fff0000,$a0000000,$00000000
 	dc.l	$7fff0000,$a0000000,$00000000
@@ -16217,7 +15687,7 @@ gv_32:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_32_45
-	dc.w	8,3
+	dc.w	7,3
 	dc.l	$00000000
 	dc.l	$3fff0000,$80000000,$00000000
 	dc.l	$7fff0000,$a0000000,$00000000
@@ -16226,7 +15696,7 @@ gv_32:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_32_46
-	dc.w	8,3
+	dc.w	7,3
 	dc.l	$00000000
 	dc.l	$c0000000,$c0000000,$00000000
 	dc.l	$7fff0000,$a0000000,$00000000
@@ -16235,7 +15705,7 @@ gv_32:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_32_47
-	dc.w	8,3
+	dc.w	7,3
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$3fff0000,$80000000,$00000000
@@ -16244,7 +15714,7 @@ gv_32:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_32_48
-	dc.w	8,3
+	dc.w	7,3
 	dc.l	$00000000
 	dc.l	$80000000,$00000000,$00000000
 	dc.l	$3fff0000,$80000000,$00000000
@@ -16253,7 +15723,7 @@ gv_32:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_32_49
-	dc.w	8,3
+	dc.w	7,3
 	dc.l	$00000000
 	dc.l	$7fff0000,$00000000,$00000000
 	dc.l	$3fff0000,$80000000,$00000000
@@ -16262,7 +15732,7 @@ gv_32:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_32_50
-	dc.w	8,3
+	dc.w	7,3
 	dc.l	$00000000
 	dc.l	$ffff0000,$00000000,$00000000
 	dc.l	$3fff0000,$80000000,$00000000
@@ -16271,7 +15741,7 @@ gv_32:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_32_51
-	dc.w	8,3
+	dc.w	7,3
 	dc.l	$00000000
 	dc.l	$7fff0000,$c0000000,$00000000
 	dc.l	$3fff0000,$80000000,$00000000
@@ -16280,7 +15750,7 @@ gv_32:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_32_52
-	dc.w	8,3
+	dc.w	7,3
 	dc.l	$00000000
 	dc.l	$7fff0000,$a0000000,$00000000
 	dc.l	$3fff0000,$80000000,$00000000
@@ -16289,7 +15759,7 @@ gv_32:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_32_53
-	dc.w	8,3
+	dc.w	7,3
 	dc.l	$00000000
 	dc.l	$3fff0000,$80000000,$00000000
 	dc.l	$3fff0000,$80000000,$00000000
@@ -16298,7 +15768,7 @@ gv_32:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_32_54
-	dc.w	8,3
+	dc.w	7,3
 	dc.l	$00000000
 	dc.l	$c0000000,$c0000000,$00000000
 	dc.l	$3fff0000,$80000000,$00000000
@@ -16307,7 +15777,7 @@ gv_32:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_32_55
-	dc.w	8,3
+	dc.w	7,3
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$c0000000,$c0000000,$00000000
@@ -16316,7 +15786,7 @@ gv_32:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_32_56
-	dc.w	8,3
+	dc.w	7,3
 	dc.l	$00000000
 	dc.l	$80000000,$00000000,$00000000
 	dc.l	$c0000000,$c0000000,$00000000
@@ -16325,7 +15795,7 @@ gv_32:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_32_57
-	dc.w	8,3
+	dc.w	7,3
 	dc.l	$00000000
 	dc.l	$7fff0000,$00000000,$00000000
 	dc.l	$c0000000,$c0000000,$00000000
@@ -16334,7 +15804,7 @@ gv_32:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_32_58
-	dc.w	8,3
+	dc.w	7,3
 	dc.l	$00000000
 	dc.l	$ffff0000,$00000000,$00000000
 	dc.l	$c0000000,$c0000000,$00000000
@@ -16343,7 +15813,7 @@ gv_32:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_32_59
-	dc.w	8,3
+	dc.w	7,3
 	dc.l	$00000000
 	dc.l	$7fff0000,$c0000000,$00000000
 	dc.l	$c0000000,$c0000000,$00000000
@@ -16352,7 +15822,7 @@ gv_32:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_32_60
-	dc.w	8,3
+	dc.w	7,3
 	dc.l	$00000000
 	dc.l	$7fff0000,$a0000000,$00000000
 	dc.l	$c0000000,$c0000000,$00000000
@@ -16361,7 +15831,7 @@ gv_32:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_32_61
-	dc.w	8,3
+	dc.w	7,3
 	dc.l	$00000000
 	dc.l	$3fff0000,$80000000,$00000000
 	dc.l	$c0000000,$c0000000,$00000000
@@ -16370,7 +15840,7 @@ gv_32:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_32_62
-	dc.w	8,3
+	dc.w	7,3
 	dc.l	$00000000
 	dc.l	$c0000000,$c0000000,$00000000
 	dc.l	$c0000000,$c0000000,$00000000
@@ -16379,43 +15849,43 @@ gv_32:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_32_63
-	dc.w	8,3
+	dc.w	7,3
 	dc.l	$00000000
 	dc.l	$40000000,$80000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$bfff0000,$80000000,$00000000
-	dc.l	$08040000,$ffffffff
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00030000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_32_64
-	dc.w	8,3
+	dc.w	7,3
 	dc.l	$00000000
 	dc.l	$40000000,$80000000,$00000000
 	dc.l	$c0010000,$e0000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$00840000,$ffffffff
+	dc.l	$bfff0000,$80000000,$00000000
+	dc.l	$08830000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_32_65
-	dc.w	8,3
+	dc.w	7,3
 	dc.l	$00000000
 	dc.l	$c0000000,$80000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$bfff0000,$80000000,$00000000
-	dc.l	$08840000,$ffffffff
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00830000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_32_66
-	dc.w	8,3
+	dc.w	7,3
 	dc.l	$00000000
 	dc.l	$c0000000,$80000000,$00000000
 	dc.l	$c0010000,$e0000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$00040000,$ffffffff
+	dc.l	$bfff0000,$80000000,$00000000
+	dc.l	$08030000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_32_67
-	dc.w	8,3
+	dc.w	7,3
 	dc.l	$00000000
 	dc.l	$40000000,$80000000,$00000000
 	dc.l	$40010000,$a0000000,$00000000
@@ -16424,7 +15894,7 @@ gv_32:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_32_68
-	dc.w	8,3
+	dc.w	7,3
 	dc.l	$00000000
 	dc.l	$40000000,$80000000,$00000000
 	dc.l	$40010000,$80000000,$00000000
@@ -16433,7 +15903,7 @@ gv_32:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_32_69
-	dc.w	8,3
+	dc.w	7,3
 	dc.l	$00000000
 	dc.l	$40000000,$80000000,$00000000
 	dc.l	$c0010000,$80000000,$00000000
@@ -16442,16 +15912,16 @@ gv_32:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_32_70
-	dc.w	8,3
+	dc.w	7,3
 	dc.l	$00000000
 	dc.l	$3fff0000,$c0000000,$00000000
 	dc.l	$40010000,$b0000000,$00000000
-	dc.l	$bffe0000,$80000000,$00000000
-	dc.l	$08040000,$ffffffff
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00030000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_32_71
-	dc.w	8,3
+	dc.w	7,3
 	dc.l	$00000000
 	dc.l	$40000000,$c0000000,$00000000
 	dc.l	$40450000,$80000000,$00000000
@@ -16460,7 +15930,7 @@ gv_32:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_32_72
-	dc.w	8,3
+	dc.w	7,3
 	dc.l	$00000000
 	dc.l	$40010000,$e0000000,$00000000
 	dc.l	$40450000,$80000000,$00000000
@@ -16469,7 +15939,7 @@ gv_32:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_32_73
-	dc.w	8,3
+	dc.w	7,3
 	dc.l	$00000000
 	dc.l	$40000000,$c0000000,$00000000
 	dc.l	$3fff0000,$80000000,$00000000
@@ -16478,25 +15948,25 @@ gv_32:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_32_74
-	dc.w	8,3
+	dc.w	7,3
 	dc.l	$00000000
 	dc.l	$40000000,$c0000000,$00000000
 	dc.l	$40000000,$80000000,$00000000
-	dc.l	$bfff0000,$80000000,$00000000
-	dc.l	$08010000,$ffffffff
+	dc.l	$40000000,$80000000,$00000000
+	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_32_75
-	dc.w	8,3
+	dc.w	7,3
 	dc.l	$00000000
 	dc.l	$3fff0000,$80000000,$00000000
 	dc.l	$3fff0000,$c0000000,$00000000
-	dc.l	$bffe0000,$80000000,$00000000
-	dc.l	$08020000,$ffffffff
+	dc.l	$3ffe0000,$80000000,$00000000
+	dc.l	$00010000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_32_76
-	dc.w	8,3
+	dc.w	7,3
 	dc.l	$00000000
 	dc.l	$3fff0000,$80000000,$00000000
 	dc.l	$40000000,$a0000000,$00000000
@@ -16507,78 +15977,782 @@ gv_32:
 	dc.l	wy_32_77
 	cnop	0,4
 gv_33:
-	dc.w	5,15
+	dc.w	8,3
 	dc.l	$00000000
-	dc.l	$3fff0000,$80000080,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$7fff0000,$ffffffff,$ffffffff
+	dc.l	$01002080,$ff00ffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_33_0
-	dc.w	5,15
-	dc.l	$00000040
-	dc.l	$3fff0000,$80000080,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$00000000,$ffffffff
+	dc.w	8,3
+	dc.l	$00000000
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$7fff0000,$ffffffff,$ffffffff
+	dc.l	$01002080,$ff00ffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_33_1
-	dc.w	5,15
-	dc.l	$00000080
-	dc.l	$3fff0000,$80000080,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$00000000,$ffffffff
+	dc.w	8,3
+	dc.l	$00000000
+	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$04000000,$ff7fffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_33_2
-	dc.w	5,15
+	dc.w	8,3
 	dc.l	$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3fff0000,$80000080,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$00000000,$ffffffff
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$04000000,$ff7fffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_33_3
-	dc.w	5,15
-	dc.l	$00000040
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3fff0000,$80000080,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$00000000,$ffffffff
+	dc.w	8,3
+	dc.l	$00000000
+	dc.l	$7fff0000,$c0000000,$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$7fff0000,$c0000000,$00000000
+	dc.l	$01000000,$ff00ffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_33_4
-	dc.w	5,15
-	dc.l	$00000080
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3fff0000,$80000080,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$00000000,$ffffffff
+	dc.w	8,3
+	dc.l	$00000000
+	dc.l	$7fff0000,$a0000000,$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$7fff0000,$e0000000,$00000000
+	dc.l	$01004080,$ff00ffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_33_5
-	dc.w	5,15
+	dc.w	8,3
 	dc.l	$00000000
-	dc.l	$bfff0000,$80000080,$00000000
 	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$bfff0000,$80000000,$00000000
-	dc.l	$08000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$04000000,$ff7fffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_33_6
-	dc.w	5,15
-	dc.l	$00000040
-	dc.l	$bfff0000,$80000080,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$bfff0000,$80000000,$00000000
-	dc.l	$08000000,$ffffffff
+	dc.w	8,3
+	dc.l	$00000000
+	dc.l	$c0000000,$c0000000,$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$04000000,$ff7fffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_33_7
+	dc.w	8,3
+	dc.l	$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$7fff0000,$ffffffff,$ffffffff
+	dc.l	$01002080,$ff00ffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_8
+	dc.w	8,3
+	dc.l	$00000000
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$7fff0000,$ffffffff,$ffffffff
+	dc.l	$01002080,$ff00ffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_9
+	dc.w	8,3
+	dc.l	$00000000
+	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$0c000000,$ff7fffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_10
+	dc.w	8,3
+	dc.l	$00000000
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$0c000000,$ff7fffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_11
+	dc.w	8,3
+	dc.l	$00000000
+	dc.l	$7fff0000,$c0000000,$00000000
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$7fff0000,$c0000000,$00000000
+	dc.l	$01000000,$ff00ffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_12
+	dc.w	8,3
+	dc.l	$00000000
+	dc.l	$7fff0000,$a0000000,$00000000
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$7fff0000,$e0000000,$00000000
+	dc.l	$01004080,$ff00ffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_13
+	dc.w	8,3
+	dc.l	$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$0c000000,$ff7fffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_14
+	dc.w	8,3
+	dc.l	$00000000
+	dc.l	$c0000000,$c0000000,$00000000
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$0c000000,$ff7fffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_15
+	dc.w	8,3
+	dc.l	$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$7fff0000,$ffffffff,$ffffffff
+	dc.l	$01002080,$ff00ffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_16
+	dc.w	8,3
+	dc.l	$00000000
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$7fff0000,$ffffffff,$ffffffff
+	dc.l	$01002080,$ff00ffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_17
+	dc.w	8,3
+	dc.l	$00000000
+	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$7fff0000,$ffffffff,$ffffffff
+	dc.l	$01002080,$ff00ffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_18
+	dc.w	8,3
+	dc.l	$00000000
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$7fff0000,$ffffffff,$ffffffff
+	dc.l	$01002080,$ff00ffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_19
+	dc.w	8,3
+	dc.l	$00000000
+	dc.l	$7fff0000,$c0000000,$00000000
+	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$7fff0000,$c0000000,$00000000
+	dc.l	$01000000,$ff00ffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_20
+	dc.w	8,3
+	dc.l	$00000000
+	dc.l	$7fff0000,$a0000000,$00000000
+	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$7fff0000,$e0000000,$00000000
+	dc.l	$01004080,$ff00ffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_21
+	dc.w	8,3
+	dc.l	$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$7fff0000,$ffffffff,$ffffffff
+	dc.l	$01002080,$ff00ffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_22
+	dc.w	8,3
+	dc.l	$00000000
+	dc.l	$c0000000,$c0000000,$00000000
+	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$7fff0000,$ffffffff,$ffffffff
+	dc.l	$01002080,$ff00ffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_23
+	dc.w	8,3
+	dc.l	$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$7fff0000,$ffffffff,$ffffffff
+	dc.l	$01002080,$ff00ffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_24
+	dc.w	8,3
+	dc.l	$00000000
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$7fff0000,$ffffffff,$ffffffff
+	dc.l	$01002080,$ff00ffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_25
+	dc.w	8,3
+	dc.l	$00000000
+	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$7fff0000,$ffffffff,$ffffffff
+	dc.l	$01002080,$ff00ffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_26
+	dc.w	8,3
+	dc.l	$00000000
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$7fff0000,$ffffffff,$ffffffff
+	dc.l	$01002080,$ff00ffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_27
+	dc.w	8,3
+	dc.l	$00000000
+	dc.l	$7fff0000,$c0000000,$00000000
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$7fff0000,$c0000000,$00000000
+	dc.l	$01000000,$ff00ffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_28
+	dc.w	8,3
+	dc.l	$00000000
+	dc.l	$7fff0000,$a0000000,$00000000
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$7fff0000,$e0000000,$00000000
+	dc.l	$01004080,$ff00ffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_29
+	dc.w	8,3
+	dc.l	$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$7fff0000,$ffffffff,$ffffffff
+	dc.l	$01002080,$ff00ffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_30
+	dc.w	8,3
+	dc.l	$00000000
+	dc.l	$c0000000,$c0000000,$00000000
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$7fff0000,$ffffffff,$ffffffff
+	dc.l	$01002080,$ff00ffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_31
+	dc.w	8,3
+	dc.l	$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$7fff0000,$c0000000,$00000000
+	dc.l	$7fff0000,$c0000000,$00000000
+	dc.l	$01000000,$ff00ffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_32
+	dc.w	8,3
+	dc.l	$00000000
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$7fff0000,$c0000000,$00000000
+	dc.l	$7fff0000,$c0000000,$00000000
+	dc.l	$01000000,$ff00ffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_33
+	dc.w	8,3
+	dc.l	$00000000
+	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$7fff0000,$c0000000,$00000000
+	dc.l	$7fff0000,$c0000000,$00000000
+	dc.l	$01000000,$ff00ffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_34
+	dc.w	8,3
+	dc.l	$00000000
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$7fff0000,$c0000000,$00000000
+	dc.l	$7fff0000,$c0000000,$00000000
+	dc.l	$01000000,$ff00ffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_35
+	dc.w	8,3
+	dc.l	$00000000
+	dc.l	$7fff0000,$c0000000,$00000000
+	dc.l	$7fff0000,$c0000000,$00000000
+	dc.l	$7fff0000,$c0000000,$00000000
+	dc.l	$01000000,$ff00ffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_36
+	dc.w	8,3
+	dc.l	$00000000
+	dc.l	$7fff0000,$a0000000,$00000000
+	dc.l	$7fff0000,$c0000000,$00000000
+	dc.l	$7fff0000,$c0000000,$00000000
+	dc.l	$01004080,$ff00ffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_37
+	dc.w	8,3
+	dc.l	$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$7fff0000,$c0000000,$00000000
+	dc.l	$7fff0000,$c0000000,$00000000
+	dc.l	$01000000,$ff00ffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_38
+	dc.w	8,3
+	dc.l	$00000000
+	dc.l	$c0000000,$c0000000,$00000000
+	dc.l	$7fff0000,$c0000000,$00000000
+	dc.l	$7fff0000,$c0000000,$00000000
+	dc.l	$01000000,$ff00ffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_39
+	dc.w	8,3
+	dc.l	$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$7fff0000,$a0000000,$00000000
+	dc.l	$7fff0000,$e0000000,$00000000
+	dc.l	$01004080,$ff00ffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_40
+	dc.w	8,3
+	dc.l	$00000000
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$7fff0000,$a0000000,$00000000
+	dc.l	$7fff0000,$e0000000,$00000000
+	dc.l	$01004080,$ff00ffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_41
+	dc.w	8,3
+	dc.l	$00000000
+	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$7fff0000,$a0000000,$00000000
+	dc.l	$7fff0000,$e0000000,$00000000
+	dc.l	$01004080,$ff00ffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_42
+	dc.w	8,3
+	dc.l	$00000000
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$7fff0000,$a0000000,$00000000
+	dc.l	$7fff0000,$e0000000,$00000000
+	dc.l	$01004080,$ff00ffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_43
+	dc.w	8,3
+	dc.l	$00000000
+	dc.l	$7fff0000,$c0000000,$00000000
+	dc.l	$7fff0000,$a0000000,$00000000
+	dc.l	$7fff0000,$e0000000,$00000000
+	dc.l	$01004080,$ff00ffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_44
+	dc.w	8,3
+	dc.l	$00000000
+	dc.l	$7fff0000,$a0000000,$00000000
+	dc.l	$7fff0000,$a0000000,$00000000
+	dc.l	$7fff0000,$e0000000,$00000000
+	dc.l	$01004080,$ff00ffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_45
+	dc.w	8,3
+	dc.l	$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$7fff0000,$a0000000,$00000000
+	dc.l	$7fff0000,$e0000000,$00000000
+	dc.l	$01004080,$ff00ffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_46
+	dc.w	8,3
+	dc.l	$00000000
+	dc.l	$c0000000,$c0000000,$00000000
+	dc.l	$7fff0000,$a0000000,$00000000
+	dc.l	$7fff0000,$e0000000,$00000000
+	dc.l	$01004080,$ff00ffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_47
+	dc.w	8,3
+	dc.l	$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$7fff0000,$ffffffff,$ffffffff
+	dc.l	$01002080,$ff00ffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_48
+	dc.w	8,3
+	dc.l	$00000000
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$7fff0000,$ffffffff,$ffffffff
+	dc.l	$01002080,$ff00ffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_49
+	dc.w	8,3
+	dc.l	$00000000
+	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00000000,$ff7fffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_50
+	dc.w	8,3
+	dc.l	$00000000
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00000000,$ff7fffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_51
+	dc.w	8,3
+	dc.l	$00000000
+	dc.l	$7fff0000,$c0000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$7fff0000,$c0000000,$00000000
+	dc.l	$01000000,$ff00ffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_52
+	dc.w	8,3
+	dc.l	$00000000
+	dc.l	$7fff0000,$a0000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$7fff0000,$e0000000,$00000000
+	dc.l	$01004080,$ff00ffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_53
+	dc.w	8,3
+	dc.l	$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$04010000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_54
+	dc.w	8,3
+	dc.l	$00000000
+	dc.l	$c0000000,$c0000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00800000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_55
+	dc.w	8,3
+	dc.l	$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$c0000000,$c0000000,$00000000
+	dc.l	$7fff0000,$ffffffff,$ffffffff
+	dc.l	$01002080,$ff00ffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_56
+	dc.w	8,3
+	dc.l	$00000000
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$c0000000,$c0000000,$00000000
+	dc.l	$7fff0000,$ffffffff,$ffffffff
+	dc.l	$01002080,$ff00ffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_57
+	dc.w	8,3
+	dc.l	$00000000
+	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$c0000000,$c0000000,$00000000
+	dc.l	$c0000000,$c0000000,$00000000
+	dc.l	$08000000,$ff7fffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_58
+	dc.w	8,3
+	dc.l	$00000000
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$c0000000,$c0000000,$00000000
+	dc.l	$c0000000,$c0000000,$00000000
+	dc.l	$08000000,$ff7fffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_59
+	dc.w	8,3
+	dc.l	$00000000
+	dc.l	$7fff0000,$c0000000,$00000000
+	dc.l	$c0000000,$c0000000,$00000000
+	dc.l	$7fff0000,$c0000000,$00000000
+	dc.l	$01000000,$ff00ffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_60
+	dc.w	8,3
+	dc.l	$00000000
+	dc.l	$7fff0000,$a0000000,$00000000
+	dc.l	$c0000000,$c0000000,$00000000
+	dc.l	$7fff0000,$e0000000,$00000000
+	dc.l	$01004080,$ff00ffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_61
+	dc.w	8,3
+	dc.l	$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$c0000000,$c0000000,$00000000
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$0c830000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_62
+	dc.w	8,3
+	dc.l	$00000000
+	dc.l	$c0000000,$c0000000,$00000000
+	dc.l	$c0000000,$c0000000,$00000000
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$0c010000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_63
+	dc.w	8,3
+	dc.l	$00000000
+	dc.l	$40000000,$80000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$bfff0000,$80000000,$00000000
+	dc.l	$08040000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_64
+	dc.w	8,3
+	dc.l	$00000000
+	dc.l	$40000000,$80000000,$00000000
+	dc.l	$c0010000,$e0000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00840000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_65
+	dc.w	8,3
+	dc.l	$00000000
+	dc.l	$c0000000,$80000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$bfff0000,$80000000,$00000000
+	dc.l	$08840000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_66
+	dc.w	8,3
+	dc.l	$00000000
+	dc.l	$c0000000,$80000000,$00000000
+	dc.l	$c0010000,$e0000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00040000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_67
+	dc.w	8,3
+	dc.l	$00000000
+	dc.l	$40000000,$80000000,$00000000
+	dc.l	$40010000,$a0000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00020000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_68
+	dc.w	8,3
+	dc.l	$00000000
+	dc.l	$40000000,$80000000,$00000000
+	dc.l	$40010000,$80000000,$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$04020000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_69
+	dc.w	8,3
+	dc.l	$00000000
+	dc.l	$40000000,$80000000,$00000000
+	dc.l	$c0010000,$80000000,$00000000
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$0c820000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_70
+	dc.w	8,3
+	dc.l	$00000000
+	dc.l	$3fff0000,$c0000000,$00000000
+	dc.l	$40010000,$b0000000,$00000000
+	dc.l	$bffe0000,$80000000,$00000000
+	dc.l	$08040000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_71
+	dc.w	8,3
+	dc.l	$00000000
+	dc.l	$40000000,$c0000000,$00000000
+	dc.l	$40450000,$80000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00550000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_72
+	dc.w	8,3
+	dc.l	$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$40450000,$80000000,$00000000
+	dc.l	$40000000,$80000000,$00000000
+	dc.l	$00120000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_73
+	dc.w	8,3
+	dc.l	$00000000
+	dc.l	$40000000,$c0000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_74
+	dc.w	8,3
+	dc.l	$00000000
+	dc.l	$40000000,$c0000000,$00000000
+	dc.l	$40000000,$80000000,$00000000
+	dc.l	$bfff0000,$80000000,$00000000
+	dc.l	$08010000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_75
+	dc.w	8,3
+	dc.l	$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3fff0000,$c0000000,$00000000
+	dc.l	$bffe0000,$80000000,$00000000
+	dc.l	$08020000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_76
+	dc.w	8,3
+	dc.l	$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$40000000,$a0000000,$00000000
+	dc.l	$3ffe0000,$80000000,$00000000
+	dc.l	$00020000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_33_77
+	cnop	0,4
+gv_34:
+	dc.w	5,15
+	dc.l	$00000000
+	dc.l	$3fff0000,$80000080,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_34_0
+	dc.w	5,15
+	dc.l	$00000040
+	dc.l	$3fff0000,$80000080,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_34_1
+	dc.w	5,15
+	dc.l	$00000080
+	dc.l	$3fff0000,$80000080,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_34_2
+	dc.w	5,15
+	dc.l	$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3fff0000,$80000080,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_34_3
+	dc.w	5,15
+	dc.l	$00000040
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3fff0000,$80000080,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_34_4
+	dc.w	5,15
+	dc.l	$00000080
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3fff0000,$80000080,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$00000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_34_5
+	dc.w	5,15
+	dc.l	$00000000
+	dc.l	$bfff0000,$80000080,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$bfff0000,$80000000,$00000000
+	dc.l	$08000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_34_6
+	dc.w	5,15
+	dc.l	$00000040
+	dc.l	$bfff0000,$80000080,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$bfff0000,$80000000,$00000000
+	dc.l	$08000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_34_7
 	dc.w	5,15
 	dc.l	$00000080
 	dc.l	$bfff0000,$80000080,$00000000
@@ -16587,7 +16761,7 @@ gv_33:
 	dc.l	$08000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_33_8
+	dc.l	wy_34_8
 	dc.w	5,15
 	dc.l	$00000000
 	dc.l	$3fff0000,$80000080,$00000000
@@ -16596,7 +16770,7 @@ gv_33:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_33_9
+	dc.l	wy_34_9
 	dc.w	5,15
 	dc.l	$00000040
 	dc.l	$3fff0000,$80000080,$00000000
@@ -16605,7 +16779,7 @@ gv_33:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_33_10
+	dc.l	wy_34_10
 	dc.w	5,15
 	dc.l	$00000080
 	dc.l	$3fff0000,$80000080,$00000000
@@ -16614,7 +16788,7 @@ gv_33:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_33_11
+	dc.l	wy_34_11
 	dc.w	5,15
 	dc.l	$00000000
 	dc.l	$3fff0000,$80000100,$00000000
@@ -16623,7 +16797,7 @@ gv_33:
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_33_12
+	dc.l	wy_34_12
 	dc.w	5,15
 	dc.l	$00000080
 	dc.l	$40000000,$c0000000,$00000000
@@ -16632,7 +16806,7 @@ gv_33:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_33_13
+	dc.l	wy_34_13
 	dc.w	5,15
 	dc.l	$00000000
 	dc.l	$40c80000,$c0000000,$00000000
@@ -16641,7 +16815,7 @@ gv_33:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_33_14
+	dc.l	wy_34_14
 	dc.w	5,15
 	dc.l	$00000010
 	dc.l	$3fff0000,$80000080,$00000000
@@ -16650,7 +16824,7 @@ gv_33:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_33_15
+	dc.l	wy_34_15
 	dc.w	5,15
 	dc.l	$00000050
 	dc.l	$3fff0000,$80000080,$00000000
@@ -16659,7 +16833,7 @@ gv_33:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_33_16
+	dc.l	wy_34_16
 	dc.w	5,15
 	dc.l	$00000090
 	dc.l	$3fff0000,$80000080,$00000000
@@ -16668,7 +16842,7 @@ gv_33:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_33_17
+	dc.l	wy_34_17
 	dc.w	5,15
 	dc.l	$00000010
 	dc.l	$3fff0000,$80000000,$00000000
@@ -16677,7 +16851,7 @@ gv_33:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_33_18
+	dc.l	wy_34_18
 	dc.w	5,15
 	dc.l	$00000050
 	dc.l	$3fff0000,$80000000,$00000000
@@ -16686,7 +16860,7 @@ gv_33:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_33_19
+	dc.l	wy_34_19
 	dc.w	5,15
 	dc.l	$00000090
 	dc.l	$3fff0000,$80000000,$00000000
@@ -16695,7 +16869,7 @@ gv_33:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_33_20
+	dc.l	wy_34_20
 	dc.w	5,15
 	dc.l	$00000010
 	dc.l	$bfff0000,$80000080,$00000000
@@ -16704,7 +16878,7 @@ gv_33:
 	dc.l	$08000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_33_21
+	dc.l	wy_34_21
 	dc.w	5,15
 	dc.l	$00000050
 	dc.l	$bfff0000,$80000080,$00000000
@@ -16713,7 +16887,7 @@ gv_33:
 	dc.l	$08000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_33_22
+	dc.l	wy_34_22
 	dc.w	5,15
 	dc.l	$00000090
 	dc.l	$bfff0000,$80000080,$00000000
@@ -16722,7 +16896,7 @@ gv_33:
 	dc.l	$08000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_33_23
+	dc.l	wy_34_23
 	dc.w	5,15
 	dc.l	$00000010
 	dc.l	$3fff0000,$80000080,$00000000
@@ -16731,7 +16905,7 @@ gv_33:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_33_24
+	dc.l	wy_34_24
 	dc.w	5,15
 	dc.l	$00000050
 	dc.l	$3fff0000,$80000080,$00000000
@@ -16740,7 +16914,7 @@ gv_33:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_33_25
+	dc.l	wy_34_25
 	dc.w	5,15
 	dc.l	$00000090
 	dc.l	$3fff0000,$80000080,$00000000
@@ -16749,7 +16923,7 @@ gv_33:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_33_26
+	dc.l	wy_34_26
 	dc.w	5,15
 	dc.l	$00000010
 	dc.l	$3fff0000,$80000100,$00000000
@@ -16758,7 +16932,7 @@ gv_33:
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_33_27
+	dc.l	wy_34_27
 	dc.w	5,15
 	dc.l	$00000090
 	dc.l	$40000000,$c0000000,$00000000
@@ -16767,7 +16941,7 @@ gv_33:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_33_28
+	dc.l	wy_34_28
 	dc.w	5,15
 	dc.l	$00000010
 	dc.l	$40c80000,$c0000000,$00000000
@@ -16776,7 +16950,7 @@ gv_33:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_33_29
+	dc.l	wy_34_29
 	dc.w	5,15
 	dc.l	$00000020
 	dc.l	$3fff0000,$80000080,$00000000
@@ -16785,7 +16959,7 @@ gv_33:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_33_30
+	dc.l	wy_34_30
 	dc.w	5,15
 	dc.l	$00000060
 	dc.l	$3fff0000,$80000080,$00000000
@@ -16794,7 +16968,7 @@ gv_33:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_33_31
+	dc.l	wy_34_31
 	dc.w	5,15
 	dc.l	$000000a0
 	dc.l	$3fff0000,$80000080,$00000000
@@ -16803,7 +16977,7 @@ gv_33:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_33_32
+	dc.l	wy_34_32
 	dc.w	5,15
 	dc.l	$00000020
 	dc.l	$3fff0000,$80000000,$00000000
@@ -16812,7 +16986,7 @@ gv_33:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_33_33
+	dc.l	wy_34_33
 	dc.w	5,15
 	dc.l	$00000060
 	dc.l	$3fff0000,$80000000,$00000000
@@ -16821,7 +16995,7 @@ gv_33:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_33_34
+	dc.l	wy_34_34
 	dc.w	5,15
 	dc.l	$000000a0
 	dc.l	$3fff0000,$80000000,$00000000
@@ -16830,7 +17004,7 @@ gv_33:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_33_35
+	dc.l	wy_34_35
 	dc.w	5,15
 	dc.l	$00000020
 	dc.l	$bfff0000,$80000080,$00000000
@@ -16839,7 +17013,7 @@ gv_33:
 	dc.l	$08000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_33_36
+	dc.l	wy_34_36
 	dc.w	5,15
 	dc.l	$00000060
 	dc.l	$bfff0000,$80000080,$00000000
@@ -16848,7 +17022,7 @@ gv_33:
 	dc.l	$08000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_33_37
+	dc.l	wy_34_37
 	dc.w	5,15
 	dc.l	$000000a0
 	dc.l	$bfff0000,$80000080,$00000000
@@ -16857,7 +17031,7 @@ gv_33:
 	dc.l	$08000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_33_38
+	dc.l	wy_34_38
 	dc.w	5,15
 	dc.l	$00000020
 	dc.l	$3fff0000,$80000080,$00000000
@@ -16866,7 +17040,7 @@ gv_33:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_33_39
+	dc.l	wy_34_39
 	dc.w	5,15
 	dc.l	$00000060
 	dc.l	$3fff0000,$80000080,$00000000
@@ -16875,7 +17049,7 @@ gv_33:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_33_40
+	dc.l	wy_34_40
 	dc.w	5,15
 	dc.l	$000000a0
 	dc.l	$3fff0000,$80000080,$00000000
@@ -16884,7 +17058,7 @@ gv_33:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_33_41
+	dc.l	wy_34_41
 	dc.w	5,15
 	dc.l	$00000020
 	dc.l	$3fff0000,$80000100,$00000000
@@ -16893,7 +17067,7 @@ gv_33:
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_33_42
+	dc.l	wy_34_42
 	dc.w	5,15
 	dc.l	$000000a0
 	dc.l	$40000000,$c0000000,$00000000
@@ -16902,7 +17076,7 @@ gv_33:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_33_43
+	dc.l	wy_34_43
 	dc.w	5,15
 	dc.l	$00000020
 	dc.l	$40c80000,$c0000000,$00000000
@@ -16911,7 +17085,7 @@ gv_33:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_33_44
+	dc.l	wy_34_44
 	dc.w	5,15
 	dc.l	$00000030
 	dc.l	$3fff0000,$80000080,$00000000
@@ -16920,7 +17094,7 @@ gv_33:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_33_45
+	dc.l	wy_34_45
 	dc.w	5,15
 	dc.l	$00000070
 	dc.l	$3fff0000,$80000080,$00000000
@@ -16929,7 +17103,7 @@ gv_33:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_33_46
+	dc.l	wy_34_46
 	dc.w	5,15
 	dc.l	$000000b0
 	dc.l	$3fff0000,$80000080,$00000000
@@ -16938,7 +17112,7 @@ gv_33:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_33_47
+	dc.l	wy_34_47
 	dc.w	5,15
 	dc.l	$00000030
 	dc.l	$3fff0000,$80000000,$00000000
@@ -16947,7 +17121,7 @@ gv_33:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_33_48
+	dc.l	wy_34_48
 	dc.w	5,15
 	dc.l	$00000070
 	dc.l	$3fff0000,$80000000,$00000000
@@ -16956,7 +17130,7 @@ gv_33:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_33_49
+	dc.l	wy_34_49
 	dc.w	5,15
 	dc.l	$000000b0
 	dc.l	$3fff0000,$80000000,$00000000
@@ -16965,7 +17139,7 @@ gv_33:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_33_50
+	dc.l	wy_34_50
 	dc.w	5,15
 	dc.l	$00000030
 	dc.l	$bfff0000,$80000080,$00000000
@@ -16974,7 +17148,7 @@ gv_33:
 	dc.l	$08000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_33_51
+	dc.l	wy_34_51
 	dc.w	5,15
 	dc.l	$00000070
 	dc.l	$bfff0000,$80000080,$00000000
@@ -16983,7 +17157,7 @@ gv_33:
 	dc.l	$08000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_33_52
+	dc.l	wy_34_52
 	dc.w	5,15
 	dc.l	$000000b0
 	dc.l	$bfff0000,$80000080,$00000000
@@ -16992,7 +17166,7 @@ gv_33:
 	dc.l	$08000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_33_53
+	dc.l	wy_34_53
 	dc.w	5,15
 	dc.l	$00000030
 	dc.l	$3fff0000,$80000080,$00000000
@@ -17001,7 +17175,7 @@ gv_33:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_33_54
+	dc.l	wy_34_54
 	dc.w	5,15
 	dc.l	$00000070
 	dc.l	$3fff0000,$80000080,$00000000
@@ -17010,7 +17184,7 @@ gv_33:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_33_55
+	dc.l	wy_34_55
 	dc.w	5,15
 	dc.l	$000000b0
 	dc.l	$3fff0000,$80000080,$00000000
@@ -17019,7 +17193,7 @@ gv_33:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_33_56
+	dc.l	wy_34_56
 	dc.w	5,15
 	dc.l	$00000030
 	dc.l	$3fff0000,$80000100,$00000000
@@ -17028,7 +17202,7 @@ gv_33:
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_33_57
+	dc.l	wy_34_57
 	dc.w	5,15
 	dc.l	$000000b0
 	dc.l	$40000000,$c0000000,$00000000
@@ -17037,7 +17211,7 @@ gv_33:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_33_58
+	dc.l	wy_34_58
 	dc.w	5,15
 	dc.l	$00000030
 	dc.l	$40c80000,$c0000000,$00000000
@@ -17046,9 +17220,9 @@ gv_33:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_33_59
+	dc.l	wy_34_59
 	cnop	0,4
-gv_34:
+gv_35:
 	dc.w	6,15
 	dc.l	$00000000
 	dc.l	$40000000,$c0000000,$00000000
@@ -17057,7 +17231,7 @@ gv_34:
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_34_0
+	dc.l	wy_35_0
 	dc.w	6,15
 	dc.l	$00000080
 	dc.l	$40000000,$c0000000,$00000000
@@ -17066,7 +17240,7 @@ gv_34:
 	dc.l	$08000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_34_1
+	dc.l	wy_35_1
 	dc.w	6,15
 	dc.l	$00000000
 	dc.l	$3ed40000,$c0000000,$00000000
@@ -17075,7 +17249,7 @@ gv_34:
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_34_2
+	dc.l	wy_35_2
 	dc.w	6,15
 	dc.l	$00000010
 	dc.l	$40000000,$c0000000,$00000000
@@ -17084,7 +17258,7 @@ gv_34:
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_34_3
+	dc.l	wy_35_3
 	dc.w	6,15
 	dc.l	$00000090
 	dc.l	$40000000,$c0000000,$00000000
@@ -17093,7 +17267,7 @@ gv_34:
 	dc.l	$08000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_34_4
+	dc.l	wy_35_4
 	dc.w	6,15
 	dc.l	$00000010
 	dc.l	$3ed40000,$c0000000,$00000000
@@ -17102,7 +17276,7 @@ gv_34:
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_34_5
+	dc.l	wy_35_5
 	dc.w	6,15
 	dc.l	$00000020
 	dc.l	$40000000,$c0000000,$00000000
@@ -17111,7 +17285,7 @@ gv_34:
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_34_6
+	dc.l	wy_35_6
 	dc.w	6,15
 	dc.l	$000000a0
 	dc.l	$40000000,$c0000000,$00000000
@@ -17120,7 +17294,7 @@ gv_34:
 	dc.l	$08000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_34_7
+	dc.l	wy_35_7
 	dc.w	6,15
 	dc.l	$00000020
 	dc.l	$3ed40000,$c0000000,$00000000
@@ -17129,7 +17303,7 @@ gv_34:
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_34_8
+	dc.l	wy_35_8
 	dc.w	6,15
 	dc.l	$00000030
 	dc.l	$40000000,$c0000000,$00000000
@@ -17138,7 +17312,7 @@ gv_34:
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_34_9
+	dc.l	wy_35_9
 	dc.w	6,15
 	dc.l	$000000b0
 	dc.l	$40000000,$c0000000,$00000000
@@ -17147,7 +17321,7 @@ gv_34:
 	dc.l	$08000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_34_10
+	dc.l	wy_35_10
 	dc.w	6,15
 	dc.l	$00000030
 	dc.l	$3ed40000,$c0000000,$00000000
@@ -17156,7 +17330,7 @@ gv_34:
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_34_11
+	dc.l	wy_35_11
 	dc.w	6,15
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
@@ -17165,947 +17339,947 @@ gv_34:
 	dc.l	$02000410,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_34_12
-	cnop	0,4
-gv_35:
-	dc.w	10,12
-	dc.l	$00000000
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3fff0000,$aaaaab00,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_0
-	dc.w	10,12
-	dc.l	$00000080
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3fff0000,$aaaaab00,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_1
-	dc.w	10,12
-	dc.l	$00000010
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3fff0000,$aaaaaa00,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_2
-	dc.w	10,12
-	dc.l	$00000090
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3fff0000,$aaaaaa00,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_3
-	dc.w	10,12
-	dc.l	$00000020
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3fff0000,$aaaaaa00,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_4
-	dc.w	10,12
-	dc.l	$000000a0
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3fff0000,$aaaaaa00,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_5
-	dc.w	10,12
-	dc.l	$00000030
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3fff0000,$aaaaab00,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_6
-	dc.w	10,12
-	dc.l	$000000b0
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3fff0000,$aaaaab00,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_7
-	dc.w	10,12
-	dc.l	$00000000
-	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$7fff0000,$ffffffff,$ffffffff
-	dc.l	$01002080,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_8
-	dc.w	11,12
-	dc.l	$00000000
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3fff0000,$aaaaaaaa,$aaaaa800
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_9
-	dc.w	11,12
-	dc.l	$00000040
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3fff0000,$aaaaaaaa,$aaaaa800
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_10
-	dc.w	11,12
-	dc.l	$00000010
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3fff0000,$aaaaaaaa,$aaaaa800
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_11
-	dc.w	11,12
-	dc.l	$00000050
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3fff0000,$aaaaaaaa,$aaaaa800
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_35_12
-	dc.w	11,12
-	dc.l	$00000020
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3fff0000,$aaaaaaaa,$aaaaa800
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_13
-	dc.w	11,12
-	dc.l	$00000060
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3fff0000,$aaaaaaaa,$aaaaa800
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_14
-	dc.w	11,12
-	dc.l	$00000030
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3fff0000,$aaaaaaaa,$aaaab000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_15
-	dc.w	11,12
-	dc.l	$00000070
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3fff0000,$aaaaaaaa,$aaaab000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_16
-	dc.w	11,12
-	dc.l	$00000000
-	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$7fff0000,$ffffffff,$ffffffff
-	dc.l	$01002080,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_17
-	dc.w	12,12
-	dc.l	$00000000
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3ffe0000,$aaaaab00,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_18
-	dc.w	12,12
-	dc.l	$00000080
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3ffe0000,$aaaaab00,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_19
-	dc.w	12,12
-	dc.l	$00000010
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3ffe0000,$aaaaaa00,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_20
-	dc.w	12,12
-	dc.l	$00000090
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3ffe0000,$aaaaaa00,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_21
-	dc.w	12,12
-	dc.l	$00000020
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3ffe0000,$aaaaaa00,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_22
-	dc.w	12,12
-	dc.l	$000000a0
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3ffe0000,$aaaaaa00,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_23
-	dc.w	12,12
-	dc.l	$00000030
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3ffe0000,$aaaaab00,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_24
-	dc.w	12,12
-	dc.l	$000000b0
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3ffe0000,$aaaaab00,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_25
-	dc.w	12,12
-	dc.l	$00000000
-	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$0a000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_26
-	dc.w	13,12
-	dc.l	$00000000
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3ffe0000,$aaaaaaaa,$aaaaa800
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_27
-	dc.w	13,12
-	dc.l	$00000040
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3ffe0000,$aaaaaaaa,$aaaaa800
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_28
-	dc.w	13,12
-	dc.l	$00000010
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3ffe0000,$aaaaaaaa,$aaaaa800
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_29
-	dc.w	13,12
-	dc.l	$00000050
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3ffe0000,$aaaaaaaa,$aaaaa800
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_30
-	dc.w	13,12
-	dc.l	$00000020
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3ffe0000,$aaaaaaaa,$aaaaa800
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_31
-	dc.w	13,12
-	dc.l	$00000060
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3ffe0000,$aaaaaaaa,$aaaaa800
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_32
-	dc.w	13,12
-	dc.l	$00000030
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3ffe0000,$aaaaaaaa,$aaaab000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_33
-	dc.w	13,12
-	dc.l	$00000070
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3ffe0000,$aaaaaaaa,$aaaab000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_34
-	dc.w	13,12
-	dc.l	$00000000
-	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$0a000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_35
-	dc.w	14,12
-	dc.l	$00000000
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3ffd0000,$aaaaab00,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_36
-	dc.w	14,12
-	dc.l	$00000080
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3ffd0000,$aaaaab00,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_37
-	dc.w	14,12
-	dc.l	$00000010
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3ffd0000,$aaaaaa00,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_38
-	dc.w	14,12
-	dc.l	$00000090
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3ffd0000,$aaaaaa00,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_39
-	dc.w	14,12
-	dc.l	$00000020
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3ffd0000,$aaaaaa00,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_40
-	dc.w	14,12
-	dc.l	$000000a0
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3ffd0000,$aaaaaa00,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_41
-	dc.w	14,12
-	dc.l	$00000030
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3ffd0000,$aaaaab00,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_42
-	dc.w	14,12
-	dc.l	$000000b0
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3ffd0000,$aaaaab00,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_43
-	dc.w	14,12
-	dc.l	$00000000
-	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$0a000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_44
-	dc.w	15,12
-	dc.l	$00000000
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaa800
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_45
-	dc.w	15,12
-	dc.l	$00000040
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaa800
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_46
-	dc.w	15,12
-	dc.l	$00000010
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaa800
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_47
-	dc.w	15,12
-	dc.l	$00000050
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaa800
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_48
-	dc.w	15,12
-	dc.l	$00000020
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaa800
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_49
-	dc.w	15,12
-	dc.l	$00000060
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaa800
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_50
-	dc.w	15,12
-	dc.l	$00000030
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaab000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_51
-	dc.w	15,12
-	dc.l	$00000070
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaab000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_52
-	dc.w	15,12
-	dc.l	$00000000
-	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$0a000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_53
-	dc.w	16,12
-	dc.l	$00000000
-	dc.l	$40000000,$c0000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3ffd0000,$aaaaab00,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_54
-	dc.w	16,12
-	dc.l	$00000080
-	dc.l	$40000000,$c0000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3ffd0000,$aaaaab00,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_55
-	dc.w	16,12
-	dc.l	$00000010
-	dc.l	$40000000,$c0000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3ffd0000,$aaaaaa00,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_56
-	dc.w	16,12
-	dc.l	$00000090
-	dc.l	$40000000,$c0000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3ffd0000,$aaaaaa00,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_57
-	dc.w	16,12
-	dc.l	$00000020
-	dc.l	$40000000,$c0000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3ffd0000,$aaaaaa00,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_58
-	dc.w	16,12
-	dc.l	$000000a0
-	dc.l	$40000000,$c0000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3ffd0000,$aaaaaa00,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_59
-	dc.w	16,12
-	dc.l	$00000030
-	dc.l	$40000000,$c0000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3ffd0000,$aaaaab00,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_60
-	dc.w	16,12
-	dc.l	$000000b0
-	dc.l	$40000000,$c0000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3ffd0000,$aaaaab00,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_61
-	dc.w	16,12
-	dc.l	$00000000
-	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$7fff0000,$ffffffff,$ffffffff
-	dc.l	$01002080,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_62
-	dc.w	17,12
-	dc.l	$00000000
-	dc.l	$40000000,$c0000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaa800
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_63
-	dc.w	17,12
-	dc.l	$00000040
-	dc.l	$40000000,$c0000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaa800
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_64
-	dc.w	17,12
-	dc.l	$00000010
-	dc.l	$40000000,$c0000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaa800
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_65
-	dc.w	17,12
-	dc.l	$00000050
-	dc.l	$40000000,$c0000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaa800
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_66
-	dc.w	17,12
-	dc.l	$00000020
-	dc.l	$40000000,$c0000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaa800
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_67
-	dc.w	17,12
-	dc.l	$00000060
-	dc.l	$40000000,$c0000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaaa800
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_68
-	dc.w	17,12
-	dc.l	$00000030
-	dc.l	$40000000,$c0000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaab000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_69
-	dc.w	17,12
-	dc.l	$00000070
-	dc.l	$40000000,$c0000000,$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$3ffd0000,$aaaaaaaa,$aaaab000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_70
-	dc.w	17,12
-	dc.l	$00000000
-	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$7fff0000,$ffffffff,$ffffffff
-	dc.l	$01002080,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_71
-	dc.w	22,12
-	dc.l	$00000000
-	dc.l	$3fff0000,$b504f333,$f9de6484
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$b504f300,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_72
-	dc.w	22,12
-	dc.l	$00000010
-	dc.l	$3fff0000,$b504f333,$f9de6484
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$b504f300,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_73
-	dc.w	22,12
-	dc.l	$00000020
-	dc.l	$3fff0000,$b504f333,$f9de6484
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$b504f300,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_74
-	dc.w	22,12
-	dc.l	$00000030
-	dc.l	$3fff0000,$b504f333,$f9de6484
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$b504f400,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_75
-	dc.w	23,12
-	dc.l	$00000000
-	dc.l	$3fff0000,$b504f333,$f9de6484
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$b504f333,$f9de6800
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_76
-	dc.w	23,12
-	dc.l	$00000010
-	dc.l	$3fff0000,$b504f333,$f9de6484
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$b504f333,$f9de6000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_77
-	dc.w	23,12
-	dc.l	$00000020
-	dc.l	$3fff0000,$b504f333,$f9de6484
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$b504f333,$f9de6000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_78
-	dc.w	23,12
-	dc.l	$00000030
-	dc.l	$3fff0000,$b504f333,$f9de6484
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$b504f333,$f9de6800
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_79
-	dc.w	24,12
-	dc.l	$00000000
-	dc.l	$40000000,$80000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$b504f300,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_80
-	dc.w	24,12
-	dc.l	$00000010
-	dc.l	$40000000,$80000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$b504f300,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_81
-	dc.w	24,12
-	dc.l	$00000020
-	dc.l	$40000000,$80000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$b504f300,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_82
-	dc.w	24,12
-	dc.l	$00000030
-	dc.l	$40000000,$80000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$b504f400,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_83
-	dc.w	25,12
-	dc.l	$00000000
-	dc.l	$40000000,$80000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$b504f333,$f9de6800
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_84
-	dc.w	25,12
-	dc.l	$00000010
-	dc.l	$40000000,$80000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$b504f333,$f9de6000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_85
-	dc.w	25,12
-	dc.l	$00000020
-	dc.l	$40000000,$80000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$b504f333,$f9de6000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_86
-	dc.w	25,12
-	dc.l	$00000030
-	dc.l	$40000000,$80000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$b504f333,$f9de6800
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_87
-	dc.w	26,12
-	dc.l	$00000000
-	dc.l	$bfff0000,$b504f333,$f9de6484
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$b504f300,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_88
-	dc.w	26,12
-	dc.l	$00000010
-	dc.l	$bfff0000,$b504f333,$f9de6484
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$b504f300,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_89
-	dc.w	26,12
-	dc.l	$00000020
-	dc.l	$bfff0000,$b504f333,$f9de6484
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$b504f300,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_90
-	dc.w	26,12
-	dc.l	$00000030
-	dc.l	$bfff0000,$b504f333,$f9de6484
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$b504f400,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_91
-	dc.w	27,12
-	dc.l	$00000000
-	dc.l	$bfff0000,$b504f333,$f9de6484
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$b504f333,$f9de6800
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_92
-	dc.w	27,12
-	dc.l	$00000010
-	dc.l	$bfff0000,$b504f333,$f9de6484
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$b504f333,$f9de6000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_93
-	dc.w	27,12
-	dc.l	$00000020
-	dc.l	$bfff0000,$b504f333,$f9de6484
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$b504f333,$f9de6000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_94
-	dc.w	27,12
-	dc.l	$00000030
-	dc.l	$bfff0000,$b504f333,$f9de6484
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$b504f333,$f9de6800
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_95
-	dc.w	28,12
-	dc.l	$00000000
-	dc.l	$bfff0000,$b504f333,$f9de6484
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$b504f300,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_96
-	dc.w	28,12
-	dc.l	$00000010
-	dc.l	$bfff0000,$b504f333,$f9de6484
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$b504f300,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_97
-	dc.w	28,12
-	dc.l	$00000020
-	dc.l	$bfff0000,$b504f333,$f9de6484
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$b504f300,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_98
-	dc.w	28,12
-	dc.l	$00000030
-	dc.l	$bfff0000,$b504f333,$f9de6484
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$b504f400,$00000000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_99
-	dc.w	29,12
-	dc.l	$00000000
-	dc.l	$bfff0000,$b504f333,$f9de6484
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$b504f333,$f9de6800
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_100
-	dc.w	29,12
-	dc.l	$00000010
-	dc.l	$bfff0000,$b504f333,$f9de6484
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$b504f333,$f9de6000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_101
-	dc.w	29,12
-	dc.l	$00000020
-	dc.l	$bfff0000,$b504f333,$f9de6484
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$b504f333,$f9de6000
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_102
-	dc.w	29,12
-	dc.l	$00000030
-	dc.l	$bfff0000,$b504f333,$f9de6484
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$b504f333,$f9de6800
-	dc.l	$00000208,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_35_103
 	cnop	0,4
 gv_36:
+	dc.w	10,12
+	dc.l	$00000000
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3fff0000,$aaaaab00,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_0
+	dc.w	10,12
+	dc.l	$00000080
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3fff0000,$aaaaab00,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_1
+	dc.w	10,12
+	dc.l	$00000010
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3fff0000,$aaaaaa00,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_2
+	dc.w	10,12
+	dc.l	$00000090
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3fff0000,$aaaaaa00,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_3
+	dc.w	10,12
+	dc.l	$00000020
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3fff0000,$aaaaaa00,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_4
+	dc.w	10,12
+	dc.l	$000000a0
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3fff0000,$aaaaaa00,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_5
+	dc.w	10,12
+	dc.l	$00000030
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3fff0000,$aaaaab00,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_6
+	dc.w	10,12
+	dc.l	$000000b0
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3fff0000,$aaaaab00,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_7
+	dc.w	10,12
+	dc.l	$00000000
+	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$7fff0000,$ffffffff,$ffffffff
+	dc.l	$01002080,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_8
+	dc.w	11,12
+	dc.l	$00000000
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3fff0000,$aaaaaaaa,$aaaaa800
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_9
+	dc.w	11,12
+	dc.l	$00000040
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3fff0000,$aaaaaaaa,$aaaaa800
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_10
+	dc.w	11,12
+	dc.l	$00000010
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3fff0000,$aaaaaaaa,$aaaaa800
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_11
+	dc.w	11,12
+	dc.l	$00000050
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3fff0000,$aaaaaaaa,$aaaaa800
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_12
+	dc.w	11,12
+	dc.l	$00000020
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3fff0000,$aaaaaaaa,$aaaaa800
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_13
+	dc.w	11,12
+	dc.l	$00000060
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3fff0000,$aaaaaaaa,$aaaaa800
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_14
+	dc.w	11,12
+	dc.l	$00000030
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3fff0000,$aaaaaaaa,$aaaab000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_15
+	dc.w	11,12
+	dc.l	$00000070
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3fff0000,$aaaaaaaa,$aaaab000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_16
+	dc.w	11,12
+	dc.l	$00000000
+	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$7fff0000,$ffffffff,$ffffffff
+	dc.l	$01002080,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_17
+	dc.w	12,12
+	dc.l	$00000000
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3ffe0000,$aaaaab00,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_18
+	dc.w	12,12
+	dc.l	$00000080
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3ffe0000,$aaaaab00,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_19
+	dc.w	12,12
+	dc.l	$00000010
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3ffe0000,$aaaaaa00,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_20
+	dc.w	12,12
+	dc.l	$00000090
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3ffe0000,$aaaaaa00,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_21
+	dc.w	12,12
+	dc.l	$00000020
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3ffe0000,$aaaaaa00,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_22
+	dc.w	12,12
+	dc.l	$000000a0
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3ffe0000,$aaaaaa00,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_23
+	dc.w	12,12
+	dc.l	$00000030
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3ffe0000,$aaaaab00,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_24
+	dc.w	12,12
+	dc.l	$000000b0
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3ffe0000,$aaaaab00,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_25
+	dc.w	12,12
+	dc.l	$00000000
+	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$0a000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_26
+	dc.w	13,12
+	dc.l	$00000000
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3ffe0000,$aaaaaaaa,$aaaaa800
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_27
+	dc.w	13,12
+	dc.l	$00000040
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3ffe0000,$aaaaaaaa,$aaaaa800
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_28
+	dc.w	13,12
+	dc.l	$00000010
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3ffe0000,$aaaaaaaa,$aaaaa800
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_29
+	dc.w	13,12
+	dc.l	$00000050
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3ffe0000,$aaaaaaaa,$aaaaa800
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_30
+	dc.w	13,12
+	dc.l	$00000020
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3ffe0000,$aaaaaaaa,$aaaaa800
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_31
+	dc.w	13,12
+	dc.l	$00000060
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3ffe0000,$aaaaaaaa,$aaaaa800
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_32
+	dc.w	13,12
+	dc.l	$00000030
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3ffe0000,$aaaaaaaa,$aaaab000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_33
+	dc.w	13,12
+	dc.l	$00000070
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3ffe0000,$aaaaaaaa,$aaaab000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_34
+	dc.w	13,12
+	dc.l	$00000000
+	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$0a000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_35
+	dc.w	14,12
+	dc.l	$00000000
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3ffd0000,$aaaaab00,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_36
+	dc.w	14,12
+	dc.l	$00000080
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3ffd0000,$aaaaab00,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_37
+	dc.w	14,12
+	dc.l	$00000010
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3ffd0000,$aaaaaa00,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_38
+	dc.w	14,12
+	dc.l	$00000090
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3ffd0000,$aaaaaa00,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_39
+	dc.w	14,12
+	dc.l	$00000020
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3ffd0000,$aaaaaa00,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_40
+	dc.w	14,12
+	dc.l	$000000a0
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3ffd0000,$aaaaaa00,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_41
+	dc.w	14,12
+	dc.l	$00000030
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3ffd0000,$aaaaab00,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_42
+	dc.w	14,12
+	dc.l	$000000b0
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3ffd0000,$aaaaab00,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_43
+	dc.w	14,12
+	dc.l	$00000000
+	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$0a000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_44
+	dc.w	15,12
+	dc.l	$00000000
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaa800
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_45
+	dc.w	15,12
+	dc.l	$00000040
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaa800
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_46
+	dc.w	15,12
+	dc.l	$00000010
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaa800
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_47
+	dc.w	15,12
+	dc.l	$00000050
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaa800
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_48
+	dc.w	15,12
+	dc.l	$00000020
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaa800
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_49
+	dc.w	15,12
+	dc.l	$00000060
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaa800
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_50
+	dc.w	15,12
+	dc.l	$00000030
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaab000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_51
+	dc.w	15,12
+	dc.l	$00000070
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaab000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_52
+	dc.w	15,12
+	dc.l	$00000000
+	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$0a000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_53
+	dc.w	16,12
+	dc.l	$00000000
+	dc.l	$40000000,$c0000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3ffd0000,$aaaaab00,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_54
+	dc.w	16,12
+	dc.l	$00000080
+	dc.l	$40000000,$c0000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3ffd0000,$aaaaab00,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_55
+	dc.w	16,12
+	dc.l	$00000010
+	dc.l	$40000000,$c0000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3ffd0000,$aaaaaa00,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_56
+	dc.w	16,12
+	dc.l	$00000090
+	dc.l	$40000000,$c0000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3ffd0000,$aaaaaa00,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_57
+	dc.w	16,12
+	dc.l	$00000020
+	dc.l	$40000000,$c0000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3ffd0000,$aaaaaa00,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_58
+	dc.w	16,12
+	dc.l	$000000a0
+	dc.l	$40000000,$c0000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3ffd0000,$aaaaaa00,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_59
+	dc.w	16,12
+	dc.l	$00000030
+	dc.l	$40000000,$c0000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3ffd0000,$aaaaab00,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_60
+	dc.w	16,12
+	dc.l	$000000b0
+	dc.l	$40000000,$c0000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3ffd0000,$aaaaab00,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_61
+	dc.w	16,12
+	dc.l	$00000000
+	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$7fff0000,$ffffffff,$ffffffff
+	dc.l	$01002080,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_62
+	dc.w	17,12
+	dc.l	$00000000
+	dc.l	$40000000,$c0000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaa800
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_63
+	dc.w	17,12
+	dc.l	$00000040
+	dc.l	$40000000,$c0000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaa800
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_64
+	dc.w	17,12
+	dc.l	$00000010
+	dc.l	$40000000,$c0000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaa800
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_65
+	dc.w	17,12
+	dc.l	$00000050
+	dc.l	$40000000,$c0000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaa800
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_66
+	dc.w	17,12
+	dc.l	$00000020
+	dc.l	$40000000,$c0000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaa800
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_67
+	dc.w	17,12
+	dc.l	$00000060
+	dc.l	$40000000,$c0000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaaa800
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_68
+	dc.w	17,12
+	dc.l	$00000030
+	dc.l	$40000000,$c0000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaab000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_69
+	dc.w	17,12
+	dc.l	$00000070
+	dc.l	$40000000,$c0000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$3ffd0000,$aaaaaaaa,$aaaab000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_70
+	dc.w	17,12
+	dc.l	$00000000
+	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$7fff0000,$ffffffff,$ffffffff
+	dc.l	$01002080,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_71
+	dc.w	22,12
+	dc.l	$00000000
+	dc.l	$3fff0000,$b504f333,$f9de6484
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3fff0000,$b504f300,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_72
+	dc.w	22,12
+	dc.l	$00000010
+	dc.l	$3fff0000,$b504f333,$f9de6484
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3fff0000,$b504f300,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_73
+	dc.w	22,12
+	dc.l	$00000020
+	dc.l	$3fff0000,$b504f333,$f9de6484
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3fff0000,$b504f300,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_74
+	dc.w	22,12
+	dc.l	$00000030
+	dc.l	$3fff0000,$b504f333,$f9de6484
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3fff0000,$b504f400,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_75
+	dc.w	23,12
+	dc.l	$00000000
+	dc.l	$3fff0000,$b504f333,$f9de6484
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3fff0000,$b504f333,$f9de6800
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_76
+	dc.w	23,12
+	dc.l	$00000010
+	dc.l	$3fff0000,$b504f333,$f9de6484
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3fff0000,$b504f333,$f9de6000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_77
+	dc.w	23,12
+	dc.l	$00000020
+	dc.l	$3fff0000,$b504f333,$f9de6484
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3fff0000,$b504f333,$f9de6000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_78
+	dc.w	23,12
+	dc.l	$00000030
+	dc.l	$3fff0000,$b504f333,$f9de6484
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3fff0000,$b504f333,$f9de6800
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_79
+	dc.w	24,12
+	dc.l	$00000000
+	dc.l	$40000000,$80000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3fff0000,$b504f300,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_80
+	dc.w	24,12
+	dc.l	$00000010
+	dc.l	$40000000,$80000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3fff0000,$b504f300,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_81
+	dc.w	24,12
+	dc.l	$00000020
+	dc.l	$40000000,$80000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3fff0000,$b504f300,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_82
+	dc.w	24,12
+	dc.l	$00000030
+	dc.l	$40000000,$80000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3fff0000,$b504f400,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_83
+	dc.w	25,12
+	dc.l	$00000000
+	dc.l	$40000000,$80000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3fff0000,$b504f333,$f9de6800
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_84
+	dc.w	25,12
+	dc.l	$00000010
+	dc.l	$40000000,$80000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3fff0000,$b504f333,$f9de6000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_85
+	dc.w	25,12
+	dc.l	$00000020
+	dc.l	$40000000,$80000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3fff0000,$b504f333,$f9de6000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_86
+	dc.w	25,12
+	dc.l	$00000030
+	dc.l	$40000000,$80000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3fff0000,$b504f333,$f9de6800
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_87
+	dc.w	26,12
+	dc.l	$00000000
+	dc.l	$bfff0000,$b504f333,$f9de6484
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3fff0000,$b504f300,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_88
+	dc.w	26,12
+	dc.l	$00000010
+	dc.l	$bfff0000,$b504f333,$f9de6484
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3fff0000,$b504f300,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_89
+	dc.w	26,12
+	dc.l	$00000020
+	dc.l	$bfff0000,$b504f333,$f9de6484
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3fff0000,$b504f300,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_90
+	dc.w	26,12
+	dc.l	$00000030
+	dc.l	$bfff0000,$b504f333,$f9de6484
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3fff0000,$b504f400,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_91
+	dc.w	27,12
+	dc.l	$00000000
+	dc.l	$bfff0000,$b504f333,$f9de6484
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3fff0000,$b504f333,$f9de6800
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_92
+	dc.w	27,12
+	dc.l	$00000010
+	dc.l	$bfff0000,$b504f333,$f9de6484
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3fff0000,$b504f333,$f9de6000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_93
+	dc.w	27,12
+	dc.l	$00000020
+	dc.l	$bfff0000,$b504f333,$f9de6484
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3fff0000,$b504f333,$f9de6000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_94
+	dc.w	27,12
+	dc.l	$00000030
+	dc.l	$bfff0000,$b504f333,$f9de6484
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3fff0000,$b504f333,$f9de6800
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_95
+	dc.w	28,12
+	dc.l	$00000000
+	dc.l	$bfff0000,$b504f333,$f9de6484
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3fff0000,$b504f300,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_96
+	dc.w	28,12
+	dc.l	$00000010
+	dc.l	$bfff0000,$b504f333,$f9de6484
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3fff0000,$b504f300,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_97
+	dc.w	28,12
+	dc.l	$00000020
+	dc.l	$bfff0000,$b504f333,$f9de6484
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3fff0000,$b504f300,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_98
+	dc.w	28,12
+	dc.l	$00000030
+	dc.l	$bfff0000,$b504f333,$f9de6484
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3fff0000,$b504f400,$00000000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_99
+	dc.w	29,12
+	dc.l	$00000000
+	dc.l	$bfff0000,$b504f333,$f9de6484
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3fff0000,$b504f333,$f9de6800
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_100
+	dc.w	29,12
+	dc.l	$00000010
+	dc.l	$bfff0000,$b504f333,$f9de6484
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3fff0000,$b504f333,$f9de6000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_101
+	dc.w	29,12
+	dc.l	$00000020
+	dc.l	$bfff0000,$b504f333,$f9de6484
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3fff0000,$b504f333,$f9de6000
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_102
+	dc.w	29,12
+	dc.l	$00000030
+	dc.l	$bfff0000,$b504f333,$f9de6484
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3fff0000,$b504f333,$f9de6800
+	dc.l	$00000208,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_36_103
+	cnop	0,4
+gv_37:
 	dc.w	35,515
 	dc.l	$00000000
 	dc.l	$3ffe0000,$80000000,$00000000
@@ -18114,7 +18288,7 @@ gv_36:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_36_0
+	dc.l	wy_37_0
 	dc.w	35,515
 	dc.l	$00000000
 	dc.l	$3fff0000,$80000000,$00000000
@@ -18123,7 +18297,7 @@ gv_36:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_36_1
+	dc.l	wy_37_1
 	dc.w	35,515
 	dc.l	$00000000
 	dc.l	$bfff0000,$c0000000,$00000000
@@ -18132,7 +18306,7 @@ gv_36:
 	dc.l	$08000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_36_2
+	dc.l	wy_37_2
 	dc.w	35,515
 	dc.l	$00000000
 	dc.l	$40020000,$b0000000,$00000000
@@ -18141,7 +18315,7 @@ gv_36:
 	dc.l	$08000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_36_3
+	dc.l	wy_37_3
 	dc.w	35,515
 	dc.l	$00000000
 	dc.l	$3ff50000,$83126e97,$8d4fdf3b
@@ -18150,7 +18324,7 @@ gv_36:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_36_4
+	dc.l	wy_37_4
 	dc.w	35,515
 	dc.l	$00000010
 	dc.l	$3ffe0000,$80000000,$00000000
@@ -18159,7 +18333,7 @@ gv_36:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_36_5
+	dc.l	wy_37_5
 	dc.w	35,515
 	dc.l	$00000020
 	dc.l	$3ffe0000,$80000000,$00000000
@@ -18168,7 +18342,7 @@ gv_36:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_36_6
+	dc.l	wy_37_6
 	dc.w	35,515
 	dc.l	$00000030
 	dc.l	$3ffe0000,$80000000,$00000000
@@ -18177,7 +18351,7 @@ gv_36:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_36_7
+	dc.l	wy_37_7
 	dc.w	35,515
 	dc.l	$00000040
 	dc.l	$3ffe0000,$80000000,$00000000
@@ -18186,7 +18360,7 @@ gv_36:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_36_8
+	dc.l	wy_37_8
 	dc.w	35,515
 	dc.l	$00000080
 	dc.l	$3ffe0000,$80000000,$00000000
@@ -18195,7 +18369,7 @@ gv_36:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_36_9
+	dc.l	wy_37_9
 	dc.w	35,3
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
@@ -18204,7 +18378,7 @@ gv_36:
 	dc.l	$04000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_36_10
+	dc.l	wy_37_10
 	dc.w	35,3
 	dc.l	$00000000
 	dc.l	$80000000,$00000000,$00000000
@@ -18213,7 +18387,7 @@ gv_36:
 	dc.l	$0c000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_36_11
+	dc.l	wy_37_11
 	dc.w	35,3
 	dc.l	$00000000
 	dc.l	$7fff0000,$00000000,$00000000
@@ -18222,7 +18396,7 @@ gv_36:
 	dc.l	$01002080,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_36_12
+	dc.l	wy_37_12
 	dc.w	35,3
 	dc.l	$00000000
 	dc.l	$7fff0000,$c0000000,$00000000
@@ -18231,9 +18405,9 @@ gv_36:
 	dc.l	$01000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_36_13
+	dc.l	wy_37_13
 	cnop	0,4
-gv_37:
+gv_38:
 	dc.w	36,515
 	dc.l	$00000000
 	dc.l	$3ffe0000,$80000000,$00000000
@@ -18242,7 +18416,7 @@ gv_37:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_37_0
+	dc.l	wy_38_0
 	dc.w	36,515
 	dc.l	$00000000
 	dc.l	$3fff0000,$80000000,$00000000
@@ -18251,7 +18425,7 @@ gv_37:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_37_1
+	dc.l	wy_38_1
 	dc.w	36,515
 	dc.l	$00000000
 	dc.l	$c0000000,$c0000000,$00000000
@@ -18260,7 +18434,7 @@ gv_37:
 	dc.l	$08000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_37_2
+	dc.l	wy_38_2
 	dc.w	36,515
 	dc.l	$00000000
 	dc.l	$40020000,$98000000,$00000000
@@ -18269,7 +18443,7 @@ gv_37:
 	dc.l	$08000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_37_3
+	dc.l	wy_38_3
 	dc.w	36,515
 	dc.l	$00000010
 	dc.l	$3ffe0000,$80000000,$00000000
@@ -18278,7 +18452,7 @@ gv_37:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_37_4
+	dc.l	wy_38_4
 	dc.w	36,515
 	dc.l	$00000020
 	dc.l	$3ffe0000,$80000000,$00000000
@@ -18287,7 +18461,7 @@ gv_37:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_37_5
+	dc.l	wy_38_5
 	dc.w	36,515
 	dc.l	$00000030
 	dc.l	$3ffe0000,$80000000,$00000000
@@ -18296,7 +18470,7 @@ gv_37:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_37_6
+	dc.l	wy_38_6
 	dc.w	36,515
 	dc.l	$00000040
 	dc.l	$3ffe0000,$80000000,$00000000
@@ -18305,7 +18479,7 @@ gv_37:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_37_7
+	dc.l	wy_38_7
 	dc.w	36,515
 	dc.l	$00000080
 	dc.l	$3ffe0000,$80000000,$00000000
@@ -18314,7 +18488,7 @@ gv_37:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_37_8
+	dc.l	wy_38_8
 	dc.w	36,3
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
@@ -18323,111 +18497,10 @@ gv_37:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_37_9
+	dc.l	wy_38_9
 	dc.w	36,3
 	dc.l	$00000000
 	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$7fff0000,$ffffffff,$ffffffff
-	dc.l	$01002080,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_37_10
-	cnop	0,4
-gv_38:
-	dc.w	37,515
-	dc.l	$00000000
-	dc.l	$3ffe0000,$80000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3ffe0000,$8bda7adf,$9a3a5219
-	dc.l	$00000208,$fffffdd7
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_38_0
-	dc.w	37,515
-	dc.l	$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3fff0000,$c75922e5,$f71d2dc5
-	dc.l	$00000208,$fffffdd7
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_38_1
-	dc.w	37,515
-	dc.l	$00000000
-	dc.l	$bffe0000,$c0000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$bffe0000,$ee7d1b08,$87775f06
-	dc.l	$08000208,$fffffdd7
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_38_2
-	dc.w	37,515
-	dc.l	$00000010
-	dc.l	$3ffe0000,$80000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3ffe0000,$8bda7adf,$9a3a5218
-	dc.l	$00000208,$fffffdd7
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_38_3
-	dc.w	37,515
-	dc.l	$00000020
-	dc.l	$3ffe0000,$80000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3ffe0000,$8bda7adf,$9a3a5218
-	dc.l	$00000208,$fffffdd7
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_38_4
-	dc.w	37,515
-	dc.l	$00000030
-	dc.l	$3ffe0000,$80000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3ffe0000,$8bda7adf,$9a3a5219
-	dc.l	$00000208,$fffffdd7
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_38_5
-	dc.w	37,515
-	dc.l	$00000040
-	dc.l	$3ffe0000,$80000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3ffe0000,$8bda7b00,$00000000
-	dc.l	$00000208,$fffffdd7
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_38_6
-	dc.w	37,515
-	dc.l	$00000080
-	dc.l	$3ffe0000,$80000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3ffe0000,$8bda7adf,$9a3a5000
-	dc.l	$00000208,$fffffdd7
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_38_7
-	dc.w	37,3
-	dc.l	$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$04000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_38_8
-	dc.w	37,3
-	dc.l	$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$0c000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_38_9
-	dc.w	37,3
-	dc.l	$00000000
-	dc.l	$ffff0000,$00000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
 	dc.l	$7fff0000,$ffffffff,$ffffffff
 	dc.l	$01002080,$ffffffff
@@ -18436,6 +18509,107 @@ gv_38:
 	dc.l	wy_38_10
 	cnop	0,4
 gv_39:
+	dc.w	37,515
+	dc.l	$00000000
+	dc.l	$3ffe0000,$80000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3ffe0000,$8bda7adf,$9a3a5219
+	dc.l	$00000208,$fffffdd7
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_39_0
+	dc.w	37,515
+	dc.l	$00000000
+	dc.l	$3fff0000,$80000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3fff0000,$c75922e5,$f71d2dc5
+	dc.l	$00000208,$fffffdd7
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_39_1
+	dc.w	37,515
+	dc.l	$00000000
+	dc.l	$bffe0000,$c0000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$bffe0000,$ee7d1b08,$87775f06
+	dc.l	$08000208,$fffffdd7
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_39_2
+	dc.w	37,515
+	dc.l	$00000010
+	dc.l	$3ffe0000,$80000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3ffe0000,$8bda7adf,$9a3a5218
+	dc.l	$00000208,$fffffdd7
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_39_3
+	dc.w	37,515
+	dc.l	$00000020
+	dc.l	$3ffe0000,$80000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3ffe0000,$8bda7adf,$9a3a5218
+	dc.l	$00000208,$fffffdd7
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_39_4
+	dc.w	37,515
+	dc.l	$00000030
+	dc.l	$3ffe0000,$80000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3ffe0000,$8bda7adf,$9a3a5219
+	dc.l	$00000208,$fffffdd7
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_39_5
+	dc.w	37,515
+	dc.l	$00000040
+	dc.l	$3ffe0000,$80000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3ffe0000,$8bda7b00,$00000000
+	dc.l	$00000208,$fffffdd7
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_39_6
+	dc.w	37,515
+	dc.l	$00000080
+	dc.l	$3ffe0000,$80000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3ffe0000,$8bda7adf,$9a3a5000
+	dc.l	$00000208,$fffffdd7
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_39_7
+	dc.w	37,3
+	dc.l	$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$04000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_39_8
+	dc.w	37,3
+	dc.l	$00000000
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$0c000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_39_9
+	dc.w	37,3
+	dc.l	$00000000
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$7fff0000,$ffffffff,$ffffffff
+	dc.l	$01002080,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_39_10
+	cnop	0,4
+gv_40:
 	dc.w	38,515
 	dc.l	$00000000
 	dc.l	$3fff0000,$80000000,$00000000
@@ -18444,7 +18618,7 @@ gv_39:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_39_0
+	dc.l	wy_40_0
 	dc.w	38,515
 	dc.l	$00000000
 	dc.l	$bfff0000,$80000000,$00000000
@@ -18453,7 +18627,7 @@ gv_39:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_39_1
+	dc.l	wy_40_1
 	dc.w	38,515
 	dc.l	$00000000
 	dc.l	$3ffe0000,$80000000,$00000000
@@ -18462,7 +18636,7 @@ gv_39:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_39_2
+	dc.l	wy_40_2
 	dc.w	38,515
 	dc.l	$00000000
 	dc.l	$40000000,$c0000000,$00000000
@@ -18471,7 +18645,7 @@ gv_39:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_39_3
+	dc.l	wy_40_3
 	dc.w	38,515
 	dc.l	$00000000
 	dc.l	$c0000000,$80000000,$00000000
@@ -18480,7 +18654,7 @@ gv_39:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_39_4
+	dc.l	wy_40_4
 	dc.w	38,515
 	dc.l	$00000010
 	dc.l	$3fff0000,$80000000,$00000000
@@ -18489,7 +18663,7 @@ gv_39:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_39_5
+	dc.l	wy_40_5
 	dc.w	38,515
 	dc.l	$00000020
 	dc.l	$3fff0000,$80000000,$00000000
@@ -18498,7 +18672,7 @@ gv_39:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_39_6
+	dc.l	wy_40_6
 	dc.w	38,515
 	dc.l	$00000030
 	dc.l	$3fff0000,$80000000,$00000000
@@ -18507,7 +18681,7 @@ gv_39:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_39_7
+	dc.l	wy_40_7
 	dc.w	38,515
 	dc.l	$00000040
 	dc.l	$3fff0000,$80000000,$00000000
@@ -18516,7 +18690,7 @@ gv_39:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_39_8
+	dc.l	wy_40_8
 	dc.w	38,515
 	dc.l	$00000080
 	dc.l	$3fff0000,$80000000,$00000000
@@ -18525,7 +18699,7 @@ gv_39:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_39_9
+	dc.l	wy_40_9
 	dc.w	38,3
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
@@ -18534,7 +18708,7 @@ gv_39:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_39_10
+	dc.l	wy_40_10
 	dc.w	38,3
 	dc.l	$00000000
 	dc.l	$7fff0000,$00000000,$00000000
@@ -18543,7 +18717,7 @@ gv_39:
 	dc.l	$02000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_39_11
+	dc.l	wy_40_11
 	dc.w	38,3
 	dc.l	$00000000
 	dc.l	$ffff0000,$00000000,$00000000
@@ -18552,7 +18726,7 @@ gv_39:
 	dc.l	$04000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_39_12
+	dc.l	wy_40_12
 	dc.w	38,3
 	dc.l	$00000000
 	dc.l	$7fff0000,$c0000000,$00000000
@@ -18561,9 +18735,9 @@ gv_39:
 	dc.l	$01000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_39_13
+	dc.l	wy_40_13
 	cnop	0,4
-gv_40:
+gv_41:
 	dc.w	39,515
 	dc.l	$00000000
 	dc.l	$3ffe0000,$80000000,$00000000
@@ -18572,7 +18746,7 @@ gv_40:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_40_0
+	dc.l	wy_41_0
 	dc.w	39,515
 	dc.l	$00000000
 	dc.l	$bfff0000,$c0000000,$00000000
@@ -18581,7 +18755,7 @@ gv_40:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_40_1
+	dc.l	wy_41_1
 	dc.w	39,515
 	dc.l	$00000000
 	dc.l	$40000000,$c0000000,$00000000
@@ -18590,7 +18764,7 @@ gv_40:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_40_2
+	dc.l	wy_41_2
 	dc.w	39,515
 	dc.l	$00000010
 	dc.l	$3ffe0000,$80000000,$00000000
@@ -18599,7 +18773,7 @@ gv_40:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_40_3
+	dc.l	wy_41_3
 	dc.w	39,515
 	dc.l	$00000020
 	dc.l	$3ffe0000,$80000000,$00000000
@@ -18608,7 +18782,7 @@ gv_40:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_40_4
+	dc.l	wy_41_4
 	dc.w	39,515
 	dc.l	$00000030
 	dc.l	$3ffe0000,$80000000,$00000000
@@ -18617,7 +18791,7 @@ gv_40:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_40_5
+	dc.l	wy_41_5
 	dc.w	39,515
 	dc.l	$00000040
 	dc.l	$3ffe0000,$80000000,$00000000
@@ -18626,7 +18800,7 @@ gv_40:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_40_6
+	dc.l	wy_41_6
 	dc.w	39,515
 	dc.l	$00000080
 	dc.l	$3ffe0000,$80000000,$00000000
@@ -18635,7 +18809,7 @@ gv_40:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_40_7
+	dc.l	wy_41_7
 	dc.w	39,3
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
@@ -18644,7 +18818,7 @@ gv_40:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_40_8
+	dc.l	wy_41_8
 	dc.w	39,3
 	dc.l	$00000000
 	dc.l	$ffff0000,$00000000,$00000000
@@ -18653,9 +18827,9 @@ gv_40:
 	dc.l	$04000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_40_9
+	dc.l	wy_41_9
 	cnop	0,4
-gv_41:
+gv_42:
 	dc.w	40,515
 	dc.l	$00000000
 	dc.l	$3ffe0000,$80000000,$00000000
@@ -18664,7 +18838,7 @@ gv_41:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_41_0
+	dc.l	wy_42_0
 	dc.w	40,515
 	dc.l	$00000000
 	dc.l	$3fff0000,$80000000,$00000000
@@ -18673,7 +18847,7 @@ gv_41:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_41_1
+	dc.l	wy_42_1
 	dc.w	40,515
 	dc.l	$00000010
 	dc.l	$3ffe0000,$80000000,$00000000
@@ -18682,7 +18856,7 @@ gv_41:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_41_2
+	dc.l	wy_42_2
 	dc.w	40,515
 	dc.l	$00000020
 	dc.l	$3ffe0000,$80000000,$00000000
@@ -18691,7 +18865,7 @@ gv_41:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_41_3
+	dc.l	wy_42_3
 	dc.w	40,515
 	dc.l	$00000030
 	dc.l	$3ffe0000,$80000000,$00000000
@@ -18700,7 +18874,7 @@ gv_41:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_41_4
+	dc.l	wy_42_4
 	dc.w	40,515
 	dc.l	$00000040
 	dc.l	$3ffe0000,$80000000,$00000000
@@ -18709,7 +18883,7 @@ gv_41:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_41_5
+	dc.l	wy_42_5
 	dc.w	40,515
 	dc.l	$00000080
 	dc.l	$3ffe0000,$80000000,$00000000
@@ -18718,7 +18892,7 @@ gv_41:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_41_6
+	dc.l	wy_42_6
 	dc.w	40,3
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
@@ -18727,7 +18901,7 @@ gv_41:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_41_7
+	dc.l	wy_42_7
 	dc.w	40,3
 	dc.l	$00000000
 	dc.l	$7fff0000,$00000000,$00000000
@@ -18736,9 +18910,9 @@ gv_41:
 	dc.l	$02000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_41_8
+	dc.l	wy_42_8
 	cnop	0,4
-gv_42:
+gv_43:
 	dc.w	41,515
 	dc.l	$00000000
 	dc.l	$40000000,$80000000,$00000000
@@ -18747,7 +18921,7 @@ gv_42:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_42_0
+	dc.l	wy_43_0
 	dc.w	41,515
 	dc.l	$00000000
 	dc.l	$40020000,$a0000000,$00000000
@@ -18756,7 +18930,7 @@ gv_42:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_42_1
+	dc.l	wy_43_1
 	dc.w	41,515
 	dc.l	$00000000
 	dc.l	$3ffe0000,$80000000,$00000000
@@ -18765,7 +18939,7 @@ gv_42:
 	dc.l	$08000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_42_2
+	dc.l	wy_43_2
 	dc.w	41,515
 	dc.l	$00000000
 	dc.l	$40080000,$fa000000,$00000000
@@ -18774,7 +18948,7 @@ gv_42:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_42_3
+	dc.l	wy_43_3
 	dc.w	41,515
 	dc.l	$00000010
 	dc.l	$40000000,$80000000,$00000000
@@ -18783,7 +18957,7 @@ gv_42:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_42_4
+	dc.l	wy_43_4
 	dc.w	41,515
 	dc.l	$00000020
 	dc.l	$40000000,$80000000,$00000000
@@ -18792,7 +18966,7 @@ gv_42:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_42_5
+	dc.l	wy_43_5
 	dc.w	41,515
 	dc.l	$00000030
 	dc.l	$40000000,$80000000,$00000000
@@ -18801,7 +18975,7 @@ gv_42:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_42_6
+	dc.l	wy_43_6
 	dc.w	41,515
 	dc.l	$00000040
 	dc.l	$40000000,$80000000,$00000000
@@ -18810,7 +18984,7 @@ gv_42:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_42_7
+	dc.l	wy_43_7
 	dc.w	41,515
 	dc.l	$00000080
 	dc.l	$40000000,$80000000,$00000000
@@ -18819,7 +18993,7 @@ gv_42:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_42_8
+	dc.l	wy_43_8
 	dc.w	41,3
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
@@ -18828,7 +19002,7 @@ gv_42:
 	dc.l	$0a000410,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_42_9
+	dc.l	wy_43_9
 	dc.w	41,3
 	dc.l	$00000000
 	dc.l	$80000000,$00000000,$00000000
@@ -18837,7 +19011,7 @@ gv_42:
 	dc.l	$0a000410,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_42_10
+	dc.l	wy_43_10
 	dc.w	41,3
 	dc.l	$00000000
 	dc.l	$7fff0000,$00000000,$00000000
@@ -18846,7 +19020,7 @@ gv_42:
 	dc.l	$02000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_42_11
+	dc.l	wy_43_11
 	dc.w	41,3
 	dc.l	$00000000
 	dc.l	$ffff0000,$00000000,$00000000
@@ -18855,7 +19029,7 @@ gv_42:
 	dc.l	$01002080,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_42_12
+	dc.l	wy_43_12
 	dc.w	41,3
 	dc.l	$00000000
 	dc.l	$bfff0000,$80000000,$00000000
@@ -18864,7 +19038,7 @@ gv_42:
 	dc.l	$01002080,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_42_13
+	dc.l	wy_43_13
 	dc.w	41,3
 	dc.l	$00000000
 	dc.l	$3fff0000,$80000000,$00000000
@@ -18873,9 +19047,9 @@ gv_42:
 	dc.l	$04000000,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_42_14
+	dc.l	wy_43_14
 	cnop	0,4
-gv_43:
+gv_44:
 	dc.w	42,515
 	dc.l	$00000000
 	dc.l	$40000000,$c0000000,$00000000
@@ -18884,7 +19058,7 @@ gv_43:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_43_0
+	dc.l	wy_44_0
 	dc.w	42,515
 	dc.l	$00000000
 	dc.l	$3ffd0000,$aaaaaaaa,$aaaaaaab
@@ -18893,7 +19067,7 @@ gv_43:
 	dc.l	$08000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_43_1
+	dc.l	wy_44_1
 	dc.w	42,515
 	dc.l	$00000000
 	dc.l	$40090000,$80000000,$00000000
@@ -18902,7 +19076,7 @@ gv_43:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_43_2
+	dc.l	wy_44_2
 	dc.w	42,515
 	dc.l	$00000010
 	dc.l	$40000000,$c0000000,$00000000
@@ -18911,7 +19085,7 @@ gv_43:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_43_3
+	dc.l	wy_44_3
 	dc.w	42,515
 	dc.l	$00000020
 	dc.l	$40000000,$c0000000,$00000000
@@ -18920,7 +19094,7 @@ gv_43:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_43_4
+	dc.l	wy_44_4
 	dc.w	42,515
 	dc.l	$00000030
 	dc.l	$40000000,$c0000000,$00000000
@@ -18929,7 +19103,7 @@ gv_43:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_43_5
+	dc.l	wy_44_5
 	dc.w	42,515
 	dc.l	$00000040
 	dc.l	$40000000,$c0000000,$00000000
@@ -18938,7 +19112,7 @@ gv_43:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_43_6
+	dc.l	wy_44_6
 	dc.w	42,515
 	dc.l	$00000080
 	dc.l	$40000000,$c0000000,$00000000
@@ -18947,7 +19121,7 @@ gv_43:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_43_7
+	dc.l	wy_44_7
 	dc.w	42,3
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
@@ -18956,7 +19130,7 @@ gv_43:
 	dc.l	$0a000410,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_43_8
+	dc.l	wy_44_8
 	dc.w	42,3
 	dc.l	$00000000
 	dc.l	$3fff0000,$80000000,$00000000
@@ -18965,9 +19139,9 @@ gv_43:
 	dc.l	$04000000,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_43_9
+	dc.l	wy_44_9
 	cnop	0,4
-gv_44:
+gv_45:
 	dc.w	43,515
 	dc.l	$00000000
 	dc.l	$40000000,$80000000,$00000000
@@ -18976,7 +19150,7 @@ gv_44:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_44_0
+	dc.l	wy_45_0
 	dc.w	43,515
 	dc.l	$00000000
 	dc.l	$40080000,$fa000000,$00000000
@@ -18985,7 +19159,7 @@ gv_44:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_44_1
+	dc.l	wy_45_1
 	dc.w	43,515
 	dc.l	$00000000
 	dc.l	$3ffc0000,$92492492,$49249249
@@ -18994,7 +19168,7 @@ gv_44:
 	dc.l	$08000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_44_2
+	dc.l	wy_45_2
 	dc.w	43,515
 	dc.l	$00000010
 	dc.l	$40000000,$80000000,$00000000
@@ -19003,7 +19177,7 @@ gv_44:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_44_3
+	dc.l	wy_45_3
 	dc.w	43,515
 	dc.l	$00000020
 	dc.l	$40000000,$80000000,$00000000
@@ -19012,7 +19186,7 @@ gv_44:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_44_4
+	dc.l	wy_45_4
 	dc.w	43,515
 	dc.l	$00000030
 	dc.l	$40000000,$80000000,$00000000
@@ -19021,7 +19195,7 @@ gv_44:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_44_5
+	dc.l	wy_45_5
 	dc.w	43,515
 	dc.l	$00000040
 	dc.l	$40000000,$80000000,$00000000
@@ -19030,7 +19204,7 @@ gv_44:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_44_6
+	dc.l	wy_45_6
 	dc.w	43,515
 	dc.l	$00000080
 	dc.l	$40000000,$80000000,$00000000
@@ -19039,7 +19213,7 @@ gv_44:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_44_7
+	dc.l	wy_45_7
 	dc.w	43,3
 	dc.l	$00000000
 	dc.l	$3fff0000,$80000000,$00000000
@@ -19048,7 +19222,7 @@ gv_44:
 	dc.l	$04000000,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_44_8
+	dc.l	wy_45_8
 	dc.w	43,3
 	dc.l	$00000000
 	dc.l	$c0000000,$80000000,$00000000
@@ -19057,9 +19231,9 @@ gv_44:
 	dc.l	$01002080,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_44_9
+	dc.l	wy_45_9
 	cnop	0,4
-gv_45:
+gv_46:
 	dc.w	44,515
 	dc.l	$00000000
 	dc.l	$3ffe0000,$80000000,$00000000
@@ -19068,7 +19242,7 @@ gv_45:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_45_0
+	dc.l	wy_46_0
 	dc.w	44,515
 	dc.l	$00000000
 	dc.l	$3fff0000,$80000000,$00000000
@@ -19077,7 +19251,7 @@ gv_45:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_45_1
+	dc.l	wy_46_1
 	dc.w	44,515
 	dc.l	$00000000
 	dc.l	$c0000000,$80000000,$00000000
@@ -19086,7 +19260,7 @@ gv_45:
 	dc.l	$08000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_45_2
+	dc.l	wy_46_2
 	dc.w	44,515
 	dc.l	$00000000
 	dc.l	$40050000,$c8000000,$00000000
@@ -19095,7 +19269,7 @@ gv_45:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_45_3
+	dc.l	wy_46_3
 	dc.w	44,515
 	dc.l	$00000010
 	dc.l	$3ffe0000,$80000000,$00000000
@@ -19104,7 +19278,7 @@ gv_45:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_45_4
+	dc.l	wy_46_4
 	dc.w	44,515
 	dc.l	$00000020
 	dc.l	$3ffe0000,$80000000,$00000000
@@ -19113,7 +19287,7 @@ gv_45:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_45_5
+	dc.l	wy_46_5
 	dc.w	44,515
 	dc.l	$00000030
 	dc.l	$3ffe0000,$80000000,$00000000
@@ -19122,7 +19296,7 @@ gv_45:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_45_6
+	dc.l	wy_46_6
 	dc.w	44,515
 	dc.l	$00000040
 	dc.l	$3ffe0000,$80000000,$00000000
@@ -19131,7 +19305,7 @@ gv_45:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_45_7
+	dc.l	wy_46_7
 	dc.w	44,515
 	dc.l	$00000080
 	dc.l	$3ffe0000,$80000000,$00000000
@@ -19140,7 +19314,7 @@ gv_45:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_45_8
+	dc.l	wy_46_8
 	dc.w	44,3
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
@@ -19149,7 +19323,7 @@ gv_45:
 	dc.l	$04000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_45_9
+	dc.l	wy_46_9
 	dc.w	44,3
 	dc.l	$00000000
 	dc.l	$80000000,$00000000,$00000000
@@ -19158,7 +19332,7 @@ gv_45:
 	dc.l	$0c000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_45_10
+	dc.l	wy_46_10
 	dc.w	44,515
 	dc.l	$00000000
 	dc.l	$7fff0000,$00000000,$00000000
@@ -19167,7 +19341,7 @@ gv_45:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_45_11
+	dc.l	wy_46_11
 	dc.w	44,515
 	dc.l	$00000000
 	dc.l	$ffff0000,$00000000,$00000000
@@ -19176,9 +19350,9 @@ gv_45:
 	dc.l	$08000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_45_12
+	dc.l	wy_46_12
 	cnop	0,4
-gv_46:
+gv_47:
 	dc.w	45,515
 	dc.l	$00000000
 	dc.l	$3ffe0000,$80000000,$00000000
@@ -19187,7 +19361,7 @@ gv_46:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_46_0
+	dc.l	wy_47_0
 	dc.w	45,515
 	dc.l	$00000000
 	dc.l	$c0000000,$80000000,$00000000
@@ -19196,7 +19370,7 @@ gv_46:
 	dc.l	$08000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_46_1
+	dc.l	wy_47_1
 	dc.w	45,515
 	dc.l	$00000010
 	dc.l	$3ffe0000,$80000000,$00000000
@@ -19205,7 +19379,7 @@ gv_46:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_46_2
+	dc.l	wy_47_2
 	dc.w	45,515
 	dc.l	$00000020
 	dc.l	$3ffe0000,$80000000,$00000000
@@ -19214,7 +19388,7 @@ gv_46:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_46_3
+	dc.l	wy_47_3
 	dc.w	45,515
 	dc.l	$00000030
 	dc.l	$3ffe0000,$80000000,$00000000
@@ -19223,7 +19397,7 @@ gv_46:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_46_4
+	dc.l	wy_47_4
 	dc.w	45,515
 	dc.l	$00000040
 	dc.l	$3ffe0000,$80000000,$00000000
@@ -19232,7 +19406,7 @@ gv_46:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_46_5
+	dc.l	wy_47_5
 	dc.w	45,515
 	dc.l	$00000080
 	dc.l	$3ffe0000,$80000000,$00000000
@@ -19241,7 +19415,7 @@ gv_46:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_46_6
+	dc.l	wy_47_6
 	dc.w	45,3
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
@@ -19250,9 +19424,9 @@ gv_46:
 	dc.l	$04000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_46_7
+	dc.l	wy_47_7
 	cnop	0,4
-gv_47:
+gv_48:
 	dc.w	46,515
 	dc.l	$00000000
 	dc.l	$3ffe0000,$80000000,$00000000
@@ -19261,7 +19435,7 @@ gv_47:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_47_0
+	dc.l	wy_48_0
 	dc.w	46,515
 	dc.l	$00000000
 	dc.l	$40000000,$80000000,$00000000
@@ -19270,7 +19444,7 @@ gv_47:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_47_1
+	dc.l	wy_48_1
 	dc.w	46,515
 	dc.l	$00000010
 	dc.l	$3ffe0000,$80000000,$00000000
@@ -19279,7 +19453,7 @@ gv_47:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_47_2
+	dc.l	wy_48_2
 	dc.w	46,515
 	dc.l	$00000020
 	dc.l	$3ffe0000,$80000000,$00000000
@@ -19288,7 +19462,7 @@ gv_47:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_47_3
+	dc.l	wy_48_3
 	dc.w	46,515
 	dc.l	$00000030
 	dc.l	$3ffe0000,$80000000,$00000000
@@ -19297,7 +19471,7 @@ gv_47:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_47_4
+	dc.l	wy_48_4
 	dc.w	46,515
 	dc.l	$00000040
 	dc.l	$3ffe0000,$80000000,$00000000
@@ -19306,7 +19480,7 @@ gv_47:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_47_5
+	dc.l	wy_48_5
 	dc.w	46,515
 	dc.l	$00000080
 	dc.l	$3ffe0000,$80000000,$00000000
@@ -19315,7 +19489,7 @@ gv_47:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_47_6
+	dc.l	wy_48_6
 	dc.w	46,3
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
@@ -19324,9 +19498,9 @@ gv_47:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_47_7
+	dc.l	wy_48_7
 	cnop	0,4
-gv_48:
+gv_49:
 	dc.w	47,515
 	dc.l	$00000000
 	dc.l	$3ffe0000,$80000000,$00000000
@@ -19335,7 +19509,7 @@ gv_48:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_48_0
+	dc.l	wy_49_0
 	dc.w	47,515
 	dc.l	$00000000
 	dc.l	$bfff0000,$80000000,$00000000
@@ -19344,7 +19518,7 @@ gv_48:
 	dc.l	$08000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_48_1
+	dc.l	wy_49_1
 	dc.w	47,515
 	dc.l	$00000010
 	dc.l	$3ffe0000,$80000000,$00000000
@@ -19353,7 +19527,7 @@ gv_48:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_48_2
+	dc.l	wy_49_2
 	dc.w	47,515
 	dc.l	$00000020
 	dc.l	$3ffe0000,$80000000,$00000000
@@ -19362,7 +19536,7 @@ gv_48:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_48_3
+	dc.l	wy_49_3
 	dc.w	47,515
 	dc.l	$00000030
 	dc.l	$3ffe0000,$80000000,$00000000
@@ -19371,7 +19545,7 @@ gv_48:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_48_4
+	dc.l	wy_49_4
 	dc.w	47,515
 	dc.l	$00000040
 	dc.l	$3ffe0000,$80000000,$00000000
@@ -19380,7 +19554,7 @@ gv_48:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_48_5
+	dc.l	wy_49_5
 	dc.w	47,515
 	dc.l	$00000080
 	dc.l	$3ffe0000,$80000000,$00000000
@@ -19389,7 +19563,7 @@ gv_48:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_48_6
+	dc.l	wy_49_6
 	dc.w	47,3
 	dc.l	$00000000
 	dc.l	$80000000,$00000000,$00000000
@@ -19398,9 +19572,9 @@ gv_48:
 	dc.l	$0c000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_48_7
+	dc.l	wy_49_7
 	cnop	0,4
-gv_49:
+gv_50:
 	dc.w	48,515
 	dc.l	$00000000
 	dc.l	$3ffe0000,$80000000,$00000000
@@ -19409,7 +19583,7 @@ gv_49:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_49_0
+	dc.l	wy_50_0
 	dc.w	48,515
 	dc.l	$00000000
 	dc.l	$bffd0000,$80000000,$00000000
@@ -19418,7 +19592,7 @@ gv_49:
 	dc.l	$08000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_49_1
+	dc.l	wy_50_1
 	dc.w	48,515
 	dc.l	$00000000
 	dc.l	$3ffe0000,$e6666666,$66666666
@@ -19427,7 +19601,7 @@ gv_49:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_49_2
+	dc.l	wy_50_2
 	dc.w	48,515
 	dc.l	$00000000
 	dc.l	$bffd0000,$f10fbd95,$74635182
@@ -19436,7 +19610,7 @@ gv_49:
 	dc.l	$08000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_49_3
+	dc.l	wy_50_3
 	dc.w	48,515
 	dc.l	$00000010
 	dc.l	$3ffe0000,$80000000,$00000000
@@ -19445,7 +19619,7 @@ gv_49:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_49_4
+	dc.l	wy_50_4
 	dc.w	48,515
 	dc.l	$00000020
 	dc.l	$3ffe0000,$80000000,$00000000
@@ -19454,7 +19628,7 @@ gv_49:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_49_5
+	dc.l	wy_50_5
 	dc.w	48,515
 	dc.l	$00000030
 	dc.l	$3ffe0000,$80000000,$00000000
@@ -19463,7 +19637,7 @@ gv_49:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_49_6
+	dc.l	wy_50_6
 	dc.w	48,515
 	dc.l	$00000040
 	dc.l	$3ffe0000,$80000000,$00000000
@@ -19472,7 +19646,7 @@ gv_49:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_49_7
+	dc.l	wy_50_7
 	dc.w	48,515
 	dc.l	$00000080
 	dc.l	$3ffe0000,$80000000,$00000000
@@ -19481,7 +19655,7 @@ gv_49:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_49_8
+	dc.l	wy_50_8
 	dc.w	48,3
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
@@ -19490,7 +19664,7 @@ gv_49:
 	dc.l	$04000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_49_9
+	dc.l	wy_50_9
 	dc.w	48,3
 	dc.l	$00000000
 	dc.l	$80000000,$00000000,$00000000
@@ -19499,7 +19673,7 @@ gv_49:
 	dc.l	$0c000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_49_10
+	dc.l	wy_50_10
 	dc.w	48,515
 	dc.l	$00000000
 	dc.l	$3fff0000,$80000000,$00000000
@@ -19508,7 +19682,7 @@ gv_49:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_49_11
+	dc.l	wy_50_11
 	dc.w	48,515
 	dc.l	$00000000
 	dc.l	$bfff0000,$80000000,$00000000
@@ -19517,7 +19691,7 @@ gv_49:
 	dc.l	$08000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_49_12
+	dc.l	wy_50_12
 	dc.w	48,3
 	dc.l	$00000000
 	dc.l	$40000000,$80000000,$00000000
@@ -19526,7 +19700,7 @@ gv_49:
 	dc.l	$01002080,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_49_13
+	dc.l	wy_50_13
 	dc.w	48,3
 	dc.l	$00000000
 	dc.l	$7fff0000,$00000000,$00000000
@@ -19535,9 +19709,9 @@ gv_49:
 	dc.l	$01002080,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_49_14
+	dc.l	wy_50_14
 	cnop	0,4
-gv_50:
+gv_51:
 	dc.w	49,515
 	dc.l	$00000000
 	dc.l	$3ffe0000,$80000000,$00000000
@@ -19546,7 +19720,7 @@ gv_50:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_50_0
+	dc.l	wy_51_0
 	dc.w	49,515
 	dc.l	$00000000
 	dc.l	$bffe0000,$c0000000,$00000000
@@ -19555,7 +19729,7 @@ gv_50:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_50_1
+	dc.l	wy_51_1
 	dc.w	49,515
 	dc.l	$00000000
 	dc.l	$3ff80000,$a3d70a3d,$70a3d70a
@@ -19564,7 +19738,7 @@ gv_50:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_50_2
+	dc.l	wy_51_2
 	dc.w	49,515
 	dc.l	$00000000
 	dc.l	$3ffe0000,$8e9f4554,$a24fdc05
@@ -19573,7 +19747,7 @@ gv_50:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_50_3
+	dc.l	wy_51_3
 	dc.w	49,515
 	dc.l	$00000010
 	dc.l	$3ffe0000,$80000000,$00000000
@@ -19582,7 +19756,7 @@ gv_50:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_50_4
+	dc.l	wy_51_4
 	dc.w	49,515
 	dc.l	$00000020
 	dc.l	$3ffe0000,$80000000,$00000000
@@ -19591,7 +19765,7 @@ gv_50:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_50_5
+	dc.l	wy_51_5
 	dc.w	49,515
 	dc.l	$00000030
 	dc.l	$3ffe0000,$80000000,$00000000
@@ -19600,7 +19774,7 @@ gv_50:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_50_6
+	dc.l	wy_51_6
 	dc.w	49,515
 	dc.l	$00000040
 	dc.l	$3ffe0000,$80000000,$00000000
@@ -19609,7 +19783,7 @@ gv_50:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_50_7
+	dc.l	wy_51_7
 	dc.w	49,515
 	dc.l	$00000080
 	dc.l	$3ffe0000,$80000000,$00000000
@@ -19618,7 +19792,7 @@ gv_50:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_50_8
+	dc.l	wy_51_8
 	dc.w	49,3
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
@@ -19627,7 +19801,7 @@ gv_50:
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_50_9
+	dc.l	wy_51_9
 	dc.w	49,3
 	dc.l	$00000000
 	dc.l	$3fff0000,$80000000,$00000000
@@ -19636,7 +19810,7 @@ gv_50:
 	dc.l	$04000000,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_50_10
+	dc.l	wy_51_10
 	dc.w	49,515
 	dc.l	$00000000
 	dc.l	$bfff0000,$80000000,$00000000
@@ -19645,7 +19819,7 @@ gv_50:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_50_11
+	dc.l	wy_51_11
 	dc.w	49,3
 	dc.l	$00000000
 	dc.l	$c0000000,$80000000,$00000000
@@ -19654,7 +19828,7 @@ gv_50:
 	dc.l	$01002080,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_50_12
+	dc.l	wy_51_12
 	dc.w	49,3
 	dc.l	$00000000
 	dc.l	$ffff0000,$00000000,$00000000
@@ -19663,9 +19837,9 @@ gv_50:
 	dc.l	$01002080,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_50_13
+	dc.l	wy_51_13
 	cnop	0,4
-gv_51:
+gv_52:
 	dc.w	50,515
 	dc.l	$00000000
 	dc.l	$3ffe0000,$80000000,$00000000
@@ -19674,7 +19848,7 @@ gv_51:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_51_0
+	dc.l	wy_52_0
 	dc.w	50,515
 	dc.l	$00000000
 	dc.l	$bffb0000,$cccccccc,$cccccccd
@@ -19683,7 +19857,7 @@ gv_51:
 	dc.l	$08000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_51_1
+	dc.l	wy_52_1
 	dc.w	50,515
 	dc.l	$00000000
 	dc.l	$3ffe0000,$c0000000,$00000000
@@ -19692,7 +19866,7 @@ gv_51:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_51_2
+	dc.l	wy_52_2
 	dc.w	50,515
 	dc.l	$00000000
 	dc.l	$bffa0000,$b6062aff,$d80ab526
@@ -19701,7 +19875,7 @@ gv_51:
 	dc.l	$08000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_51_3
+	dc.l	wy_52_3
 	dc.w	50,515
 	dc.l	$00000000
 	dc.l	$bffb0000,$a2084c69,$4feb58be
@@ -19710,7 +19884,7 @@ gv_51:
 	dc.l	$08000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_51_4
+	dc.l	wy_52_4
 	dc.w	50,515
 	dc.l	$00000010
 	dc.l	$3ffe0000,$80000000,$00000000
@@ -19719,7 +19893,7 @@ gv_51:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_51_5
+	dc.l	wy_52_5
 	dc.w	50,515
 	dc.l	$00000020
 	dc.l	$3ffe0000,$80000000,$00000000
@@ -19728,7 +19902,7 @@ gv_51:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_51_6
+	dc.l	wy_52_6
 	dc.w	50,515
 	dc.l	$00000030
 	dc.l	$3ffe0000,$80000000,$00000000
@@ -19737,7 +19911,7 @@ gv_51:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_51_7
+	dc.l	wy_52_7
 	dc.w	50,515
 	dc.l	$00000040
 	dc.l	$3ffe0000,$80000000,$00000000
@@ -19746,7 +19920,7 @@ gv_51:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_51_8
+	dc.l	wy_52_8
 	dc.w	50,515
 	dc.l	$00000080
 	dc.l	$3ffe0000,$80000000,$00000000
@@ -19755,154 +19929,8 @@ gv_51:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_51_9
-	dc.w	50,3
-	dc.l	$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$04000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_51_10
-	dc.w	50,3
-	dc.l	$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$80000000,$00000000,$00000000
-	dc.l	$0c000000,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_51_11
-	dc.w	50,3
-	dc.l	$00000000
-	dc.l	$3fff0000,$80000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$02000410,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_51_12
-	dc.w	50,3
-	dc.l	$00000000
-	dc.l	$bfff0000,$80000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$0a000410,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_51_13
-	dc.w	50,3
-	dc.l	$00000000
-	dc.l	$40000000,$80000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$7fff0000,$ffffffff,$ffffffff
-	dc.l	$01002080,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_51_14
-	dc.w	50,3
-	dc.l	$00000000
-	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$7fff0000,$ffffffff,$ffffffff
-	dc.l	$01002080,$ffffffff
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_51_15
-	cnop	0,4
-gv_52:
-	dc.w	51,515
-	dc.l	$00000000
-	dc.l	$3ffe0000,$80000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3ffe0000,$a61298e1,$e069bc97
-	dc.l	$00000208,$fffffdd7
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_52_0
-	dc.w	51,515
-	dc.l	$00000000
-	dc.l	$bfff0000,$80000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$bffe0000,$a1d2a727,$4c4320e5
-	dc.l	$08000208,$fffffdd7
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_52_1
-	dc.w	51,515
-	dc.l	$00000000
-	dc.l	$40000000,$80000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$40010000,$cc7325c6,$a6ed6e62
-	dc.l	$00000208,$fffffdd7
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_52_2
-	dc.w	51,515
-	dc.l	$00000000
-	dc.l	$3ff50000,$83126e97,$8d4fdf3b
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3ff50000,$832336fd,$c679d030
-	dc.l	$00000208,$fffffdd7
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_52_3
-	dc.w	51,515
-	dc.l	$00000000
-	dc.l	$c0030000,$f0000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$bffe0000,$ffffffff,$ffe5a91f
-	dc.l	$08000208,$fffffdd7
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_52_4
-	dc.w	51,515
-	dc.l	$00000010
-	dc.l	$3ffe0000,$80000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3ffe0000,$a61298e1,$e069bc97
-	dc.l	$00000208,$fffffdd7
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_52_5
-	dc.w	51,515
-	dc.l	$00000020
-	dc.l	$3ffe0000,$80000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3ffe0000,$a61298e1,$e069bc97
-	dc.l	$00000208,$fffffdd7
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_52_6
-	dc.w	51,515
-	dc.l	$00000030
-	dc.l	$3ffe0000,$80000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3ffe0000,$a61298e1,$e069bc98
-	dc.l	$00000208,$fffffdd7
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_52_7
-	dc.w	51,515
-	dc.l	$00000040
-	dc.l	$3ffe0000,$80000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3ffe0000,$a6129900,$00000000
-	dc.l	$00000208,$fffffdd7
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_52_8
-	dc.w	51,515
-	dc.l	$00000080
-	dc.l	$3ffe0000,$80000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3ffe0000,$a61298e1,$e069c000
-	dc.l	$00000208,$fffffdd7
-	dc.l	$00000000,$00000000,$00000000
-	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_52_9
-	dc.w	51,3
+	dc.w	50,3
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
@@ -19911,7 +19939,7 @@ gv_52:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_52_10
-	dc.w	51,3
+	dc.w	50,3
 	dc.l	$00000000
 	dc.l	$80000000,$00000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
@@ -19920,117 +19948,135 @@ gv_52:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_52_11
-	dc.w	51,3
+	dc.w	50,3
 	dc.l	$00000000
-	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$3fff0000,$80000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
 	dc.l	$7fff0000,$00000000,$00000000
-	dc.l	$02000000,$ffffffff
+	dc.l	$02000410,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_52_12
-	dc.w	51,515
+	dc.w	50,3
 	dc.l	$00000000
-	dc.l	$ffff0000,$00000000,$00000000
-	dc.l	$40010000,$e0000000,$00000000
 	dc.l	$bfff0000,$80000000,$00000000
-	dc.l	$08000000,$fffffdd7
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$0a000410,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_52_13
+	dc.w	50,3
+	dc.l	$00000000
+	dc.l	$40000000,$80000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$7fff0000,$ffffffff,$ffffffff
+	dc.l	$01002080,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_52_14
+	dc.w	50,3
+	dc.l	$00000000
+	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$7fff0000,$ffffffff,$ffffffff
+	dc.l	$01002080,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_52_15
 	cnop	0,4
 gv_53:
-	dc.w	52,515
+	dc.w	51,515
 	dc.l	$00000000
 	dc.l	$3ffe0000,$80000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3ffd0000,$cf991f65,$fcc25f96
+	dc.l	$3ffe0000,$a61298e1,$e069bc97
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_53_0
-	dc.w	52,515
+	dc.w	51,515
 	dc.l	$00000000
-	dc.l	$bffe0000,$80000000,$00000000
+	dc.l	$bfff0000,$80000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$bffe0000,$b17217f7,$d1cf79ac
+	dc.l	$bffe0000,$a1d2a727,$4c4320e5
 	dc.l	$08000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_53_1
-	dc.w	52,515
+	dc.w	51,515
 	dc.l	$00000000
-	dc.l	$40020000,$a0000000,$00000000
+	dc.l	$40000000,$80000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$40000000,$99771dbb,$f9ba5dbe
+	dc.l	$40010000,$cc7325c6,$a6ed6e62
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_53_2
-	dc.w	52,515
+	dc.w	51,515
 	dc.l	$00000000
 	dc.l	$3ff50000,$83126e97,$8d4fdf3b
 	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3ff50000,$8301aa7c,$61f5f8ab
+	dc.l	$3ff50000,$832336fd,$c679d030
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_53_3
-	dc.w	52,515
+	dc.w	51,515
 	dc.l	$00000000
-	dc.l	$bffc0000,$9f6919d6,$d28876fd
+	dc.l	$c0030000,$f0000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$bffc0000,$ad473b11,$fb302a63
+	dc.l	$bffe0000,$ffffffff,$ffe5a91f
 	dc.l	$08000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_53_4
-	dc.w	52,515
+	dc.w	51,515
 	dc.l	$00000010
 	dc.l	$3ffe0000,$80000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3ffd0000,$cf991f65,$fcc25f95
+	dc.l	$3ffe0000,$a61298e1,$e069bc97
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_53_5
-	dc.w	52,515
+	dc.w	51,515
 	dc.l	$00000020
 	dc.l	$3ffe0000,$80000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3ffd0000,$cf991f65,$fcc25f95
+	dc.l	$3ffe0000,$a61298e1,$e069bc97
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_53_6
-	dc.w	52,515
+	dc.w	51,515
 	dc.l	$00000030
 	dc.l	$3ffe0000,$80000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3ffd0000,$cf991f65,$fcc25f96
+	dc.l	$3ffe0000,$a61298e1,$e069bc98
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_53_7
-	dc.w	52,515
+	dc.w	51,515
 	dc.l	$00000040
 	dc.l	$3ffe0000,$80000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3ffd0000,$cf991f00,$00000000
+	dc.l	$3ffe0000,$a6129900,$00000000
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_53_8
-	dc.w	52,515
+	dc.w	51,515
 	dc.l	$00000080
 	dc.l	$3ffe0000,$80000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
-	dc.l	$3ffd0000,$cf991f65,$fcc26000
+	dc.l	$3ffe0000,$a61298e1,$e069c000
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_53_9
-	dc.w	52,3
+	dc.w	51,3
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
@@ -20039,7 +20085,7 @@ gv_53:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_53_10
-	dc.w	52,3
+	dc.w	51,3
 	dc.l	$00000000
 	dc.l	$80000000,$00000000,$00000000
 	dc.l	$40010000,$e0000000,$00000000
@@ -20048,6 +20094,134 @@ gv_53:
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
 	dc.l	wy_53_11
+	dc.w	51,3
+	dc.l	$00000000
+	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$7fff0000,$00000000,$00000000
+	dc.l	$02000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_53_12
+	dc.w	51,515
+	dc.l	$00000000
+	dc.l	$ffff0000,$00000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$bfff0000,$80000000,$00000000
+	dc.l	$08000000,$fffffdd7
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_53_13
+	cnop	0,4
+gv_54:
+	dc.w	52,515
+	dc.l	$00000000
+	dc.l	$3ffe0000,$80000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3ffd0000,$cf991f65,$fcc25f96
+	dc.l	$00000208,$fffffdd7
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_54_0
+	dc.w	52,515
+	dc.l	$00000000
+	dc.l	$bffe0000,$80000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$bffe0000,$b17217f7,$d1cf79ac
+	dc.l	$08000208,$fffffdd7
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_54_1
+	dc.w	52,515
+	dc.l	$00000000
+	dc.l	$40020000,$a0000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$40000000,$99771dbb,$f9ba5dbe
+	dc.l	$00000208,$fffffdd7
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_54_2
+	dc.w	52,515
+	dc.l	$00000000
+	dc.l	$3ff50000,$83126e97,$8d4fdf3b
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3ff50000,$8301aa7c,$61f5f8ab
+	dc.l	$00000208,$fffffdd7
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_54_3
+	dc.w	52,515
+	dc.l	$00000000
+	dc.l	$bffc0000,$9f6919d6,$d28876fd
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$bffc0000,$ad473b11,$fb302a63
+	dc.l	$08000208,$fffffdd7
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_54_4
+	dc.w	52,515
+	dc.l	$00000010
+	dc.l	$3ffe0000,$80000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3ffd0000,$cf991f65,$fcc25f95
+	dc.l	$00000208,$fffffdd7
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_54_5
+	dc.w	52,515
+	dc.l	$00000020
+	dc.l	$3ffe0000,$80000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3ffd0000,$cf991f65,$fcc25f95
+	dc.l	$00000208,$fffffdd7
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_54_6
+	dc.w	52,515
+	dc.l	$00000030
+	dc.l	$3ffe0000,$80000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3ffd0000,$cf991f65,$fcc25f96
+	dc.l	$00000208,$fffffdd7
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_54_7
+	dc.w	52,515
+	dc.l	$00000040
+	dc.l	$3ffe0000,$80000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3ffd0000,$cf991f00,$00000000
+	dc.l	$00000208,$fffffdd7
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_54_8
+	dc.w	52,515
+	dc.l	$00000080
+	dc.l	$3ffe0000,$80000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$3ffd0000,$cf991f65,$fcc26000
+	dc.l	$00000208,$fffffdd7
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_54_9
+	dc.w	52,3
+	dc.l	$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$04000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_54_10
+	dc.w	52,3
+	dc.l	$00000000
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$40010000,$e0000000,$00000000
+	dc.l	$80000000,$00000000,$00000000
+	dc.l	$0c000000,$ffffffff
+	dc.l	$00000000,$00000000,$00000000
+	dc.l	$ffffffff,$ffffffff,$ffffffff
+	dc.l	wy_54_11
 	dc.w	52,3
 	dc.l	$00000000
 	dc.l	$bfff0000,$80000000,$00000000
@@ -20056,7 +20230,7 @@ gv_53:
 	dc.l	$0a000410,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_53_12
+	dc.l	wy_54_12
 	dc.w	52,3
 	dc.l	$00000000
 	dc.l	$c0000000,$80000000,$00000000
@@ -20065,7 +20239,7 @@ gv_53:
 	dc.l	$01002080,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_53_13
+	dc.l	wy_54_13
 	dc.w	52,3
 	dc.l	$00000000
 	dc.l	$7fff0000,$00000000,$00000000
@@ -20074,7 +20248,7 @@ gv_53:
 	dc.l	$02000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_53_14
+	dc.l	wy_54_14
 	dc.w	52,3
 	dc.l	$00000000
 	dc.l	$ffff0000,$00000000,$00000000
@@ -20083,9 +20257,9 @@ gv_53:
 	dc.l	$01002080,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_53_15
+	dc.l	wy_54_15
 	cnop	0,4
-gv_54:
+gv_55:
 	dc.w	53,515
 	dc.l	$00000000
 	dc.l	$3ffe0000,$80000000,$00000000
@@ -20094,7 +20268,7 @@ gv_54:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$3ffe0000,$e0a94032,$dbea7cee
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_54_0
+	dc.l	wy_55_0
 	dc.w	53,515
 	dc.l	$00000000
 	dc.l	$bfff0000,$80000000,$00000000
@@ -20103,7 +20277,7 @@ gv_54:
 	dc.l	$08000208,$fffffdd7
 	dc.l	$3ffe0000,$8a51407d,$a8345c92
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_54_1
+	dc.l	wy_55_1
 	dc.w	53,515
 	dc.l	$00000000
 	dc.l	$c0000000,$99999999,$9999999a
@@ -20112,7 +20286,7 @@ gv_54:
 	dc.l	$08000208,$fffffdd7
 	dc.l	$bffe0000,$bcc5d5a4,$868c2c1f
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_54_2
+	dc.l	wy_55_2
 	dc.w	53,515
 	dc.l	$00000010
 	dc.l	$3ffe0000,$80000000,$00000000
@@ -20121,7 +20295,7 @@ gv_54:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$3ffe0000,$e0a94032,$dbea7ced
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_54_3
+	dc.l	wy_55_3
 	dc.w	53,515
 	dc.l	$00000020
 	dc.l	$3ffe0000,$80000000,$00000000
@@ -20130,7 +20304,7 @@ gv_54:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$3ffe0000,$e0a94032,$dbea7ced
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_54_4
+	dc.l	wy_55_4
 	dc.w	53,515
 	dc.l	$00000030
 	dc.l	$3ffe0000,$80000000,$00000000
@@ -20139,7 +20313,7 @@ gv_54:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$3ffe0000,$e0a94032,$dbea7cee
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_54_5
+	dc.l	wy_55_5
 	dc.w	53,515
 	dc.l	$00000040
 	dc.l	$3ffe0000,$80000000,$00000000
@@ -20148,7 +20322,7 @@ gv_54:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$3ffe0000,$e0a94000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_54_6
+	dc.l	wy_55_6
 	dc.w	53,515
 	dc.l	$00000080
 	dc.l	$3ffe0000,$80000000,$00000000
@@ -20157,7 +20331,7 @@ gv_54:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$3ffe0000,$e0a94032,$dbea8000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_54_7
+	dc.l	wy_55_7
 	dc.w	53,3
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
@@ -20166,7 +20340,7 @@ gv_54:
 	dc.l	$04000000,$ffffffff
 	dc.l	$3fff0000,$80000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_54_8
+	dc.l	wy_55_8
 	dc.w	53,3
 	dc.l	$00000000
 	dc.l	$7fff0000,$00000000,$00000000
@@ -20175,9 +20349,9 @@ gv_54:
 	dc.l	$01002080,$ffffffff
 	dc.l	$7fff0000,$ffffffff,$ffffffff
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_54_9
+	dc.l	wy_55_9
 	cnop	0,4
-gv_55:
+gv_56:
 	dc.w	72,259
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
@@ -20186,7 +20360,7 @@ gv_55:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_55_0
+	dc.l	wy_56_0
 	dc.w	73,259
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
@@ -20195,7 +20369,7 @@ gv_55:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_55_1
+	dc.l	wy_56_1
 	dc.w	74,259
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
@@ -20204,7 +20378,7 @@ gv_55:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_55_2
+	dc.l	wy_56_2
 	dc.w	75,259
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
@@ -20213,7 +20387,7 @@ gv_55:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_55_3
+	dc.l	wy_56_3
 	dc.w	76,259
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
@@ -20222,7 +20396,7 @@ gv_55:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_55_4
+	dc.l	wy_56_4
 	dc.w	77,3
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
@@ -20231,7 +20405,7 @@ gv_55:
 	dc.l	$04000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_55_5
+	dc.l	wy_56_5
 	dc.w	78,259
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
@@ -20240,7 +20414,7 @@ gv_55:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_55_6
+	dc.l	wy_56_6
 	dc.w	79,259
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
@@ -20249,7 +20423,7 @@ gv_55:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_55_7
+	dc.l	wy_56_7
 	dc.w	80,3
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
@@ -20258,7 +20432,7 @@ gv_55:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_55_8
+	dc.l	wy_56_8
 	dc.w	81,3
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
@@ -20267,7 +20441,7 @@ gv_55:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_55_9
+	dc.l	wy_56_9
 	dc.w	82,3
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
@@ -20276,7 +20450,7 @@ gv_55:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_55_10
+	dc.l	wy_56_10
 	dc.w	83,3
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
@@ -20285,7 +20459,7 @@ gv_55:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_55_11
+	dc.l	wy_56_11
 	dc.w	84,3
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
@@ -20294,7 +20468,7 @@ gv_55:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_55_12
+	dc.l	wy_56_12
 	dc.w	85,3
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
@@ -20303,7 +20477,7 @@ gv_55:
 	dc.l	$00000000,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_55_13
+	dc.l	wy_56_13
 	dc.w	86,259
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
@@ -20312,7 +20486,7 @@ gv_55:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_55_14
+	dc.l	wy_56_14
 	dc.w	87,259
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
@@ -20321,7 +20495,7 @@ gv_55:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_55_15
+	dc.l	wy_56_15
 	dc.w	88,259
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
@@ -20330,7 +20504,7 @@ gv_55:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_55_16
+	dc.l	wy_56_16
 	dc.w	89,259
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
@@ -20339,7 +20513,7 @@ gv_55:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_55_17
+	dc.l	wy_56_17
 	dc.w	90,259
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
@@ -20348,7 +20522,7 @@ gv_55:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_55_18
+	dc.l	wy_56_18
 	dc.w	91,259
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
@@ -20357,7 +20531,7 @@ gv_55:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_55_19
+	dc.l	wy_56_19
 	dc.w	92,259
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
@@ -20366,7 +20540,7 @@ gv_55:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_55_20
+	dc.l	wy_56_20
 	dc.w	93,259
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
@@ -20375,7 +20549,7 @@ gv_55:
 	dc.l	$00000208,$fffffdd7
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_55_21
+	dc.l	wy_56_21
 	dc.w	72,3
 	dc.l	$00000000
 	dc.l	$00000000,$00000000,$00000000
@@ -20384,7 +20558,7 @@ gv_55:
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_55_22
+	dc.l	wy_56_22
 	dc.w	72,3
 	dc.l	$00000010
 	dc.l	$00000000,$00000000,$00000000
@@ -20393,7 +20567,7 @@ gv_55:
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_55_23
+	dc.l	wy_56_23
 	dc.w	72,3
 	dc.l	$00000020
 	dc.l	$00000000,$00000000,$00000000
@@ -20402,7 +20576,7 @@ gv_55:
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_55_24
+	dc.l	wy_56_24
 	dc.w	72,3
 	dc.l	$00000030
 	dc.l	$00000000,$00000000,$00000000
@@ -20411,7 +20585,7 @@ gv_55:
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_55_25
+	dc.l	wy_56_25
 	dc.w	72,3
 	dc.l	$00000040
 	dc.l	$00000000,$00000000,$00000000
@@ -20420,7 +20594,7 @@ gv_55:
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_55_26
+	dc.l	wy_56_26
 	dc.w	72,3
 	dc.l	$00000080
 	dc.l	$00000000,$00000000,$00000000
@@ -20429,7 +20603,7 @@ gv_55:
 	dc.l	$00000208,$ffffffff
 	dc.l	$00000000,$00000000,$00000000
 	dc.l	$ffffffff,$ffffffff,$ffffffff
-	dc.l	wy_55_27
+	dc.l	wy_56_27
 gn_0:	dc.b	"conv_in_b",0
 wy_0_0:	dc.b	"fmove_b_in src=raw dst=7 rn.x: byte 00 sign-extended",0
 wy_0_1:	dc.b	"fmove_b_in src=raw dst=7 rn.x: byte 01 sign-extended",0
@@ -20845,1510 +21019,1530 @@ wy_11_59:	dc.b	"fmove_d_out src=- dst=-inf rn.x: special value",0
 wy_11_60:	dc.b	"fmove_d_out src=- dst=qnan rn.x: special value",0
 wy_11_61:	dc.b	"fmove_d_out src=- dst=-qnan rn.x: special value",0
 wy_11_62:	dc.b	"fmove_d_out src=- dst=snan rn.x: SNaN register: SNAN set, quiet NaN stored",0
-gn_12:	dc.b	"conv_out_x",0
-wy_12_0:	dc.b	"fmove_x_out src=- dst=+0 rn.x: extended destination: not rounded to the FPCR precision",0
-wy_12_1:	dc.b	"fmove_x_out src=- dst=-0 rn.x: extended destination: not rounded to the FPCR precision",0
-wy_12_2:	dc.b	"fmove_x_out src=- dst=+inf rn.x: extended destination: not rounded to the FPCR precision",0
-wy_12_3:	dc.b	"fmove_x_out src=- dst=-inf rn.x: extended destination: not rounded to the FPCR precision",0
-wy_12_4:	dc.b	"fmove_x_out src=- dst=1 rn.x: extended destination: not rounded to the FPCR precision",0
-wy_12_5:	dc.b	"fmove_x_out src=- dst=1 rn.s: extended destination: not rounded to the FPCR precision",0
-wy_12_6:	dc.b	"fmove_x_out src=- dst=1 rn.d: extended destination: not rounded to the FPCR precision",0
-wy_12_7:	dc.b	"fmove_x_out src=- dst=m*2^0 rn.x: extended destination: not rounded to the FPCR precision",0
-wy_12_8:	dc.b	"fmove_x_out src=- dst=m*2^0 rn.s: extended destination: not rounded to the FPCR precision",0
-wy_12_9:	dc.b	"fmove_x_out src=- dst=m*2^0 rn.d: extended destination: not rounded to the FPCR precision",0
-wy_12_10:	dc.b	"fmove_x_out src=- dst=m*2^16383 rn.x: extended destination: not rounded to the FPCR precision",0
-wy_12_11:	dc.b	"fmove_x_out src=- dst=m*2^16383 rn.s: extended destination: not rounded to the FPCR precision",0
-wy_12_12:	dc.b	"fmove_x_out src=- dst=m*2^16383 rn.d: extended destination: not rounded to the FPCR precision",0
-wy_12_13:	dc.b	"fmove_x_out src=- dst=qnan rn.x: extended destination: not rounded to the FPCR precision",0
-wy_12_14:	dc.b	"fmove_x_out src=- dst=qnan rn.x: extended destination: not rounded to the FPCR precision",0
-wy_12_15:	dc.b	"fmove_x_out src=- dst=snan rn.x: SNaN register: SNAN set, quiet NaN stored",0
-gn_13:	dc.b	"conv_out_p",0
-wy_13_0:	dc.b	"fmove_p_out_k1 src=- dst=1 rn.x: packed out, k=1",0
-wy_13_1:	dc.b	"fmove_p_out_k17 src=- dst=1 rn.x: packed out, k=17",0
-wy_13_2:	dc.b	"fmove_p_out_k3 src=- dst=25/2 rn.x: packed out, k=3",0
-wy_13_3:	dc.b	"fmove_p_out_k3 src=- dst=25/2 rz.x: packed out, k=3",0
-wy_13_4:	dc.b	"fmove_p_out_k3 src=- dst=25/2 rm.x: packed out, k=3",0
-wy_13_5:	dc.b	"fmove_p_out_k3 src=- dst=25/2 rp.x: packed out, k=3",0
-wy_13_6:	dc.b	"fmove_p_out_k17 src=- dst=25/2 rn.x: packed out, k=17",0
-wy_13_7:	dc.b	"fmove_p_out_k17 src=- dst=25/2 rz.x: packed out, k=17",0
-wy_13_8:	dc.b	"fmove_p_out_k17 src=- dst=25/2 rm.x: packed out, k=17",0
-wy_13_9:	dc.b	"fmove_p_out_k17 src=- dst=25/2 rp.x: packed out, k=17",0
-wy_13_10:	dc.b	"fmove_p_out_k3 src=- dst=-25/2 rn.x: packed out, k=3",0
-wy_13_11:	dc.b	"fmove_p_out_k3 src=- dst=-25/2 rz.x: packed out, k=3",0
-wy_13_12:	dc.b	"fmove_p_out_k3 src=- dst=-25/2 rm.x: packed out, k=3",0
-wy_13_13:	dc.b	"fmove_p_out_k3 src=- dst=-25/2 rp.x: packed out, k=3",0
-wy_13_14:	dc.b	"fmove_p_out_k5 src=- dst=2^-2 rn.x: packed out, k=5",0
-wy_13_15:	dc.b	"fmove_p_out_k5 src=- dst=2^-2 rz.x: packed out, k=5",0
-wy_13_16:	dc.b	"fmove_p_out_k5 src=- dst=2^-2 rm.x: packed out, k=5",0
-wy_13_17:	dc.b	"fmove_p_out_k5 src=- dst=2^-2 rp.x: packed out, k=5",0
-wy_13_18:	dc.b	"fmove_p_out_k3 src=- dst=123456 rn.x: packed out, k=3",0
-wy_13_19:	dc.b	"fmove_p_out_k3 src=- dst=123456 rz.x: packed out, k=3",0
-wy_13_20:	dc.b	"fmove_p_out_k3 src=- dst=123456 rm.x: packed out, k=3",0
-wy_13_21:	dc.b	"fmove_p_out_k3 src=- dst=123456 rp.x: packed out, k=3",0
-wy_13_22:	dc.b	"fmove_p_out_k17 src=- dst=123456 rn.x: packed out, k=17",0
-wy_13_23:	dc.b	"fmove_p_out_k17 src=- dst=123456 rz.x: packed out, k=17",0
-wy_13_24:	dc.b	"fmove_p_out_k17 src=- dst=123456 rm.x: packed out, k=17",0
-wy_13_25:	dc.b	"fmove_p_out_k17 src=- dst=123456 rp.x: packed out, k=17",0
-wy_13_26:	dc.b	"fmove_p_out_k1 src=- dst=10000000000 rn.x: packed out, k=1",0
-wy_13_27:	dc.b	"fmove_p_out_k1 src=- dst=10000000000 rz.x: packed out, k=1",0
-wy_13_28:	dc.b	"fmove_p_out_k1 src=- dst=10000000000 rm.x: packed out, k=1",0
-wy_13_29:	dc.b	"fmove_p_out_k1 src=- dst=10000000000 rp.x: packed out, k=1",0
-wy_13_30:	dc.b	"fmove_p_out_k5 src=- dst=m*2^-2 rn.x: packed out of X(1/3), k=5",0
-wy_13_31:	dc.b	"fmove_p_out_k5 src=- dst=m*2^-2 rz.x: packed out of X(1/3), k=5",0
-wy_13_32:	dc.b	"fmove_p_out_k5 src=- dst=m*2^-2 rm.x: packed out of X(1/3), k=5",0
-wy_13_33:	dc.b	"fmove_p_out_k5 src=- dst=m*2^-2 rp.x: packed out of X(1/3), k=5",0
-wy_13_34:	dc.b	"fmove_p_out_k3 src=- dst=+0 rn.x: packed out of +0",0
-gn_14:	dc.b	"inf_roundtrip",0
-wy_14_0:	dc.b	"fmove_x_inout src=raw dst=7 rn.x: FMOVE.X in then FMOVE.X out must keep every bit",0
-wy_14_1:	dc.b	"fmove_x_inout src=raw dst=7 rn.x: FMOVE.X in then FMOVE.X out must keep every bit",0
-wy_14_2:	dc.b	"fmove_x_inout src=raw dst=7 rn.x: FMOVE.X in then FMOVE.X out must keep every bit",0
-wy_14_3:	dc.b	"fmove_x_inout src=raw dst=7 rn.x: FMOVE.X in then FMOVE.X out must keep every bit",0
-wy_14_4:	dc.b	"fmove_x_inout src=raw dst=7 rn.x: FMOVE.X in then FMOVE.X out must keep every bit",0
-wy_14_5:	dc.b	"fmove_x_inout src=raw dst=7 rn.x: FMOVE.X in then FMOVE.X out must keep every bit",0
-gn_15:	dc.b	"special_x_inout",0
-wy_15_0:	dc.b	"fmove_x_inout src=raw dst=7 rn.x: bit-exact round trip +0",0
-wy_15_1:	dc.b	"fmove_x_inout src=raw dst=7 rn.x: bit-exact round trip -0",0
-wy_15_2:	dc.b	"fmove_x_inout src=raw dst=7 rn.x: bit-exact round trip 1",0
-wy_15_3:	dc.b	"fmove_x_inout src=raw dst=7 rn.x: bit-exact round trip m*2^16383",0
-wy_15_4:	dc.b	"fmove_x_inout src=raw dst=7 rn.x: bit-exact round trip -m*2^16383",0
-wy_15_5:	dc.b	"fmove_x_inout src=raw dst=7 rn.x: bit-exact round trip 2^-16382",0
-wy_15_6:	dc.b	"fmove_x_inout src=raw dst=7 rn.x: bit-exact round trip m*2^-16382",0
-wy_15_7:	dc.b	"fmove_x_inout src=raw dst=7 rn.x: SNaN in: SNAN set, quieted",0
-wy_15_8:	dc.b	"fmove_x_inout src=raw dst=7 rn.x: smallest denormal survives FMOVE.X in/out (6888x)",0
-wy_15_9:	dc.b	"fmove_x_inout src=raw dst=7 rn.x: negative denormal survives FMOVE.X in/out (6888x)",0
-wy_15_10:	dc.b	"fmove_x_inout src=raw dst=7 rn.x: largest denormal survives FMOVE.X in/out (6888x)",0
-wy_15_11:	dc.b	"fmove_x_inout src=raw dst=7 rn.x: unnormal is normalized on FMOVE.X in (6888x)",0
-gn_16:	dc.b	"fcmp_classes",0
-wy_16_0:	dc.b	"fcmp src=+0 dst=+0 rn.x: CC of dst-src; register unchanged",0
-wy_16_1:	dc.b	"fcmp src=-0 dst=+0 rn.x: CC of dst-src; register unchanged",0
-wy_16_2:	dc.b	"fcmp src=1 dst=+0 rn.x: CC of dst-src; register unchanged",0
-wy_16_3:	dc.b	"fcmp src=-1 dst=+0 rn.x: CC of dst-src; register unchanged",0
-wy_16_4:	dc.b	"fcmp src=2 dst=+0 rn.x: CC of dst-src; register unchanged",0
-wy_16_5:	dc.b	"fcmp src=+inf dst=+0 rn.x: CC of dst-src; register unchanged",0
-wy_16_6:	dc.b	"fcmp src=-inf dst=+0 rn.x: CC of dst-src; register unchanged",0
-wy_16_7:	dc.b	"fcmp src=qnan dst=+0 rn.x: CC of dst-src; register unchanged",0
-wy_16_8:	dc.b	"fcmp src=+0 dst=-0 rn.x: CC of dst-src; register unchanged",0
-wy_16_9:	dc.b	"fcmp src=-0 dst=-0 rn.x: CC of dst-src; register unchanged",0
-wy_16_10:	dc.b	"fcmp src=1 dst=-0 rn.x: CC of dst-src; register unchanged",0
-wy_16_11:	dc.b	"fcmp src=-1 dst=-0 rn.x: CC of dst-src; register unchanged",0
-wy_16_12:	dc.b	"fcmp src=2 dst=-0 rn.x: CC of dst-src; register unchanged",0
-wy_16_13:	dc.b	"fcmp src=+inf dst=-0 rn.x: CC of dst-src; register unchanged",0
-wy_16_14:	dc.b	"fcmp src=-inf dst=-0 rn.x: CC of dst-src; register unchanged",0
-wy_16_15:	dc.b	"fcmp src=qnan dst=-0 rn.x: CC of dst-src; register unchanged",0
-wy_16_16:	dc.b	"fcmp src=+0 dst=1 rn.x: CC of dst-src; register unchanged",0
-wy_16_17:	dc.b	"fcmp src=-0 dst=1 rn.x: CC of dst-src; register unchanged",0
-wy_16_18:	dc.b	"fcmp src=1 dst=1 rn.x: CC of dst-src; register unchanged",0
-wy_16_19:	dc.b	"fcmp src=-1 dst=1 rn.x: CC of dst-src; register unchanged",0
-wy_16_20:	dc.b	"fcmp src=2 dst=1 rn.x: CC of dst-src; register unchanged",0
-wy_16_21:	dc.b	"fcmp src=+inf dst=1 rn.x: CC of dst-src; register unchanged",0
-wy_16_22:	dc.b	"fcmp src=-inf dst=1 rn.x: CC of dst-src; register unchanged",0
-wy_16_23:	dc.b	"fcmp src=qnan dst=1 rn.x: CC of dst-src; register unchanged",0
-wy_16_24:	dc.b	"fcmp src=+0 dst=-1 rn.x: CC of dst-src; register unchanged",0
-wy_16_25:	dc.b	"fcmp src=-0 dst=-1 rn.x: CC of dst-src; register unchanged",0
-wy_16_26:	dc.b	"fcmp src=1 dst=-1 rn.x: CC of dst-src; register unchanged",0
-wy_16_27:	dc.b	"fcmp src=-1 dst=-1 rn.x: CC of dst-src; register unchanged",0
-wy_16_28:	dc.b	"fcmp src=2 dst=-1 rn.x: CC of dst-src; register unchanged",0
-wy_16_29:	dc.b	"fcmp src=+inf dst=-1 rn.x: CC of dst-src; register unchanged",0
-wy_16_30:	dc.b	"fcmp src=-inf dst=-1 rn.x: CC of dst-src; register unchanged",0
-wy_16_31:	dc.b	"fcmp src=qnan dst=-1 rn.x: CC of dst-src; register unchanged",0
-wy_16_32:	dc.b	"fcmp src=+0 dst=2 rn.x: CC of dst-src; register unchanged",0
-wy_16_33:	dc.b	"fcmp src=-0 dst=2 rn.x: CC of dst-src; register unchanged",0
-wy_16_34:	dc.b	"fcmp src=1 dst=2 rn.x: CC of dst-src; register unchanged",0
-wy_16_35:	dc.b	"fcmp src=-1 dst=2 rn.x: CC of dst-src; register unchanged",0
-wy_16_36:	dc.b	"fcmp src=2 dst=2 rn.x: CC of dst-src; register unchanged",0
-wy_16_37:	dc.b	"fcmp src=+inf dst=2 rn.x: CC of dst-src; register unchanged",0
-wy_16_38:	dc.b	"fcmp src=-inf dst=2 rn.x: CC of dst-src; register unchanged",0
-wy_16_39:	dc.b	"fcmp src=qnan dst=2 rn.x: CC of dst-src; register unchanged",0
-wy_16_40:	dc.b	"fcmp src=+0 dst=+inf rn.x: CC of dst-src; register unchanged",0
-wy_16_41:	dc.b	"fcmp src=-0 dst=+inf rn.x: CC of dst-src; register unchanged",0
-wy_16_42:	dc.b	"fcmp src=1 dst=+inf rn.x: CC of dst-src; register unchanged",0
-wy_16_43:	dc.b	"fcmp src=-1 dst=+inf rn.x: CC of dst-src; register unchanged",0
-wy_16_44:	dc.b	"fcmp src=2 dst=+inf rn.x: CC of dst-src; register unchanged",0
-wy_16_45:	dc.b	"fcmp src=+inf dst=+inf rn.x: CC of dst-src; register unchanged",0
-wy_16_46:	dc.b	"fcmp src=-inf dst=+inf rn.x: CC of dst-src; register unchanged",0
-wy_16_47:	dc.b	"fcmp src=qnan dst=+inf rn.x: CC of dst-src; register unchanged",0
-wy_16_48:	dc.b	"fcmp src=+0 dst=-inf rn.x: CC of dst-src; register unchanged",0
-wy_16_49:	dc.b	"fcmp src=-0 dst=-inf rn.x: CC of dst-src; register unchanged",0
-wy_16_50:	dc.b	"fcmp src=1 dst=-inf rn.x: CC of dst-src; register unchanged",0
-wy_16_51:	dc.b	"fcmp src=-1 dst=-inf rn.x: CC of dst-src; register unchanged",0
-wy_16_52:	dc.b	"fcmp src=2 dst=-inf rn.x: CC of dst-src; register unchanged",0
-wy_16_53:	dc.b	"fcmp src=+inf dst=-inf rn.x: CC of dst-src; register unchanged",0
-wy_16_54:	dc.b	"fcmp src=-inf dst=-inf rn.x: CC of dst-src; register unchanged",0
-wy_16_55:	dc.b	"fcmp src=qnan dst=-inf rn.x: CC of dst-src; register unchanged",0
-wy_16_56:	dc.b	"fcmp src=+0 dst=qnan rn.x: CC of dst-src; register unchanged",0
-wy_16_57:	dc.b	"fcmp src=-0 dst=qnan rn.x: CC of dst-src; register unchanged",0
-wy_16_58:	dc.b	"fcmp src=1 dst=qnan rn.x: CC of dst-src; register unchanged",0
-wy_16_59:	dc.b	"fcmp src=-1 dst=qnan rn.x: CC of dst-src; register unchanged",0
-wy_16_60:	dc.b	"fcmp src=2 dst=qnan rn.x: CC of dst-src; register unchanged",0
-wy_16_61:	dc.b	"fcmp src=+inf dst=qnan rn.x: CC of dst-src; register unchanged",0
-wy_16_62:	dc.b	"fcmp src=-inf dst=qnan rn.x: CC of dst-src; register unchanged",0
-wy_16_63:	dc.b	"fcmp src=qnan dst=qnan rn.x: CC of dst-src; register unchanged",0
-wy_16_64:	dc.b	"fcmp src=snan dst=1 rn.x: SNaN operand sets SNAN",0
-gn_17:	dc.b	"ftst_classes",0
-wy_17_0:	dc.b	"ftst src=+0 dst=7 rn.x: CC of the operand",0
-wy_17_1:	dc.b	"ftst src=-0 dst=7 rn.x: CC of the operand",0
-wy_17_2:	dc.b	"ftst src=1 dst=7 rn.x: CC of the operand",0
-wy_17_3:	dc.b	"ftst src=-1 dst=7 rn.x: CC of the operand",0
-wy_17_4:	dc.b	"ftst src=+inf dst=7 rn.x: CC of the operand",0
-wy_17_5:	dc.b	"ftst src=-inf dst=7 rn.x: CC of the operand",0
-wy_17_6:	dc.b	"ftst src=qnan dst=7 rn.x: CC of the operand",0
-wy_17_7:	dc.b	"ftst src=-qnan dst=7 rn.x: CC of the operand",0
-wy_17_8:	dc.b	"ftst src=m*2^16383 dst=7 rn.x: CC of the operand",0
-wy_17_9:	dc.b	"ftst src=2^-16382 dst=7 rn.x: CC of the operand",0
-gn_18:	dc.b	"arith_fadd",0
-wy_18_0:	dc.b	"fadd src=+0 dst=+0 rn.x",0
-wy_18_1:	dc.b	"fadd src=-0 dst=+0 rn.x",0
-wy_18_2:	dc.b	"fadd src=+inf dst=+0 rn.x",0
-wy_18_3:	dc.b	"fadd src=-inf dst=+0 rn.x",0
-wy_18_4:	dc.b	"fadd src=qnan dst=+0 rn.x",0
-wy_18_5:	dc.b	"fadd src=snan dst=+0 rn.x",0
-wy_18_6:	dc.b	"fadd src=1 dst=+0 rn.x",0
-wy_18_7:	dc.b	"fadd src=-3 dst=+0 rn.x",0
-wy_18_8:	dc.b	"fadd src=+0 dst=-0 rn.x",0
-wy_18_9:	dc.b	"fadd src=-0 dst=-0 rn.x",0
-wy_18_10:	dc.b	"fadd src=+inf dst=-0 rn.x",0
-wy_18_11:	dc.b	"fadd src=-inf dst=-0 rn.x",0
-wy_18_12:	dc.b	"fadd src=qnan dst=-0 rn.x",0
-wy_18_13:	dc.b	"fadd src=snan dst=-0 rn.x",0
-wy_18_14:	dc.b	"fadd src=1 dst=-0 rn.x",0
-wy_18_15:	dc.b	"fadd src=-3 dst=-0 rn.x",0
-wy_18_16:	dc.b	"fadd src=+0 dst=+inf rn.x",0
-wy_18_17:	dc.b	"fadd src=-0 dst=+inf rn.x",0
-wy_18_18:	dc.b	"fadd src=+inf dst=+inf rn.x",0
-wy_18_19:	dc.b	"fadd src=-inf dst=+inf rn.x",0
-wy_18_20:	dc.b	"fadd src=qnan dst=+inf rn.x",0
-wy_18_21:	dc.b	"fadd src=snan dst=+inf rn.x",0
-wy_18_22:	dc.b	"fadd src=1 dst=+inf rn.x",0
-wy_18_23:	dc.b	"fadd src=-3 dst=+inf rn.x",0
-wy_18_24:	dc.b	"fadd src=+0 dst=-inf rn.x",0
-wy_18_25:	dc.b	"fadd src=-0 dst=-inf rn.x",0
-wy_18_26:	dc.b	"fadd src=+inf dst=-inf rn.x",0
-wy_18_27:	dc.b	"fadd src=-inf dst=-inf rn.x",0
-wy_18_28:	dc.b	"fadd src=qnan dst=-inf rn.x",0
-wy_18_29:	dc.b	"fadd src=snan dst=-inf rn.x",0
-wy_18_30:	dc.b	"fadd src=1 dst=-inf rn.x",0
-wy_18_31:	dc.b	"fadd src=-3 dst=-inf rn.x",0
-wy_18_32:	dc.b	"fadd src=+0 dst=qnan rn.x",0
-wy_18_33:	dc.b	"fadd src=-0 dst=qnan rn.x",0
-wy_18_34:	dc.b	"fadd src=+inf dst=qnan rn.x",0
-wy_18_35:	dc.b	"fadd src=-inf dst=qnan rn.x",0
-wy_18_36:	dc.b	"fadd src=qnan dst=qnan rn.x",0
-wy_18_37:	dc.b	"fadd src=snan dst=qnan rn.x",0
-wy_18_38:	dc.b	"fadd src=1 dst=qnan rn.x",0
-wy_18_39:	dc.b	"fadd src=-3 dst=qnan rn.x",0
-wy_18_40:	dc.b	"fadd src=+0 dst=snan rn.x",0
-wy_18_41:	dc.b	"fadd src=-0 dst=snan rn.x",0
-wy_18_42:	dc.b	"fadd src=+inf dst=snan rn.x",0
-wy_18_43:	dc.b	"fadd src=-inf dst=snan rn.x",0
-wy_18_44:	dc.b	"fadd src=qnan dst=snan rn.x",0
-wy_18_45:	dc.b	"fadd src=snan dst=snan rn.x",0
-wy_18_46:	dc.b	"fadd src=1 dst=snan rn.x",0
-wy_18_47:	dc.b	"fadd src=-3 dst=snan rn.x",0
-wy_18_48:	dc.b	"fadd src=+0 dst=1 rn.x",0
-wy_18_49:	dc.b	"fadd src=-0 dst=1 rn.x",0
-wy_18_50:	dc.b	"fadd src=+inf dst=1 rn.x",0
-wy_18_51:	dc.b	"fadd src=-inf dst=1 rn.x",0
-wy_18_52:	dc.b	"fadd src=qnan dst=1 rn.x",0
-wy_18_53:	dc.b	"fadd src=snan dst=1 rn.x",0
-wy_18_54:	dc.b	"fadd src=1 dst=1 rn.x",0
-wy_18_55:	dc.b	"fadd src=-3 dst=1 rn.x",0
-wy_18_56:	dc.b	"fadd src=+0 dst=-3 rn.x",0
-wy_18_57:	dc.b	"fadd src=-0 dst=-3 rn.x",0
-wy_18_58:	dc.b	"fadd src=+inf dst=-3 rn.x",0
-wy_18_59:	dc.b	"fadd src=-inf dst=-3 rn.x",0
-wy_18_60:	dc.b	"fadd src=qnan dst=-3 rn.x",0
-wy_18_61:	dc.b	"fadd src=snan dst=-3 rn.x",0
-wy_18_62:	dc.b	"fadd src=1 dst=-3 rn.x",0
-wy_18_63:	dc.b	"fadd src=-3 dst=-3 rn.x",0
-wy_18_64:	dc.b	"fadd src=2^-64 dst=1 rn.x: tie at half an X ulp -> even",0
-wy_18_65:	dc.b	"fadd src=2^-64 dst=1 rz.x: tie at half an X ulp -> even",0
-wy_18_66:	dc.b	"fadd src=2^-64 dst=1 rm.x: tie at half an X ulp -> even",0
-wy_18_67:	dc.b	"fadd src=2^-64 dst=1 rp.x: tie at half an X ulp -> even",0
-wy_18_68:	dc.b	"fadd src=2^-64 dst=m*2^0 rn.x: tie, odd lsb -> up in RN",0
-wy_18_69:	dc.b	"fadd src=2^-64 dst=m*2^0 rz.x: tie, odd lsb -> up in RN",0
-wy_18_70:	dc.b	"fadd src=2^-64 dst=m*2^0 rm.x: tie, odd lsb -> up in RN",0
-wy_18_71:	dc.b	"fadd src=2^-64 dst=m*2^0 rp.x: tie, odd lsb -> up in RN",0
-wy_18_72:	dc.b	"fadd src=2^-24 dst=1 rn.s: tie at half an S ulp",0
-wy_18_73:	dc.b	"fadd src=2^-24 dst=1 rz.s: tie at half an S ulp",0
-wy_18_74:	dc.b	"fadd src=2^-24 dst=1 rm.s: tie at half an S ulp",0
-wy_18_75:	dc.b	"fadd src=2^-24 dst=1 rp.s: tie at half an S ulp",0
-wy_18_76:	dc.b	"fadd src=2^-53 dst=1 rn.d: tie at half a D ulp",0
-wy_18_77:	dc.b	"fadd src=2^-53 dst=1 rz.d: tie at half a D ulp",0
-wy_18_78:	dc.b	"fadd src=2^-53 dst=1 rm.d: tie at half a D ulp",0
-wy_18_79:	dc.b	"fadd src=2^-53 dst=1 rp.d: tie at half a D ulp",0
-wy_18_80:	dc.b	"fadd src=m*2^-65 dst=1 rn.x: below half",0
-wy_18_81:	dc.b	"fadd src=m*2^-65 dst=1 rz.x: below half",0
-wy_18_82:	dc.b	"fadd src=m*2^-65 dst=1 rm.x: below half",0
-wy_18_83:	dc.b	"fadd src=m*2^-65 dst=1 rp.x: below half",0
-wy_18_84:	dc.b	"fadd src=-1 dst=1 rn.x: x + -x: +0, but -0 in RM",0
-wy_18_85:	dc.b	"fadd src=-1 dst=1 rz.x: x + -x: +0, but -0 in RM",0
-wy_18_86:	dc.b	"fadd src=-1 dst=1 rm.x: x + -x: +0, but -0 in RM",0
-wy_18_87:	dc.b	"fadd src=-1 dst=1 rp.x: x + -x: +0, but -0 in RM",0
-wy_18_88:	dc.b	"fadd src=m*2^16383 dst=m*2^16383 rn.x: overflow",0
-wy_18_89:	dc.b	"fadd src=m*2^16383 dst=m*2^16383 rz.x: overflow",0
-wy_18_90:	dc.b	"fadd src=m*2^16383 dst=m*2^16383 rm.x: overflow",0
-wy_18_91:	dc.b	"fadd src=m*2^16383 dst=m*2^16383 rp.x: overflow",0
-wy_18_92:	dc.b	"fadd src=-m*2^16383 dst=-m*2^16383 rn.x: negative overflow",0
-wy_18_93:	dc.b	"fadd src=-m*2^16383 dst=-m*2^16383 rz.x: negative overflow",0
-wy_18_94:	dc.b	"fadd src=-m*2^16383 dst=-m*2^16383 rm.x: negative overflow",0
-wy_18_95:	dc.b	"fadd src=-m*2^16383 dst=-m*2^16383 rp.x: negative overflow",0
-wy_18_96:	dc.b	"fadd src=m*2^-2 dst=m*2^-2 rn.x",0
-wy_18_97:	dc.b	"fadd src=m*2^-2 dst=m*2^-2 rn.s",0
-wy_18_98:	dc.b	"fadd src=m*2^-2 dst=m*2^-2 rn.d",0
-wy_18_99:	dc.b	"fadd src=m*2^-2 dst=m*2^-2 rz.x",0
-wy_18_100:	dc.b	"fadd src=m*2^-2 dst=m*2^-2 rz.s",0
-wy_18_101:	dc.b	"fadd src=m*2^-2 dst=m*2^-2 rz.d",0
-wy_18_102:	dc.b	"fadd src=m*2^-2 dst=m*2^-2 rm.x",0
-wy_18_103:	dc.b	"fadd src=m*2^-2 dst=m*2^-2 rm.s",0
-wy_18_104:	dc.b	"fadd src=m*2^-2 dst=m*2^-2 rm.d",0
-wy_18_105:	dc.b	"fadd src=m*2^-2 dst=m*2^-2 rp.x",0
-wy_18_106:	dc.b	"fadd src=m*2^-2 dst=m*2^-2 rp.s",0
-wy_18_107:	dc.b	"fadd src=m*2^-2 dst=m*2^-2 rp.d",0
-gn_19:	dc.b	"arith_fsub",0
-wy_19_0:	dc.b	"fsub src=+0 dst=+0 rn.x",0
-wy_19_1:	dc.b	"fsub src=-0 dst=+0 rn.x",0
-wy_19_2:	dc.b	"fsub src=+inf dst=+0 rn.x",0
-wy_19_3:	dc.b	"fsub src=-inf dst=+0 rn.x",0
-wy_19_4:	dc.b	"fsub src=qnan dst=+0 rn.x",0
-wy_19_5:	dc.b	"fsub src=snan dst=+0 rn.x",0
-wy_19_6:	dc.b	"fsub src=1 dst=+0 rn.x",0
-wy_19_7:	dc.b	"fsub src=-3 dst=+0 rn.x",0
-wy_19_8:	dc.b	"fsub src=+0 dst=-0 rn.x",0
-wy_19_9:	dc.b	"fsub src=-0 dst=-0 rn.x",0
-wy_19_10:	dc.b	"fsub src=+inf dst=-0 rn.x",0
-wy_19_11:	dc.b	"fsub src=-inf dst=-0 rn.x",0
-wy_19_12:	dc.b	"fsub src=qnan dst=-0 rn.x",0
-wy_19_13:	dc.b	"fsub src=snan dst=-0 rn.x",0
-wy_19_14:	dc.b	"fsub src=1 dst=-0 rn.x",0
-wy_19_15:	dc.b	"fsub src=-3 dst=-0 rn.x",0
-wy_19_16:	dc.b	"fsub src=+0 dst=+inf rn.x",0
-wy_19_17:	dc.b	"fsub src=-0 dst=+inf rn.x",0
-wy_19_18:	dc.b	"fsub src=+inf dst=+inf rn.x",0
-wy_19_19:	dc.b	"fsub src=-inf dst=+inf rn.x",0
-wy_19_20:	dc.b	"fsub src=qnan dst=+inf rn.x",0
-wy_19_21:	dc.b	"fsub src=snan dst=+inf rn.x",0
-wy_19_22:	dc.b	"fsub src=1 dst=+inf rn.x",0
-wy_19_23:	dc.b	"fsub src=-3 dst=+inf rn.x",0
-wy_19_24:	dc.b	"fsub src=+0 dst=-inf rn.x",0
-wy_19_25:	dc.b	"fsub src=-0 dst=-inf rn.x",0
-wy_19_26:	dc.b	"fsub src=+inf dst=-inf rn.x",0
-wy_19_27:	dc.b	"fsub src=-inf dst=-inf rn.x",0
-wy_19_28:	dc.b	"fsub src=qnan dst=-inf rn.x",0
-wy_19_29:	dc.b	"fsub src=snan dst=-inf rn.x",0
-wy_19_30:	dc.b	"fsub src=1 dst=-inf rn.x",0
-wy_19_31:	dc.b	"fsub src=-3 dst=-inf rn.x",0
-wy_19_32:	dc.b	"fsub src=+0 dst=qnan rn.x",0
-wy_19_33:	dc.b	"fsub src=-0 dst=qnan rn.x",0
-wy_19_34:	dc.b	"fsub src=+inf dst=qnan rn.x",0
-wy_19_35:	dc.b	"fsub src=-inf dst=qnan rn.x",0
-wy_19_36:	dc.b	"fsub src=qnan dst=qnan rn.x",0
-wy_19_37:	dc.b	"fsub src=snan dst=qnan rn.x",0
-wy_19_38:	dc.b	"fsub src=1 dst=qnan rn.x",0
-wy_19_39:	dc.b	"fsub src=-3 dst=qnan rn.x",0
-wy_19_40:	dc.b	"fsub src=+0 dst=snan rn.x",0
-wy_19_41:	dc.b	"fsub src=-0 dst=snan rn.x",0
-wy_19_42:	dc.b	"fsub src=+inf dst=snan rn.x",0
-wy_19_43:	dc.b	"fsub src=-inf dst=snan rn.x",0
-wy_19_44:	dc.b	"fsub src=qnan dst=snan rn.x",0
-wy_19_45:	dc.b	"fsub src=snan dst=snan rn.x",0
-wy_19_46:	dc.b	"fsub src=1 dst=snan rn.x",0
-wy_19_47:	dc.b	"fsub src=-3 dst=snan rn.x",0
-wy_19_48:	dc.b	"fsub src=+0 dst=1 rn.x",0
-wy_19_49:	dc.b	"fsub src=-0 dst=1 rn.x",0
-wy_19_50:	dc.b	"fsub src=+inf dst=1 rn.x",0
-wy_19_51:	dc.b	"fsub src=-inf dst=1 rn.x",0
-wy_19_52:	dc.b	"fsub src=qnan dst=1 rn.x",0
-wy_19_53:	dc.b	"fsub src=snan dst=1 rn.x",0
-wy_19_54:	dc.b	"fsub src=1 dst=1 rn.x",0
-wy_19_55:	dc.b	"fsub src=-3 dst=1 rn.x",0
-wy_19_56:	dc.b	"fsub src=+0 dst=-3 rn.x",0
-wy_19_57:	dc.b	"fsub src=-0 dst=-3 rn.x",0
-wy_19_58:	dc.b	"fsub src=+inf dst=-3 rn.x",0
-wy_19_59:	dc.b	"fsub src=-inf dst=-3 rn.x",0
-wy_19_60:	dc.b	"fsub src=qnan dst=-3 rn.x",0
-wy_19_61:	dc.b	"fsub src=snan dst=-3 rn.x",0
-wy_19_62:	dc.b	"fsub src=1 dst=-3 rn.x",0
-wy_19_63:	dc.b	"fsub src=-3 dst=-3 rn.x",0
-wy_19_64:	dc.b	"fsub src=2^-65 dst=1 rn.x: 1-2^-65: tie on a mantissa of all ones",0
-wy_19_65:	dc.b	"fsub src=2^-65 dst=1 rz.x: 1-2^-65: tie on a mantissa of all ones",0
-wy_19_66:	dc.b	"fsub src=2^-65 dst=1 rm.x: 1-2^-65: tie on a mantissa of all ones",0
-wy_19_67:	dc.b	"fsub src=2^-65 dst=1 rp.x: 1-2^-65: tie on a mantissa of all ones",0
-wy_19_68:	dc.b	"fsub src=1 dst=1 rn.x: x - x: +0, but -0 in RM",0
-wy_19_69:	dc.b	"fsub src=1 dst=1 rz.x: x - x: +0, but -0 in RM",0
-wy_19_70:	dc.b	"fsub src=1 dst=1 rm.x: x - x: +0, but -0 in RM",0
-wy_19_71:	dc.b	"fsub src=1 dst=1 rp.x: x - x: +0, but -0 in RM",0
-wy_19_72:	dc.b	"fsub src=-m*2^16383 dst=m*2^16383 rn.x: overflow",0
-wy_19_73:	dc.b	"fsub src=-m*2^16383 dst=m*2^16383 rz.x: overflow",0
-wy_19_74:	dc.b	"fsub src=-m*2^16383 dst=m*2^16383 rm.x: overflow",0
-wy_19_75:	dc.b	"fsub src=-m*2^16383 dst=m*2^16383 rp.x: overflow",0
-wy_19_76:	dc.b	"fsub src=m*2^-1 dst=1 rn.x",0
-wy_19_77:	dc.b	"fsub src=m*2^-1 dst=1 rn.s",0
-wy_19_78:	dc.b	"fsub src=m*2^-1 dst=1 rn.d",0
-wy_19_79:	dc.b	"fsub src=m*2^-1 dst=1 rz.x",0
-wy_19_80:	dc.b	"fsub src=m*2^-1 dst=1 rz.s",0
-wy_19_81:	dc.b	"fsub src=m*2^-1 dst=1 rz.d",0
-wy_19_82:	dc.b	"fsub src=m*2^-1 dst=1 rm.x",0
-wy_19_83:	dc.b	"fsub src=m*2^-1 dst=1 rm.s",0
-wy_19_84:	dc.b	"fsub src=m*2^-1 dst=1 rm.d",0
-wy_19_85:	dc.b	"fsub src=m*2^-1 dst=1 rp.x",0
-wy_19_86:	dc.b	"fsub src=m*2^-1 dst=1 rp.s",0
-wy_19_87:	dc.b	"fsub src=m*2^-1 dst=1 rp.d",0
-gn_20:	dc.b	"arith_fmul",0
-wy_20_0:	dc.b	"fmul src=+0 dst=+0 rn.x",0
-wy_20_1:	dc.b	"fmul src=-0 dst=+0 rn.x",0
-wy_20_2:	dc.b	"fmul src=+inf dst=+0 rn.x",0
-wy_20_3:	dc.b	"fmul src=-inf dst=+0 rn.x",0
-wy_20_4:	dc.b	"fmul src=qnan dst=+0 rn.x",0
-wy_20_5:	dc.b	"fmul src=snan dst=+0 rn.x",0
-wy_20_6:	dc.b	"fmul src=1 dst=+0 rn.x",0
-wy_20_7:	dc.b	"fmul src=-3 dst=+0 rn.x",0
-wy_20_8:	dc.b	"fmul src=+0 dst=-0 rn.x",0
-wy_20_9:	dc.b	"fmul src=-0 dst=-0 rn.x",0
-wy_20_10:	dc.b	"fmul src=+inf dst=-0 rn.x",0
-wy_20_11:	dc.b	"fmul src=-inf dst=-0 rn.x",0
-wy_20_12:	dc.b	"fmul src=qnan dst=-0 rn.x",0
-wy_20_13:	dc.b	"fmul src=snan dst=-0 rn.x",0
-wy_20_14:	dc.b	"fmul src=1 dst=-0 rn.x",0
-wy_20_15:	dc.b	"fmul src=-3 dst=-0 rn.x",0
-wy_20_16:	dc.b	"fmul src=+0 dst=+inf rn.x",0
-wy_20_17:	dc.b	"fmul src=-0 dst=+inf rn.x",0
-wy_20_18:	dc.b	"fmul src=+inf dst=+inf rn.x",0
-wy_20_19:	dc.b	"fmul src=-inf dst=+inf rn.x",0
-wy_20_20:	dc.b	"fmul src=qnan dst=+inf rn.x",0
-wy_20_21:	dc.b	"fmul src=snan dst=+inf rn.x",0
-wy_20_22:	dc.b	"fmul src=1 dst=+inf rn.x",0
-wy_20_23:	dc.b	"fmul src=-3 dst=+inf rn.x",0
-wy_20_24:	dc.b	"fmul src=+0 dst=-inf rn.x",0
-wy_20_25:	dc.b	"fmul src=-0 dst=-inf rn.x",0
-wy_20_26:	dc.b	"fmul src=+inf dst=-inf rn.x",0
-wy_20_27:	dc.b	"fmul src=-inf dst=-inf rn.x",0
-wy_20_28:	dc.b	"fmul src=qnan dst=-inf rn.x",0
-wy_20_29:	dc.b	"fmul src=snan dst=-inf rn.x",0
-wy_20_30:	dc.b	"fmul src=1 dst=-inf rn.x",0
-wy_20_31:	dc.b	"fmul src=-3 dst=-inf rn.x",0
-wy_20_32:	dc.b	"fmul src=+0 dst=qnan rn.x",0
-wy_20_33:	dc.b	"fmul src=-0 dst=qnan rn.x",0
-wy_20_34:	dc.b	"fmul src=+inf dst=qnan rn.x",0
-wy_20_35:	dc.b	"fmul src=-inf dst=qnan rn.x",0
-wy_20_36:	dc.b	"fmul src=qnan dst=qnan rn.x",0
-wy_20_37:	dc.b	"fmul src=snan dst=qnan rn.x",0
-wy_20_38:	dc.b	"fmul src=1 dst=qnan rn.x",0
-wy_20_39:	dc.b	"fmul src=-3 dst=qnan rn.x",0
-wy_20_40:	dc.b	"fmul src=+0 dst=snan rn.x",0
-wy_20_41:	dc.b	"fmul src=-0 dst=snan rn.x",0
-wy_20_42:	dc.b	"fmul src=+inf dst=snan rn.x",0
-wy_20_43:	dc.b	"fmul src=-inf dst=snan rn.x",0
-wy_20_44:	dc.b	"fmul src=qnan dst=snan rn.x",0
-wy_20_45:	dc.b	"fmul src=snan dst=snan rn.x",0
-wy_20_46:	dc.b	"fmul src=1 dst=snan rn.x",0
-wy_20_47:	dc.b	"fmul src=-3 dst=snan rn.x",0
-wy_20_48:	dc.b	"fmul src=+0 dst=1 rn.x",0
-wy_20_49:	dc.b	"fmul src=-0 dst=1 rn.x",0
-wy_20_50:	dc.b	"fmul src=+inf dst=1 rn.x",0
-wy_20_51:	dc.b	"fmul src=-inf dst=1 rn.x",0
-wy_20_52:	dc.b	"fmul src=qnan dst=1 rn.x",0
-wy_20_53:	dc.b	"fmul src=snan dst=1 rn.x",0
-wy_20_54:	dc.b	"fmul src=1 dst=1 rn.x",0
-wy_20_55:	dc.b	"fmul src=-3 dst=1 rn.x",0
-wy_20_56:	dc.b	"fmul src=+0 dst=-3 rn.x",0
-wy_20_57:	dc.b	"fmul src=-0 dst=-3 rn.x",0
-wy_20_58:	dc.b	"fmul src=+inf dst=-3 rn.x",0
-wy_20_59:	dc.b	"fmul src=-inf dst=-3 rn.x",0
-wy_20_60:	dc.b	"fmul src=qnan dst=-3 rn.x",0
-wy_20_61:	dc.b	"fmul src=snan dst=-3 rn.x",0
-wy_20_62:	dc.b	"fmul src=1 dst=-3 rn.x",0
-wy_20_63:	dc.b	"fmul src=-3 dst=-3 rn.x",0
-wy_20_64:	dc.b	"fmul src=m*2^0 dst=m*2^0 rn.x: exact product 1+2^-31+2^-64 is an X tie",0
-wy_20_65:	dc.b	"fmul src=m*2^0 dst=m*2^0 rz.x: exact product 1+2^-31+2^-64 is an X tie",0
-wy_20_66:	dc.b	"fmul src=m*2^0 dst=m*2^0 rm.x: exact product 1+2^-31+2^-64 is an X tie",0
-wy_20_67:	dc.b	"fmul src=m*2^0 dst=m*2^0 rp.x: exact product 1+2^-31+2^-64 is an X tie",0
-wy_20_68:	dc.b	"fmul src=4097/4096 dst=4097/4096 rn.s: S tie",0
-wy_20_69:	dc.b	"fmul src=4097/4096 dst=4097/4096 rz.s: S tie",0
-wy_20_70:	dc.b	"fmul src=4097/4096 dst=4097/4096 rm.s: S tie",0
-wy_20_71:	dc.b	"fmul src=4097/4096 dst=4097/4096 rp.s: S tie",0
-wy_20_72:	dc.b	"fmul src=m*2^-2 dst=3 rn.x: X(1/3)*3",0
-wy_20_73:	dc.b	"fmul src=m*2^-2 dst=3 rn.s: X(1/3)*3",0
-wy_20_74:	dc.b	"fmul src=m*2^-2 dst=3 rn.d: X(1/3)*3",0
-wy_20_75:	dc.b	"fmul src=m*2^-2 dst=3 rz.x: X(1/3)*3",0
-wy_20_76:	dc.b	"fmul src=m*2^-2 dst=3 rz.s: X(1/3)*3",0
-wy_20_77:	dc.b	"fmul src=m*2^-2 dst=3 rz.d: X(1/3)*3",0
-wy_20_78:	dc.b	"fmul src=m*2^-2 dst=3 rm.x: X(1/3)*3",0
-wy_20_79:	dc.b	"fmul src=m*2^-2 dst=3 rm.s: X(1/3)*3",0
-wy_20_80:	dc.b	"fmul src=m*2^-2 dst=3 rm.d: X(1/3)*3",0
-wy_20_81:	dc.b	"fmul src=m*2^-2 dst=3 rp.x: X(1/3)*3",0
-wy_20_82:	dc.b	"fmul src=m*2^-2 dst=3 rp.s: X(1/3)*3",0
-wy_20_83:	dc.b	"fmul src=m*2^-2 dst=3 rp.d: X(1/3)*3",0
-wy_20_84:	dc.b	"fmul src=2^16000 dst=2^16000 rn.x: overflow",0
-wy_20_85:	dc.b	"fmul src=2^16000 dst=2^16000 rz.x: overflow",0
-wy_20_86:	dc.b	"fmul src=2^16000 dst=2^16000 rm.x: overflow",0
-wy_20_87:	dc.b	"fmul src=2^16000 dst=2^16000 rp.x: overflow",0
-wy_20_88:	dc.b	"fmul src=-2^16000 dst=2^16000 rn.x: negative overflow",0
-wy_20_89:	dc.b	"fmul src=-2^16000 dst=2^16000 rz.x: negative overflow",0
-wy_20_90:	dc.b	"fmul src=-2^16000 dst=2^16000 rm.x: negative overflow",0
-wy_20_91:	dc.b	"fmul src=-2^16000 dst=2^16000 rp.x: negative overflow",0
-wy_20_92:	dc.b	"fmul src=2^-10000 dst=2^-10000 rn.x: deep underflow",0
-wy_20_93:	dc.b	"fmul src=-2^-10000 dst=2^-10000 rn.x: deep underflow",0
-wy_20_94:	dc.b	"fmul src=2^-10000 dst=2^-10000 rz.x: deep underflow",0
-wy_20_95:	dc.b	"fmul src=-2^-10000 dst=2^-10000 rz.x: deep underflow",0
-wy_20_96:	dc.b	"fmul src=2^-10000 dst=2^-10000 rm.x: deep underflow",0
-wy_20_97:	dc.b	"fmul src=-2^-10000 dst=2^-10000 rm.x: deep underflow",0
-wy_20_98:	dc.b	"fmul src=2^-10000 dst=2^-10000 rp.x: deep underflow",0
-wy_20_99:	dc.b	"fmul src=-2^-10000 dst=2^-10000 rp.x: deep underflow",0
-gn_21:	dc.b	"arith_fdiv",0
-wy_21_0:	dc.b	"fdiv src=+0 dst=+0 rn.x",0
-wy_21_1:	dc.b	"fdiv src=-0 dst=+0 rn.x",0
-wy_21_2:	dc.b	"fdiv src=+inf dst=+0 rn.x",0
-wy_21_3:	dc.b	"fdiv src=-inf dst=+0 rn.x",0
-wy_21_4:	dc.b	"fdiv src=qnan dst=+0 rn.x",0
-wy_21_5:	dc.b	"fdiv src=snan dst=+0 rn.x",0
-wy_21_6:	dc.b	"fdiv src=1 dst=+0 rn.x",0
-wy_21_7:	dc.b	"fdiv src=-3 dst=+0 rn.x",0
-wy_21_8:	dc.b	"fdiv src=+0 dst=-0 rn.x",0
-wy_21_9:	dc.b	"fdiv src=-0 dst=-0 rn.x",0
-wy_21_10:	dc.b	"fdiv src=+inf dst=-0 rn.x",0
-wy_21_11:	dc.b	"fdiv src=-inf dst=-0 rn.x",0
-wy_21_12:	dc.b	"fdiv src=qnan dst=-0 rn.x",0
-wy_21_13:	dc.b	"fdiv src=snan dst=-0 rn.x",0
-wy_21_14:	dc.b	"fdiv src=1 dst=-0 rn.x",0
-wy_21_15:	dc.b	"fdiv src=-3 dst=-0 rn.x",0
-wy_21_16:	dc.b	"fdiv src=+0 dst=+inf rn.x",0
-wy_21_17:	dc.b	"fdiv src=-0 dst=+inf rn.x",0
-wy_21_18:	dc.b	"fdiv src=+inf dst=+inf rn.x",0
-wy_21_19:	dc.b	"fdiv src=-inf dst=+inf rn.x",0
-wy_21_20:	dc.b	"fdiv src=qnan dst=+inf rn.x",0
-wy_21_21:	dc.b	"fdiv src=snan dst=+inf rn.x",0
-wy_21_22:	dc.b	"fdiv src=1 dst=+inf rn.x",0
-wy_21_23:	dc.b	"fdiv src=-3 dst=+inf rn.x",0
-wy_21_24:	dc.b	"fdiv src=+0 dst=-inf rn.x",0
-wy_21_25:	dc.b	"fdiv src=-0 dst=-inf rn.x",0
-wy_21_26:	dc.b	"fdiv src=+inf dst=-inf rn.x",0
-wy_21_27:	dc.b	"fdiv src=-inf dst=-inf rn.x",0
-wy_21_28:	dc.b	"fdiv src=qnan dst=-inf rn.x",0
-wy_21_29:	dc.b	"fdiv src=snan dst=-inf rn.x",0
-wy_21_30:	dc.b	"fdiv src=1 dst=-inf rn.x",0
-wy_21_31:	dc.b	"fdiv src=-3 dst=-inf rn.x",0
-wy_21_32:	dc.b	"fdiv src=+0 dst=qnan rn.x",0
-wy_21_33:	dc.b	"fdiv src=-0 dst=qnan rn.x",0
-wy_21_34:	dc.b	"fdiv src=+inf dst=qnan rn.x",0
-wy_21_35:	dc.b	"fdiv src=-inf dst=qnan rn.x",0
-wy_21_36:	dc.b	"fdiv src=qnan dst=qnan rn.x",0
-wy_21_37:	dc.b	"fdiv src=snan dst=qnan rn.x",0
-wy_21_38:	dc.b	"fdiv src=1 dst=qnan rn.x",0
-wy_21_39:	dc.b	"fdiv src=-3 dst=qnan rn.x",0
-wy_21_40:	dc.b	"fdiv src=+0 dst=snan rn.x",0
-wy_21_41:	dc.b	"fdiv src=-0 dst=snan rn.x",0
-wy_21_42:	dc.b	"fdiv src=+inf dst=snan rn.x",0
-wy_21_43:	dc.b	"fdiv src=-inf dst=snan rn.x",0
-wy_21_44:	dc.b	"fdiv src=qnan dst=snan rn.x",0
-wy_21_45:	dc.b	"fdiv src=snan dst=snan rn.x",0
-wy_21_46:	dc.b	"fdiv src=1 dst=snan rn.x",0
-wy_21_47:	dc.b	"fdiv src=-3 dst=snan rn.x",0
-wy_21_48:	dc.b	"fdiv src=+0 dst=1 rn.x",0
-wy_21_49:	dc.b	"fdiv src=-0 dst=1 rn.x",0
-wy_21_50:	dc.b	"fdiv src=+inf dst=1 rn.x",0
-wy_21_51:	dc.b	"fdiv src=-inf dst=1 rn.x",0
-wy_21_52:	dc.b	"fdiv src=qnan dst=1 rn.x",0
-wy_21_53:	dc.b	"fdiv src=snan dst=1 rn.x",0
-wy_21_54:	dc.b	"fdiv src=1 dst=1 rn.x",0
-wy_21_55:	dc.b	"fdiv src=-3 dst=1 rn.x",0
-wy_21_56:	dc.b	"fdiv src=+0 dst=-3 rn.x",0
-wy_21_57:	dc.b	"fdiv src=-0 dst=-3 rn.x",0
-wy_21_58:	dc.b	"fdiv src=+inf dst=-3 rn.x",0
-wy_21_59:	dc.b	"fdiv src=-inf dst=-3 rn.x",0
-wy_21_60:	dc.b	"fdiv src=qnan dst=-3 rn.x",0
-wy_21_61:	dc.b	"fdiv src=snan dst=-3 rn.x",0
-wy_21_62:	dc.b	"fdiv src=1 dst=-3 rn.x",0
-wy_21_63:	dc.b	"fdiv src=-3 dst=-3 rn.x",0
-wy_21_64:	dc.b	"fdiv src=3 dst=1 rn.x: 1/3",0
-wy_21_65:	dc.b	"fdiv src=3 dst=1 rn.s: 1/3",0
-wy_21_66:	dc.b	"fdiv src=3 dst=1 rn.d: 1/3",0
-wy_21_67:	dc.b	"fdiv src=3 dst=1 rz.x: 1/3",0
-wy_21_68:	dc.b	"fdiv src=3 dst=1 rz.s: 1/3",0
-wy_21_69:	dc.b	"fdiv src=3 dst=1 rz.d: 1/3",0
-wy_21_70:	dc.b	"fdiv src=3 dst=1 rm.x: 1/3",0
-wy_21_71:	dc.b	"fdiv src=3 dst=1 rm.s: 1/3",0
-wy_21_72:	dc.b	"fdiv src=3 dst=1 rm.d: 1/3",0
-wy_21_73:	dc.b	"fdiv src=3 dst=1 rp.x: 1/3",0
-wy_21_74:	dc.b	"fdiv src=3 dst=1 rp.s: 1/3",0
-wy_21_75:	dc.b	"fdiv src=3 dst=1 rp.d: 1/3",0
-wy_21_76:	dc.b	"fdiv src=3 dst=-1 rn.x: -1/3",0
-wy_21_77:	dc.b	"fdiv src=3 dst=-1 rn.s: -1/3",0
-wy_21_78:	dc.b	"fdiv src=3 dst=-1 rn.d: -1/3",0
-wy_21_79:	dc.b	"fdiv src=3 dst=-1 rz.x: -1/3",0
-wy_21_80:	dc.b	"fdiv src=3 dst=-1 rz.s: -1/3",0
-wy_21_81:	dc.b	"fdiv src=3 dst=-1 rz.d: -1/3",0
-wy_21_82:	dc.b	"fdiv src=3 dst=-1 rm.x: -1/3",0
-wy_21_83:	dc.b	"fdiv src=3 dst=-1 rm.s: -1/3",0
-wy_21_84:	dc.b	"fdiv src=3 dst=-1 rm.d: -1/3",0
-wy_21_85:	dc.b	"fdiv src=3 dst=-1 rp.x: -1/3",0
-wy_21_86:	dc.b	"fdiv src=3 dst=-1 rp.s: -1/3",0
-wy_21_87:	dc.b	"fdiv src=3 dst=-1 rp.d: -1/3",0
-wy_21_88:	dc.b	"fdiv src=3 dst=2 rn.x: 2/3",0
-wy_21_89:	dc.b	"fdiv src=3 dst=2 rn.s: 2/3",0
-wy_21_90:	dc.b	"fdiv src=3 dst=2 rn.d: 2/3",0
-wy_21_91:	dc.b	"fdiv src=3 dst=2 rz.x: 2/3",0
-wy_21_92:	dc.b	"fdiv src=3 dst=2 rz.s: 2/3",0
-wy_21_93:	dc.b	"fdiv src=3 dst=2 rz.d: 2/3",0
-wy_21_94:	dc.b	"fdiv src=3 dst=2 rm.x: 2/3",0
-wy_21_95:	dc.b	"fdiv src=3 dst=2 rm.s: 2/3",0
-wy_21_96:	dc.b	"fdiv src=3 dst=2 rm.d: 2/3",0
-wy_21_97:	dc.b	"fdiv src=3 dst=2 rp.x: 2/3",0
-wy_21_98:	dc.b	"fdiv src=3 dst=2 rp.s: 2/3",0
-wy_21_99:	dc.b	"fdiv src=3 dst=2 rp.d: 2/3",0
-wy_21_100:	dc.b	"fdiv src=10 dst=1 rn.x: 1/10",0
-wy_21_101:	dc.b	"fdiv src=10 dst=1 rn.s: 1/10",0
-wy_21_102:	dc.b	"fdiv src=10 dst=1 rn.d: 1/10",0
-wy_21_103:	dc.b	"fdiv src=10 dst=1 rz.x: 1/10",0
-wy_21_104:	dc.b	"fdiv src=10 dst=1 rz.s: 1/10",0
-wy_21_105:	dc.b	"fdiv src=10 dst=1 rz.d: 1/10",0
-wy_21_106:	dc.b	"fdiv src=10 dst=1 rm.x: 1/10",0
-wy_21_107:	dc.b	"fdiv src=10 dst=1 rm.s: 1/10",0
-wy_21_108:	dc.b	"fdiv src=10 dst=1 rm.d: 1/10",0
-wy_21_109:	dc.b	"fdiv src=10 dst=1 rp.x: 1/10",0
-wy_21_110:	dc.b	"fdiv src=10 dst=1 rp.s: 1/10",0
-wy_21_111:	dc.b	"fdiv src=10 dst=1 rp.d: 1/10",0
-wy_21_112:	dc.b	"fdiv src=7 dst=-22 rn.x: -22/7",0
-wy_21_113:	dc.b	"fdiv src=7 dst=-22 rz.x: -22/7",0
-wy_21_114:	dc.b	"fdiv src=7 dst=-22 rm.x: -22/7",0
-wy_21_115:	dc.b	"fdiv src=7 dst=-22 rp.x: -22/7",0
-wy_21_116:	dc.b	"fdiv src=2^-16000 dst=2^16000 rn.x: overflow",0
-wy_21_117:	dc.b	"fdiv src=2^-16000 dst=2^16000 rz.x: overflow",0
-wy_21_118:	dc.b	"fdiv src=2^-16000 dst=2^16000 rm.x: overflow",0
-wy_21_119:	dc.b	"fdiv src=2^-16000 dst=2^16000 rp.x: overflow",0
-wy_21_120:	dc.b	"fdiv src=4 dst=1 rn.x: exact",0
-gn_22:	dc.b	"arith_fsqrt",0
-wy_22_0:	dc.b	"fsqrt src=+0 dst=7 rn.x",0
-wy_22_1:	dc.b	"fsqrt src=-0 dst=7 rn.x",0
-wy_22_2:	dc.b	"fsqrt src=+inf dst=7 rn.x",0
-wy_22_3:	dc.b	"fsqrt src=-inf dst=7 rn.x",0
-wy_22_4:	dc.b	"fsqrt src=qnan dst=7 rn.x",0
-wy_22_5:	dc.b	"fsqrt src=snan dst=7 rn.x",0
-wy_22_6:	dc.b	"fsqrt src=-1 dst=7 rn.x",0
-wy_22_7:	dc.b	"fsqrt src=4 dst=7 rn.x",0
-wy_22_8:	dc.b	"fsqrt src=9/4 dst=7 rn.x",0
-wy_22_9:	dc.b	"fsqrt src=2 dst=7 rn.x: correctly rounded square root",0
-wy_22_10:	dc.b	"fsqrt src=3 dst=7 rn.x: correctly rounded square root",0
-wy_22_11:	dc.b	"fsqrt src=2^-1 dst=7 rn.x: correctly rounded square root",0
-wy_22_12:	dc.b	"fsqrt src=2 dst=7 rn.s: correctly rounded square root",0
-wy_22_13:	dc.b	"fsqrt src=3 dst=7 rn.s: correctly rounded square root",0
-wy_22_14:	dc.b	"fsqrt src=2^-1 dst=7 rn.s: correctly rounded square root",0
-wy_22_15:	dc.b	"fsqrt src=2 dst=7 rn.d: correctly rounded square root",0
-wy_22_16:	dc.b	"fsqrt src=3 dst=7 rn.d: correctly rounded square root",0
-wy_22_17:	dc.b	"fsqrt src=2^-1 dst=7 rn.d: correctly rounded square root",0
-wy_22_18:	dc.b	"fsqrt src=2 dst=7 rz.x: correctly rounded square root",0
-wy_22_19:	dc.b	"fsqrt src=3 dst=7 rz.x: correctly rounded square root",0
-wy_22_20:	dc.b	"fsqrt src=2^-1 dst=7 rz.x: correctly rounded square root",0
-wy_22_21:	dc.b	"fsqrt src=2 dst=7 rz.s: correctly rounded square root",0
-wy_22_22:	dc.b	"fsqrt src=3 dst=7 rz.s: correctly rounded square root",0
-wy_22_23:	dc.b	"fsqrt src=2^-1 dst=7 rz.s: correctly rounded square root",0
-wy_22_24:	dc.b	"fsqrt src=2 dst=7 rz.d: correctly rounded square root",0
-wy_22_25:	dc.b	"fsqrt src=3 dst=7 rz.d: correctly rounded square root",0
-wy_22_26:	dc.b	"fsqrt src=2^-1 dst=7 rz.d: correctly rounded square root",0
-wy_22_27:	dc.b	"fsqrt src=2 dst=7 rm.x: correctly rounded square root",0
-wy_22_28:	dc.b	"fsqrt src=3 dst=7 rm.x: correctly rounded square root",0
-wy_22_29:	dc.b	"fsqrt src=2^-1 dst=7 rm.x: correctly rounded square root",0
-wy_22_30:	dc.b	"fsqrt src=2 dst=7 rm.s: correctly rounded square root",0
-wy_22_31:	dc.b	"fsqrt src=3 dst=7 rm.s: correctly rounded square root",0
-wy_22_32:	dc.b	"fsqrt src=2^-1 dst=7 rm.s: correctly rounded square root",0
-wy_22_33:	dc.b	"fsqrt src=2 dst=7 rm.d: correctly rounded square root",0
-wy_22_34:	dc.b	"fsqrt src=3 dst=7 rm.d: correctly rounded square root",0
-wy_22_35:	dc.b	"fsqrt src=2^-1 dst=7 rm.d: correctly rounded square root",0
-wy_22_36:	dc.b	"fsqrt src=2 dst=7 rp.x: correctly rounded square root",0
-wy_22_37:	dc.b	"fsqrt src=3 dst=7 rp.x: correctly rounded square root",0
-wy_22_38:	dc.b	"fsqrt src=2^-1 dst=7 rp.x: correctly rounded square root",0
-wy_22_39:	dc.b	"fsqrt src=2 dst=7 rp.s: correctly rounded square root",0
-wy_22_40:	dc.b	"fsqrt src=3 dst=7 rp.s: correctly rounded square root",0
-wy_22_41:	dc.b	"fsqrt src=2^-1 dst=7 rp.s: correctly rounded square root",0
-wy_22_42:	dc.b	"fsqrt src=2 dst=7 rp.d: correctly rounded square root",0
-wy_22_43:	dc.b	"fsqrt src=3 dst=7 rp.d: correctly rounded square root",0
-wy_22_44:	dc.b	"fsqrt src=2^-1 dst=7 rp.d: correctly rounded square root",0
-gn_23:	dc.b	"arith_fmove",0
-wy_23_0:	dc.b	"fmove src=+0 dst=7 rn.x",0
-wy_23_1:	dc.b	"fmove src=-0 dst=7 rn.x",0
-wy_23_2:	dc.b	"fmove src=+inf dst=7 rn.x",0
-wy_23_3:	dc.b	"fmove src=-inf dst=7 rn.x",0
-wy_23_4:	dc.b	"fmove src=qnan dst=7 rn.x",0
-wy_23_5:	dc.b	"fmove src=snan dst=7 rn.x",0
-wy_23_6:	dc.b	"fmove src=m*2^0 dst=7 rn.x: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
-wy_23_7:	dc.b	"fmove src=-m*2^0 dst=7 rn.x: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
-wy_23_8:	dc.b	"fmove src=m*2^0 dst=7 rn.x: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
-wy_23_9:	dc.b	"fmove src=m*2^0 dst=7 rn.x: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
-wy_23_10:	dc.b	"fmove src=m*2^-2 dst=7 rn.x: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
-wy_23_11:	dc.b	"fmove src=m*2^0 dst=7 rn.s: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
-wy_23_12:	dc.b	"fmove src=-m*2^0 dst=7 rn.s: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
-wy_23_13:	dc.b	"fmove src=m*2^0 dst=7 rn.s: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
-wy_23_14:	dc.b	"fmove src=m*2^0 dst=7 rn.s: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
-wy_23_15:	dc.b	"fmove src=m*2^-2 dst=7 rn.s: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
-wy_23_16:	dc.b	"fmove src=m*2^0 dst=7 rn.d: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
-wy_23_17:	dc.b	"fmove src=-m*2^0 dst=7 rn.d: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
-wy_23_18:	dc.b	"fmove src=m*2^0 dst=7 rn.d: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
-wy_23_19:	dc.b	"fmove src=m*2^0 dst=7 rn.d: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
-wy_23_20:	dc.b	"fmove src=m*2^-2 dst=7 rn.d: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
-wy_23_21:	dc.b	"fmove src=m*2^0 dst=7 rz.x: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
-wy_23_22:	dc.b	"fmove src=-m*2^0 dst=7 rz.x: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
-wy_23_23:	dc.b	"fmove src=m*2^0 dst=7 rz.x: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
-wy_23_24:	dc.b	"fmove src=m*2^0 dst=7 rz.x: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
-wy_23_25:	dc.b	"fmove src=m*2^-2 dst=7 rz.x: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
-wy_23_26:	dc.b	"fmove src=m*2^0 dst=7 rz.s: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
-wy_23_27:	dc.b	"fmove src=-m*2^0 dst=7 rz.s: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
-wy_23_28:	dc.b	"fmove src=m*2^0 dst=7 rz.s: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
-wy_23_29:	dc.b	"fmove src=m*2^0 dst=7 rz.s: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
-wy_23_30:	dc.b	"fmove src=m*2^-2 dst=7 rz.s: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
-wy_23_31:	dc.b	"fmove src=m*2^0 dst=7 rz.d: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
-wy_23_32:	dc.b	"fmove src=-m*2^0 dst=7 rz.d: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
-wy_23_33:	dc.b	"fmove src=m*2^0 dst=7 rz.d: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
-wy_23_34:	dc.b	"fmove src=m*2^0 dst=7 rz.d: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
-wy_23_35:	dc.b	"fmove src=m*2^-2 dst=7 rz.d: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
-wy_23_36:	dc.b	"fmove src=m*2^0 dst=7 rm.x: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
-wy_23_37:	dc.b	"fmove src=-m*2^0 dst=7 rm.x: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
-wy_23_38:	dc.b	"fmove src=m*2^0 dst=7 rm.x: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
-wy_23_39:	dc.b	"fmove src=m*2^0 dst=7 rm.x: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
-wy_23_40:	dc.b	"fmove src=m*2^-2 dst=7 rm.x: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
-wy_23_41:	dc.b	"fmove src=m*2^0 dst=7 rm.s: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
-wy_23_42:	dc.b	"fmove src=-m*2^0 dst=7 rm.s: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
-wy_23_43:	dc.b	"fmove src=m*2^0 dst=7 rm.s: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
-wy_23_44:	dc.b	"fmove src=m*2^0 dst=7 rm.s: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
-wy_23_45:	dc.b	"fmove src=m*2^-2 dst=7 rm.s: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
-wy_23_46:	dc.b	"fmove src=m*2^0 dst=7 rm.d: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
-wy_23_47:	dc.b	"fmove src=-m*2^0 dst=7 rm.d: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
-wy_23_48:	dc.b	"fmove src=m*2^0 dst=7 rm.d: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
-wy_23_49:	dc.b	"fmove src=m*2^0 dst=7 rm.d: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
-wy_23_50:	dc.b	"fmove src=m*2^-2 dst=7 rm.d: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
-wy_23_51:	dc.b	"fmove src=m*2^0 dst=7 rp.x: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
-wy_23_52:	dc.b	"fmove src=-m*2^0 dst=7 rp.x: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
-wy_23_53:	dc.b	"fmove src=m*2^0 dst=7 rp.x: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
-wy_23_54:	dc.b	"fmove src=m*2^0 dst=7 rp.x: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
-wy_23_55:	dc.b	"fmove src=m*2^-2 dst=7 rp.x: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
-wy_23_56:	dc.b	"fmove src=m*2^0 dst=7 rp.s: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
-wy_23_57:	dc.b	"fmove src=-m*2^0 dst=7 rp.s: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
-wy_23_58:	dc.b	"fmove src=m*2^0 dst=7 rp.s: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
-wy_23_59:	dc.b	"fmove src=m*2^0 dst=7 rp.s: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
-wy_23_60:	dc.b	"fmove src=m*2^-2 dst=7 rp.s: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
-wy_23_61:	dc.b	"fmove src=m*2^0 dst=7 rp.d: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
-wy_23_62:	dc.b	"fmove src=-m*2^0 dst=7 rp.d: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
-wy_23_63:	dc.b	"fmove src=m*2^0 dst=7 rp.d: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
-wy_23_64:	dc.b	"fmove src=m*2^0 dst=7 rp.d: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
-wy_23_65:	dc.b	"fmove src=m*2^-2 dst=7 rp.d: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
-gn_24:	dc.b	"arith_fabs",0
-wy_24_0:	dc.b	"fabs src=+0 dst=7 rn.x",0
-wy_24_1:	dc.b	"fabs src=-0 dst=7 rn.x",0
-wy_24_2:	dc.b	"fabs src=+inf dst=7 rn.x",0
-wy_24_3:	dc.b	"fabs src=-inf dst=7 rn.x",0
-wy_24_4:	dc.b	"fabs src=qnan dst=7 rn.x",0
-wy_24_5:	dc.b	"fabs src=snan dst=7 rn.x",0
-wy_24_6:	dc.b	"fabs src=-1 dst=7 rn.x",0
-wy_24_7:	dc.b	"fabs src=5 dst=7 rn.x",0
-wy_24_8:	dc.b	"fabs src=-m*2^0 dst=7 rn.s: FABS rounds to the FPCR precision",0
-gn_25:	dc.b	"arith_fneg",0
-wy_25_0:	dc.b	"fneg src=+0 dst=7 rn.x",0
-wy_25_1:	dc.b	"fneg src=-0 dst=7 rn.x",0
-wy_25_2:	dc.b	"fneg src=+inf dst=7 rn.x",0
-wy_25_3:	dc.b	"fneg src=-inf dst=7 rn.x",0
-wy_25_4:	dc.b	"fneg src=qnan dst=7 rn.x",0
-wy_25_5:	dc.b	"fneg src=snan dst=7 rn.x",0
-wy_25_6:	dc.b	"fneg src=-1 dst=7 rn.x",0
-wy_25_7:	dc.b	"fneg src=5 dst=7 rn.x",0
-wy_25_8:	dc.b	"fneg src=m*2^0 dst=7 rz.s: FNEG rounds to the FPCR precision",0
-gn_26:	dc.b	"arith_fint",0
-wy_26_0:	dc.b	"fint src=+0 dst=7 rn.x",0
-wy_26_1:	dc.b	"fint src=+0 dst=7 rz.x",0
-wy_26_2:	dc.b	"fint src=+0 dst=7 rm.x",0
-wy_26_3:	dc.b	"fint src=+0 dst=7 rp.x",0
-wy_26_4:	dc.b	"fint src=-0 dst=7 rn.x",0
-wy_26_5:	dc.b	"fint src=-0 dst=7 rz.x",0
-wy_26_6:	dc.b	"fint src=-0 dst=7 rm.x",0
-wy_26_7:	dc.b	"fint src=-0 dst=7 rp.x",0
-wy_26_8:	dc.b	"fint src=+inf dst=7 rn.x",0
-wy_26_9:	dc.b	"fint src=+inf dst=7 rz.x",0
-wy_26_10:	dc.b	"fint src=+inf dst=7 rm.x",0
-wy_26_11:	dc.b	"fint src=+inf dst=7 rp.x",0
-wy_26_12:	dc.b	"fint src=-inf dst=7 rn.x",0
-wy_26_13:	dc.b	"fint src=-inf dst=7 rz.x",0
-wy_26_14:	dc.b	"fint src=-inf dst=7 rm.x",0
-wy_26_15:	dc.b	"fint src=-inf dst=7 rp.x",0
-wy_26_16:	dc.b	"fint src=qnan dst=7 rn.x",0
-wy_26_17:	dc.b	"fint src=qnan dst=7 rz.x",0
-wy_26_18:	dc.b	"fint src=qnan dst=7 rm.x",0
-wy_26_19:	dc.b	"fint src=qnan dst=7 rp.x",0
-wy_26_20:	dc.b	"fint src=snan dst=7 rn.x",0
-wy_26_21:	dc.b	"fint src=snan dst=7 rz.x",0
-wy_26_22:	dc.b	"fint src=snan dst=7 rm.x",0
-wy_26_23:	dc.b	"fint src=snan dst=7 rp.x",0
-wy_26_24:	dc.b	"fint src=5/2 dst=7 rn.x",0
-wy_26_25:	dc.b	"fint src=5/2 dst=7 rz.x",0
-wy_26_26:	dc.b	"fint src=5/2 dst=7 rm.x",0
-wy_26_27:	dc.b	"fint src=5/2 dst=7 rp.x",0
-wy_26_28:	dc.b	"fint src=7/2 dst=7 rn.x",0
-wy_26_29:	dc.b	"fint src=7/2 dst=7 rz.x",0
-wy_26_30:	dc.b	"fint src=7/2 dst=7 rm.x",0
-wy_26_31:	dc.b	"fint src=7/2 dst=7 rp.x",0
-wy_26_32:	dc.b	"fint src=-5/2 dst=7 rn.x",0
-wy_26_33:	dc.b	"fint src=-5/2 dst=7 rz.x",0
-wy_26_34:	dc.b	"fint src=-5/2 dst=7 rm.x",0
-wy_26_35:	dc.b	"fint src=-5/2 dst=7 rp.x",0
-wy_26_36:	dc.b	"fint src=2^-1 dst=7 rn.x",0
-wy_26_37:	dc.b	"fint src=2^-1 dst=7 rz.x",0
-wy_26_38:	dc.b	"fint src=2^-1 dst=7 rm.x",0
-wy_26_39:	dc.b	"fint src=2^-1 dst=7 rp.x",0
-wy_26_40:	dc.b	"fint src=-2^-1 dst=7 rn.x",0
-wy_26_41:	dc.b	"fint src=-2^-1 dst=7 rz.x",0
-wy_26_42:	dc.b	"fint src=-2^-1 dst=7 rm.x",0
-wy_26_43:	dc.b	"fint src=-2^-1 dst=7 rp.x",0
-wy_26_44:	dc.b	"fint src=m*2^1 dst=7 rn.x",0
-wy_26_45:	dc.b	"fint src=m*2^1 dst=7 rz.x",0
-wy_26_46:	dc.b	"fint src=m*2^1 dst=7 rm.x",0
-wy_26_47:	dc.b	"fint src=m*2^1 dst=7 rp.x",0
-wy_26_48:	dc.b	"fint src=-m*2^1 dst=7 rn.x",0
-wy_26_49:	dc.b	"fint src=-m*2^1 dst=7 rz.x",0
-wy_26_50:	dc.b	"fint src=-m*2^1 dst=7 rm.x",0
-wy_26_51:	dc.b	"fint src=-m*2^1 dst=7 rp.x",0
-wy_26_52:	dc.b	"fint src=2^70 dst=7 rn.x",0
-wy_26_53:	dc.b	"fint src=2^70 dst=7 rz.x",0
-wy_26_54:	dc.b	"fint src=2^70 dst=7 rm.x",0
-wy_26_55:	dc.b	"fint src=2^70 dst=7 rp.x",0
-wy_26_56:	dc.b	"fint src=3/4 dst=7 rn.x",0
-wy_26_57:	dc.b	"fint src=3/4 dst=7 rz.x",0
-wy_26_58:	dc.b	"fint src=3/4 dst=7 rm.x",0
-wy_26_59:	dc.b	"fint src=3/4 dst=7 rp.x",0
-gn_27:	dc.b	"arith_fintrz",0
-wy_27_0:	dc.b	"fintrz src=+0 dst=7 rn.x",0
-wy_27_1:	dc.b	"fintrz src=+0 dst=7 rp.x",0
-wy_27_2:	dc.b	"fintrz src=-0 dst=7 rn.x",0
-wy_27_3:	dc.b	"fintrz src=-0 dst=7 rp.x",0
-wy_27_4:	dc.b	"fintrz src=+inf dst=7 rn.x",0
-wy_27_5:	dc.b	"fintrz src=+inf dst=7 rp.x",0
-wy_27_6:	dc.b	"fintrz src=-inf dst=7 rn.x",0
-wy_27_7:	dc.b	"fintrz src=-inf dst=7 rp.x",0
-wy_27_8:	dc.b	"fintrz src=qnan dst=7 rn.x",0
-wy_27_9:	dc.b	"fintrz src=qnan dst=7 rp.x",0
-wy_27_10:	dc.b	"fintrz src=snan dst=7 rn.x",0
-wy_27_11:	dc.b	"fintrz src=snan dst=7 rp.x",0
-wy_27_12:	dc.b	"fintrz src=5/2 dst=7 rn.x",0
-wy_27_13:	dc.b	"fintrz src=5/2 dst=7 rp.x",0
-wy_27_14:	dc.b	"fintrz src=7/2 dst=7 rn.x",0
-wy_27_15:	dc.b	"fintrz src=7/2 dst=7 rp.x",0
-wy_27_16:	dc.b	"fintrz src=-5/2 dst=7 rn.x",0
-wy_27_17:	dc.b	"fintrz src=-5/2 dst=7 rp.x",0
-wy_27_18:	dc.b	"fintrz src=2^-1 dst=7 rn.x",0
-wy_27_19:	dc.b	"fintrz src=2^-1 dst=7 rp.x",0
-wy_27_20:	dc.b	"fintrz src=-2^-1 dst=7 rn.x",0
-wy_27_21:	dc.b	"fintrz src=-2^-1 dst=7 rp.x",0
-wy_27_22:	dc.b	"fintrz src=m*2^1 dst=7 rn.x",0
-wy_27_23:	dc.b	"fintrz src=m*2^1 dst=7 rp.x",0
-wy_27_24:	dc.b	"fintrz src=-m*2^1 dst=7 rn.x",0
-wy_27_25:	dc.b	"fintrz src=-m*2^1 dst=7 rp.x",0
-wy_27_26:	dc.b	"fintrz src=2^70 dst=7 rn.x",0
-wy_27_27:	dc.b	"fintrz src=2^70 dst=7 rp.x",0
-wy_27_28:	dc.b	"fintrz src=3/4 dst=7 rn.x",0
-wy_27_29:	dc.b	"fintrz src=3/4 dst=7 rp.x",0
-gn_28:	dc.b	"arith_fgetexp",0
-wy_28_0:	dc.b	"fgetexp src=+0 dst=7 rn.x",0
-wy_28_1:	dc.b	"fgetexp src=-0 dst=7 rn.x",0
-wy_28_2:	dc.b	"fgetexp src=+inf dst=7 rn.x",0
-wy_28_3:	dc.b	"fgetexp src=-inf dst=7 rn.x",0
-wy_28_4:	dc.b	"fgetexp src=qnan dst=7 rn.x",0
-wy_28_5:	dc.b	"fgetexp src=snan dst=7 rn.x",0
-wy_28_6:	dc.b	"fgetexp src=8 dst=7 rn.x",0
-wy_28_7:	dc.b	"fgetexp src=3/4 dst=7 rn.x",0
-wy_28_8:	dc.b	"fgetexp src=-1 dst=7 rn.x",0
-wy_28_9:	dc.b	"fgetexp src=m*2^16383 dst=7 rn.x",0
-wy_28_10:	dc.b	"fgetexp src=2^-16000 dst=7 rn.x",0
-gn_29:	dc.b	"arith_fgetman",0
-wy_29_0:	dc.b	"fgetman src=+0 dst=7 rn.x",0
-wy_29_1:	dc.b	"fgetman src=-0 dst=7 rn.x",0
-wy_29_2:	dc.b	"fgetman src=+inf dst=7 rn.x",0
-wy_29_3:	dc.b	"fgetman src=-inf dst=7 rn.x",0
-wy_29_4:	dc.b	"fgetman src=qnan dst=7 rn.x",0
-wy_29_5:	dc.b	"fgetman src=snan dst=7 rn.x",0
-wy_29_6:	dc.b	"fgetman src=12 dst=7 rn.x",0
-wy_29_7:	dc.b	"fgetman src=-3/4 dst=7 rn.x",0
-wy_29_8:	dc.b	"fgetman src=m*2^16383 dst=7 rn.x",0
-wy_29_9:	dc.b	"fgetman src=m*2^-15999 dst=7 rn.x",0
-gn_30:	dc.b	"arith_fscale",0
-wy_30_0:	dc.b	"fscale src=+0 dst=+0 rn.x",0
-wy_30_1:	dc.b	"fscale src=-0 dst=+0 rn.x",0
-wy_30_2:	dc.b	"fscale src=+inf dst=+0 rn.x",0
-wy_30_3:	dc.b	"fscale src=-inf dst=+0 rn.x",0
-wy_30_4:	dc.b	"fscale src=qnan dst=+0 rn.x",0
-wy_30_5:	dc.b	"fscale src=snan dst=+0 rn.x",0
-wy_30_6:	dc.b	"fscale src=1 dst=+0 rn.x",0
-wy_30_7:	dc.b	"fscale src=-3 dst=+0 rn.x",0
-wy_30_8:	dc.b	"fscale src=+0 dst=-0 rn.x",0
-wy_30_9:	dc.b	"fscale src=-0 dst=-0 rn.x",0
-wy_30_10:	dc.b	"fscale src=+inf dst=-0 rn.x",0
-wy_30_11:	dc.b	"fscale src=-inf dst=-0 rn.x",0
-wy_30_12:	dc.b	"fscale src=qnan dst=-0 rn.x",0
-wy_30_13:	dc.b	"fscale src=snan dst=-0 rn.x",0
-wy_30_14:	dc.b	"fscale src=1 dst=-0 rn.x",0
-wy_30_15:	dc.b	"fscale src=-3 dst=-0 rn.x",0
-wy_30_16:	dc.b	"fscale src=+0 dst=+inf rn.x",0
-wy_30_17:	dc.b	"fscale src=-0 dst=+inf rn.x",0
-wy_30_18:	dc.b	"fscale src=+inf dst=+inf rn.x",0
-wy_30_19:	dc.b	"fscale src=-inf dst=+inf rn.x",0
-wy_30_20:	dc.b	"fscale src=qnan dst=+inf rn.x",0
-wy_30_21:	dc.b	"fscale src=snan dst=+inf rn.x",0
-wy_30_22:	dc.b	"fscale src=1 dst=+inf rn.x",0
-wy_30_23:	dc.b	"fscale src=-3 dst=+inf rn.x",0
-wy_30_24:	dc.b	"fscale src=+0 dst=-inf rn.x",0
-wy_30_25:	dc.b	"fscale src=-0 dst=-inf rn.x",0
-wy_30_26:	dc.b	"fscale src=+inf dst=-inf rn.x",0
-wy_30_27:	dc.b	"fscale src=-inf dst=-inf rn.x",0
-wy_30_28:	dc.b	"fscale src=qnan dst=-inf rn.x",0
-wy_30_29:	dc.b	"fscale src=snan dst=-inf rn.x",0
-wy_30_30:	dc.b	"fscale src=1 dst=-inf rn.x",0
-wy_30_31:	dc.b	"fscale src=-3 dst=-inf rn.x",0
-wy_30_32:	dc.b	"fscale src=+0 dst=qnan rn.x",0
-wy_30_33:	dc.b	"fscale src=-0 dst=qnan rn.x",0
-wy_30_34:	dc.b	"fscale src=+inf dst=qnan rn.x",0
-wy_30_35:	dc.b	"fscale src=-inf dst=qnan rn.x",0
-wy_30_36:	dc.b	"fscale src=qnan dst=qnan rn.x",0
-wy_30_37:	dc.b	"fscale src=snan dst=qnan rn.x",0
-wy_30_38:	dc.b	"fscale src=1 dst=qnan rn.x",0
-wy_30_39:	dc.b	"fscale src=-3 dst=qnan rn.x",0
-wy_30_40:	dc.b	"fscale src=+0 dst=snan rn.x",0
-wy_30_41:	dc.b	"fscale src=-0 dst=snan rn.x",0
-wy_30_42:	dc.b	"fscale src=+inf dst=snan rn.x",0
-wy_30_43:	dc.b	"fscale src=-inf dst=snan rn.x",0
-wy_30_44:	dc.b	"fscale src=qnan dst=snan rn.x",0
-wy_30_45:	dc.b	"fscale src=snan dst=snan rn.x",0
-wy_30_46:	dc.b	"fscale src=1 dst=snan rn.x",0
-wy_30_47:	dc.b	"fscale src=-3 dst=snan rn.x",0
-wy_30_48:	dc.b	"fscale src=+0 dst=1 rn.x",0
-wy_30_49:	dc.b	"fscale src=-0 dst=1 rn.x",0
-wy_30_50:	dc.b	"fscale src=+inf dst=1 rn.x",0
-wy_30_51:	dc.b	"fscale src=-inf dst=1 rn.x",0
-wy_30_52:	dc.b	"fscale src=qnan dst=1 rn.x",0
-wy_30_53:	dc.b	"fscale src=snan dst=1 rn.x",0
-wy_30_54:	dc.b	"fscale src=1 dst=1 rn.x",0
-wy_30_55:	dc.b	"fscale src=-3 dst=1 rn.x",0
-wy_30_56:	dc.b	"fscale src=+0 dst=-3 rn.x",0
-wy_30_57:	dc.b	"fscale src=-0 dst=-3 rn.x",0
-wy_30_58:	dc.b	"fscale src=+inf dst=-3 rn.x",0
-wy_30_59:	dc.b	"fscale src=-inf dst=-3 rn.x",0
-wy_30_60:	dc.b	"fscale src=qnan dst=-3 rn.x",0
-wy_30_61:	dc.b	"fscale src=snan dst=-3 rn.x",0
-wy_30_62:	dc.b	"fscale src=1 dst=-3 rn.x",0
-wy_30_63:	dc.b	"fscale src=-3 dst=-3 rn.x",0
-wy_30_64:	dc.b	"fscale src=3 dst=3/2 rn.x: 1.5 * 2^3",0
-wy_30_65:	dc.b	"fscale src=-1 dst=3/2 rn.x",0
-wy_30_66:	dc.b	"fscale src=m*2^1 dst=1 rn.x: scale factor truncated to 2",0
-wy_30_67:	dc.b	"fscale src=-m*2^1 dst=1 rn.x: scale factor truncated to -2",0
-wy_30_68:	dc.b	"fscale src=20000 dst=1 rn.x: overflow",0
-wy_30_69:	dc.b	"fscale src=20000 dst=1 rz.x: overflow",0
-wy_30_70:	dc.b	"fscale src=20000 dst=1 rm.x: overflow",0
-wy_30_71:	dc.b	"fscale src=20000 dst=1 rp.x: overflow",0
-gn_31:	dc.b	"arith_fmod",0
-wy_31_0:	dc.b	"fmod src=+0 dst=+0 rn.x",0
-wy_31_1:	dc.b	"fmod src=-0 dst=+0 rn.x",0
-wy_31_2:	dc.b	"fmod src=+inf dst=+0 rn.x",0
-wy_31_3:	dc.b	"fmod src=-inf dst=+0 rn.x",0
-wy_31_4:	dc.b	"fmod src=qnan dst=+0 rn.x",0
-wy_31_5:	dc.b	"fmod src=snan dst=+0 rn.x",0
-wy_31_6:	dc.b	"fmod src=1 dst=+0 rn.x",0
-wy_31_7:	dc.b	"fmod src=-3 dst=+0 rn.x",0
-wy_31_8:	dc.b	"fmod src=+0 dst=-0 rn.x",0
-wy_31_9:	dc.b	"fmod src=-0 dst=-0 rn.x",0
-wy_31_10:	dc.b	"fmod src=+inf dst=-0 rn.x",0
-wy_31_11:	dc.b	"fmod src=-inf dst=-0 rn.x",0
-wy_31_12:	dc.b	"fmod src=qnan dst=-0 rn.x",0
-wy_31_13:	dc.b	"fmod src=snan dst=-0 rn.x",0
-wy_31_14:	dc.b	"fmod src=1 dst=-0 rn.x",0
-wy_31_15:	dc.b	"fmod src=-3 dst=-0 rn.x",0
-wy_31_16:	dc.b	"fmod src=+0 dst=+inf rn.x",0
-wy_31_17:	dc.b	"fmod src=-0 dst=+inf rn.x",0
-wy_31_18:	dc.b	"fmod src=+inf dst=+inf rn.x",0
-wy_31_19:	dc.b	"fmod src=-inf dst=+inf rn.x",0
-wy_31_20:	dc.b	"fmod src=qnan dst=+inf rn.x",0
-wy_31_21:	dc.b	"fmod src=snan dst=+inf rn.x",0
-wy_31_22:	dc.b	"fmod src=1 dst=+inf rn.x",0
-wy_31_23:	dc.b	"fmod src=-3 dst=+inf rn.x",0
-wy_31_24:	dc.b	"fmod src=+0 dst=-inf rn.x",0
-wy_31_25:	dc.b	"fmod src=-0 dst=-inf rn.x",0
-wy_31_26:	dc.b	"fmod src=+inf dst=-inf rn.x",0
-wy_31_27:	dc.b	"fmod src=-inf dst=-inf rn.x",0
-wy_31_28:	dc.b	"fmod src=qnan dst=-inf rn.x",0
-wy_31_29:	dc.b	"fmod src=snan dst=-inf rn.x",0
-wy_31_30:	dc.b	"fmod src=1 dst=-inf rn.x",0
-wy_31_31:	dc.b	"fmod src=-3 dst=-inf rn.x",0
-wy_31_32:	dc.b	"fmod src=+0 dst=qnan rn.x",0
-wy_31_33:	dc.b	"fmod src=-0 dst=qnan rn.x",0
-wy_31_34:	dc.b	"fmod src=+inf dst=qnan rn.x",0
-wy_31_35:	dc.b	"fmod src=-inf dst=qnan rn.x",0
-wy_31_36:	dc.b	"fmod src=qnan dst=qnan rn.x",0
-wy_31_37:	dc.b	"fmod src=snan dst=qnan rn.x",0
-wy_31_38:	dc.b	"fmod src=1 dst=qnan rn.x",0
-wy_31_39:	dc.b	"fmod src=-3 dst=qnan rn.x",0
-wy_31_40:	dc.b	"fmod src=+0 dst=snan rn.x",0
-wy_31_41:	dc.b	"fmod src=-0 dst=snan rn.x",0
-wy_31_42:	dc.b	"fmod src=+inf dst=snan rn.x",0
-wy_31_43:	dc.b	"fmod src=-inf dst=snan rn.x",0
-wy_31_44:	dc.b	"fmod src=qnan dst=snan rn.x",0
-wy_31_45:	dc.b	"fmod src=snan dst=snan rn.x",0
-wy_31_46:	dc.b	"fmod src=1 dst=snan rn.x",0
-wy_31_47:	dc.b	"fmod src=-3 dst=snan rn.x",0
-wy_31_48:	dc.b	"fmod src=+0 dst=1 rn.x",0
-wy_31_49:	dc.b	"fmod src=-0 dst=1 rn.x",0
-wy_31_50:	dc.b	"fmod src=+inf dst=1 rn.x",0
-wy_31_51:	dc.b	"fmod src=-inf dst=1 rn.x",0
-wy_31_52:	dc.b	"fmod src=qnan dst=1 rn.x",0
-wy_31_53:	dc.b	"fmod src=snan dst=1 rn.x",0
-wy_31_54:	dc.b	"fmod src=1 dst=1 rn.x",0
-wy_31_55:	dc.b	"fmod src=-3 dst=1 rn.x",0
-wy_31_56:	dc.b	"fmod src=+0 dst=-3 rn.x",0
-wy_31_57:	dc.b	"fmod src=-0 dst=-3 rn.x",0
-wy_31_58:	dc.b	"fmod src=+inf dst=-3 rn.x",0
-wy_31_59:	dc.b	"fmod src=-inf dst=-3 rn.x",0
-wy_31_60:	dc.b	"fmod src=qnan dst=-3 rn.x",0
-wy_31_61:	dc.b	"fmod src=snan dst=-3 rn.x",0
-wy_31_62:	dc.b	"fmod src=1 dst=-3 rn.x",0
-wy_31_63:	dc.b	"fmod src=-3 dst=-3 rn.x",0
-wy_31_64:	dc.b	"fmod src=2 dst=7 rn.x: quotient byte = sign + low 7 bits of the quotient",0
-wy_31_65:	dc.b	"fmod src=2 dst=-7 rn.x: quotient byte = sign + low 7 bits of the quotient",0
-wy_31_66:	dc.b	"fmod src=-2 dst=7 rn.x: quotient byte = sign + low 7 bits of the quotient",0
-wy_31_67:	dc.b	"fmod src=-2 dst=-7 rn.x: quotient byte = sign + low 7 bits of the quotient",0
-wy_31_68:	dc.b	"fmod src=2 dst=5 rn.x: quotient byte = sign + low 7 bits of the quotient",0
-wy_31_69:	dc.b	"fmod src=2 dst=4 rn.x: quotient byte = sign + low 7 bits of the quotient",0
-wy_31_70:	dc.b	"fmod src=2 dst=-4 rn.x: quotient byte = sign + low 7 bits of the quotient",0
-wy_31_71:	dc.b	"fmod src=3/2 dst=11/2 rn.x: quotient byte = sign + low 7 bits of the quotient",0
-wy_31_72:	dc.b	"fmod src=3 dst=2^70 rn.x: quotient byte = sign + low 7 bits of the quotient",0
-wy_31_73:	dc.b	"fmod src=7 dst=2^70 rn.x: quotient byte = sign + low 7 bits of the quotient",0
-wy_31_74:	dc.b	"fmod src=3 dst=1 rn.x: quotient byte = sign + low 7 bits of the quotient",0
-wy_31_75:	dc.b	"fmod src=3 dst=2 rn.x: quotient byte = sign + low 7 bits of the quotient",0
-wy_31_76:	dc.b	"fmod src=1 dst=3/2 rn.x: quotient byte = sign + low 7 bits of the quotient",0
-wy_31_77:	dc.b	"fmod src=1 dst=5/2 rn.x: quotient byte = sign + low 7 bits of the quotient",0
-gn_32:	dc.b	"arith_frem",0
-wy_32_0:	dc.b	"frem src=+0 dst=+0 rn.x",0
-wy_32_1:	dc.b	"frem src=-0 dst=+0 rn.x",0
-wy_32_2:	dc.b	"frem src=+inf dst=+0 rn.x",0
-wy_32_3:	dc.b	"frem src=-inf dst=+0 rn.x",0
-wy_32_4:	dc.b	"frem src=qnan dst=+0 rn.x",0
-wy_32_5:	dc.b	"frem src=snan dst=+0 rn.x",0
-wy_32_6:	dc.b	"frem src=1 dst=+0 rn.x",0
-wy_32_7:	dc.b	"frem src=-3 dst=+0 rn.x",0
-wy_32_8:	dc.b	"frem src=+0 dst=-0 rn.x",0
-wy_32_9:	dc.b	"frem src=-0 dst=-0 rn.x",0
-wy_32_10:	dc.b	"frem src=+inf dst=-0 rn.x",0
-wy_32_11:	dc.b	"frem src=-inf dst=-0 rn.x",0
-wy_32_12:	dc.b	"frem src=qnan dst=-0 rn.x",0
-wy_32_13:	dc.b	"frem src=snan dst=-0 rn.x",0
-wy_32_14:	dc.b	"frem src=1 dst=-0 rn.x",0
-wy_32_15:	dc.b	"frem src=-3 dst=-0 rn.x",0
-wy_32_16:	dc.b	"frem src=+0 dst=+inf rn.x",0
-wy_32_17:	dc.b	"frem src=-0 dst=+inf rn.x",0
-wy_32_18:	dc.b	"frem src=+inf dst=+inf rn.x",0
-wy_32_19:	dc.b	"frem src=-inf dst=+inf rn.x",0
-wy_32_20:	dc.b	"frem src=qnan dst=+inf rn.x",0
-wy_32_21:	dc.b	"frem src=snan dst=+inf rn.x",0
-wy_32_22:	dc.b	"frem src=1 dst=+inf rn.x",0
-wy_32_23:	dc.b	"frem src=-3 dst=+inf rn.x",0
-wy_32_24:	dc.b	"frem src=+0 dst=-inf rn.x",0
-wy_32_25:	dc.b	"frem src=-0 dst=-inf rn.x",0
-wy_32_26:	dc.b	"frem src=+inf dst=-inf rn.x",0
-wy_32_27:	dc.b	"frem src=-inf dst=-inf rn.x",0
-wy_32_28:	dc.b	"frem src=qnan dst=-inf rn.x",0
-wy_32_29:	dc.b	"frem src=snan dst=-inf rn.x",0
-wy_32_30:	dc.b	"frem src=1 dst=-inf rn.x",0
-wy_32_31:	dc.b	"frem src=-3 dst=-inf rn.x",0
-wy_32_32:	dc.b	"frem src=+0 dst=qnan rn.x",0
-wy_32_33:	dc.b	"frem src=-0 dst=qnan rn.x",0
-wy_32_34:	dc.b	"frem src=+inf dst=qnan rn.x",0
-wy_32_35:	dc.b	"frem src=-inf dst=qnan rn.x",0
-wy_32_36:	dc.b	"frem src=qnan dst=qnan rn.x",0
-wy_32_37:	dc.b	"frem src=snan dst=qnan rn.x",0
-wy_32_38:	dc.b	"frem src=1 dst=qnan rn.x",0
-wy_32_39:	dc.b	"frem src=-3 dst=qnan rn.x",0
-wy_32_40:	dc.b	"frem src=+0 dst=snan rn.x",0
-wy_32_41:	dc.b	"frem src=-0 dst=snan rn.x",0
-wy_32_42:	dc.b	"frem src=+inf dst=snan rn.x",0
-wy_32_43:	dc.b	"frem src=-inf dst=snan rn.x",0
-wy_32_44:	dc.b	"frem src=qnan dst=snan rn.x",0
-wy_32_45:	dc.b	"frem src=snan dst=snan rn.x",0
-wy_32_46:	dc.b	"frem src=1 dst=snan rn.x",0
-wy_32_47:	dc.b	"frem src=-3 dst=snan rn.x",0
-wy_32_48:	dc.b	"frem src=+0 dst=1 rn.x",0
-wy_32_49:	dc.b	"frem src=-0 dst=1 rn.x",0
-wy_32_50:	dc.b	"frem src=+inf dst=1 rn.x",0
-wy_32_51:	dc.b	"frem src=-inf dst=1 rn.x",0
-wy_32_52:	dc.b	"frem src=qnan dst=1 rn.x",0
-wy_32_53:	dc.b	"frem src=snan dst=1 rn.x",0
-wy_32_54:	dc.b	"frem src=1 dst=1 rn.x",0
-wy_32_55:	dc.b	"frem src=-3 dst=1 rn.x",0
-wy_32_56:	dc.b	"frem src=+0 dst=-3 rn.x",0
-wy_32_57:	dc.b	"frem src=-0 dst=-3 rn.x",0
-wy_32_58:	dc.b	"frem src=+inf dst=-3 rn.x",0
-wy_32_59:	dc.b	"frem src=-inf dst=-3 rn.x",0
-wy_32_60:	dc.b	"frem src=qnan dst=-3 rn.x",0
-wy_32_61:	dc.b	"frem src=snan dst=-3 rn.x",0
-wy_32_62:	dc.b	"frem src=1 dst=-3 rn.x",0
-wy_32_63:	dc.b	"frem src=-3 dst=-3 rn.x",0
-wy_32_64:	dc.b	"frem src=2 dst=7 rn.x: quotient byte = sign + low 7 bits of the quotient",0
-wy_32_65:	dc.b	"frem src=2 dst=-7 rn.x: quotient byte = sign + low 7 bits of the quotient",0
-wy_32_66:	dc.b	"frem src=-2 dst=7 rn.x: quotient byte = sign + low 7 bits of the quotient",0
-wy_32_67:	dc.b	"frem src=-2 dst=-7 rn.x: quotient byte = sign + low 7 bits of the quotient",0
-wy_32_68:	dc.b	"frem src=2 dst=5 rn.x: quotient byte = sign + low 7 bits of the quotient",0
-wy_32_69:	dc.b	"frem src=2 dst=4 rn.x: quotient byte = sign + low 7 bits of the quotient",0
-wy_32_70:	dc.b	"frem src=2 dst=-4 rn.x: quotient byte = sign + low 7 bits of the quotient",0
-wy_32_71:	dc.b	"frem src=3/2 dst=11/2 rn.x: quotient byte = sign + low 7 bits of the quotient",0
-wy_32_72:	dc.b	"frem src=3 dst=2^70 rn.x: quotient byte = sign + low 7 bits of the quotient",0
-wy_32_73:	dc.b	"frem src=7 dst=2^70 rn.x: quotient byte = sign + low 7 bits of the quotient",0
-wy_32_74:	dc.b	"frem src=3 dst=1 rn.x: quotient byte = sign + low 7 bits of the quotient",0
-wy_32_75:	dc.b	"frem src=3 dst=2 rn.x: quotient byte = sign + low 7 bits of the quotient",0
-wy_32_76:	dc.b	"frem src=1 dst=3/2 rn.x: quotient byte = sign + low 7 bits of the quotient",0
-wy_32_77:	dc.b	"frem src=1 dst=5/2 rn.x: quotient byte = sign + low 7 bits of the quotient",0
-gn_33:	dc.b	"arith_fsglmul",0
-wy_33_0:	dc.b	"fsglmul src=m*2^0 dst=1 rn.x: both input mantissas truncated to 24 bits before multiplication",0
-wy_33_1:	dc.b	"fsglmul src=m*2^0 dst=1 rn.s: both input mantissas truncated to 24 bits before multiplication",0
-wy_33_2:	dc.b	"fsglmul src=m*2^0 dst=1 rn.d: both input mantissas truncated to 24 bits before multiplication",0
-wy_33_3:	dc.b	"fsglmul src=1 dst=m*2^0 rn.x: both input mantissas truncated to 24 bits before multiplication",0
-wy_33_4:	dc.b	"fsglmul src=1 dst=m*2^0 rn.s: both input mantissas truncated to 24 bits before multiplication",0
-wy_33_5:	dc.b	"fsglmul src=1 dst=m*2^0 rn.d: both input mantissas truncated to 24 bits before multiplication",0
-wy_33_6:	dc.b	"fsglmul src=-m*2^0 dst=1 rn.x: both input mantissas truncated to 24 bits before multiplication",0
-wy_33_7:	dc.b	"fsglmul src=-m*2^0 dst=1 rn.s: both input mantissas truncated to 24 bits before multiplication",0
-wy_33_8:	dc.b	"fsglmul src=-m*2^0 dst=1 rn.d: both input mantissas truncated to 24 bits before multiplication",0
-wy_33_9:	dc.b	"fsglmul src=m*2^0 dst=m*2^0 rn.x: both input mantissas truncated to 24 bits before multiplication",0
-wy_33_10:	dc.b	"fsglmul src=m*2^0 dst=m*2^0 rn.s: both input mantissas truncated to 24 bits before multiplication",0
-wy_33_11:	dc.b	"fsglmul src=m*2^0 dst=m*2^0 rn.d: both input mantissas truncated to 24 bits before multiplication",0
-wy_33_12:	dc.b	"fsglmul src=m*2^0 dst=m*2^0 rn.x: product rounded to single precision, any FPCR precision",0
-wy_33_13:	dc.b	"fsglmul src=3 dst=5 rn.d",0
-wy_33_14:	dc.b	"fsglmul src=m*2^201 dst=m*2^202 rn.x: extended exponent range is kept",0
-wy_33_15:	dc.b	"fsglmul src=m*2^0 dst=1 rz.x: both input mantissas truncated to 24 bits before multiplication",0
-wy_33_16:	dc.b	"fsglmul src=m*2^0 dst=1 rz.s: both input mantissas truncated to 24 bits before multiplication",0
-wy_33_17:	dc.b	"fsglmul src=m*2^0 dst=1 rz.d: both input mantissas truncated to 24 bits before multiplication",0
-wy_33_18:	dc.b	"fsglmul src=1 dst=m*2^0 rz.x: both input mantissas truncated to 24 bits before multiplication",0
-wy_33_19:	dc.b	"fsglmul src=1 dst=m*2^0 rz.s: both input mantissas truncated to 24 bits before multiplication",0
-wy_33_20:	dc.b	"fsglmul src=1 dst=m*2^0 rz.d: both input mantissas truncated to 24 bits before multiplication",0
-wy_33_21:	dc.b	"fsglmul src=-m*2^0 dst=1 rz.x: both input mantissas truncated to 24 bits before multiplication",0
-wy_33_22:	dc.b	"fsglmul src=-m*2^0 dst=1 rz.s: both input mantissas truncated to 24 bits before multiplication",0
-wy_33_23:	dc.b	"fsglmul src=-m*2^0 dst=1 rz.d: both input mantissas truncated to 24 bits before multiplication",0
-wy_33_24:	dc.b	"fsglmul src=m*2^0 dst=m*2^0 rz.x: both input mantissas truncated to 24 bits before multiplication",0
-wy_33_25:	dc.b	"fsglmul src=m*2^0 dst=m*2^0 rz.s: both input mantissas truncated to 24 bits before multiplication",0
-wy_33_26:	dc.b	"fsglmul src=m*2^0 dst=m*2^0 rz.d: both input mantissas truncated to 24 bits before multiplication",0
-wy_33_27:	dc.b	"fsglmul src=m*2^0 dst=m*2^0 rz.x: product rounded to single precision, any FPCR precision",0
-wy_33_28:	dc.b	"fsglmul src=3 dst=5 rz.d",0
-wy_33_29:	dc.b	"fsglmul src=m*2^201 dst=m*2^202 rz.x: extended exponent range is kept",0
-wy_33_30:	dc.b	"fsglmul src=m*2^0 dst=1 rm.x: both input mantissas truncated to 24 bits before multiplication",0
-wy_33_31:	dc.b	"fsglmul src=m*2^0 dst=1 rm.s: both input mantissas truncated to 24 bits before multiplication",0
-wy_33_32:	dc.b	"fsglmul src=m*2^0 dst=1 rm.d: both input mantissas truncated to 24 bits before multiplication",0
-wy_33_33:	dc.b	"fsglmul src=1 dst=m*2^0 rm.x: both input mantissas truncated to 24 bits before multiplication",0
-wy_33_34:	dc.b	"fsglmul src=1 dst=m*2^0 rm.s: both input mantissas truncated to 24 bits before multiplication",0
-wy_33_35:	dc.b	"fsglmul src=1 dst=m*2^0 rm.d: both input mantissas truncated to 24 bits before multiplication",0
-wy_33_36:	dc.b	"fsglmul src=-m*2^0 dst=1 rm.x: both input mantissas truncated to 24 bits before multiplication",0
-wy_33_37:	dc.b	"fsglmul src=-m*2^0 dst=1 rm.s: both input mantissas truncated to 24 bits before multiplication",0
-wy_33_38:	dc.b	"fsglmul src=-m*2^0 dst=1 rm.d: both input mantissas truncated to 24 bits before multiplication",0
-wy_33_39:	dc.b	"fsglmul src=m*2^0 dst=m*2^0 rm.x: both input mantissas truncated to 24 bits before multiplication",0
-wy_33_40:	dc.b	"fsglmul src=m*2^0 dst=m*2^0 rm.s: both input mantissas truncated to 24 bits before multiplication",0
-wy_33_41:	dc.b	"fsglmul src=m*2^0 dst=m*2^0 rm.d: both input mantissas truncated to 24 bits before multiplication",0
-wy_33_42:	dc.b	"fsglmul src=m*2^0 dst=m*2^0 rm.x: product rounded to single precision, any FPCR precision",0
-wy_33_43:	dc.b	"fsglmul src=3 dst=5 rm.d",0
-wy_33_44:	dc.b	"fsglmul src=m*2^201 dst=m*2^202 rm.x: extended exponent range is kept",0
-wy_33_45:	dc.b	"fsglmul src=m*2^0 dst=1 rp.x: both input mantissas truncated to 24 bits before multiplication",0
-wy_33_46:	dc.b	"fsglmul src=m*2^0 dst=1 rp.s: both input mantissas truncated to 24 bits before multiplication",0
-wy_33_47:	dc.b	"fsglmul src=m*2^0 dst=1 rp.d: both input mantissas truncated to 24 bits before multiplication",0
-wy_33_48:	dc.b	"fsglmul src=1 dst=m*2^0 rp.x: both input mantissas truncated to 24 bits before multiplication",0
-wy_33_49:	dc.b	"fsglmul src=1 dst=m*2^0 rp.s: both input mantissas truncated to 24 bits before multiplication",0
-wy_33_50:	dc.b	"fsglmul src=1 dst=m*2^0 rp.d: both input mantissas truncated to 24 bits before multiplication",0
-wy_33_51:	dc.b	"fsglmul src=-m*2^0 dst=1 rp.x: both input mantissas truncated to 24 bits before multiplication",0
-wy_33_52:	dc.b	"fsglmul src=-m*2^0 dst=1 rp.s: both input mantissas truncated to 24 bits before multiplication",0
-wy_33_53:	dc.b	"fsglmul src=-m*2^0 dst=1 rp.d: both input mantissas truncated to 24 bits before multiplication",0
-wy_33_54:	dc.b	"fsglmul src=m*2^0 dst=m*2^0 rp.x: both input mantissas truncated to 24 bits before multiplication",0
-wy_33_55:	dc.b	"fsglmul src=m*2^0 dst=m*2^0 rp.s: both input mantissas truncated to 24 bits before multiplication",0
-wy_33_56:	dc.b	"fsglmul src=m*2^0 dst=m*2^0 rp.d: both input mantissas truncated to 24 bits before multiplication",0
-wy_33_57:	dc.b	"fsglmul src=m*2^0 dst=m*2^0 rp.x: product rounded to single precision, any FPCR precision",0
-wy_33_58:	dc.b	"fsglmul src=3 dst=5 rp.d",0
-wy_33_59:	dc.b	"fsglmul src=m*2^201 dst=m*2^202 rp.x: extended exponent range is kept",0
-gn_34:	dc.b	"arith_fsgldiv",0
-wy_34_0:	dc.b	"fsgldiv src=3 dst=1 rn.x: 1/3 rounded to single precision",0
-wy_34_1:	dc.b	"fsgldiv src=3 dst=-2 rn.d",0
-wy_34_2:	dc.b	"fsgldiv src=m*2^-299 dst=2^300 rn.x: extended exponent range is kept",0
-wy_34_3:	dc.b	"fsgldiv src=3 dst=1 rz.x: 1/3 rounded to single precision",0
-wy_34_4:	dc.b	"fsgldiv src=3 dst=-2 rz.d",0
-wy_34_5:	dc.b	"fsgldiv src=m*2^-299 dst=2^300 rz.x: extended exponent range is kept",0
-wy_34_6:	dc.b	"fsgldiv src=3 dst=1 rm.x: 1/3 rounded to single precision",0
-wy_34_7:	dc.b	"fsgldiv src=3 dst=-2 rm.d",0
-wy_34_8:	dc.b	"fsgldiv src=m*2^-299 dst=2^300 rm.x: extended exponent range is kept",0
-wy_34_9:	dc.b	"fsgldiv src=3 dst=1 rp.x: 1/3 rounded to single precision",0
-wy_34_10:	dc.b	"fsgldiv src=3 dst=-2 rp.d",0
-wy_34_11:	dc.b	"fsgldiv src=m*2^-299 dst=2^300 rp.x: extended exponent range is kept",0
-wy_34_12:	dc.b	"fsgldiv src=+0 dst=1 rn.x: divide by zero",0
-gn_35:	dc.b	"arith_fsd_variants",0
-wy_35_0:	dc.b	"fsadd src=m*2^-2 dst=1 rn.x: rounded to s whatever the FPCR precision",0
-wy_35_1:	dc.b	"fsadd src=m*2^-2 dst=1 rn.d: rounded to s whatever the FPCR precision",0
-wy_35_2:	dc.b	"fsadd src=m*2^-2 dst=1 rz.x: rounded to s whatever the FPCR precision",0
-wy_35_3:	dc.b	"fsadd src=m*2^-2 dst=1 rz.d: rounded to s whatever the FPCR precision",0
-wy_35_4:	dc.b	"fsadd src=m*2^-2 dst=1 rm.x: rounded to s whatever the FPCR precision",0
-wy_35_5:	dc.b	"fsadd src=m*2^-2 dst=1 rm.d: rounded to s whatever the FPCR precision",0
-wy_35_6:	dc.b	"fsadd src=m*2^-2 dst=1 rp.x: rounded to s whatever the FPCR precision",0
-wy_35_7:	dc.b	"fsadd src=m*2^-2 dst=1 rp.d: rounded to s whatever the FPCR precision",0
-wy_35_8:	dc.b	"fsadd src=+inf dst=-inf rn.x",0
-wy_35_9:	dc.b	"fdadd src=m*2^-2 dst=1 rn.x: rounded to d whatever the FPCR precision",0
-wy_35_10:	dc.b	"fdadd src=m*2^-2 dst=1 rn.s: rounded to d whatever the FPCR precision",0
-wy_35_11:	dc.b	"fdadd src=m*2^-2 dst=1 rz.x: rounded to d whatever the FPCR precision",0
-wy_35_12:	dc.b	"fdadd src=m*2^-2 dst=1 rz.s: rounded to d whatever the FPCR precision",0
-wy_35_13:	dc.b	"fdadd src=m*2^-2 dst=1 rm.x: rounded to d whatever the FPCR precision",0
-wy_35_14:	dc.b	"fdadd src=m*2^-2 dst=1 rm.s: rounded to d whatever the FPCR precision",0
-wy_35_15:	dc.b	"fdadd src=m*2^-2 dst=1 rp.x: rounded to d whatever the FPCR precision",0
-wy_35_16:	dc.b	"fdadd src=m*2^-2 dst=1 rp.s: rounded to d whatever the FPCR precision",0
-wy_35_17:	dc.b	"fdadd src=+inf dst=-inf rn.x",0
-wy_35_18:	dc.b	"fssub src=m*2^-2 dst=1 rn.x: rounded to s whatever the FPCR precision",0
-wy_35_19:	dc.b	"fssub src=m*2^-2 dst=1 rn.d: rounded to s whatever the FPCR precision",0
-wy_35_20:	dc.b	"fssub src=m*2^-2 dst=1 rz.x: rounded to s whatever the FPCR precision",0
-wy_35_21:	dc.b	"fssub src=m*2^-2 dst=1 rz.d: rounded to s whatever the FPCR precision",0
-wy_35_22:	dc.b	"fssub src=m*2^-2 dst=1 rm.x: rounded to s whatever the FPCR precision",0
-wy_35_23:	dc.b	"fssub src=m*2^-2 dst=1 rm.d: rounded to s whatever the FPCR precision",0
-wy_35_24:	dc.b	"fssub src=m*2^-2 dst=1 rp.x: rounded to s whatever the FPCR precision",0
-wy_35_25:	dc.b	"fssub src=m*2^-2 dst=1 rp.d: rounded to s whatever the FPCR precision",0
-wy_35_26:	dc.b	"fssub src=+inf dst=-inf rn.x",0
-wy_35_27:	dc.b	"fdsub src=m*2^-2 dst=1 rn.x: rounded to d whatever the FPCR precision",0
-wy_35_28:	dc.b	"fdsub src=m*2^-2 dst=1 rn.s: rounded to d whatever the FPCR precision",0
-wy_35_29:	dc.b	"fdsub src=m*2^-2 dst=1 rz.x: rounded to d whatever the FPCR precision",0
-wy_35_30:	dc.b	"fdsub src=m*2^-2 dst=1 rz.s: rounded to d whatever the FPCR precision",0
-wy_35_31:	dc.b	"fdsub src=m*2^-2 dst=1 rm.x: rounded to d whatever the FPCR precision",0
-wy_35_32:	dc.b	"fdsub src=m*2^-2 dst=1 rm.s: rounded to d whatever the FPCR precision",0
-wy_35_33:	dc.b	"fdsub src=m*2^-2 dst=1 rp.x: rounded to d whatever the FPCR precision",0
-wy_35_34:	dc.b	"fdsub src=m*2^-2 dst=1 rp.s: rounded to d whatever the FPCR precision",0
-wy_35_35:	dc.b	"fdsub src=+inf dst=-inf rn.x",0
-wy_35_36:	dc.b	"fsmul src=m*2^-2 dst=1 rn.x: rounded to s whatever the FPCR precision",0
-wy_35_37:	dc.b	"fsmul src=m*2^-2 dst=1 rn.d: rounded to s whatever the FPCR precision",0
-wy_35_38:	dc.b	"fsmul src=m*2^-2 dst=1 rz.x: rounded to s whatever the FPCR precision",0
-wy_35_39:	dc.b	"fsmul src=m*2^-2 dst=1 rz.d: rounded to s whatever the FPCR precision",0
-wy_35_40:	dc.b	"fsmul src=m*2^-2 dst=1 rm.x: rounded to s whatever the FPCR precision",0
-wy_35_41:	dc.b	"fsmul src=m*2^-2 dst=1 rm.d: rounded to s whatever the FPCR precision",0
-wy_35_42:	dc.b	"fsmul src=m*2^-2 dst=1 rp.x: rounded to s whatever the FPCR precision",0
-wy_35_43:	dc.b	"fsmul src=m*2^-2 dst=1 rp.d: rounded to s whatever the FPCR precision",0
-wy_35_44:	dc.b	"fsmul src=+inf dst=-inf rn.x",0
-wy_35_45:	dc.b	"fdmul src=m*2^-2 dst=1 rn.x: rounded to d whatever the FPCR precision",0
-wy_35_46:	dc.b	"fdmul src=m*2^-2 dst=1 rn.s: rounded to d whatever the FPCR precision",0
-wy_35_47:	dc.b	"fdmul src=m*2^-2 dst=1 rz.x: rounded to d whatever the FPCR precision",0
-wy_35_48:	dc.b	"fdmul src=m*2^-2 dst=1 rz.s: rounded to d whatever the FPCR precision",0
-wy_35_49:	dc.b	"fdmul src=m*2^-2 dst=1 rm.x: rounded to d whatever the FPCR precision",0
-wy_35_50:	dc.b	"fdmul src=m*2^-2 dst=1 rm.s: rounded to d whatever the FPCR precision",0
-wy_35_51:	dc.b	"fdmul src=m*2^-2 dst=1 rp.x: rounded to d whatever the FPCR precision",0
-wy_35_52:	dc.b	"fdmul src=m*2^-2 dst=1 rp.s: rounded to d whatever the FPCR precision",0
-wy_35_53:	dc.b	"fdmul src=+inf dst=-inf rn.x",0
-wy_35_54:	dc.b	"fsdiv src=3 dst=1 rn.x: rounded to s whatever the FPCR precision",0
-wy_35_55:	dc.b	"fsdiv src=3 dst=1 rn.d: rounded to s whatever the FPCR precision",0
-wy_35_56:	dc.b	"fsdiv src=3 dst=1 rz.x: rounded to s whatever the FPCR precision",0
-wy_35_57:	dc.b	"fsdiv src=3 dst=1 rz.d: rounded to s whatever the FPCR precision",0
-wy_35_58:	dc.b	"fsdiv src=3 dst=1 rm.x: rounded to s whatever the FPCR precision",0
-wy_35_59:	dc.b	"fsdiv src=3 dst=1 rm.d: rounded to s whatever the FPCR precision",0
-wy_35_60:	dc.b	"fsdiv src=3 dst=1 rp.x: rounded to s whatever the FPCR precision",0
-wy_35_61:	dc.b	"fsdiv src=3 dst=1 rp.d: rounded to s whatever the FPCR precision",0
-wy_35_62:	dc.b	"fsdiv src=+inf dst=-inf rn.x",0
-wy_35_63:	dc.b	"fddiv src=3 dst=1 rn.x: rounded to d whatever the FPCR precision",0
-wy_35_64:	dc.b	"fddiv src=3 dst=1 rn.s: rounded to d whatever the FPCR precision",0
-wy_35_65:	dc.b	"fddiv src=3 dst=1 rz.x: rounded to d whatever the FPCR precision",0
-wy_35_66:	dc.b	"fddiv src=3 dst=1 rz.s: rounded to d whatever the FPCR precision",0
-wy_35_67:	dc.b	"fddiv src=3 dst=1 rm.x: rounded to d whatever the FPCR precision",0
-wy_35_68:	dc.b	"fddiv src=3 dst=1 rm.s: rounded to d whatever the FPCR precision",0
-wy_35_69:	dc.b	"fddiv src=3 dst=1 rp.x: rounded to d whatever the FPCR precision",0
-wy_35_70:	dc.b	"fddiv src=3 dst=1 rp.s: rounded to d whatever the FPCR precision",0
-wy_35_71:	dc.b	"fddiv src=+inf dst=-inf rn.x",0
-wy_35_72:	dc.b	"fsmove src=m*2^0 dst=7 rn.x: rounded to s",0
-wy_35_73:	dc.b	"fsmove src=m*2^0 dst=7 rz.x: rounded to s",0
-wy_35_74:	dc.b	"fsmove src=m*2^0 dst=7 rm.x: rounded to s",0
-wy_35_75:	dc.b	"fsmove src=m*2^0 dst=7 rp.x: rounded to s",0
-wy_35_76:	dc.b	"fdmove src=m*2^0 dst=7 rn.x: rounded to d",0
-wy_35_77:	dc.b	"fdmove src=m*2^0 dst=7 rz.x: rounded to d",0
-wy_35_78:	dc.b	"fdmove src=m*2^0 dst=7 rm.x: rounded to d",0
-wy_35_79:	dc.b	"fdmove src=m*2^0 dst=7 rp.x: rounded to d",0
-wy_35_80:	dc.b	"fssqrt src=2 dst=7 rn.x: rounded to s",0
-wy_35_81:	dc.b	"fssqrt src=2 dst=7 rz.x: rounded to s",0
-wy_35_82:	dc.b	"fssqrt src=2 dst=7 rm.x: rounded to s",0
-wy_35_83:	dc.b	"fssqrt src=2 dst=7 rp.x: rounded to s",0
-wy_35_84:	dc.b	"fdsqrt src=2 dst=7 rn.x: rounded to d",0
-wy_35_85:	dc.b	"fdsqrt src=2 dst=7 rz.x: rounded to d",0
-wy_35_86:	dc.b	"fdsqrt src=2 dst=7 rm.x: rounded to d",0
-wy_35_87:	dc.b	"fdsqrt src=2 dst=7 rp.x: rounded to d",0
-wy_35_88:	dc.b	"fsabs src=-m*2^0 dst=7 rn.x: rounded to s",0
-wy_35_89:	dc.b	"fsabs src=-m*2^0 dst=7 rz.x: rounded to s",0
-wy_35_90:	dc.b	"fsabs src=-m*2^0 dst=7 rm.x: rounded to s",0
-wy_35_91:	dc.b	"fsabs src=-m*2^0 dst=7 rp.x: rounded to s",0
-wy_35_92:	dc.b	"fdabs src=-m*2^0 dst=7 rn.x: rounded to d",0
-wy_35_93:	dc.b	"fdabs src=-m*2^0 dst=7 rz.x: rounded to d",0
-wy_35_94:	dc.b	"fdabs src=-m*2^0 dst=7 rm.x: rounded to d",0
-wy_35_95:	dc.b	"fdabs src=-m*2^0 dst=7 rp.x: rounded to d",0
-wy_35_96:	dc.b	"fsneg src=-m*2^0 dst=7 rn.x: rounded to s",0
-wy_35_97:	dc.b	"fsneg src=-m*2^0 dst=7 rz.x: rounded to s",0
-wy_35_98:	dc.b	"fsneg src=-m*2^0 dst=7 rm.x: rounded to s",0
-wy_35_99:	dc.b	"fsneg src=-m*2^0 dst=7 rp.x: rounded to s",0
-wy_35_100:	dc.b	"fdneg src=-m*2^0 dst=7 rn.x: rounded to d",0
-wy_35_101:	dc.b	"fdneg src=-m*2^0 dst=7 rz.x: rounded to d",0
-wy_35_102:	dc.b	"fdneg src=-m*2^0 dst=7 rm.x: rounded to d",0
-wy_35_103:	dc.b	"fdneg src=-m*2^0 dst=7 rp.x: rounded to d",0
-gn_36:	dc.b	"trans_fsin",0
-wy_36_0:	dc.b	"fsin src=2^-1 dst=7 rn.x: within 2 ulp of the exact value",0
-wy_36_1:	dc.b	"fsin src=1 dst=7 rn.x: within 2 ulp of the exact value",0
-wy_36_2:	dc.b	"fsin src=-3/2 dst=7 rn.x: within 2 ulp of the exact value",0
-wy_36_3:	dc.b	"fsin src=11 dst=7 rn.x: within 2 ulp of the exact value",0
-wy_36_4:	dc.b	"fsin src=m*2^-10 dst=7 rn.x: within 2 ulp of the exact value",0
-wy_36_5:	dc.b	"fsin src=2^-1 dst=7 rz.x: within 2 ulp (x) of the exact value",0
-wy_36_6:	dc.b	"fsin src=2^-1 dst=7 rm.x: within 2 ulp (x) of the exact value",0
-wy_36_7:	dc.b	"fsin src=2^-1 dst=7 rp.x: within 2 ulp (x) of the exact value",0
-wy_36_8:	dc.b	"fsin src=2^-1 dst=7 rn.s: within 2 ulp (s) of the exact value",0
-wy_36_9:	dc.b	"fsin src=2^-1 dst=7 rn.d: within 2 ulp (d) of the exact value",0
-wy_36_10:	dc.b	"fsin src=+0 dst=7 rn.x: special operand",0
-wy_36_11:	dc.b	"fsin src=-0 dst=7 rn.x: special operand",0
-wy_36_12:	dc.b	"fsin src=+inf dst=7 rn.x: special operand",0
-wy_36_13:	dc.b	"fsin src=qnan dst=7 rn.x: special operand",0
-gn_37:	dc.b	"trans_fcos",0
-wy_37_0:	dc.b	"fcos src=2^-1 dst=7 rn.x: within 2 ulp of the exact value",0
-wy_37_1:	dc.b	"fcos src=1 dst=7 rn.x: within 2 ulp of the exact value",0
-wy_37_2:	dc.b	"fcos src=-3 dst=7 rn.x: within 2 ulp of the exact value",0
-wy_37_3:	dc.b	"fcos src=19/2 dst=7 rn.x: within 2 ulp of the exact value",0
-wy_37_4:	dc.b	"fcos src=2^-1 dst=7 rz.x: within 2 ulp (x) of the exact value",0
-wy_37_5:	dc.b	"fcos src=2^-1 dst=7 rm.x: within 2 ulp (x) of the exact value",0
-wy_37_6:	dc.b	"fcos src=2^-1 dst=7 rp.x: within 2 ulp (x) of the exact value",0
-wy_37_7:	dc.b	"fcos src=2^-1 dst=7 rn.s: within 2 ulp (s) of the exact value",0
-wy_37_8:	dc.b	"fcos src=2^-1 dst=7 rn.d: within 2 ulp (d) of the exact value",0
-wy_37_9:	dc.b	"fcos src=+0 dst=7 rn.x: special operand",0
-wy_37_10:	dc.b	"fcos src=+inf dst=7 rn.x: special operand",0
-gn_38:	dc.b	"trans_ftan",0
-wy_38_0:	dc.b	"ftan src=2^-1 dst=7 rn.x: within 2 ulp of the exact value",0
-wy_38_1:	dc.b	"ftan src=1 dst=7 rn.x: within 2 ulp of the exact value",0
-wy_38_2:	dc.b	"ftan src=-3/4 dst=7 rn.x: within 2 ulp of the exact value",0
-wy_38_3:	dc.b	"ftan src=2^-1 dst=7 rz.x: within 2 ulp (x) of the exact value",0
-wy_38_4:	dc.b	"ftan src=2^-1 dst=7 rm.x: within 2 ulp (x) of the exact value",0
-wy_38_5:	dc.b	"ftan src=2^-1 dst=7 rp.x: within 2 ulp (x) of the exact value",0
-wy_38_6:	dc.b	"ftan src=2^-1 dst=7 rn.s: within 2 ulp (s) of the exact value",0
-wy_38_7:	dc.b	"ftan src=2^-1 dst=7 rn.d: within 2 ulp (d) of the exact value",0
-wy_38_8:	dc.b	"ftan src=+0 dst=7 rn.x: special operand",0
-wy_38_9:	dc.b	"ftan src=-0 dst=7 rn.x: special operand",0
-wy_38_10:	dc.b	"ftan src=-inf dst=7 rn.x: special operand",0
-gn_39:	dc.b	"trans_fetox",0
-wy_39_0:	dc.b	"fetox src=1 dst=7 rn.x: within 2 ulp of the exact value",0
-wy_39_1:	dc.b	"fetox src=-1 dst=7 rn.x: within 2 ulp of the exact value",0
-wy_39_2:	dc.b	"fetox src=2^-1 dst=7 rn.x: within 2 ulp of the exact value",0
-wy_39_3:	dc.b	"fetox src=3 dst=7 rn.x: within 2 ulp of the exact value",0
-wy_39_4:	dc.b	"fetox src=-2 dst=7 rn.x: within 2 ulp of the exact value",0
-wy_39_5:	dc.b	"fetox src=1 dst=7 rz.x: within 2 ulp (x) of the exact value",0
-wy_39_6:	dc.b	"fetox src=1 dst=7 rm.x: within 2 ulp (x) of the exact value",0
-wy_39_7:	dc.b	"fetox src=1 dst=7 rp.x: within 2 ulp (x) of the exact value",0
-wy_39_8:	dc.b	"fetox src=1 dst=7 rn.s: within 2 ulp (s) of the exact value",0
-wy_39_9:	dc.b	"fetox src=1 dst=7 rn.d: within 2 ulp (d) of the exact value",0
-wy_39_10:	dc.b	"fetox src=+0 dst=7 rn.x: special operand",0
-wy_39_11:	dc.b	"fetox src=+inf dst=7 rn.x: special operand",0
-wy_39_12:	dc.b	"fetox src=-inf dst=7 rn.x: special operand",0
-wy_39_13:	dc.b	"fetox src=qnan dst=7 rn.x: special operand",0
-gn_40:	dc.b	"trans_ftwotox",0
-wy_40_0:	dc.b	"ftwotox src=2^-1 dst=7 rn.x: within 2 ulp of the exact value",0
-wy_40_1:	dc.b	"ftwotox src=-3/2 dst=7 rn.x: within 2 ulp of the exact value",0
-wy_40_2:	dc.b	"ftwotox src=3 dst=7 rn.x: within 2 ulp of the exact value",0
-wy_40_3:	dc.b	"ftwotox src=2^-1 dst=7 rz.x: within 2 ulp (x) of the exact value",0
-wy_40_4:	dc.b	"ftwotox src=2^-1 dst=7 rm.x: within 2 ulp (x) of the exact value",0
-wy_40_5:	dc.b	"ftwotox src=2^-1 dst=7 rp.x: within 2 ulp (x) of the exact value",0
-wy_40_6:	dc.b	"ftwotox src=2^-1 dst=7 rn.s: within 2 ulp (s) of the exact value",0
-wy_40_7:	dc.b	"ftwotox src=2^-1 dst=7 rn.d: within 2 ulp (d) of the exact value",0
-wy_40_8:	dc.b	"ftwotox src=+0 dst=7 rn.x: special operand",0
-wy_40_9:	dc.b	"ftwotox src=-inf dst=7 rn.x: special operand",0
-gn_41:	dc.b	"trans_ftentox",0
-wy_41_0:	dc.b	"ftentox src=2^-1 dst=7 rn.x: within 2 ulp of the exact value",0
-wy_41_1:	dc.b	"ftentox src=1 dst=7 rn.x: within 2 ulp of the exact value",0
-wy_41_2:	dc.b	"ftentox src=2^-1 dst=7 rz.x: within 2 ulp (x) of the exact value",0
-wy_41_3:	dc.b	"ftentox src=2^-1 dst=7 rm.x: within 2 ulp (x) of the exact value",0
-wy_41_4:	dc.b	"ftentox src=2^-1 dst=7 rp.x: within 2 ulp (x) of the exact value",0
-wy_41_5:	dc.b	"ftentox src=2^-1 dst=7 rn.s: within 2 ulp (s) of the exact value",0
-wy_41_6:	dc.b	"ftentox src=2^-1 dst=7 rn.d: within 2 ulp (d) of the exact value",0
-wy_41_7:	dc.b	"ftentox src=+0 dst=7 rn.x: special operand",0
-wy_41_8:	dc.b	"ftentox src=+inf dst=7 rn.x: special operand",0
-gn_42:	dc.b	"trans_flogn",0
-wy_42_0:	dc.b	"flogn src=2 dst=7 rn.x: within 2 ulp of the exact value",0
-wy_42_1:	dc.b	"flogn src=10 dst=7 rn.x: within 2 ulp of the exact value",0
-wy_42_2:	dc.b	"flogn src=2^-1 dst=7 rn.x: within 2 ulp of the exact value",0
-wy_42_3:	dc.b	"flogn src=1000 dst=7 rn.x: within 2 ulp of the exact value",0
-wy_42_4:	dc.b	"flogn src=2 dst=7 rz.x: within 2 ulp (x) of the exact value",0
-wy_42_5:	dc.b	"flogn src=2 dst=7 rm.x: within 2 ulp (x) of the exact value",0
-wy_42_6:	dc.b	"flogn src=2 dst=7 rp.x: within 2 ulp (x) of the exact value",0
-wy_42_7:	dc.b	"flogn src=2 dst=7 rn.s: within 2 ulp (s) of the exact value",0
-wy_42_8:	dc.b	"flogn src=2 dst=7 rn.d: within 2 ulp (d) of the exact value",0
-wy_42_9:	dc.b	"flogn src=+0 dst=7 rn.x: special operand",0
-wy_42_10:	dc.b	"flogn src=-0 dst=7 rn.x: special operand",0
-wy_42_11:	dc.b	"flogn src=+inf dst=7 rn.x: special operand",0
-wy_42_12:	dc.b	"flogn src=-inf dst=7 rn.x: special operand",0
-wy_42_13:	dc.b	"flogn src=-1 dst=7 rn.x: special operand",0
-wy_42_14:	dc.b	"flogn src=1 dst=7 rn.x: special operand",0
-gn_43:	dc.b	"trans_flog2",0
-wy_43_0:	dc.b	"flog2 src=3 dst=7 rn.x: within 2 ulp of the exact value",0
-wy_43_1:	dc.b	"flog2 src=m*2^-2 dst=7 rn.x: within 2 ulp of the exact value",0
-wy_43_2:	dc.b	"flog2 src=1024 dst=7 rn.x: within 2 ulp of the exact value",0
-wy_43_3:	dc.b	"flog2 src=3 dst=7 rz.x: within 2 ulp (x) of the exact value",0
-wy_43_4:	dc.b	"flog2 src=3 dst=7 rm.x: within 2 ulp (x) of the exact value",0
-wy_43_5:	dc.b	"flog2 src=3 dst=7 rp.x: within 2 ulp (x) of the exact value",0
-wy_43_6:	dc.b	"flog2 src=3 dst=7 rn.s: within 2 ulp (s) of the exact value",0
-wy_43_7:	dc.b	"flog2 src=3 dst=7 rn.d: within 2 ulp (d) of the exact value",0
-wy_43_8:	dc.b	"flog2 src=+0 dst=7 rn.x: special operand",0
-wy_43_9:	dc.b	"flog2 src=1 dst=7 rn.x: special operand",0
-gn_44:	dc.b	"trans_flog10",0
-wy_44_0:	dc.b	"flog10 src=2 dst=7 rn.x: within 2 ulp of the exact value",0
-wy_44_1:	dc.b	"flog10 src=1000 dst=7 rn.x: within 2 ulp of the exact value",0
-wy_44_2:	dc.b	"flog10 src=m*2^-3 dst=7 rn.x: within 2 ulp of the exact value",0
-wy_44_3:	dc.b	"flog10 src=2 dst=7 rz.x: within 2 ulp (x) of the exact value",0
-wy_44_4:	dc.b	"flog10 src=2 dst=7 rm.x: within 2 ulp (x) of the exact value",0
-wy_44_5:	dc.b	"flog10 src=2 dst=7 rp.x: within 2 ulp (x) of the exact value",0
-wy_44_6:	dc.b	"flog10 src=2 dst=7 rn.s: within 2 ulp (s) of the exact value",0
-wy_44_7:	dc.b	"flog10 src=2 dst=7 rn.d: within 2 ulp (d) of the exact value",0
-wy_44_8:	dc.b	"flog10 src=1 dst=7 rn.x: special operand",0
-wy_44_9:	dc.b	"flog10 src=-2 dst=7 rn.x: special operand",0
-gn_45:	dc.b	"trans_fatan",0
-wy_45_0:	dc.b	"fatan src=2^-1 dst=7 rn.x: within 2 ulp of the exact value",0
-wy_45_1:	dc.b	"fatan src=1 dst=7 rn.x: within 2 ulp of the exact value",0
-wy_45_2:	dc.b	"fatan src=-2 dst=7 rn.x: within 2 ulp of the exact value",0
-wy_45_3:	dc.b	"fatan src=100 dst=7 rn.x: within 2 ulp of the exact value",0
-wy_45_4:	dc.b	"fatan src=2^-1 dst=7 rz.x: within 2 ulp (x) of the exact value",0
-wy_45_5:	dc.b	"fatan src=2^-1 dst=7 rm.x: within 2 ulp (x) of the exact value",0
-wy_45_6:	dc.b	"fatan src=2^-1 dst=7 rp.x: within 2 ulp (x) of the exact value",0
-wy_45_7:	dc.b	"fatan src=2^-1 dst=7 rn.s: within 2 ulp (s) of the exact value",0
-wy_45_8:	dc.b	"fatan src=2^-1 dst=7 rn.d: within 2 ulp (d) of the exact value",0
-wy_45_9:	dc.b	"fatan src=+0 dst=7 rn.x: special operand",0
-wy_45_10:	dc.b	"fatan src=-0 dst=7 rn.x: special operand",0
-wy_45_11:	dc.b	"fatan src=+inf dst=7 rn.x: special operand",0
-wy_45_12:	dc.b	"fatan src=-inf dst=7 rn.x: special operand",0
-gn_46:	dc.b	"trans_fsinh",0
-wy_46_0:	dc.b	"fsinh src=2^-1 dst=7 rn.x: within 2 ulp of the exact value",0
-wy_46_1:	dc.b	"fsinh src=-2 dst=7 rn.x: within 2 ulp of the exact value",0
-wy_46_2:	dc.b	"fsinh src=2^-1 dst=7 rz.x: within 2 ulp (x) of the exact value",0
-wy_46_3:	dc.b	"fsinh src=2^-1 dst=7 rm.x: within 2 ulp (x) of the exact value",0
-wy_46_4:	dc.b	"fsinh src=2^-1 dst=7 rp.x: within 2 ulp (x) of the exact value",0
-wy_46_5:	dc.b	"fsinh src=2^-1 dst=7 rn.s: within 2 ulp (s) of the exact value",0
-wy_46_6:	dc.b	"fsinh src=2^-1 dst=7 rn.d: within 2 ulp (d) of the exact value",0
-wy_46_7:	dc.b	"fsinh src=+0 dst=7 rn.x: special operand",0
-gn_47:	dc.b	"trans_fcosh",0
-wy_47_0:	dc.b	"fcosh src=2^-1 dst=7 rn.x: within 2 ulp of the exact value",0
-wy_47_1:	dc.b	"fcosh src=2 dst=7 rn.x: within 2 ulp of the exact value",0
-wy_47_2:	dc.b	"fcosh src=2^-1 dst=7 rz.x: within 2 ulp (x) of the exact value",0
-wy_47_3:	dc.b	"fcosh src=2^-1 dst=7 rm.x: within 2 ulp (x) of the exact value",0
-wy_47_4:	dc.b	"fcosh src=2^-1 dst=7 rp.x: within 2 ulp (x) of the exact value",0
-wy_47_5:	dc.b	"fcosh src=2^-1 dst=7 rn.s: within 2 ulp (s) of the exact value",0
-wy_47_6:	dc.b	"fcosh src=2^-1 dst=7 rn.d: within 2 ulp (d) of the exact value",0
-wy_47_7:	dc.b	"fcosh src=+0 dst=7 rn.x: special operand",0
-gn_48:	dc.b	"trans_ftanh",0
-wy_48_0:	dc.b	"ftanh src=2^-1 dst=7 rn.x: within 2 ulp of the exact value",0
-wy_48_1:	dc.b	"ftanh src=-1 dst=7 rn.x: within 2 ulp of the exact value",0
-wy_48_2:	dc.b	"ftanh src=2^-1 dst=7 rz.x: within 2 ulp (x) of the exact value",0
-wy_48_3:	dc.b	"ftanh src=2^-1 dst=7 rm.x: within 2 ulp (x) of the exact value",0
-wy_48_4:	dc.b	"ftanh src=2^-1 dst=7 rp.x: within 2 ulp (x) of the exact value",0
-wy_48_5:	dc.b	"ftanh src=2^-1 dst=7 rn.s: within 2 ulp (s) of the exact value",0
-wy_48_6:	dc.b	"ftanh src=2^-1 dst=7 rn.d: within 2 ulp (d) of the exact value",0
-wy_48_7:	dc.b	"ftanh src=-0 dst=7 rn.x: special operand",0
-gn_49:	dc.b	"trans_fasin",0
-wy_49_0:	dc.b	"fasin src=2^-1 dst=7 rn.x: within 2 ulp of the exact value",0
-wy_49_1:	dc.b	"fasin src=-2^-2 dst=7 rn.x: within 2 ulp of the exact value",0
-wy_49_2:	dc.b	"fasin src=m*2^-1 dst=7 rn.x: within 2 ulp of the exact value",0
-wy_49_3:	dc.b	"fasin src=-m*2^-2 dst=7 rn.x: within 2 ulp of the exact value",0
-wy_49_4:	dc.b	"fasin src=2^-1 dst=7 rz.x: within 2 ulp (x) of the exact value",0
-wy_49_5:	dc.b	"fasin src=2^-1 dst=7 rm.x: within 2 ulp (x) of the exact value",0
-wy_49_6:	dc.b	"fasin src=2^-1 dst=7 rp.x: within 2 ulp (x) of the exact value",0
-wy_49_7:	dc.b	"fasin src=2^-1 dst=7 rn.s: within 2 ulp (s) of the exact value",0
-wy_49_8:	dc.b	"fasin src=2^-1 dst=7 rn.d: within 2 ulp (d) of the exact value",0
-wy_49_9:	dc.b	"fasin src=+0 dst=7 rn.x: special operand",0
-wy_49_10:	dc.b	"fasin src=-0 dst=7 rn.x: special operand",0
-wy_49_11:	dc.b	"fasin src=1 dst=7 rn.x: special operand",0
-wy_49_12:	dc.b	"fasin src=-1 dst=7 rn.x: special operand",0
-wy_49_13:	dc.b	"fasin src=2 dst=7 rn.x: special operand",0
-wy_49_14:	dc.b	"fasin src=+inf dst=7 rn.x: special operand",0
-gn_50:	dc.b	"trans_facos",0
-wy_50_0:	dc.b	"facos src=2^-1 dst=7 rn.x: within 2 ulp of the exact value",0
-wy_50_1:	dc.b	"facos src=-3/4 dst=7 rn.x: within 2 ulp of the exact value",0
-wy_50_2:	dc.b	"facos src=m*2^-7 dst=7 rn.x: within 2 ulp of the exact value",0
-wy_50_3:	dc.b	"facos src=m*2^-1 dst=7 rn.x: within 2 ulp of the exact value",0
-wy_50_4:	dc.b	"facos src=2^-1 dst=7 rz.x: within 2 ulp (x) of the exact value",0
-wy_50_5:	dc.b	"facos src=2^-1 dst=7 rm.x: within 2 ulp (x) of the exact value",0
-wy_50_6:	dc.b	"facos src=2^-1 dst=7 rp.x: within 2 ulp (x) of the exact value",0
-wy_50_7:	dc.b	"facos src=2^-1 dst=7 rn.s: within 2 ulp (s) of the exact value",0
-wy_50_8:	dc.b	"facos src=2^-1 dst=7 rn.d: within 2 ulp (d) of the exact value",0
-wy_50_9:	dc.b	"facos src=+0 dst=7 rn.x: special operand",0
-wy_50_10:	dc.b	"facos src=1 dst=7 rn.x: special operand",0
-wy_50_11:	dc.b	"facos src=-1 dst=7 rn.x: special operand",0
-wy_50_12:	dc.b	"facos src=-2 dst=7 rn.x: special operand",0
-wy_50_13:	dc.b	"facos src=-inf dst=7 rn.x: special operand",0
-gn_51:	dc.b	"trans_fatanh",0
-wy_51_0:	dc.b	"fatanh src=2^-1 dst=7 rn.x: within 2 ulp of the exact value",0
-wy_51_1:	dc.b	"fatanh src=-m*2^-4 dst=7 rn.x: within 2 ulp of the exact value",0
-wy_51_2:	dc.b	"fatanh src=3/4 dst=7 rn.x: within 2 ulp of the exact value",0
-wy_51_3:	dc.b	"fatanh src=-m*2^-5 dst=7 rn.x: within 2 ulp of the exact value",0
-wy_51_4:	dc.b	"fatanh src=-m*2^-4 dst=7 rn.x: within 2 ulp of the exact value",0
-wy_51_5:	dc.b	"fatanh src=2^-1 dst=7 rz.x: within 2 ulp (x) of the exact value",0
-wy_51_6:	dc.b	"fatanh src=2^-1 dst=7 rm.x: within 2 ulp (x) of the exact value",0
-wy_51_7:	dc.b	"fatanh src=2^-1 dst=7 rp.x: within 2 ulp (x) of the exact value",0
-wy_51_8:	dc.b	"fatanh src=2^-1 dst=7 rn.s: within 2 ulp (s) of the exact value",0
-wy_51_9:	dc.b	"fatanh src=2^-1 dst=7 rn.d: within 2 ulp (d) of the exact value",0
-wy_51_10:	dc.b	"fatanh src=+0 dst=7 rn.x: special operand",0
-wy_51_11:	dc.b	"fatanh src=-0 dst=7 rn.x: special operand",0
-wy_51_12:	dc.b	"fatanh src=1 dst=7 rn.x: special operand",0
-wy_51_13:	dc.b	"fatanh src=-1 dst=7 rn.x: special operand",0
-wy_51_14:	dc.b	"fatanh src=2 dst=7 rn.x: special operand",0
-wy_51_15:	dc.b	"fatanh src=+inf dst=7 rn.x: special operand",0
-gn_52:	dc.b	"trans_fetoxm1",0
-wy_52_0:	dc.b	"fetoxm1 src=2^-1 dst=7 rn.x: within 2 ulp of the exact value",0
-wy_52_1:	dc.b	"fetoxm1 src=-1 dst=7 rn.x: within 2 ulp of the exact value",0
-wy_52_2:	dc.b	"fetoxm1 src=2 dst=7 rn.x: within 2 ulp of the exact value",0
-wy_52_3:	dc.b	"fetoxm1 src=m*2^-10 dst=7 rn.x: within 2 ulp of the exact value",0
-wy_52_4:	dc.b	"fetoxm1 src=-30 dst=7 rn.x: within 2 ulp of the exact value",0
-wy_52_5:	dc.b	"fetoxm1 src=2^-1 dst=7 rz.x: within 2 ulp (x) of the exact value",0
-wy_52_6:	dc.b	"fetoxm1 src=2^-1 dst=7 rm.x: within 2 ulp (x) of the exact value",0
-wy_52_7:	dc.b	"fetoxm1 src=2^-1 dst=7 rp.x: within 2 ulp (x) of the exact value",0
-wy_52_8:	dc.b	"fetoxm1 src=2^-1 dst=7 rn.s: within 2 ulp (s) of the exact value",0
-wy_52_9:	dc.b	"fetoxm1 src=2^-1 dst=7 rn.d: within 2 ulp (d) of the exact value",0
-wy_52_10:	dc.b	"fetoxm1 src=+0 dst=7 rn.x: special operand",0
-wy_52_11:	dc.b	"fetoxm1 src=-0 dst=7 rn.x: special operand",0
-wy_52_12:	dc.b	"fetoxm1 src=+inf dst=7 rn.x: special operand",0
-wy_52_13:	dc.b	"fetoxm1 src=-inf dst=7 rn.x: special operand",0
-gn_53:	dc.b	"trans_flognp1",0
-wy_53_0:	dc.b	"flognp1 src=2^-1 dst=7 rn.x: within 2 ulp of the exact value",0
-wy_53_1:	dc.b	"flognp1 src=-2^-1 dst=7 rn.x: within 2 ulp of the exact value",0
-wy_53_2:	dc.b	"flognp1 src=10 dst=7 rn.x: within 2 ulp of the exact value",0
-wy_53_3:	dc.b	"flognp1 src=m*2^-10 dst=7 rn.x: within 2 ulp of the exact value",0
-wy_53_4:	dc.b	"flognp1 src=-m*2^-3 dst=7 rn.x: within 2 ulp of the exact value",0
-wy_53_5:	dc.b	"flognp1 src=2^-1 dst=7 rz.x: within 2 ulp (x) of the exact value",0
-wy_53_6:	dc.b	"flognp1 src=2^-1 dst=7 rm.x: within 2 ulp (x) of the exact value",0
-wy_53_7:	dc.b	"flognp1 src=2^-1 dst=7 rp.x: within 2 ulp (x) of the exact value",0
-wy_53_8:	dc.b	"flognp1 src=2^-1 dst=7 rn.s: within 2 ulp (s) of the exact value",0
-wy_53_9:	dc.b	"flognp1 src=2^-1 dst=7 rn.d: within 2 ulp (d) of the exact value",0
-wy_53_10:	dc.b	"flognp1 src=+0 dst=7 rn.x: special operand",0
-wy_53_11:	dc.b	"flognp1 src=-0 dst=7 rn.x: special operand",0
-wy_53_12:	dc.b	"flognp1 src=-1 dst=7 rn.x: special operand",0
-wy_53_13:	dc.b	"flognp1 src=-2 dst=7 rn.x: special operand",0
-wy_53_14:	dc.b	"flognp1 src=+inf dst=7 rn.x: special operand",0
-wy_53_15:	dc.b	"flognp1 src=-inf dst=7 rn.x: special operand",0
-gn_54:	dc.b	"trans_fsincos",0
-wy_54_0:	dc.b	"fsincos src=2^-1 dst=7 rn.x: sin in FP0, cos in FP2",0
-wy_54_1:	dc.b	"fsincos src=-1 dst=7 rn.x: sin in FP0, cos in FP2",0
-wy_54_2:	dc.b	"fsincos src=-m*2^1 dst=7 rn.x: sin in FP0, cos in FP2",0
-wy_54_3:	dc.b	"fsincos src=2^-1 dst=7 rz.x: sin in FP0, cos in FP2, within 2 ulp (x)",0
-wy_54_4:	dc.b	"fsincos src=2^-1 dst=7 rm.x: sin in FP0, cos in FP2, within 2 ulp (x)",0
-wy_54_5:	dc.b	"fsincos src=2^-1 dst=7 rp.x: sin in FP0, cos in FP2, within 2 ulp (x)",0
-wy_54_6:	dc.b	"fsincos src=2^-1 dst=7 rn.s: sin in FP0, cos in FP2, within 2 ulp (s)",0
-wy_54_7:	dc.b	"fsincos src=2^-1 dst=7 rn.d: sin in FP0, cos in FP2, within 2 ulp (d)",0
-wy_54_8:	dc.b	"fsincos src=+0 dst=7 rn.x: sin(+0)=+0, cos(+0)=1",0
-wy_54_9:	dc.b	"fsincos src=+inf dst=7 rn.x: infinity: OPERR, both NaN",0
-gn_55:	dc.b	"trans_fmovecr",0
-wy_55_0:	dc.b	"fmovecr_00 src=- dst=7 rn.x: ROM constant pi (RN, X)",0
-wy_55_1:	dc.b	"fmovecr_0b src=- dst=7 rn.x: ROM constant log10(2) (RN, X)",0
-wy_55_2:	dc.b	"fmovecr_0c src=- dst=7 rn.x: ROM constant e (RN, X)",0
-wy_55_3:	dc.b	"fmovecr_0d src=- dst=7 rn.x: ROM constant log2(e) (RN, X)",0
-wy_55_4:	dc.b	"fmovecr_0e src=- dst=7 rn.x: ROM constant log10(e) (RN, X)",0
-wy_55_5:	dc.b	"fmovecr_0f src=- dst=7 rn.x: constant 0.0",0
-wy_55_6:	dc.b	"fmovecr_30 src=- dst=7 rn.x: ROM constant ln(2) (RN, X)",0
-wy_55_7:	dc.b	"fmovecr_31 src=- dst=7 rn.x: ROM constant ln(10) (RN, X)",0
-wy_55_8:	dc.b	"fmovecr_32 src=- dst=7 rn.x: ROM constant 1e0 (RN, X)",0
-wy_55_9:	dc.b	"fmovecr_33 src=- dst=7 rn.x: ROM constant 1e1 (RN, X)",0
-wy_55_10:	dc.b	"fmovecr_34 src=- dst=7 rn.x: ROM constant 1e2 (RN, X)",0
-wy_55_11:	dc.b	"fmovecr_35 src=- dst=7 rn.x: ROM constant 1e4 (RN, X)",0
-wy_55_12:	dc.b	"fmovecr_36 src=- dst=7 rn.x: ROM constant 1e8 (RN, X)",0
-wy_55_13:	dc.b	"fmovecr_37 src=- dst=7 rn.x: ROM constant 1e16 (RN, X)",0
-wy_55_14:	dc.b	"fmovecr_38 src=- dst=7 rn.x: ROM constant 1e32 (RN, X)",0
-wy_55_15:	dc.b	"fmovecr_39 src=- dst=7 rn.x: ROM constant 1e64 (RN, X)",0
-wy_55_16:	dc.b	"fmovecr_3a src=- dst=7 rn.x: ROM constant 1e128 (RN, X)",0
-wy_55_17:	dc.b	"fmovecr_3b src=- dst=7 rn.x: ROM constant 1e256 (RN, X)",0
-wy_55_18:	dc.b	"fmovecr_3c src=- dst=7 rn.x: ROM constant 1e512 (RN, X)",0
-wy_55_19:	dc.b	"fmovecr_3d src=- dst=7 rn.x: ROM constant 1e1024 (RN, X)",0
-wy_55_20:	dc.b	"fmovecr_3e src=- dst=7 rn.x: ROM constant 1e2048 (RN, X)",0
-wy_55_21:	dc.b	"fmovecr_3f src=- dst=7 rn.x: ROM constant 1e4096 (RN, X)",0
-wy_55_22:	dc.b	"fmovecr_00 src=- dst=7 rn.x: pi rounded in the FPCR mode",0
-wy_55_23:	dc.b	"fmovecr_00 src=- dst=7 rz.x: pi rounded in the FPCR mode",0
-wy_55_24:	dc.b	"fmovecr_00 src=- dst=7 rm.x: pi rounded in the FPCR mode",0
-wy_55_25:	dc.b	"fmovecr_00 src=- dst=7 rp.x: pi rounded in the FPCR mode",0
-wy_55_26:	dc.b	"fmovecr_00 src=- dst=7 rn.s: pi rounded to the FPCR precision",0
-wy_55_27:	dc.b	"fmovecr_00 src=- dst=7 rn.d: pi rounded to the FPCR precision",0
+gn_12:	dc.b	"exc_enabled_quiet",0
+wy_12_0:	dc.b	"fadd src=3/2 dst=9/4 rn.x: exceptions enabled, none raised",0
+wy_12_1:	dc.b	"fsub src=3/2 dst=9/4 rn.x: exceptions enabled, none raised",0
+wy_12_2:	dc.b	"fmul src=3/2 dst=9/4 rn.x: exceptions enabled, none raised",0
+wy_12_3:	dc.b	"fdiv src=3/2 dst=9/4 rn.x: exceptions enabled, none raised",0
+wy_12_4:	dc.b	"fcmp src=3/2 dst=9/4 rn.x: exceptions enabled, none raised",0
+wy_12_5:	dc.b	"fsqrt src=9/4 dst=7 rn.x: exceptions enabled, none raised",0
+wy_12_6:	dc.b	"fmove src=3/2 dst=7 rn.x: exceptions enabled, none raised",0
+wy_12_7:	dc.b	"fabs src=-3/2 dst=7 rn.x: exceptions enabled, none raised",0
+wy_12_8:	dc.b	"fneg src=3/2 dst=7 rn.x: exceptions enabled, none raised",0
+wy_12_9:	dc.b	"ftst src=-3/2 dst=7 rn.x: exceptions enabled, none raised",0
+wy_12_10:	dc.b	"fmove_l_in src=raw dst=7 rn.x: exceptions enabled",0
+wy_12_11:	dc.b	"fmove_w_in src=raw dst=1 rn.x: exceptions enabled",0
+wy_12_12:	dc.b	"fmove_b_in src=raw dst=1 rn.x: exceptions enabled",0
+wy_12_13:	dc.b	"fmove_s_in src=raw dst=7 rn.x: exceptions enabled",0
+wy_12_14:	dc.b	"fmove_d_in src=raw dst=7 rn.x: exceptions enabled",0
+wy_12_15:	dc.b	"fmove_x_in src=raw dst=7 rn.x: exceptions enabled",0
+wy_12_16:	dc.b	"fmove_l_out src=- dst=-12 rn.x: exceptions enabled, CC unchanged",0
+wy_12_17:	dc.b	"fmove_s_out src=- dst=3/2 rn.x: exceptions enabled",0
+wy_12_18:	dc.b	"fmove_d_out src=- dst=-9/4 rn.x: exceptions enabled",0
+gn_13:	dc.b	"conv_out_x",0
+wy_13_0:	dc.b	"fmove_x_out src=- dst=+0 rn.x: extended destination: not rounded to the FPCR precision",0
+wy_13_1:	dc.b	"fmove_x_out src=- dst=-0 rn.x: extended destination: not rounded to the FPCR precision",0
+wy_13_2:	dc.b	"fmove_x_out src=- dst=+inf rn.x: extended destination: not rounded to the FPCR precision",0
+wy_13_3:	dc.b	"fmove_x_out src=- dst=-inf rn.x: extended destination: not rounded to the FPCR precision",0
+wy_13_4:	dc.b	"fmove_x_out src=- dst=1 rn.x: extended destination: not rounded to the FPCR precision",0
+wy_13_5:	dc.b	"fmove_x_out src=- dst=1 rn.s: extended destination: not rounded to the FPCR precision",0
+wy_13_6:	dc.b	"fmove_x_out src=- dst=1 rn.d: extended destination: not rounded to the FPCR precision",0
+wy_13_7:	dc.b	"fmove_x_out src=- dst=m*2^0 rn.x: extended destination: not rounded to the FPCR precision",0
+wy_13_8:	dc.b	"fmove_x_out src=- dst=m*2^0 rn.s: extended destination: not rounded to the FPCR precision",0
+wy_13_9:	dc.b	"fmove_x_out src=- dst=m*2^0 rn.d: extended destination: not rounded to the FPCR precision",0
+wy_13_10:	dc.b	"fmove_x_out src=- dst=m*2^16383 rn.x: extended destination: not rounded to the FPCR precision",0
+wy_13_11:	dc.b	"fmove_x_out src=- dst=m*2^16383 rn.s: extended destination: not rounded to the FPCR precision",0
+wy_13_12:	dc.b	"fmove_x_out src=- dst=m*2^16383 rn.d: extended destination: not rounded to the FPCR precision",0
+wy_13_13:	dc.b	"fmove_x_out src=- dst=qnan rn.x: extended destination: not rounded to the FPCR precision",0
+wy_13_14:	dc.b	"fmove_x_out src=- dst=qnan rn.x: extended destination: not rounded to the FPCR precision",0
+wy_13_15:	dc.b	"fmove_x_out src=- dst=snan rn.x: SNaN register: SNAN set, quiet NaN stored",0
+gn_14:	dc.b	"conv_out_p",0
+wy_14_0:	dc.b	"fmove_p_out_k1 src=- dst=1 rn.x: packed out, k=1",0
+wy_14_1:	dc.b	"fmove_p_out_k17 src=- dst=1 rn.x: packed out, k=17",0
+wy_14_2:	dc.b	"fmove_p_out_k3 src=- dst=25/2 rn.x: packed out, k=3",0
+wy_14_3:	dc.b	"fmove_p_out_k3 src=- dst=25/2 rz.x: packed out, k=3",0
+wy_14_4:	dc.b	"fmove_p_out_k3 src=- dst=25/2 rm.x: packed out, k=3",0
+wy_14_5:	dc.b	"fmove_p_out_k3 src=- dst=25/2 rp.x: packed out, k=3",0
+wy_14_6:	dc.b	"fmove_p_out_k17 src=- dst=25/2 rn.x: packed out, k=17",0
+wy_14_7:	dc.b	"fmove_p_out_k17 src=- dst=25/2 rz.x: packed out, k=17",0
+wy_14_8:	dc.b	"fmove_p_out_k17 src=- dst=25/2 rm.x: packed out, k=17",0
+wy_14_9:	dc.b	"fmove_p_out_k17 src=- dst=25/2 rp.x: packed out, k=17",0
+wy_14_10:	dc.b	"fmove_p_out_k3 src=- dst=-25/2 rn.x: packed out, k=3",0
+wy_14_11:	dc.b	"fmove_p_out_k3 src=- dst=-25/2 rz.x: packed out, k=3",0
+wy_14_12:	dc.b	"fmove_p_out_k3 src=- dst=-25/2 rm.x: packed out, k=3",0
+wy_14_13:	dc.b	"fmove_p_out_k3 src=- dst=-25/2 rp.x: packed out, k=3",0
+wy_14_14:	dc.b	"fmove_p_out_k5 src=- dst=2^-2 rn.x: packed out, k=5",0
+wy_14_15:	dc.b	"fmove_p_out_k5 src=- dst=2^-2 rz.x: packed out, k=5",0
+wy_14_16:	dc.b	"fmove_p_out_k5 src=- dst=2^-2 rm.x: packed out, k=5",0
+wy_14_17:	dc.b	"fmove_p_out_k5 src=- dst=2^-2 rp.x: packed out, k=5",0
+wy_14_18:	dc.b	"fmove_p_out_k3 src=- dst=123456 rn.x: packed out, k=3",0
+wy_14_19:	dc.b	"fmove_p_out_k3 src=- dst=123456 rz.x: packed out, k=3",0
+wy_14_20:	dc.b	"fmove_p_out_k3 src=- dst=123456 rm.x: packed out, k=3",0
+wy_14_21:	dc.b	"fmove_p_out_k3 src=- dst=123456 rp.x: packed out, k=3",0
+wy_14_22:	dc.b	"fmove_p_out_k17 src=- dst=123456 rn.x: packed out, k=17",0
+wy_14_23:	dc.b	"fmove_p_out_k17 src=- dst=123456 rz.x: packed out, k=17",0
+wy_14_24:	dc.b	"fmove_p_out_k17 src=- dst=123456 rm.x: packed out, k=17",0
+wy_14_25:	dc.b	"fmove_p_out_k17 src=- dst=123456 rp.x: packed out, k=17",0
+wy_14_26:	dc.b	"fmove_p_out_k1 src=- dst=10000000000 rn.x: packed out, k=1",0
+wy_14_27:	dc.b	"fmove_p_out_k1 src=- dst=10000000000 rz.x: packed out, k=1",0
+wy_14_28:	dc.b	"fmove_p_out_k1 src=- dst=10000000000 rm.x: packed out, k=1",0
+wy_14_29:	dc.b	"fmove_p_out_k1 src=- dst=10000000000 rp.x: packed out, k=1",0
+wy_14_30:	dc.b	"fmove_p_out_k5 src=- dst=m*2^-2 rn.x: packed out of X(1/3), k=5",0
+wy_14_31:	dc.b	"fmove_p_out_k5 src=- dst=m*2^-2 rz.x: packed out of X(1/3), k=5",0
+wy_14_32:	dc.b	"fmove_p_out_k5 src=- dst=m*2^-2 rm.x: packed out of X(1/3), k=5",0
+wy_14_33:	dc.b	"fmove_p_out_k5 src=- dst=m*2^-2 rp.x: packed out of X(1/3), k=5",0
+wy_14_34:	dc.b	"fmove_p_out_k3 src=- dst=+0 rn.x: packed out of +0",0
+gn_15:	dc.b	"inf_roundtrip",0
+wy_15_0:	dc.b	"fmove_x_inout src=raw dst=7 rn.x: FMOVE.X in then FMOVE.X out must keep every bit",0
+wy_15_1:	dc.b	"fmove_x_inout src=raw dst=7 rn.x: FMOVE.X in then FMOVE.X out must keep every bit",0
+wy_15_2:	dc.b	"fmove_x_inout src=raw dst=7 rn.x: FMOVE.X in then FMOVE.X out must keep every bit",0
+wy_15_3:	dc.b	"fmove_x_inout src=raw dst=7 rn.x: FMOVE.X in then FMOVE.X out must keep every bit",0
+wy_15_4:	dc.b	"fmove_x_inout src=raw dst=7 rn.x: FMOVE.X in then FMOVE.X out must keep every bit",0
+wy_15_5:	dc.b	"fmove_x_inout src=raw dst=7 rn.x: FMOVE.X in then FMOVE.X out must keep every bit",0
+gn_16:	dc.b	"special_x_inout",0
+wy_16_0:	dc.b	"fmove_x_inout src=raw dst=7 rn.x: bit-exact round trip +0",0
+wy_16_1:	dc.b	"fmove_x_inout src=raw dst=7 rn.x: bit-exact round trip -0",0
+wy_16_2:	dc.b	"fmove_x_inout src=raw dst=7 rn.x: bit-exact round trip 1",0
+wy_16_3:	dc.b	"fmove_x_inout src=raw dst=7 rn.x: bit-exact round trip m*2^16383",0
+wy_16_4:	dc.b	"fmove_x_inout src=raw dst=7 rn.x: bit-exact round trip -m*2^16383",0
+wy_16_5:	dc.b	"fmove_x_inout src=raw dst=7 rn.x: bit-exact round trip 2^-16382",0
+wy_16_6:	dc.b	"fmove_x_inout src=raw dst=7 rn.x: bit-exact round trip m*2^-16382",0
+wy_16_7:	dc.b	"fmove_x_inout src=raw dst=7 rn.x: SNaN in: SNAN set, quieted",0
+wy_16_8:	dc.b	"fmove_x_inout src=raw dst=7 rn.x: smallest denormal survives FMOVE.X in/out (6888x)",0
+wy_16_9:	dc.b	"fmove_x_inout src=raw dst=7 rn.x: negative denormal survives FMOVE.X in/out (6888x)",0
+wy_16_10:	dc.b	"fmove_x_inout src=raw dst=7 rn.x: largest denormal survives FMOVE.X in/out (6888x)",0
+wy_16_11:	dc.b	"fmove_x_inout src=raw dst=7 rn.x: unnormal is normalized on FMOVE.X in (6888x)",0
+gn_17:	dc.b	"fcmp_classes",0
+wy_17_0:	dc.b	"fcmp src=+0 dst=+0 rn.x: CC of dst-src; register unchanged",0
+wy_17_1:	dc.b	"fcmp src=-0 dst=+0 rn.x: CC of dst-src; register unchanged",0
+wy_17_2:	dc.b	"fcmp src=1 dst=+0 rn.x: CC of dst-src; register unchanged",0
+wy_17_3:	dc.b	"fcmp src=-1 dst=+0 rn.x: CC of dst-src; register unchanged",0
+wy_17_4:	dc.b	"fcmp src=2 dst=+0 rn.x: CC of dst-src; register unchanged",0
+wy_17_5:	dc.b	"fcmp src=+inf dst=+0 rn.x: CC of dst-src; register unchanged",0
+wy_17_6:	dc.b	"fcmp src=-inf dst=+0 rn.x: CC of dst-src; register unchanged",0
+wy_17_7:	dc.b	"fcmp src=qnan dst=+0 rn.x: CC of dst-src; register unchanged",0
+wy_17_8:	dc.b	"fcmp src=+0 dst=-0 rn.x: CC of dst-src; register unchanged",0
+wy_17_9:	dc.b	"fcmp src=-0 dst=-0 rn.x: CC of dst-src; register unchanged",0
+wy_17_10:	dc.b	"fcmp src=1 dst=-0 rn.x: CC of dst-src; register unchanged",0
+wy_17_11:	dc.b	"fcmp src=-1 dst=-0 rn.x: CC of dst-src; register unchanged",0
+wy_17_12:	dc.b	"fcmp src=2 dst=-0 rn.x: CC of dst-src; register unchanged",0
+wy_17_13:	dc.b	"fcmp src=+inf dst=-0 rn.x: CC of dst-src; register unchanged",0
+wy_17_14:	dc.b	"fcmp src=-inf dst=-0 rn.x: CC of dst-src; register unchanged",0
+wy_17_15:	dc.b	"fcmp src=qnan dst=-0 rn.x: CC of dst-src; register unchanged",0
+wy_17_16:	dc.b	"fcmp src=+0 dst=1 rn.x: CC of dst-src; register unchanged",0
+wy_17_17:	dc.b	"fcmp src=-0 dst=1 rn.x: CC of dst-src; register unchanged",0
+wy_17_18:	dc.b	"fcmp src=1 dst=1 rn.x: CC of dst-src; register unchanged",0
+wy_17_19:	dc.b	"fcmp src=-1 dst=1 rn.x: CC of dst-src; register unchanged",0
+wy_17_20:	dc.b	"fcmp src=2 dst=1 rn.x: CC of dst-src; register unchanged",0
+wy_17_21:	dc.b	"fcmp src=+inf dst=1 rn.x: CC of dst-src; register unchanged",0
+wy_17_22:	dc.b	"fcmp src=-inf dst=1 rn.x: CC of dst-src; register unchanged",0
+wy_17_23:	dc.b	"fcmp src=qnan dst=1 rn.x: CC of dst-src; register unchanged",0
+wy_17_24:	dc.b	"fcmp src=+0 dst=-1 rn.x: CC of dst-src; register unchanged",0
+wy_17_25:	dc.b	"fcmp src=-0 dst=-1 rn.x: CC of dst-src; register unchanged",0
+wy_17_26:	dc.b	"fcmp src=1 dst=-1 rn.x: CC of dst-src; register unchanged",0
+wy_17_27:	dc.b	"fcmp src=-1 dst=-1 rn.x: CC of dst-src; register unchanged",0
+wy_17_28:	dc.b	"fcmp src=2 dst=-1 rn.x: CC of dst-src; register unchanged",0
+wy_17_29:	dc.b	"fcmp src=+inf dst=-1 rn.x: CC of dst-src; register unchanged",0
+wy_17_30:	dc.b	"fcmp src=-inf dst=-1 rn.x: CC of dst-src; register unchanged",0
+wy_17_31:	dc.b	"fcmp src=qnan dst=-1 rn.x: CC of dst-src; register unchanged",0
+wy_17_32:	dc.b	"fcmp src=+0 dst=2 rn.x: CC of dst-src; register unchanged",0
+wy_17_33:	dc.b	"fcmp src=-0 dst=2 rn.x: CC of dst-src; register unchanged",0
+wy_17_34:	dc.b	"fcmp src=1 dst=2 rn.x: CC of dst-src; register unchanged",0
+wy_17_35:	dc.b	"fcmp src=-1 dst=2 rn.x: CC of dst-src; register unchanged",0
+wy_17_36:	dc.b	"fcmp src=2 dst=2 rn.x: CC of dst-src; register unchanged",0
+wy_17_37:	dc.b	"fcmp src=+inf dst=2 rn.x: CC of dst-src; register unchanged",0
+wy_17_38:	dc.b	"fcmp src=-inf dst=2 rn.x: CC of dst-src; register unchanged",0
+wy_17_39:	dc.b	"fcmp src=qnan dst=2 rn.x: CC of dst-src; register unchanged",0
+wy_17_40:	dc.b	"fcmp src=+0 dst=+inf rn.x: CC of dst-src; register unchanged",0
+wy_17_41:	dc.b	"fcmp src=-0 dst=+inf rn.x: CC of dst-src; register unchanged",0
+wy_17_42:	dc.b	"fcmp src=1 dst=+inf rn.x: CC of dst-src; register unchanged",0
+wy_17_43:	dc.b	"fcmp src=-1 dst=+inf rn.x: CC of dst-src; register unchanged",0
+wy_17_44:	dc.b	"fcmp src=2 dst=+inf rn.x: CC of dst-src; register unchanged",0
+wy_17_45:	dc.b	"fcmp src=+inf dst=+inf rn.x: CC of dst-src; register unchanged",0
+wy_17_46:	dc.b	"fcmp src=-inf dst=+inf rn.x: CC of dst-src; register unchanged",0
+wy_17_47:	dc.b	"fcmp src=qnan dst=+inf rn.x: CC of dst-src; register unchanged",0
+wy_17_48:	dc.b	"fcmp src=+0 dst=-inf rn.x: CC of dst-src; register unchanged",0
+wy_17_49:	dc.b	"fcmp src=-0 dst=-inf rn.x: CC of dst-src; register unchanged",0
+wy_17_50:	dc.b	"fcmp src=1 dst=-inf rn.x: CC of dst-src; register unchanged",0
+wy_17_51:	dc.b	"fcmp src=-1 dst=-inf rn.x: CC of dst-src; register unchanged",0
+wy_17_52:	dc.b	"fcmp src=2 dst=-inf rn.x: CC of dst-src; register unchanged",0
+wy_17_53:	dc.b	"fcmp src=+inf dst=-inf rn.x: CC of dst-src; register unchanged",0
+wy_17_54:	dc.b	"fcmp src=-inf dst=-inf rn.x: CC of dst-src; register unchanged",0
+wy_17_55:	dc.b	"fcmp src=qnan dst=-inf rn.x: CC of dst-src; register unchanged",0
+wy_17_56:	dc.b	"fcmp src=+0 dst=qnan rn.x: CC of dst-src; register unchanged",0
+wy_17_57:	dc.b	"fcmp src=-0 dst=qnan rn.x: CC of dst-src; register unchanged",0
+wy_17_58:	dc.b	"fcmp src=1 dst=qnan rn.x: CC of dst-src; register unchanged",0
+wy_17_59:	dc.b	"fcmp src=-1 dst=qnan rn.x: CC of dst-src; register unchanged",0
+wy_17_60:	dc.b	"fcmp src=2 dst=qnan rn.x: CC of dst-src; register unchanged",0
+wy_17_61:	dc.b	"fcmp src=+inf dst=qnan rn.x: CC of dst-src; register unchanged",0
+wy_17_62:	dc.b	"fcmp src=-inf dst=qnan rn.x: CC of dst-src; register unchanged",0
+wy_17_63:	dc.b	"fcmp src=qnan dst=qnan rn.x: CC of dst-src; register unchanged",0
+wy_17_64:	dc.b	"fcmp src=snan dst=1 rn.x: SNaN operand sets SNAN",0
+gn_18:	dc.b	"ftst_classes",0
+wy_18_0:	dc.b	"ftst src=+0 dst=7 rn.x: CC of the operand",0
+wy_18_1:	dc.b	"ftst src=-0 dst=7 rn.x: CC of the operand",0
+wy_18_2:	dc.b	"ftst src=1 dst=7 rn.x: CC of the operand",0
+wy_18_3:	dc.b	"ftst src=-1 dst=7 rn.x: CC of the operand",0
+wy_18_4:	dc.b	"ftst src=+inf dst=7 rn.x: CC of the operand",0
+wy_18_5:	dc.b	"ftst src=-inf dst=7 rn.x: CC of the operand",0
+wy_18_6:	dc.b	"ftst src=qnan dst=7 rn.x: CC of the operand",0
+wy_18_7:	dc.b	"ftst src=-qnan dst=7 rn.x: CC of the operand",0
+wy_18_8:	dc.b	"ftst src=m*2^16383 dst=7 rn.x: CC of the operand",0
+wy_18_9:	dc.b	"ftst src=2^-16382 dst=7 rn.x: CC of the operand",0
+gn_19:	dc.b	"arith_fadd",0
+wy_19_0:	dc.b	"fadd src=+0 dst=+0 rn.x",0
+wy_19_1:	dc.b	"fadd src=-0 dst=+0 rn.x",0
+wy_19_2:	dc.b	"fadd src=+inf dst=+0 rn.x",0
+wy_19_3:	dc.b	"fadd src=-inf dst=+0 rn.x",0
+wy_19_4:	dc.b	"fadd src=qnan dst=+0 rn.x",0
+wy_19_5:	dc.b	"fadd src=snan dst=+0 rn.x",0
+wy_19_6:	dc.b	"fadd src=1 dst=+0 rn.x",0
+wy_19_7:	dc.b	"fadd src=-3 dst=+0 rn.x",0
+wy_19_8:	dc.b	"fadd src=+0 dst=-0 rn.x",0
+wy_19_9:	dc.b	"fadd src=-0 dst=-0 rn.x",0
+wy_19_10:	dc.b	"fadd src=+inf dst=-0 rn.x",0
+wy_19_11:	dc.b	"fadd src=-inf dst=-0 rn.x",0
+wy_19_12:	dc.b	"fadd src=qnan dst=-0 rn.x",0
+wy_19_13:	dc.b	"fadd src=snan dst=-0 rn.x",0
+wy_19_14:	dc.b	"fadd src=1 dst=-0 rn.x",0
+wy_19_15:	dc.b	"fadd src=-3 dst=-0 rn.x",0
+wy_19_16:	dc.b	"fadd src=+0 dst=+inf rn.x",0
+wy_19_17:	dc.b	"fadd src=-0 dst=+inf rn.x",0
+wy_19_18:	dc.b	"fadd src=+inf dst=+inf rn.x",0
+wy_19_19:	dc.b	"fadd src=-inf dst=+inf rn.x",0
+wy_19_20:	dc.b	"fadd src=qnan dst=+inf rn.x",0
+wy_19_21:	dc.b	"fadd src=snan dst=+inf rn.x",0
+wy_19_22:	dc.b	"fadd src=1 dst=+inf rn.x",0
+wy_19_23:	dc.b	"fadd src=-3 dst=+inf rn.x",0
+wy_19_24:	dc.b	"fadd src=+0 dst=-inf rn.x",0
+wy_19_25:	dc.b	"fadd src=-0 dst=-inf rn.x",0
+wy_19_26:	dc.b	"fadd src=+inf dst=-inf rn.x",0
+wy_19_27:	dc.b	"fadd src=-inf dst=-inf rn.x",0
+wy_19_28:	dc.b	"fadd src=qnan dst=-inf rn.x",0
+wy_19_29:	dc.b	"fadd src=snan dst=-inf rn.x",0
+wy_19_30:	dc.b	"fadd src=1 dst=-inf rn.x",0
+wy_19_31:	dc.b	"fadd src=-3 dst=-inf rn.x",0
+wy_19_32:	dc.b	"fadd src=+0 dst=qnan rn.x",0
+wy_19_33:	dc.b	"fadd src=-0 dst=qnan rn.x",0
+wy_19_34:	dc.b	"fadd src=+inf dst=qnan rn.x",0
+wy_19_35:	dc.b	"fadd src=-inf dst=qnan rn.x",0
+wy_19_36:	dc.b	"fadd src=qnan dst=qnan rn.x",0
+wy_19_37:	dc.b	"fadd src=snan dst=qnan rn.x",0
+wy_19_38:	dc.b	"fadd src=1 dst=qnan rn.x",0
+wy_19_39:	dc.b	"fadd src=-3 dst=qnan rn.x",0
+wy_19_40:	dc.b	"fadd src=+0 dst=snan rn.x",0
+wy_19_41:	dc.b	"fadd src=-0 dst=snan rn.x",0
+wy_19_42:	dc.b	"fadd src=+inf dst=snan rn.x",0
+wy_19_43:	dc.b	"fadd src=-inf dst=snan rn.x",0
+wy_19_44:	dc.b	"fadd src=qnan dst=snan rn.x",0
+wy_19_45:	dc.b	"fadd src=snan dst=snan rn.x",0
+wy_19_46:	dc.b	"fadd src=1 dst=snan rn.x",0
+wy_19_47:	dc.b	"fadd src=-3 dst=snan rn.x",0
+wy_19_48:	dc.b	"fadd src=+0 dst=1 rn.x",0
+wy_19_49:	dc.b	"fadd src=-0 dst=1 rn.x",0
+wy_19_50:	dc.b	"fadd src=+inf dst=1 rn.x",0
+wy_19_51:	dc.b	"fadd src=-inf dst=1 rn.x",0
+wy_19_52:	dc.b	"fadd src=qnan dst=1 rn.x",0
+wy_19_53:	dc.b	"fadd src=snan dst=1 rn.x",0
+wy_19_54:	dc.b	"fadd src=1 dst=1 rn.x",0
+wy_19_55:	dc.b	"fadd src=-3 dst=1 rn.x",0
+wy_19_56:	dc.b	"fadd src=+0 dst=-3 rn.x",0
+wy_19_57:	dc.b	"fadd src=-0 dst=-3 rn.x",0
+wy_19_58:	dc.b	"fadd src=+inf dst=-3 rn.x",0
+wy_19_59:	dc.b	"fadd src=-inf dst=-3 rn.x",0
+wy_19_60:	dc.b	"fadd src=qnan dst=-3 rn.x",0
+wy_19_61:	dc.b	"fadd src=snan dst=-3 rn.x",0
+wy_19_62:	dc.b	"fadd src=1 dst=-3 rn.x",0
+wy_19_63:	dc.b	"fadd src=-3 dst=-3 rn.x",0
+wy_19_64:	dc.b	"fadd src=2^-64 dst=1 rn.x: tie at half an X ulp -> even",0
+wy_19_65:	dc.b	"fadd src=2^-64 dst=1 rz.x: tie at half an X ulp -> even",0
+wy_19_66:	dc.b	"fadd src=2^-64 dst=1 rm.x: tie at half an X ulp -> even",0
+wy_19_67:	dc.b	"fadd src=2^-64 dst=1 rp.x: tie at half an X ulp -> even",0
+wy_19_68:	dc.b	"fadd src=2^-64 dst=m*2^0 rn.x: tie, odd lsb -> up in RN",0
+wy_19_69:	dc.b	"fadd src=2^-64 dst=m*2^0 rz.x: tie, odd lsb -> up in RN",0
+wy_19_70:	dc.b	"fadd src=2^-64 dst=m*2^0 rm.x: tie, odd lsb -> up in RN",0
+wy_19_71:	dc.b	"fadd src=2^-64 dst=m*2^0 rp.x: tie, odd lsb -> up in RN",0
+wy_19_72:	dc.b	"fadd src=2^-24 dst=1 rn.s: tie at half an S ulp",0
+wy_19_73:	dc.b	"fadd src=2^-24 dst=1 rz.s: tie at half an S ulp",0
+wy_19_74:	dc.b	"fadd src=2^-24 dst=1 rm.s: tie at half an S ulp",0
+wy_19_75:	dc.b	"fadd src=2^-24 dst=1 rp.s: tie at half an S ulp",0
+wy_19_76:	dc.b	"fadd src=2^-53 dst=1 rn.d: tie at half a D ulp",0
+wy_19_77:	dc.b	"fadd src=2^-53 dst=1 rz.d: tie at half a D ulp",0
+wy_19_78:	dc.b	"fadd src=2^-53 dst=1 rm.d: tie at half a D ulp",0
+wy_19_79:	dc.b	"fadd src=2^-53 dst=1 rp.d: tie at half a D ulp",0
+wy_19_80:	dc.b	"fadd src=m*2^-65 dst=1 rn.x: below half",0
+wy_19_81:	dc.b	"fadd src=m*2^-65 dst=1 rz.x: below half",0
+wy_19_82:	dc.b	"fadd src=m*2^-65 dst=1 rm.x: below half",0
+wy_19_83:	dc.b	"fadd src=m*2^-65 dst=1 rp.x: below half",0
+wy_19_84:	dc.b	"fadd src=-1 dst=1 rn.x: x + -x: +0, but -0 in RM",0
+wy_19_85:	dc.b	"fadd src=-1 dst=1 rz.x: x + -x: +0, but -0 in RM",0
+wy_19_86:	dc.b	"fadd src=-1 dst=1 rm.x: x + -x: +0, but -0 in RM",0
+wy_19_87:	dc.b	"fadd src=-1 dst=1 rp.x: x + -x: +0, but -0 in RM",0
+wy_19_88:	dc.b	"fadd src=m*2^16383 dst=m*2^16383 rn.x: overflow",0
+wy_19_89:	dc.b	"fadd src=m*2^16383 dst=m*2^16383 rz.x: overflow",0
+wy_19_90:	dc.b	"fadd src=m*2^16383 dst=m*2^16383 rm.x: overflow",0
+wy_19_91:	dc.b	"fadd src=m*2^16383 dst=m*2^16383 rp.x: overflow",0
+wy_19_92:	dc.b	"fadd src=-m*2^16383 dst=-m*2^16383 rn.x: negative overflow",0
+wy_19_93:	dc.b	"fadd src=-m*2^16383 dst=-m*2^16383 rz.x: negative overflow",0
+wy_19_94:	dc.b	"fadd src=-m*2^16383 dst=-m*2^16383 rm.x: negative overflow",0
+wy_19_95:	dc.b	"fadd src=-m*2^16383 dst=-m*2^16383 rp.x: negative overflow",0
+wy_19_96:	dc.b	"fadd src=m*2^-2 dst=m*2^-2 rn.x",0
+wy_19_97:	dc.b	"fadd src=m*2^-2 dst=m*2^-2 rn.s",0
+wy_19_98:	dc.b	"fadd src=m*2^-2 dst=m*2^-2 rn.d",0
+wy_19_99:	dc.b	"fadd src=m*2^-2 dst=m*2^-2 rz.x",0
+wy_19_100:	dc.b	"fadd src=m*2^-2 dst=m*2^-2 rz.s",0
+wy_19_101:	dc.b	"fadd src=m*2^-2 dst=m*2^-2 rz.d",0
+wy_19_102:	dc.b	"fadd src=m*2^-2 dst=m*2^-2 rm.x",0
+wy_19_103:	dc.b	"fadd src=m*2^-2 dst=m*2^-2 rm.s",0
+wy_19_104:	dc.b	"fadd src=m*2^-2 dst=m*2^-2 rm.d",0
+wy_19_105:	dc.b	"fadd src=m*2^-2 dst=m*2^-2 rp.x",0
+wy_19_106:	dc.b	"fadd src=m*2^-2 dst=m*2^-2 rp.s",0
+wy_19_107:	dc.b	"fadd src=m*2^-2 dst=m*2^-2 rp.d",0
+gn_20:	dc.b	"arith_fsub",0
+wy_20_0:	dc.b	"fsub src=+0 dst=+0 rn.x",0
+wy_20_1:	dc.b	"fsub src=-0 dst=+0 rn.x",0
+wy_20_2:	dc.b	"fsub src=+inf dst=+0 rn.x",0
+wy_20_3:	dc.b	"fsub src=-inf dst=+0 rn.x",0
+wy_20_4:	dc.b	"fsub src=qnan dst=+0 rn.x",0
+wy_20_5:	dc.b	"fsub src=snan dst=+0 rn.x",0
+wy_20_6:	dc.b	"fsub src=1 dst=+0 rn.x",0
+wy_20_7:	dc.b	"fsub src=-3 dst=+0 rn.x",0
+wy_20_8:	dc.b	"fsub src=+0 dst=-0 rn.x",0
+wy_20_9:	dc.b	"fsub src=-0 dst=-0 rn.x",0
+wy_20_10:	dc.b	"fsub src=+inf dst=-0 rn.x",0
+wy_20_11:	dc.b	"fsub src=-inf dst=-0 rn.x",0
+wy_20_12:	dc.b	"fsub src=qnan dst=-0 rn.x",0
+wy_20_13:	dc.b	"fsub src=snan dst=-0 rn.x",0
+wy_20_14:	dc.b	"fsub src=1 dst=-0 rn.x",0
+wy_20_15:	dc.b	"fsub src=-3 dst=-0 rn.x",0
+wy_20_16:	dc.b	"fsub src=+0 dst=+inf rn.x",0
+wy_20_17:	dc.b	"fsub src=-0 dst=+inf rn.x",0
+wy_20_18:	dc.b	"fsub src=+inf dst=+inf rn.x",0
+wy_20_19:	dc.b	"fsub src=-inf dst=+inf rn.x",0
+wy_20_20:	dc.b	"fsub src=qnan dst=+inf rn.x",0
+wy_20_21:	dc.b	"fsub src=snan dst=+inf rn.x",0
+wy_20_22:	dc.b	"fsub src=1 dst=+inf rn.x",0
+wy_20_23:	dc.b	"fsub src=-3 dst=+inf rn.x",0
+wy_20_24:	dc.b	"fsub src=+0 dst=-inf rn.x",0
+wy_20_25:	dc.b	"fsub src=-0 dst=-inf rn.x",0
+wy_20_26:	dc.b	"fsub src=+inf dst=-inf rn.x",0
+wy_20_27:	dc.b	"fsub src=-inf dst=-inf rn.x",0
+wy_20_28:	dc.b	"fsub src=qnan dst=-inf rn.x",0
+wy_20_29:	dc.b	"fsub src=snan dst=-inf rn.x",0
+wy_20_30:	dc.b	"fsub src=1 dst=-inf rn.x",0
+wy_20_31:	dc.b	"fsub src=-3 dst=-inf rn.x",0
+wy_20_32:	dc.b	"fsub src=+0 dst=qnan rn.x",0
+wy_20_33:	dc.b	"fsub src=-0 dst=qnan rn.x",0
+wy_20_34:	dc.b	"fsub src=+inf dst=qnan rn.x",0
+wy_20_35:	dc.b	"fsub src=-inf dst=qnan rn.x",0
+wy_20_36:	dc.b	"fsub src=qnan dst=qnan rn.x",0
+wy_20_37:	dc.b	"fsub src=snan dst=qnan rn.x",0
+wy_20_38:	dc.b	"fsub src=1 dst=qnan rn.x",0
+wy_20_39:	dc.b	"fsub src=-3 dst=qnan rn.x",0
+wy_20_40:	dc.b	"fsub src=+0 dst=snan rn.x",0
+wy_20_41:	dc.b	"fsub src=-0 dst=snan rn.x",0
+wy_20_42:	dc.b	"fsub src=+inf dst=snan rn.x",0
+wy_20_43:	dc.b	"fsub src=-inf dst=snan rn.x",0
+wy_20_44:	dc.b	"fsub src=qnan dst=snan rn.x",0
+wy_20_45:	dc.b	"fsub src=snan dst=snan rn.x",0
+wy_20_46:	dc.b	"fsub src=1 dst=snan rn.x",0
+wy_20_47:	dc.b	"fsub src=-3 dst=snan rn.x",0
+wy_20_48:	dc.b	"fsub src=+0 dst=1 rn.x",0
+wy_20_49:	dc.b	"fsub src=-0 dst=1 rn.x",0
+wy_20_50:	dc.b	"fsub src=+inf dst=1 rn.x",0
+wy_20_51:	dc.b	"fsub src=-inf dst=1 rn.x",0
+wy_20_52:	dc.b	"fsub src=qnan dst=1 rn.x",0
+wy_20_53:	dc.b	"fsub src=snan dst=1 rn.x",0
+wy_20_54:	dc.b	"fsub src=1 dst=1 rn.x",0
+wy_20_55:	dc.b	"fsub src=-3 dst=1 rn.x",0
+wy_20_56:	dc.b	"fsub src=+0 dst=-3 rn.x",0
+wy_20_57:	dc.b	"fsub src=-0 dst=-3 rn.x",0
+wy_20_58:	dc.b	"fsub src=+inf dst=-3 rn.x",0
+wy_20_59:	dc.b	"fsub src=-inf dst=-3 rn.x",0
+wy_20_60:	dc.b	"fsub src=qnan dst=-3 rn.x",0
+wy_20_61:	dc.b	"fsub src=snan dst=-3 rn.x",0
+wy_20_62:	dc.b	"fsub src=1 dst=-3 rn.x",0
+wy_20_63:	dc.b	"fsub src=-3 dst=-3 rn.x",0
+wy_20_64:	dc.b	"fsub src=2^-65 dst=1 rn.x: 1-2^-65: tie on a mantissa of all ones",0
+wy_20_65:	dc.b	"fsub src=2^-65 dst=1 rz.x: 1-2^-65: tie on a mantissa of all ones",0
+wy_20_66:	dc.b	"fsub src=2^-65 dst=1 rm.x: 1-2^-65: tie on a mantissa of all ones",0
+wy_20_67:	dc.b	"fsub src=2^-65 dst=1 rp.x: 1-2^-65: tie on a mantissa of all ones",0
+wy_20_68:	dc.b	"fsub src=1 dst=1 rn.x: x - x: +0, but -0 in RM",0
+wy_20_69:	dc.b	"fsub src=1 dst=1 rz.x: x - x: +0, but -0 in RM",0
+wy_20_70:	dc.b	"fsub src=1 dst=1 rm.x: x - x: +0, but -0 in RM",0
+wy_20_71:	dc.b	"fsub src=1 dst=1 rp.x: x - x: +0, but -0 in RM",0
+wy_20_72:	dc.b	"fsub src=-m*2^16383 dst=m*2^16383 rn.x: overflow",0
+wy_20_73:	dc.b	"fsub src=-m*2^16383 dst=m*2^16383 rz.x: overflow",0
+wy_20_74:	dc.b	"fsub src=-m*2^16383 dst=m*2^16383 rm.x: overflow",0
+wy_20_75:	dc.b	"fsub src=-m*2^16383 dst=m*2^16383 rp.x: overflow",0
+wy_20_76:	dc.b	"fsub src=m*2^-1 dst=1 rn.x",0
+wy_20_77:	dc.b	"fsub src=m*2^-1 dst=1 rn.s",0
+wy_20_78:	dc.b	"fsub src=m*2^-1 dst=1 rn.d",0
+wy_20_79:	dc.b	"fsub src=m*2^-1 dst=1 rz.x",0
+wy_20_80:	dc.b	"fsub src=m*2^-1 dst=1 rz.s",0
+wy_20_81:	dc.b	"fsub src=m*2^-1 dst=1 rz.d",0
+wy_20_82:	dc.b	"fsub src=m*2^-1 dst=1 rm.x",0
+wy_20_83:	dc.b	"fsub src=m*2^-1 dst=1 rm.s",0
+wy_20_84:	dc.b	"fsub src=m*2^-1 dst=1 rm.d",0
+wy_20_85:	dc.b	"fsub src=m*2^-1 dst=1 rp.x",0
+wy_20_86:	dc.b	"fsub src=m*2^-1 dst=1 rp.s",0
+wy_20_87:	dc.b	"fsub src=m*2^-1 dst=1 rp.d",0
+gn_21:	dc.b	"arith_fmul",0
+wy_21_0:	dc.b	"fmul src=+0 dst=+0 rn.x",0
+wy_21_1:	dc.b	"fmul src=-0 dst=+0 rn.x",0
+wy_21_2:	dc.b	"fmul src=+inf dst=+0 rn.x",0
+wy_21_3:	dc.b	"fmul src=-inf dst=+0 rn.x",0
+wy_21_4:	dc.b	"fmul src=qnan dst=+0 rn.x",0
+wy_21_5:	dc.b	"fmul src=snan dst=+0 rn.x",0
+wy_21_6:	dc.b	"fmul src=1 dst=+0 rn.x",0
+wy_21_7:	dc.b	"fmul src=-3 dst=+0 rn.x",0
+wy_21_8:	dc.b	"fmul src=+0 dst=-0 rn.x",0
+wy_21_9:	dc.b	"fmul src=-0 dst=-0 rn.x",0
+wy_21_10:	dc.b	"fmul src=+inf dst=-0 rn.x",0
+wy_21_11:	dc.b	"fmul src=-inf dst=-0 rn.x",0
+wy_21_12:	dc.b	"fmul src=qnan dst=-0 rn.x",0
+wy_21_13:	dc.b	"fmul src=snan dst=-0 rn.x",0
+wy_21_14:	dc.b	"fmul src=1 dst=-0 rn.x",0
+wy_21_15:	dc.b	"fmul src=-3 dst=-0 rn.x",0
+wy_21_16:	dc.b	"fmul src=+0 dst=+inf rn.x",0
+wy_21_17:	dc.b	"fmul src=-0 dst=+inf rn.x",0
+wy_21_18:	dc.b	"fmul src=+inf dst=+inf rn.x",0
+wy_21_19:	dc.b	"fmul src=-inf dst=+inf rn.x",0
+wy_21_20:	dc.b	"fmul src=qnan dst=+inf rn.x",0
+wy_21_21:	dc.b	"fmul src=snan dst=+inf rn.x",0
+wy_21_22:	dc.b	"fmul src=1 dst=+inf rn.x",0
+wy_21_23:	dc.b	"fmul src=-3 dst=+inf rn.x",0
+wy_21_24:	dc.b	"fmul src=+0 dst=-inf rn.x",0
+wy_21_25:	dc.b	"fmul src=-0 dst=-inf rn.x",0
+wy_21_26:	dc.b	"fmul src=+inf dst=-inf rn.x",0
+wy_21_27:	dc.b	"fmul src=-inf dst=-inf rn.x",0
+wy_21_28:	dc.b	"fmul src=qnan dst=-inf rn.x",0
+wy_21_29:	dc.b	"fmul src=snan dst=-inf rn.x",0
+wy_21_30:	dc.b	"fmul src=1 dst=-inf rn.x",0
+wy_21_31:	dc.b	"fmul src=-3 dst=-inf rn.x",0
+wy_21_32:	dc.b	"fmul src=+0 dst=qnan rn.x",0
+wy_21_33:	dc.b	"fmul src=-0 dst=qnan rn.x",0
+wy_21_34:	dc.b	"fmul src=+inf dst=qnan rn.x",0
+wy_21_35:	dc.b	"fmul src=-inf dst=qnan rn.x",0
+wy_21_36:	dc.b	"fmul src=qnan dst=qnan rn.x",0
+wy_21_37:	dc.b	"fmul src=snan dst=qnan rn.x",0
+wy_21_38:	dc.b	"fmul src=1 dst=qnan rn.x",0
+wy_21_39:	dc.b	"fmul src=-3 dst=qnan rn.x",0
+wy_21_40:	dc.b	"fmul src=+0 dst=snan rn.x",0
+wy_21_41:	dc.b	"fmul src=-0 dst=snan rn.x",0
+wy_21_42:	dc.b	"fmul src=+inf dst=snan rn.x",0
+wy_21_43:	dc.b	"fmul src=-inf dst=snan rn.x",0
+wy_21_44:	dc.b	"fmul src=qnan dst=snan rn.x",0
+wy_21_45:	dc.b	"fmul src=snan dst=snan rn.x",0
+wy_21_46:	dc.b	"fmul src=1 dst=snan rn.x",0
+wy_21_47:	dc.b	"fmul src=-3 dst=snan rn.x",0
+wy_21_48:	dc.b	"fmul src=+0 dst=1 rn.x",0
+wy_21_49:	dc.b	"fmul src=-0 dst=1 rn.x",0
+wy_21_50:	dc.b	"fmul src=+inf dst=1 rn.x",0
+wy_21_51:	dc.b	"fmul src=-inf dst=1 rn.x",0
+wy_21_52:	dc.b	"fmul src=qnan dst=1 rn.x",0
+wy_21_53:	dc.b	"fmul src=snan dst=1 rn.x",0
+wy_21_54:	dc.b	"fmul src=1 dst=1 rn.x",0
+wy_21_55:	dc.b	"fmul src=-3 dst=1 rn.x",0
+wy_21_56:	dc.b	"fmul src=+0 dst=-3 rn.x",0
+wy_21_57:	dc.b	"fmul src=-0 dst=-3 rn.x",0
+wy_21_58:	dc.b	"fmul src=+inf dst=-3 rn.x",0
+wy_21_59:	dc.b	"fmul src=-inf dst=-3 rn.x",0
+wy_21_60:	dc.b	"fmul src=qnan dst=-3 rn.x",0
+wy_21_61:	dc.b	"fmul src=snan dst=-3 rn.x",0
+wy_21_62:	dc.b	"fmul src=1 dst=-3 rn.x",0
+wy_21_63:	dc.b	"fmul src=-3 dst=-3 rn.x",0
+wy_21_64:	dc.b	"fmul src=m*2^0 dst=m*2^0 rn.x: exact product 1+2^-31+2^-64 is an X tie",0
+wy_21_65:	dc.b	"fmul src=m*2^0 dst=m*2^0 rz.x: exact product 1+2^-31+2^-64 is an X tie",0
+wy_21_66:	dc.b	"fmul src=m*2^0 dst=m*2^0 rm.x: exact product 1+2^-31+2^-64 is an X tie",0
+wy_21_67:	dc.b	"fmul src=m*2^0 dst=m*2^0 rp.x: exact product 1+2^-31+2^-64 is an X tie",0
+wy_21_68:	dc.b	"fmul src=4097/4096 dst=4097/4096 rn.s: S tie",0
+wy_21_69:	dc.b	"fmul src=4097/4096 dst=4097/4096 rz.s: S tie",0
+wy_21_70:	dc.b	"fmul src=4097/4096 dst=4097/4096 rm.s: S tie",0
+wy_21_71:	dc.b	"fmul src=4097/4096 dst=4097/4096 rp.s: S tie",0
+wy_21_72:	dc.b	"fmul src=m*2^-2 dst=3 rn.x: X(1/3)*3",0
+wy_21_73:	dc.b	"fmul src=m*2^-2 dst=3 rn.s: X(1/3)*3",0
+wy_21_74:	dc.b	"fmul src=m*2^-2 dst=3 rn.d: X(1/3)*3",0
+wy_21_75:	dc.b	"fmul src=m*2^-2 dst=3 rz.x: X(1/3)*3",0
+wy_21_76:	dc.b	"fmul src=m*2^-2 dst=3 rz.s: X(1/3)*3",0
+wy_21_77:	dc.b	"fmul src=m*2^-2 dst=3 rz.d: X(1/3)*3",0
+wy_21_78:	dc.b	"fmul src=m*2^-2 dst=3 rm.x: X(1/3)*3",0
+wy_21_79:	dc.b	"fmul src=m*2^-2 dst=3 rm.s: X(1/3)*3",0
+wy_21_80:	dc.b	"fmul src=m*2^-2 dst=3 rm.d: X(1/3)*3",0
+wy_21_81:	dc.b	"fmul src=m*2^-2 dst=3 rp.x: X(1/3)*3",0
+wy_21_82:	dc.b	"fmul src=m*2^-2 dst=3 rp.s: X(1/3)*3",0
+wy_21_83:	dc.b	"fmul src=m*2^-2 dst=3 rp.d: X(1/3)*3",0
+wy_21_84:	dc.b	"fmul src=2^16000 dst=2^16000 rn.x: overflow",0
+wy_21_85:	dc.b	"fmul src=2^16000 dst=2^16000 rz.x: overflow",0
+wy_21_86:	dc.b	"fmul src=2^16000 dst=2^16000 rm.x: overflow",0
+wy_21_87:	dc.b	"fmul src=2^16000 dst=2^16000 rp.x: overflow",0
+wy_21_88:	dc.b	"fmul src=-2^16000 dst=2^16000 rn.x: negative overflow",0
+wy_21_89:	dc.b	"fmul src=-2^16000 dst=2^16000 rz.x: negative overflow",0
+wy_21_90:	dc.b	"fmul src=-2^16000 dst=2^16000 rm.x: negative overflow",0
+wy_21_91:	dc.b	"fmul src=-2^16000 dst=2^16000 rp.x: negative overflow",0
+wy_21_92:	dc.b	"fmul src=2^-10000 dst=2^-10000 rn.x: deep underflow",0
+wy_21_93:	dc.b	"fmul src=-2^-10000 dst=2^-10000 rn.x: deep underflow",0
+wy_21_94:	dc.b	"fmul src=2^-10000 dst=2^-10000 rz.x: deep underflow",0
+wy_21_95:	dc.b	"fmul src=-2^-10000 dst=2^-10000 rz.x: deep underflow",0
+wy_21_96:	dc.b	"fmul src=2^-10000 dst=2^-10000 rm.x: deep underflow",0
+wy_21_97:	dc.b	"fmul src=-2^-10000 dst=2^-10000 rm.x: deep underflow",0
+wy_21_98:	dc.b	"fmul src=2^-10000 dst=2^-10000 rp.x: deep underflow",0
+wy_21_99:	dc.b	"fmul src=-2^-10000 dst=2^-10000 rp.x: deep underflow",0
+gn_22:	dc.b	"arith_fdiv",0
+wy_22_0:	dc.b	"fdiv src=+0 dst=+0 rn.x",0
+wy_22_1:	dc.b	"fdiv src=-0 dst=+0 rn.x",0
+wy_22_2:	dc.b	"fdiv src=+inf dst=+0 rn.x",0
+wy_22_3:	dc.b	"fdiv src=-inf dst=+0 rn.x",0
+wy_22_4:	dc.b	"fdiv src=qnan dst=+0 rn.x",0
+wy_22_5:	dc.b	"fdiv src=snan dst=+0 rn.x",0
+wy_22_6:	dc.b	"fdiv src=1 dst=+0 rn.x",0
+wy_22_7:	dc.b	"fdiv src=-3 dst=+0 rn.x",0
+wy_22_8:	dc.b	"fdiv src=+0 dst=-0 rn.x",0
+wy_22_9:	dc.b	"fdiv src=-0 dst=-0 rn.x",0
+wy_22_10:	dc.b	"fdiv src=+inf dst=-0 rn.x",0
+wy_22_11:	dc.b	"fdiv src=-inf dst=-0 rn.x",0
+wy_22_12:	dc.b	"fdiv src=qnan dst=-0 rn.x",0
+wy_22_13:	dc.b	"fdiv src=snan dst=-0 rn.x",0
+wy_22_14:	dc.b	"fdiv src=1 dst=-0 rn.x",0
+wy_22_15:	dc.b	"fdiv src=-3 dst=-0 rn.x",0
+wy_22_16:	dc.b	"fdiv src=+0 dst=+inf rn.x",0
+wy_22_17:	dc.b	"fdiv src=-0 dst=+inf rn.x",0
+wy_22_18:	dc.b	"fdiv src=+inf dst=+inf rn.x",0
+wy_22_19:	dc.b	"fdiv src=-inf dst=+inf rn.x",0
+wy_22_20:	dc.b	"fdiv src=qnan dst=+inf rn.x",0
+wy_22_21:	dc.b	"fdiv src=snan dst=+inf rn.x",0
+wy_22_22:	dc.b	"fdiv src=1 dst=+inf rn.x",0
+wy_22_23:	dc.b	"fdiv src=-3 dst=+inf rn.x",0
+wy_22_24:	dc.b	"fdiv src=+0 dst=-inf rn.x",0
+wy_22_25:	dc.b	"fdiv src=-0 dst=-inf rn.x",0
+wy_22_26:	dc.b	"fdiv src=+inf dst=-inf rn.x",0
+wy_22_27:	dc.b	"fdiv src=-inf dst=-inf rn.x",0
+wy_22_28:	dc.b	"fdiv src=qnan dst=-inf rn.x",0
+wy_22_29:	dc.b	"fdiv src=snan dst=-inf rn.x",0
+wy_22_30:	dc.b	"fdiv src=1 dst=-inf rn.x",0
+wy_22_31:	dc.b	"fdiv src=-3 dst=-inf rn.x",0
+wy_22_32:	dc.b	"fdiv src=+0 dst=qnan rn.x",0
+wy_22_33:	dc.b	"fdiv src=-0 dst=qnan rn.x",0
+wy_22_34:	dc.b	"fdiv src=+inf dst=qnan rn.x",0
+wy_22_35:	dc.b	"fdiv src=-inf dst=qnan rn.x",0
+wy_22_36:	dc.b	"fdiv src=qnan dst=qnan rn.x",0
+wy_22_37:	dc.b	"fdiv src=snan dst=qnan rn.x",0
+wy_22_38:	dc.b	"fdiv src=1 dst=qnan rn.x",0
+wy_22_39:	dc.b	"fdiv src=-3 dst=qnan rn.x",0
+wy_22_40:	dc.b	"fdiv src=+0 dst=snan rn.x",0
+wy_22_41:	dc.b	"fdiv src=-0 dst=snan rn.x",0
+wy_22_42:	dc.b	"fdiv src=+inf dst=snan rn.x",0
+wy_22_43:	dc.b	"fdiv src=-inf dst=snan rn.x",0
+wy_22_44:	dc.b	"fdiv src=qnan dst=snan rn.x",0
+wy_22_45:	dc.b	"fdiv src=snan dst=snan rn.x",0
+wy_22_46:	dc.b	"fdiv src=1 dst=snan rn.x",0
+wy_22_47:	dc.b	"fdiv src=-3 dst=snan rn.x",0
+wy_22_48:	dc.b	"fdiv src=+0 dst=1 rn.x",0
+wy_22_49:	dc.b	"fdiv src=-0 dst=1 rn.x",0
+wy_22_50:	dc.b	"fdiv src=+inf dst=1 rn.x",0
+wy_22_51:	dc.b	"fdiv src=-inf dst=1 rn.x",0
+wy_22_52:	dc.b	"fdiv src=qnan dst=1 rn.x",0
+wy_22_53:	dc.b	"fdiv src=snan dst=1 rn.x",0
+wy_22_54:	dc.b	"fdiv src=1 dst=1 rn.x",0
+wy_22_55:	dc.b	"fdiv src=-3 dst=1 rn.x",0
+wy_22_56:	dc.b	"fdiv src=+0 dst=-3 rn.x",0
+wy_22_57:	dc.b	"fdiv src=-0 dst=-3 rn.x",0
+wy_22_58:	dc.b	"fdiv src=+inf dst=-3 rn.x",0
+wy_22_59:	dc.b	"fdiv src=-inf dst=-3 rn.x",0
+wy_22_60:	dc.b	"fdiv src=qnan dst=-3 rn.x",0
+wy_22_61:	dc.b	"fdiv src=snan dst=-3 rn.x",0
+wy_22_62:	dc.b	"fdiv src=1 dst=-3 rn.x",0
+wy_22_63:	dc.b	"fdiv src=-3 dst=-3 rn.x",0
+wy_22_64:	dc.b	"fdiv src=3 dst=1 rn.x: 1/3",0
+wy_22_65:	dc.b	"fdiv src=3 dst=1 rn.s: 1/3",0
+wy_22_66:	dc.b	"fdiv src=3 dst=1 rn.d: 1/3",0
+wy_22_67:	dc.b	"fdiv src=3 dst=1 rz.x: 1/3",0
+wy_22_68:	dc.b	"fdiv src=3 dst=1 rz.s: 1/3",0
+wy_22_69:	dc.b	"fdiv src=3 dst=1 rz.d: 1/3",0
+wy_22_70:	dc.b	"fdiv src=3 dst=1 rm.x: 1/3",0
+wy_22_71:	dc.b	"fdiv src=3 dst=1 rm.s: 1/3",0
+wy_22_72:	dc.b	"fdiv src=3 dst=1 rm.d: 1/3",0
+wy_22_73:	dc.b	"fdiv src=3 dst=1 rp.x: 1/3",0
+wy_22_74:	dc.b	"fdiv src=3 dst=1 rp.s: 1/3",0
+wy_22_75:	dc.b	"fdiv src=3 dst=1 rp.d: 1/3",0
+wy_22_76:	dc.b	"fdiv src=3 dst=-1 rn.x: -1/3",0
+wy_22_77:	dc.b	"fdiv src=3 dst=-1 rn.s: -1/3",0
+wy_22_78:	dc.b	"fdiv src=3 dst=-1 rn.d: -1/3",0
+wy_22_79:	dc.b	"fdiv src=3 dst=-1 rz.x: -1/3",0
+wy_22_80:	dc.b	"fdiv src=3 dst=-1 rz.s: -1/3",0
+wy_22_81:	dc.b	"fdiv src=3 dst=-1 rz.d: -1/3",0
+wy_22_82:	dc.b	"fdiv src=3 dst=-1 rm.x: -1/3",0
+wy_22_83:	dc.b	"fdiv src=3 dst=-1 rm.s: -1/3",0
+wy_22_84:	dc.b	"fdiv src=3 dst=-1 rm.d: -1/3",0
+wy_22_85:	dc.b	"fdiv src=3 dst=-1 rp.x: -1/3",0
+wy_22_86:	dc.b	"fdiv src=3 dst=-1 rp.s: -1/3",0
+wy_22_87:	dc.b	"fdiv src=3 dst=-1 rp.d: -1/3",0
+wy_22_88:	dc.b	"fdiv src=3 dst=2 rn.x: 2/3",0
+wy_22_89:	dc.b	"fdiv src=3 dst=2 rn.s: 2/3",0
+wy_22_90:	dc.b	"fdiv src=3 dst=2 rn.d: 2/3",0
+wy_22_91:	dc.b	"fdiv src=3 dst=2 rz.x: 2/3",0
+wy_22_92:	dc.b	"fdiv src=3 dst=2 rz.s: 2/3",0
+wy_22_93:	dc.b	"fdiv src=3 dst=2 rz.d: 2/3",0
+wy_22_94:	dc.b	"fdiv src=3 dst=2 rm.x: 2/3",0
+wy_22_95:	dc.b	"fdiv src=3 dst=2 rm.s: 2/3",0
+wy_22_96:	dc.b	"fdiv src=3 dst=2 rm.d: 2/3",0
+wy_22_97:	dc.b	"fdiv src=3 dst=2 rp.x: 2/3",0
+wy_22_98:	dc.b	"fdiv src=3 dst=2 rp.s: 2/3",0
+wy_22_99:	dc.b	"fdiv src=3 dst=2 rp.d: 2/3",0
+wy_22_100:	dc.b	"fdiv src=10 dst=1 rn.x: 1/10",0
+wy_22_101:	dc.b	"fdiv src=10 dst=1 rn.s: 1/10",0
+wy_22_102:	dc.b	"fdiv src=10 dst=1 rn.d: 1/10",0
+wy_22_103:	dc.b	"fdiv src=10 dst=1 rz.x: 1/10",0
+wy_22_104:	dc.b	"fdiv src=10 dst=1 rz.s: 1/10",0
+wy_22_105:	dc.b	"fdiv src=10 dst=1 rz.d: 1/10",0
+wy_22_106:	dc.b	"fdiv src=10 dst=1 rm.x: 1/10",0
+wy_22_107:	dc.b	"fdiv src=10 dst=1 rm.s: 1/10",0
+wy_22_108:	dc.b	"fdiv src=10 dst=1 rm.d: 1/10",0
+wy_22_109:	dc.b	"fdiv src=10 dst=1 rp.x: 1/10",0
+wy_22_110:	dc.b	"fdiv src=10 dst=1 rp.s: 1/10",0
+wy_22_111:	dc.b	"fdiv src=10 dst=1 rp.d: 1/10",0
+wy_22_112:	dc.b	"fdiv src=7 dst=-22 rn.x: -22/7",0
+wy_22_113:	dc.b	"fdiv src=7 dst=-22 rz.x: -22/7",0
+wy_22_114:	dc.b	"fdiv src=7 dst=-22 rm.x: -22/7",0
+wy_22_115:	dc.b	"fdiv src=7 dst=-22 rp.x: -22/7",0
+wy_22_116:	dc.b	"fdiv src=2^-16000 dst=2^16000 rn.x: overflow",0
+wy_22_117:	dc.b	"fdiv src=2^-16000 dst=2^16000 rz.x: overflow",0
+wy_22_118:	dc.b	"fdiv src=2^-16000 dst=2^16000 rm.x: overflow",0
+wy_22_119:	dc.b	"fdiv src=2^-16000 dst=2^16000 rp.x: overflow",0
+wy_22_120:	dc.b	"fdiv src=4 dst=1 rn.x: exact",0
+gn_23:	dc.b	"arith_fsqrt",0
+wy_23_0:	dc.b	"fsqrt src=+0 dst=7 rn.x",0
+wy_23_1:	dc.b	"fsqrt src=-0 dst=7 rn.x",0
+wy_23_2:	dc.b	"fsqrt src=+inf dst=7 rn.x",0
+wy_23_3:	dc.b	"fsqrt src=-inf dst=7 rn.x",0
+wy_23_4:	dc.b	"fsqrt src=qnan dst=7 rn.x",0
+wy_23_5:	dc.b	"fsqrt src=snan dst=7 rn.x",0
+wy_23_6:	dc.b	"fsqrt src=-1 dst=7 rn.x",0
+wy_23_7:	dc.b	"fsqrt src=4 dst=7 rn.x",0
+wy_23_8:	dc.b	"fsqrt src=9/4 dst=7 rn.x",0
+wy_23_9:	dc.b	"fsqrt src=2 dst=7 rn.x: correctly rounded square root",0
+wy_23_10:	dc.b	"fsqrt src=3 dst=7 rn.x: correctly rounded square root",0
+wy_23_11:	dc.b	"fsqrt src=2^-1 dst=7 rn.x: correctly rounded square root",0
+wy_23_12:	dc.b	"fsqrt src=2 dst=7 rn.s: correctly rounded square root",0
+wy_23_13:	dc.b	"fsqrt src=3 dst=7 rn.s: correctly rounded square root",0
+wy_23_14:	dc.b	"fsqrt src=2^-1 dst=7 rn.s: correctly rounded square root",0
+wy_23_15:	dc.b	"fsqrt src=2 dst=7 rn.d: correctly rounded square root",0
+wy_23_16:	dc.b	"fsqrt src=3 dst=7 rn.d: correctly rounded square root",0
+wy_23_17:	dc.b	"fsqrt src=2^-1 dst=7 rn.d: correctly rounded square root",0
+wy_23_18:	dc.b	"fsqrt src=2 dst=7 rz.x: correctly rounded square root",0
+wy_23_19:	dc.b	"fsqrt src=3 dst=7 rz.x: correctly rounded square root",0
+wy_23_20:	dc.b	"fsqrt src=2^-1 dst=7 rz.x: correctly rounded square root",0
+wy_23_21:	dc.b	"fsqrt src=2 dst=7 rz.s: correctly rounded square root",0
+wy_23_22:	dc.b	"fsqrt src=3 dst=7 rz.s: correctly rounded square root",0
+wy_23_23:	dc.b	"fsqrt src=2^-1 dst=7 rz.s: correctly rounded square root",0
+wy_23_24:	dc.b	"fsqrt src=2 dst=7 rz.d: correctly rounded square root",0
+wy_23_25:	dc.b	"fsqrt src=3 dst=7 rz.d: correctly rounded square root",0
+wy_23_26:	dc.b	"fsqrt src=2^-1 dst=7 rz.d: correctly rounded square root",0
+wy_23_27:	dc.b	"fsqrt src=2 dst=7 rm.x: correctly rounded square root",0
+wy_23_28:	dc.b	"fsqrt src=3 dst=7 rm.x: correctly rounded square root",0
+wy_23_29:	dc.b	"fsqrt src=2^-1 dst=7 rm.x: correctly rounded square root",0
+wy_23_30:	dc.b	"fsqrt src=2 dst=7 rm.s: correctly rounded square root",0
+wy_23_31:	dc.b	"fsqrt src=3 dst=7 rm.s: correctly rounded square root",0
+wy_23_32:	dc.b	"fsqrt src=2^-1 dst=7 rm.s: correctly rounded square root",0
+wy_23_33:	dc.b	"fsqrt src=2 dst=7 rm.d: correctly rounded square root",0
+wy_23_34:	dc.b	"fsqrt src=3 dst=7 rm.d: correctly rounded square root",0
+wy_23_35:	dc.b	"fsqrt src=2^-1 dst=7 rm.d: correctly rounded square root",0
+wy_23_36:	dc.b	"fsqrt src=2 dst=7 rp.x: correctly rounded square root",0
+wy_23_37:	dc.b	"fsqrt src=3 dst=7 rp.x: correctly rounded square root",0
+wy_23_38:	dc.b	"fsqrt src=2^-1 dst=7 rp.x: correctly rounded square root",0
+wy_23_39:	dc.b	"fsqrt src=2 dst=7 rp.s: correctly rounded square root",0
+wy_23_40:	dc.b	"fsqrt src=3 dst=7 rp.s: correctly rounded square root",0
+wy_23_41:	dc.b	"fsqrt src=2^-1 dst=7 rp.s: correctly rounded square root",0
+wy_23_42:	dc.b	"fsqrt src=2 dst=7 rp.d: correctly rounded square root",0
+wy_23_43:	dc.b	"fsqrt src=3 dst=7 rp.d: correctly rounded square root",0
+wy_23_44:	dc.b	"fsqrt src=2^-1 dst=7 rp.d: correctly rounded square root",0
+gn_24:	dc.b	"arith_fmove",0
+wy_24_0:	dc.b	"fmove src=+0 dst=7 rn.x",0
+wy_24_1:	dc.b	"fmove src=-0 dst=7 rn.x",0
+wy_24_2:	dc.b	"fmove src=+inf dst=7 rn.x",0
+wy_24_3:	dc.b	"fmove src=-inf dst=7 rn.x",0
+wy_24_4:	dc.b	"fmove src=qnan dst=7 rn.x",0
+wy_24_5:	dc.b	"fmove src=snan dst=7 rn.x",0
+wy_24_6:	dc.b	"fmove src=m*2^0 dst=7 rn.x: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
+wy_24_7:	dc.b	"fmove src=-m*2^0 dst=7 rn.x: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
+wy_24_8:	dc.b	"fmove src=m*2^0 dst=7 rn.x: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
+wy_24_9:	dc.b	"fmove src=m*2^0 dst=7 rn.x: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
+wy_24_10:	dc.b	"fmove src=m*2^-2 dst=7 rn.x: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
+wy_24_11:	dc.b	"fmove src=m*2^0 dst=7 rn.s: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
+wy_24_12:	dc.b	"fmove src=-m*2^0 dst=7 rn.s: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
+wy_24_13:	dc.b	"fmove src=m*2^0 dst=7 rn.s: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
+wy_24_14:	dc.b	"fmove src=m*2^0 dst=7 rn.s: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
+wy_24_15:	dc.b	"fmove src=m*2^-2 dst=7 rn.s: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
+wy_24_16:	dc.b	"fmove src=m*2^0 dst=7 rn.d: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
+wy_24_17:	dc.b	"fmove src=-m*2^0 dst=7 rn.d: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
+wy_24_18:	dc.b	"fmove src=m*2^0 dst=7 rn.d: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
+wy_24_19:	dc.b	"fmove src=m*2^0 dst=7 rn.d: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
+wy_24_20:	dc.b	"fmove src=m*2^-2 dst=7 rn.d: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
+wy_24_21:	dc.b	"fmove src=m*2^0 dst=7 rz.x: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
+wy_24_22:	dc.b	"fmove src=-m*2^0 dst=7 rz.x: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
+wy_24_23:	dc.b	"fmove src=m*2^0 dst=7 rz.x: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
+wy_24_24:	dc.b	"fmove src=m*2^0 dst=7 rz.x: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
+wy_24_25:	dc.b	"fmove src=m*2^-2 dst=7 rz.x: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
+wy_24_26:	dc.b	"fmove src=m*2^0 dst=7 rz.s: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
+wy_24_27:	dc.b	"fmove src=-m*2^0 dst=7 rz.s: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
+wy_24_28:	dc.b	"fmove src=m*2^0 dst=7 rz.s: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
+wy_24_29:	dc.b	"fmove src=m*2^0 dst=7 rz.s: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
+wy_24_30:	dc.b	"fmove src=m*2^-2 dst=7 rz.s: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
+wy_24_31:	dc.b	"fmove src=m*2^0 dst=7 rz.d: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
+wy_24_32:	dc.b	"fmove src=-m*2^0 dst=7 rz.d: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
+wy_24_33:	dc.b	"fmove src=m*2^0 dst=7 rz.d: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
+wy_24_34:	dc.b	"fmove src=m*2^0 dst=7 rz.d: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
+wy_24_35:	dc.b	"fmove src=m*2^-2 dst=7 rz.d: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
+wy_24_36:	dc.b	"fmove src=m*2^0 dst=7 rm.x: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
+wy_24_37:	dc.b	"fmove src=-m*2^0 dst=7 rm.x: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
+wy_24_38:	dc.b	"fmove src=m*2^0 dst=7 rm.x: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
+wy_24_39:	dc.b	"fmove src=m*2^0 dst=7 rm.x: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
+wy_24_40:	dc.b	"fmove src=m*2^-2 dst=7 rm.x: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
+wy_24_41:	dc.b	"fmove src=m*2^0 dst=7 rm.s: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
+wy_24_42:	dc.b	"fmove src=-m*2^0 dst=7 rm.s: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
+wy_24_43:	dc.b	"fmove src=m*2^0 dst=7 rm.s: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
+wy_24_44:	dc.b	"fmove src=m*2^0 dst=7 rm.s: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
+wy_24_45:	dc.b	"fmove src=m*2^-2 dst=7 rm.s: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
+wy_24_46:	dc.b	"fmove src=m*2^0 dst=7 rm.d: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
+wy_24_47:	dc.b	"fmove src=-m*2^0 dst=7 rm.d: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
+wy_24_48:	dc.b	"fmove src=m*2^0 dst=7 rm.d: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
+wy_24_49:	dc.b	"fmove src=m*2^0 dst=7 rm.d: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
+wy_24_50:	dc.b	"fmove src=m*2^-2 dst=7 rm.d: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
+wy_24_51:	dc.b	"fmove src=m*2^0 dst=7 rp.x: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
+wy_24_52:	dc.b	"fmove src=-m*2^0 dst=7 rp.x: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
+wy_24_53:	dc.b	"fmove src=m*2^0 dst=7 rp.x: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
+wy_24_54:	dc.b	"fmove src=m*2^0 dst=7 rp.x: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
+wy_24_55:	dc.b	"fmove src=m*2^-2 dst=7 rp.x: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
+wy_24_56:	dc.b	"fmove src=m*2^0 dst=7 rp.s: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
+wy_24_57:	dc.b	"fmove src=-m*2^0 dst=7 rp.s: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
+wy_24_58:	dc.b	"fmove src=m*2^0 dst=7 rp.s: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
+wy_24_59:	dc.b	"fmove src=m*2^0 dst=7 rp.s: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
+wy_24_60:	dc.b	"fmove src=m*2^-2 dst=7 rp.s: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
+wy_24_61:	dc.b	"fmove src=m*2^0 dst=7 rp.d: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
+wy_24_62:	dc.b	"fmove src=-m*2^0 dst=7 rp.d: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
+wy_24_63:	dc.b	"fmove src=m*2^0 dst=7 rp.d: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
+wy_24_64:	dc.b	"fmove src=m*2^0 dst=7 rp.d: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
+wy_24_65:	dc.b	"fmove src=m*2^-2 dst=7 rp.d: FMOVE.X FPm,FP0 rounds to the FPCR precision",0
+gn_25:	dc.b	"arith_fabs",0
+wy_25_0:	dc.b	"fabs src=+0 dst=7 rn.x",0
+wy_25_1:	dc.b	"fabs src=-0 dst=7 rn.x",0
+wy_25_2:	dc.b	"fabs src=+inf dst=7 rn.x",0
+wy_25_3:	dc.b	"fabs src=-inf dst=7 rn.x",0
+wy_25_4:	dc.b	"fabs src=qnan dst=7 rn.x",0
+wy_25_5:	dc.b	"fabs src=snan dst=7 rn.x",0
+wy_25_6:	dc.b	"fabs src=-1 dst=7 rn.x",0
+wy_25_7:	dc.b	"fabs src=5 dst=7 rn.x",0
+wy_25_8:	dc.b	"fabs src=-m*2^0 dst=7 rn.s: FABS rounds to the FPCR precision",0
+gn_26:	dc.b	"arith_fneg",0
+wy_26_0:	dc.b	"fneg src=+0 dst=7 rn.x",0
+wy_26_1:	dc.b	"fneg src=-0 dst=7 rn.x",0
+wy_26_2:	dc.b	"fneg src=+inf dst=7 rn.x",0
+wy_26_3:	dc.b	"fneg src=-inf dst=7 rn.x",0
+wy_26_4:	dc.b	"fneg src=qnan dst=7 rn.x",0
+wy_26_5:	dc.b	"fneg src=snan dst=7 rn.x",0
+wy_26_6:	dc.b	"fneg src=-1 dst=7 rn.x",0
+wy_26_7:	dc.b	"fneg src=5 dst=7 rn.x",0
+wy_26_8:	dc.b	"fneg src=m*2^0 dst=7 rz.s: FNEG rounds to the FPCR precision",0
+gn_27:	dc.b	"arith_fint",0
+wy_27_0:	dc.b	"fint src=+0 dst=7 rn.x",0
+wy_27_1:	dc.b	"fint src=+0 dst=7 rz.x",0
+wy_27_2:	dc.b	"fint src=+0 dst=7 rm.x",0
+wy_27_3:	dc.b	"fint src=+0 dst=7 rp.x",0
+wy_27_4:	dc.b	"fint src=-0 dst=7 rn.x",0
+wy_27_5:	dc.b	"fint src=-0 dst=7 rz.x",0
+wy_27_6:	dc.b	"fint src=-0 dst=7 rm.x",0
+wy_27_7:	dc.b	"fint src=-0 dst=7 rp.x",0
+wy_27_8:	dc.b	"fint src=+inf dst=7 rn.x",0
+wy_27_9:	dc.b	"fint src=+inf dst=7 rz.x",0
+wy_27_10:	dc.b	"fint src=+inf dst=7 rm.x",0
+wy_27_11:	dc.b	"fint src=+inf dst=7 rp.x",0
+wy_27_12:	dc.b	"fint src=-inf dst=7 rn.x",0
+wy_27_13:	dc.b	"fint src=-inf dst=7 rz.x",0
+wy_27_14:	dc.b	"fint src=-inf dst=7 rm.x",0
+wy_27_15:	dc.b	"fint src=-inf dst=7 rp.x",0
+wy_27_16:	dc.b	"fint src=qnan dst=7 rn.x",0
+wy_27_17:	dc.b	"fint src=qnan dst=7 rz.x",0
+wy_27_18:	dc.b	"fint src=qnan dst=7 rm.x",0
+wy_27_19:	dc.b	"fint src=qnan dst=7 rp.x",0
+wy_27_20:	dc.b	"fint src=snan dst=7 rn.x",0
+wy_27_21:	dc.b	"fint src=snan dst=7 rz.x",0
+wy_27_22:	dc.b	"fint src=snan dst=7 rm.x",0
+wy_27_23:	dc.b	"fint src=snan dst=7 rp.x",0
+wy_27_24:	dc.b	"fint src=5/2 dst=7 rn.x",0
+wy_27_25:	dc.b	"fint src=5/2 dst=7 rz.x",0
+wy_27_26:	dc.b	"fint src=5/2 dst=7 rm.x",0
+wy_27_27:	dc.b	"fint src=5/2 dst=7 rp.x",0
+wy_27_28:	dc.b	"fint src=7/2 dst=7 rn.x",0
+wy_27_29:	dc.b	"fint src=7/2 dst=7 rz.x",0
+wy_27_30:	dc.b	"fint src=7/2 dst=7 rm.x",0
+wy_27_31:	dc.b	"fint src=7/2 dst=7 rp.x",0
+wy_27_32:	dc.b	"fint src=-5/2 dst=7 rn.x",0
+wy_27_33:	dc.b	"fint src=-5/2 dst=7 rz.x",0
+wy_27_34:	dc.b	"fint src=-5/2 dst=7 rm.x",0
+wy_27_35:	dc.b	"fint src=-5/2 dst=7 rp.x",0
+wy_27_36:	dc.b	"fint src=2^-1 dst=7 rn.x",0
+wy_27_37:	dc.b	"fint src=2^-1 dst=7 rz.x",0
+wy_27_38:	dc.b	"fint src=2^-1 dst=7 rm.x",0
+wy_27_39:	dc.b	"fint src=2^-1 dst=7 rp.x",0
+wy_27_40:	dc.b	"fint src=-2^-1 dst=7 rn.x",0
+wy_27_41:	dc.b	"fint src=-2^-1 dst=7 rz.x",0
+wy_27_42:	dc.b	"fint src=-2^-1 dst=7 rm.x",0
+wy_27_43:	dc.b	"fint src=-2^-1 dst=7 rp.x",0
+wy_27_44:	dc.b	"fint src=m*2^1 dst=7 rn.x",0
+wy_27_45:	dc.b	"fint src=m*2^1 dst=7 rz.x",0
+wy_27_46:	dc.b	"fint src=m*2^1 dst=7 rm.x",0
+wy_27_47:	dc.b	"fint src=m*2^1 dst=7 rp.x",0
+wy_27_48:	dc.b	"fint src=-m*2^1 dst=7 rn.x",0
+wy_27_49:	dc.b	"fint src=-m*2^1 dst=7 rz.x",0
+wy_27_50:	dc.b	"fint src=-m*2^1 dst=7 rm.x",0
+wy_27_51:	dc.b	"fint src=-m*2^1 dst=7 rp.x",0
+wy_27_52:	dc.b	"fint src=2^70 dst=7 rn.x",0
+wy_27_53:	dc.b	"fint src=2^70 dst=7 rz.x",0
+wy_27_54:	dc.b	"fint src=2^70 dst=7 rm.x",0
+wy_27_55:	dc.b	"fint src=2^70 dst=7 rp.x",0
+wy_27_56:	dc.b	"fint src=3/4 dst=7 rn.x",0
+wy_27_57:	dc.b	"fint src=3/4 dst=7 rz.x",0
+wy_27_58:	dc.b	"fint src=3/4 dst=7 rm.x",0
+wy_27_59:	dc.b	"fint src=3/4 dst=7 rp.x",0
+gn_28:	dc.b	"arith_fintrz",0
+wy_28_0:	dc.b	"fintrz src=+0 dst=7 rn.x",0
+wy_28_1:	dc.b	"fintrz src=+0 dst=7 rp.x",0
+wy_28_2:	dc.b	"fintrz src=-0 dst=7 rn.x",0
+wy_28_3:	dc.b	"fintrz src=-0 dst=7 rp.x",0
+wy_28_4:	dc.b	"fintrz src=+inf dst=7 rn.x",0
+wy_28_5:	dc.b	"fintrz src=+inf dst=7 rp.x",0
+wy_28_6:	dc.b	"fintrz src=-inf dst=7 rn.x",0
+wy_28_7:	dc.b	"fintrz src=-inf dst=7 rp.x",0
+wy_28_8:	dc.b	"fintrz src=qnan dst=7 rn.x",0
+wy_28_9:	dc.b	"fintrz src=qnan dst=7 rp.x",0
+wy_28_10:	dc.b	"fintrz src=snan dst=7 rn.x",0
+wy_28_11:	dc.b	"fintrz src=snan dst=7 rp.x",0
+wy_28_12:	dc.b	"fintrz src=5/2 dst=7 rn.x",0
+wy_28_13:	dc.b	"fintrz src=5/2 dst=7 rp.x",0
+wy_28_14:	dc.b	"fintrz src=7/2 dst=7 rn.x",0
+wy_28_15:	dc.b	"fintrz src=7/2 dst=7 rp.x",0
+wy_28_16:	dc.b	"fintrz src=-5/2 dst=7 rn.x",0
+wy_28_17:	dc.b	"fintrz src=-5/2 dst=7 rp.x",0
+wy_28_18:	dc.b	"fintrz src=2^-1 dst=7 rn.x",0
+wy_28_19:	dc.b	"fintrz src=2^-1 dst=7 rp.x",0
+wy_28_20:	dc.b	"fintrz src=-2^-1 dst=7 rn.x",0
+wy_28_21:	dc.b	"fintrz src=-2^-1 dst=7 rp.x",0
+wy_28_22:	dc.b	"fintrz src=m*2^1 dst=7 rn.x",0
+wy_28_23:	dc.b	"fintrz src=m*2^1 dst=7 rp.x",0
+wy_28_24:	dc.b	"fintrz src=-m*2^1 dst=7 rn.x",0
+wy_28_25:	dc.b	"fintrz src=-m*2^1 dst=7 rp.x",0
+wy_28_26:	dc.b	"fintrz src=2^70 dst=7 rn.x",0
+wy_28_27:	dc.b	"fintrz src=2^70 dst=7 rp.x",0
+wy_28_28:	dc.b	"fintrz src=3/4 dst=7 rn.x",0
+wy_28_29:	dc.b	"fintrz src=3/4 dst=7 rp.x",0
+gn_29:	dc.b	"arith_fgetexp",0
+wy_29_0:	dc.b	"fgetexp src=+0 dst=7 rn.x",0
+wy_29_1:	dc.b	"fgetexp src=-0 dst=7 rn.x",0
+wy_29_2:	dc.b	"fgetexp src=+inf dst=7 rn.x",0
+wy_29_3:	dc.b	"fgetexp src=-inf dst=7 rn.x",0
+wy_29_4:	dc.b	"fgetexp src=qnan dst=7 rn.x",0
+wy_29_5:	dc.b	"fgetexp src=snan dst=7 rn.x",0
+wy_29_6:	dc.b	"fgetexp src=8 dst=7 rn.x",0
+wy_29_7:	dc.b	"fgetexp src=3/4 dst=7 rn.x",0
+wy_29_8:	dc.b	"fgetexp src=-1 dst=7 rn.x",0
+wy_29_9:	dc.b	"fgetexp src=m*2^16383 dst=7 rn.x",0
+wy_29_10:	dc.b	"fgetexp src=2^-16000 dst=7 rn.x",0
+gn_30:	dc.b	"arith_fgetman",0
+wy_30_0:	dc.b	"fgetman src=+0 dst=7 rn.x",0
+wy_30_1:	dc.b	"fgetman src=-0 dst=7 rn.x",0
+wy_30_2:	dc.b	"fgetman src=+inf dst=7 rn.x",0
+wy_30_3:	dc.b	"fgetman src=-inf dst=7 rn.x",0
+wy_30_4:	dc.b	"fgetman src=qnan dst=7 rn.x",0
+wy_30_5:	dc.b	"fgetman src=snan dst=7 rn.x",0
+wy_30_6:	dc.b	"fgetman src=12 dst=7 rn.x",0
+wy_30_7:	dc.b	"fgetman src=-3/4 dst=7 rn.x",0
+wy_30_8:	dc.b	"fgetman src=m*2^16383 dst=7 rn.x",0
+wy_30_9:	dc.b	"fgetman src=m*2^-15999 dst=7 rn.x",0
+gn_31:	dc.b	"arith_fscale",0
+wy_31_0:	dc.b	"fscale src=+0 dst=+0 rn.x",0
+wy_31_1:	dc.b	"fscale src=-0 dst=+0 rn.x",0
+wy_31_2:	dc.b	"fscale src=+inf dst=+0 rn.x",0
+wy_31_3:	dc.b	"fscale src=-inf dst=+0 rn.x",0
+wy_31_4:	dc.b	"fscale src=qnan dst=+0 rn.x",0
+wy_31_5:	dc.b	"fscale src=snan dst=+0 rn.x",0
+wy_31_6:	dc.b	"fscale src=1 dst=+0 rn.x",0
+wy_31_7:	dc.b	"fscale src=-3 dst=+0 rn.x",0
+wy_31_8:	dc.b	"fscale src=+0 dst=-0 rn.x",0
+wy_31_9:	dc.b	"fscale src=-0 dst=-0 rn.x",0
+wy_31_10:	dc.b	"fscale src=+inf dst=-0 rn.x",0
+wy_31_11:	dc.b	"fscale src=-inf dst=-0 rn.x",0
+wy_31_12:	dc.b	"fscale src=qnan dst=-0 rn.x",0
+wy_31_13:	dc.b	"fscale src=snan dst=-0 rn.x",0
+wy_31_14:	dc.b	"fscale src=1 dst=-0 rn.x",0
+wy_31_15:	dc.b	"fscale src=-3 dst=-0 rn.x",0
+wy_31_16:	dc.b	"fscale src=+0 dst=+inf rn.x",0
+wy_31_17:	dc.b	"fscale src=-0 dst=+inf rn.x",0
+wy_31_18:	dc.b	"fscale src=+inf dst=+inf rn.x",0
+wy_31_19:	dc.b	"fscale src=-inf dst=+inf rn.x",0
+wy_31_20:	dc.b	"fscale src=qnan dst=+inf rn.x",0
+wy_31_21:	dc.b	"fscale src=snan dst=+inf rn.x",0
+wy_31_22:	dc.b	"fscale src=1 dst=+inf rn.x",0
+wy_31_23:	dc.b	"fscale src=-3 dst=+inf rn.x",0
+wy_31_24:	dc.b	"fscale src=+0 dst=-inf rn.x",0
+wy_31_25:	dc.b	"fscale src=-0 dst=-inf rn.x",0
+wy_31_26:	dc.b	"fscale src=+inf dst=-inf rn.x",0
+wy_31_27:	dc.b	"fscale src=-inf dst=-inf rn.x",0
+wy_31_28:	dc.b	"fscale src=qnan dst=-inf rn.x",0
+wy_31_29:	dc.b	"fscale src=snan dst=-inf rn.x",0
+wy_31_30:	dc.b	"fscale src=1 dst=-inf rn.x",0
+wy_31_31:	dc.b	"fscale src=-3 dst=-inf rn.x",0
+wy_31_32:	dc.b	"fscale src=+0 dst=qnan rn.x",0
+wy_31_33:	dc.b	"fscale src=-0 dst=qnan rn.x",0
+wy_31_34:	dc.b	"fscale src=+inf dst=qnan rn.x",0
+wy_31_35:	dc.b	"fscale src=-inf dst=qnan rn.x",0
+wy_31_36:	dc.b	"fscale src=qnan dst=qnan rn.x",0
+wy_31_37:	dc.b	"fscale src=snan dst=qnan rn.x",0
+wy_31_38:	dc.b	"fscale src=1 dst=qnan rn.x",0
+wy_31_39:	dc.b	"fscale src=-3 dst=qnan rn.x",0
+wy_31_40:	dc.b	"fscale src=+0 dst=snan rn.x",0
+wy_31_41:	dc.b	"fscale src=-0 dst=snan rn.x",0
+wy_31_42:	dc.b	"fscale src=+inf dst=snan rn.x",0
+wy_31_43:	dc.b	"fscale src=-inf dst=snan rn.x",0
+wy_31_44:	dc.b	"fscale src=qnan dst=snan rn.x",0
+wy_31_45:	dc.b	"fscale src=snan dst=snan rn.x",0
+wy_31_46:	dc.b	"fscale src=1 dst=snan rn.x",0
+wy_31_47:	dc.b	"fscale src=-3 dst=snan rn.x",0
+wy_31_48:	dc.b	"fscale src=+0 dst=1 rn.x",0
+wy_31_49:	dc.b	"fscale src=-0 dst=1 rn.x",0
+wy_31_50:	dc.b	"fscale src=+inf dst=1 rn.x",0
+wy_31_51:	dc.b	"fscale src=-inf dst=1 rn.x",0
+wy_31_52:	dc.b	"fscale src=qnan dst=1 rn.x",0
+wy_31_53:	dc.b	"fscale src=snan dst=1 rn.x",0
+wy_31_54:	dc.b	"fscale src=1 dst=1 rn.x",0
+wy_31_55:	dc.b	"fscale src=-3 dst=1 rn.x",0
+wy_31_56:	dc.b	"fscale src=+0 dst=-3 rn.x",0
+wy_31_57:	dc.b	"fscale src=-0 dst=-3 rn.x",0
+wy_31_58:	dc.b	"fscale src=+inf dst=-3 rn.x",0
+wy_31_59:	dc.b	"fscale src=-inf dst=-3 rn.x",0
+wy_31_60:	dc.b	"fscale src=qnan dst=-3 rn.x",0
+wy_31_61:	dc.b	"fscale src=snan dst=-3 rn.x",0
+wy_31_62:	dc.b	"fscale src=1 dst=-3 rn.x",0
+wy_31_63:	dc.b	"fscale src=-3 dst=-3 rn.x",0
+wy_31_64:	dc.b	"fscale src=3 dst=3/2 rn.x: 1.5 * 2^3",0
+wy_31_65:	dc.b	"fscale src=-1 dst=3/2 rn.x",0
+wy_31_66:	dc.b	"fscale src=m*2^1 dst=1 rn.x: scale factor truncated to 2",0
+wy_31_67:	dc.b	"fscale src=-m*2^1 dst=1 rn.x: scale factor truncated to -2",0
+wy_31_68:	dc.b	"fscale src=20000 dst=1 rn.x: overflow",0
+wy_31_69:	dc.b	"fscale src=20000 dst=1 rz.x: overflow",0
+wy_31_70:	dc.b	"fscale src=20000 dst=1 rm.x: overflow",0
+wy_31_71:	dc.b	"fscale src=20000 dst=1 rp.x: overflow",0
+gn_32:	dc.b	"arith_fmod",0
+wy_32_0:	dc.b	"fmod src=+0 dst=+0 rn.x",0
+wy_32_1:	dc.b	"fmod src=-0 dst=+0 rn.x",0
+wy_32_2:	dc.b	"fmod src=+inf dst=+0 rn.x",0
+wy_32_3:	dc.b	"fmod src=-inf dst=+0 rn.x",0
+wy_32_4:	dc.b	"fmod src=qnan dst=+0 rn.x",0
+wy_32_5:	dc.b	"fmod src=snan dst=+0 rn.x",0
+wy_32_6:	dc.b	"fmod src=1 dst=+0 rn.x",0
+wy_32_7:	dc.b	"fmod src=-3 dst=+0 rn.x",0
+wy_32_8:	dc.b	"fmod src=+0 dst=-0 rn.x",0
+wy_32_9:	dc.b	"fmod src=-0 dst=-0 rn.x",0
+wy_32_10:	dc.b	"fmod src=+inf dst=-0 rn.x",0
+wy_32_11:	dc.b	"fmod src=-inf dst=-0 rn.x",0
+wy_32_12:	dc.b	"fmod src=qnan dst=-0 rn.x",0
+wy_32_13:	dc.b	"fmod src=snan dst=-0 rn.x",0
+wy_32_14:	dc.b	"fmod src=1 dst=-0 rn.x",0
+wy_32_15:	dc.b	"fmod src=-3 dst=-0 rn.x",0
+wy_32_16:	dc.b	"fmod src=+0 dst=+inf rn.x",0
+wy_32_17:	dc.b	"fmod src=-0 dst=+inf rn.x",0
+wy_32_18:	dc.b	"fmod src=+inf dst=+inf rn.x",0
+wy_32_19:	dc.b	"fmod src=-inf dst=+inf rn.x",0
+wy_32_20:	dc.b	"fmod src=qnan dst=+inf rn.x",0
+wy_32_21:	dc.b	"fmod src=snan dst=+inf rn.x",0
+wy_32_22:	dc.b	"fmod src=1 dst=+inf rn.x",0
+wy_32_23:	dc.b	"fmod src=-3 dst=+inf rn.x",0
+wy_32_24:	dc.b	"fmod src=+0 dst=-inf rn.x",0
+wy_32_25:	dc.b	"fmod src=-0 dst=-inf rn.x",0
+wy_32_26:	dc.b	"fmod src=+inf dst=-inf rn.x",0
+wy_32_27:	dc.b	"fmod src=-inf dst=-inf rn.x",0
+wy_32_28:	dc.b	"fmod src=qnan dst=-inf rn.x",0
+wy_32_29:	dc.b	"fmod src=snan dst=-inf rn.x",0
+wy_32_30:	dc.b	"fmod src=1 dst=-inf rn.x",0
+wy_32_31:	dc.b	"fmod src=-3 dst=-inf rn.x",0
+wy_32_32:	dc.b	"fmod src=+0 dst=qnan rn.x",0
+wy_32_33:	dc.b	"fmod src=-0 dst=qnan rn.x",0
+wy_32_34:	dc.b	"fmod src=+inf dst=qnan rn.x",0
+wy_32_35:	dc.b	"fmod src=-inf dst=qnan rn.x",0
+wy_32_36:	dc.b	"fmod src=qnan dst=qnan rn.x",0
+wy_32_37:	dc.b	"fmod src=snan dst=qnan rn.x",0
+wy_32_38:	dc.b	"fmod src=1 dst=qnan rn.x",0
+wy_32_39:	dc.b	"fmod src=-3 dst=qnan rn.x",0
+wy_32_40:	dc.b	"fmod src=+0 dst=snan rn.x",0
+wy_32_41:	dc.b	"fmod src=-0 dst=snan rn.x",0
+wy_32_42:	dc.b	"fmod src=+inf dst=snan rn.x",0
+wy_32_43:	dc.b	"fmod src=-inf dst=snan rn.x",0
+wy_32_44:	dc.b	"fmod src=qnan dst=snan rn.x",0
+wy_32_45:	dc.b	"fmod src=snan dst=snan rn.x",0
+wy_32_46:	dc.b	"fmod src=1 dst=snan rn.x",0
+wy_32_47:	dc.b	"fmod src=-3 dst=snan rn.x",0
+wy_32_48:	dc.b	"fmod src=+0 dst=1 rn.x",0
+wy_32_49:	dc.b	"fmod src=-0 dst=1 rn.x",0
+wy_32_50:	dc.b	"fmod src=+inf dst=1 rn.x",0
+wy_32_51:	dc.b	"fmod src=-inf dst=1 rn.x",0
+wy_32_52:	dc.b	"fmod src=qnan dst=1 rn.x",0
+wy_32_53:	dc.b	"fmod src=snan dst=1 rn.x",0
+wy_32_54:	dc.b	"fmod src=1 dst=1 rn.x",0
+wy_32_55:	dc.b	"fmod src=-3 dst=1 rn.x",0
+wy_32_56:	dc.b	"fmod src=+0 dst=-3 rn.x",0
+wy_32_57:	dc.b	"fmod src=-0 dst=-3 rn.x",0
+wy_32_58:	dc.b	"fmod src=+inf dst=-3 rn.x",0
+wy_32_59:	dc.b	"fmod src=-inf dst=-3 rn.x",0
+wy_32_60:	dc.b	"fmod src=qnan dst=-3 rn.x",0
+wy_32_61:	dc.b	"fmod src=snan dst=-3 rn.x",0
+wy_32_62:	dc.b	"fmod src=1 dst=-3 rn.x",0
+wy_32_63:	dc.b	"fmod src=-3 dst=-3 rn.x",0
+wy_32_64:	dc.b	"fmod src=2 dst=7 rn.x: quotient byte = sign + low 7 bits of the quotient",0
+wy_32_65:	dc.b	"fmod src=2 dst=-7 rn.x: quotient byte = sign + low 7 bits of the quotient",0
+wy_32_66:	dc.b	"fmod src=-2 dst=7 rn.x: quotient byte = sign + low 7 bits of the quotient",0
+wy_32_67:	dc.b	"fmod src=-2 dst=-7 rn.x: quotient byte = sign + low 7 bits of the quotient",0
+wy_32_68:	dc.b	"fmod src=2 dst=5 rn.x: quotient byte = sign + low 7 bits of the quotient",0
+wy_32_69:	dc.b	"fmod src=2 dst=4 rn.x: quotient byte = sign + low 7 bits of the quotient",0
+wy_32_70:	dc.b	"fmod src=2 dst=-4 rn.x: quotient byte = sign + low 7 bits of the quotient",0
+wy_32_71:	dc.b	"fmod src=3/2 dst=11/2 rn.x: quotient byte = sign + low 7 bits of the quotient",0
+wy_32_72:	dc.b	"fmod src=3 dst=2^70 rn.x: quotient byte = sign + low 7 bits of the quotient",0
+wy_32_73:	dc.b	"fmod src=7 dst=2^70 rn.x: quotient byte = sign + low 7 bits of the quotient",0
+wy_32_74:	dc.b	"fmod src=3 dst=1 rn.x: quotient byte = sign + low 7 bits of the quotient",0
+wy_32_75:	dc.b	"fmod src=3 dst=2 rn.x: quotient byte = sign + low 7 bits of the quotient",0
+wy_32_76:	dc.b	"fmod src=1 dst=3/2 rn.x: quotient byte = sign + low 7 bits of the quotient",0
+wy_32_77:	dc.b	"fmod src=1 dst=5/2 rn.x: quotient byte = sign + low 7 bits of the quotient",0
+gn_33:	dc.b	"arith_frem",0
+wy_33_0:	dc.b	"frem src=+0 dst=+0 rn.x",0
+wy_33_1:	dc.b	"frem src=-0 dst=+0 rn.x",0
+wy_33_2:	dc.b	"frem src=+inf dst=+0 rn.x",0
+wy_33_3:	dc.b	"frem src=-inf dst=+0 rn.x",0
+wy_33_4:	dc.b	"frem src=qnan dst=+0 rn.x",0
+wy_33_5:	dc.b	"frem src=snan dst=+0 rn.x",0
+wy_33_6:	dc.b	"frem src=1 dst=+0 rn.x",0
+wy_33_7:	dc.b	"frem src=-3 dst=+0 rn.x",0
+wy_33_8:	dc.b	"frem src=+0 dst=-0 rn.x",0
+wy_33_9:	dc.b	"frem src=-0 dst=-0 rn.x",0
+wy_33_10:	dc.b	"frem src=+inf dst=-0 rn.x",0
+wy_33_11:	dc.b	"frem src=-inf dst=-0 rn.x",0
+wy_33_12:	dc.b	"frem src=qnan dst=-0 rn.x",0
+wy_33_13:	dc.b	"frem src=snan dst=-0 rn.x",0
+wy_33_14:	dc.b	"frem src=1 dst=-0 rn.x",0
+wy_33_15:	dc.b	"frem src=-3 dst=-0 rn.x",0
+wy_33_16:	dc.b	"frem src=+0 dst=+inf rn.x",0
+wy_33_17:	dc.b	"frem src=-0 dst=+inf rn.x",0
+wy_33_18:	dc.b	"frem src=+inf dst=+inf rn.x",0
+wy_33_19:	dc.b	"frem src=-inf dst=+inf rn.x",0
+wy_33_20:	dc.b	"frem src=qnan dst=+inf rn.x",0
+wy_33_21:	dc.b	"frem src=snan dst=+inf rn.x",0
+wy_33_22:	dc.b	"frem src=1 dst=+inf rn.x",0
+wy_33_23:	dc.b	"frem src=-3 dst=+inf rn.x",0
+wy_33_24:	dc.b	"frem src=+0 dst=-inf rn.x",0
+wy_33_25:	dc.b	"frem src=-0 dst=-inf rn.x",0
+wy_33_26:	dc.b	"frem src=+inf dst=-inf rn.x",0
+wy_33_27:	dc.b	"frem src=-inf dst=-inf rn.x",0
+wy_33_28:	dc.b	"frem src=qnan dst=-inf rn.x",0
+wy_33_29:	dc.b	"frem src=snan dst=-inf rn.x",0
+wy_33_30:	dc.b	"frem src=1 dst=-inf rn.x",0
+wy_33_31:	dc.b	"frem src=-3 dst=-inf rn.x",0
+wy_33_32:	dc.b	"frem src=+0 dst=qnan rn.x",0
+wy_33_33:	dc.b	"frem src=-0 dst=qnan rn.x",0
+wy_33_34:	dc.b	"frem src=+inf dst=qnan rn.x",0
+wy_33_35:	dc.b	"frem src=-inf dst=qnan rn.x",0
+wy_33_36:	dc.b	"frem src=qnan dst=qnan rn.x",0
+wy_33_37:	dc.b	"frem src=snan dst=qnan rn.x",0
+wy_33_38:	dc.b	"frem src=1 dst=qnan rn.x",0
+wy_33_39:	dc.b	"frem src=-3 dst=qnan rn.x",0
+wy_33_40:	dc.b	"frem src=+0 dst=snan rn.x",0
+wy_33_41:	dc.b	"frem src=-0 dst=snan rn.x",0
+wy_33_42:	dc.b	"frem src=+inf dst=snan rn.x",0
+wy_33_43:	dc.b	"frem src=-inf dst=snan rn.x",0
+wy_33_44:	dc.b	"frem src=qnan dst=snan rn.x",0
+wy_33_45:	dc.b	"frem src=snan dst=snan rn.x",0
+wy_33_46:	dc.b	"frem src=1 dst=snan rn.x",0
+wy_33_47:	dc.b	"frem src=-3 dst=snan rn.x",0
+wy_33_48:	dc.b	"frem src=+0 dst=1 rn.x",0
+wy_33_49:	dc.b	"frem src=-0 dst=1 rn.x",0
+wy_33_50:	dc.b	"frem src=+inf dst=1 rn.x",0
+wy_33_51:	dc.b	"frem src=-inf dst=1 rn.x",0
+wy_33_52:	dc.b	"frem src=qnan dst=1 rn.x",0
+wy_33_53:	dc.b	"frem src=snan dst=1 rn.x",0
+wy_33_54:	dc.b	"frem src=1 dst=1 rn.x",0
+wy_33_55:	dc.b	"frem src=-3 dst=1 rn.x",0
+wy_33_56:	dc.b	"frem src=+0 dst=-3 rn.x",0
+wy_33_57:	dc.b	"frem src=-0 dst=-3 rn.x",0
+wy_33_58:	dc.b	"frem src=+inf dst=-3 rn.x",0
+wy_33_59:	dc.b	"frem src=-inf dst=-3 rn.x",0
+wy_33_60:	dc.b	"frem src=qnan dst=-3 rn.x",0
+wy_33_61:	dc.b	"frem src=snan dst=-3 rn.x",0
+wy_33_62:	dc.b	"frem src=1 dst=-3 rn.x",0
+wy_33_63:	dc.b	"frem src=-3 dst=-3 rn.x",0
+wy_33_64:	dc.b	"frem src=2 dst=7 rn.x: quotient byte = sign + low 7 bits of the quotient",0
+wy_33_65:	dc.b	"frem src=2 dst=-7 rn.x: quotient byte = sign + low 7 bits of the quotient",0
+wy_33_66:	dc.b	"frem src=-2 dst=7 rn.x: quotient byte = sign + low 7 bits of the quotient",0
+wy_33_67:	dc.b	"frem src=-2 dst=-7 rn.x: quotient byte = sign + low 7 bits of the quotient",0
+wy_33_68:	dc.b	"frem src=2 dst=5 rn.x: quotient byte = sign + low 7 bits of the quotient",0
+wy_33_69:	dc.b	"frem src=2 dst=4 rn.x: quotient byte = sign + low 7 bits of the quotient",0
+wy_33_70:	dc.b	"frem src=2 dst=-4 rn.x: quotient byte = sign + low 7 bits of the quotient",0
+wy_33_71:	dc.b	"frem src=3/2 dst=11/2 rn.x: quotient byte = sign + low 7 bits of the quotient",0
+wy_33_72:	dc.b	"frem src=3 dst=2^70 rn.x: quotient byte = sign + low 7 bits of the quotient",0
+wy_33_73:	dc.b	"frem src=7 dst=2^70 rn.x: quotient byte = sign + low 7 bits of the quotient",0
+wy_33_74:	dc.b	"frem src=3 dst=1 rn.x: quotient byte = sign + low 7 bits of the quotient",0
+wy_33_75:	dc.b	"frem src=3 dst=2 rn.x: quotient byte = sign + low 7 bits of the quotient",0
+wy_33_76:	dc.b	"frem src=1 dst=3/2 rn.x: quotient byte = sign + low 7 bits of the quotient",0
+wy_33_77:	dc.b	"frem src=1 dst=5/2 rn.x: quotient byte = sign + low 7 bits of the quotient",0
+gn_34:	dc.b	"arith_fsglmul",0
+wy_34_0:	dc.b	"fsglmul src=m*2^0 dst=1 rn.x: both input mantissas truncated to 24 bits before multiplication",0
+wy_34_1:	dc.b	"fsglmul src=m*2^0 dst=1 rn.s: both input mantissas truncated to 24 bits before multiplication",0
+wy_34_2:	dc.b	"fsglmul src=m*2^0 dst=1 rn.d: both input mantissas truncated to 24 bits before multiplication",0
+wy_34_3:	dc.b	"fsglmul src=1 dst=m*2^0 rn.x: both input mantissas truncated to 24 bits before multiplication",0
+wy_34_4:	dc.b	"fsglmul src=1 dst=m*2^0 rn.s: both input mantissas truncated to 24 bits before multiplication",0
+wy_34_5:	dc.b	"fsglmul src=1 dst=m*2^0 rn.d: both input mantissas truncated to 24 bits before multiplication",0
+wy_34_6:	dc.b	"fsglmul src=-m*2^0 dst=1 rn.x: both input mantissas truncated to 24 bits before multiplication",0
+wy_34_7:	dc.b	"fsglmul src=-m*2^0 dst=1 rn.s: both input mantissas truncated to 24 bits before multiplication",0
+wy_34_8:	dc.b	"fsglmul src=-m*2^0 dst=1 rn.d: both input mantissas truncated to 24 bits before multiplication",0
+wy_34_9:	dc.b	"fsglmul src=m*2^0 dst=m*2^0 rn.x: both input mantissas truncated to 24 bits before multiplication",0
+wy_34_10:	dc.b	"fsglmul src=m*2^0 dst=m*2^0 rn.s: both input mantissas truncated to 24 bits before multiplication",0
+wy_34_11:	dc.b	"fsglmul src=m*2^0 dst=m*2^0 rn.d: both input mantissas truncated to 24 bits before multiplication",0
+wy_34_12:	dc.b	"fsglmul src=m*2^0 dst=m*2^0 rn.x: product rounded to single precision, any FPCR precision",0
+wy_34_13:	dc.b	"fsglmul src=3 dst=5 rn.d",0
+wy_34_14:	dc.b	"fsglmul src=m*2^201 dst=m*2^202 rn.x: extended exponent range is kept",0
+wy_34_15:	dc.b	"fsglmul src=m*2^0 dst=1 rz.x: both input mantissas truncated to 24 bits before multiplication",0
+wy_34_16:	dc.b	"fsglmul src=m*2^0 dst=1 rz.s: both input mantissas truncated to 24 bits before multiplication",0
+wy_34_17:	dc.b	"fsglmul src=m*2^0 dst=1 rz.d: both input mantissas truncated to 24 bits before multiplication",0
+wy_34_18:	dc.b	"fsglmul src=1 dst=m*2^0 rz.x: both input mantissas truncated to 24 bits before multiplication",0
+wy_34_19:	dc.b	"fsglmul src=1 dst=m*2^0 rz.s: both input mantissas truncated to 24 bits before multiplication",0
+wy_34_20:	dc.b	"fsglmul src=1 dst=m*2^0 rz.d: both input mantissas truncated to 24 bits before multiplication",0
+wy_34_21:	dc.b	"fsglmul src=-m*2^0 dst=1 rz.x: both input mantissas truncated to 24 bits before multiplication",0
+wy_34_22:	dc.b	"fsglmul src=-m*2^0 dst=1 rz.s: both input mantissas truncated to 24 bits before multiplication",0
+wy_34_23:	dc.b	"fsglmul src=-m*2^0 dst=1 rz.d: both input mantissas truncated to 24 bits before multiplication",0
+wy_34_24:	dc.b	"fsglmul src=m*2^0 dst=m*2^0 rz.x: both input mantissas truncated to 24 bits before multiplication",0
+wy_34_25:	dc.b	"fsglmul src=m*2^0 dst=m*2^0 rz.s: both input mantissas truncated to 24 bits before multiplication",0
+wy_34_26:	dc.b	"fsglmul src=m*2^0 dst=m*2^0 rz.d: both input mantissas truncated to 24 bits before multiplication",0
+wy_34_27:	dc.b	"fsglmul src=m*2^0 dst=m*2^0 rz.x: product rounded to single precision, any FPCR precision",0
+wy_34_28:	dc.b	"fsglmul src=3 dst=5 rz.d",0
+wy_34_29:	dc.b	"fsglmul src=m*2^201 dst=m*2^202 rz.x: extended exponent range is kept",0
+wy_34_30:	dc.b	"fsglmul src=m*2^0 dst=1 rm.x: both input mantissas truncated to 24 bits before multiplication",0
+wy_34_31:	dc.b	"fsglmul src=m*2^0 dst=1 rm.s: both input mantissas truncated to 24 bits before multiplication",0
+wy_34_32:	dc.b	"fsglmul src=m*2^0 dst=1 rm.d: both input mantissas truncated to 24 bits before multiplication",0
+wy_34_33:	dc.b	"fsglmul src=1 dst=m*2^0 rm.x: both input mantissas truncated to 24 bits before multiplication",0
+wy_34_34:	dc.b	"fsglmul src=1 dst=m*2^0 rm.s: both input mantissas truncated to 24 bits before multiplication",0
+wy_34_35:	dc.b	"fsglmul src=1 dst=m*2^0 rm.d: both input mantissas truncated to 24 bits before multiplication",0
+wy_34_36:	dc.b	"fsglmul src=-m*2^0 dst=1 rm.x: both input mantissas truncated to 24 bits before multiplication",0
+wy_34_37:	dc.b	"fsglmul src=-m*2^0 dst=1 rm.s: both input mantissas truncated to 24 bits before multiplication",0
+wy_34_38:	dc.b	"fsglmul src=-m*2^0 dst=1 rm.d: both input mantissas truncated to 24 bits before multiplication",0
+wy_34_39:	dc.b	"fsglmul src=m*2^0 dst=m*2^0 rm.x: both input mantissas truncated to 24 bits before multiplication",0
+wy_34_40:	dc.b	"fsglmul src=m*2^0 dst=m*2^0 rm.s: both input mantissas truncated to 24 bits before multiplication",0
+wy_34_41:	dc.b	"fsglmul src=m*2^0 dst=m*2^0 rm.d: both input mantissas truncated to 24 bits before multiplication",0
+wy_34_42:	dc.b	"fsglmul src=m*2^0 dst=m*2^0 rm.x: product rounded to single precision, any FPCR precision",0
+wy_34_43:	dc.b	"fsglmul src=3 dst=5 rm.d",0
+wy_34_44:	dc.b	"fsglmul src=m*2^201 dst=m*2^202 rm.x: extended exponent range is kept",0
+wy_34_45:	dc.b	"fsglmul src=m*2^0 dst=1 rp.x: both input mantissas truncated to 24 bits before multiplication",0
+wy_34_46:	dc.b	"fsglmul src=m*2^0 dst=1 rp.s: both input mantissas truncated to 24 bits before multiplication",0
+wy_34_47:	dc.b	"fsglmul src=m*2^0 dst=1 rp.d: both input mantissas truncated to 24 bits before multiplication",0
+wy_34_48:	dc.b	"fsglmul src=1 dst=m*2^0 rp.x: both input mantissas truncated to 24 bits before multiplication",0
+wy_34_49:	dc.b	"fsglmul src=1 dst=m*2^0 rp.s: both input mantissas truncated to 24 bits before multiplication",0
+wy_34_50:	dc.b	"fsglmul src=1 dst=m*2^0 rp.d: both input mantissas truncated to 24 bits before multiplication",0
+wy_34_51:	dc.b	"fsglmul src=-m*2^0 dst=1 rp.x: both input mantissas truncated to 24 bits before multiplication",0
+wy_34_52:	dc.b	"fsglmul src=-m*2^0 dst=1 rp.s: both input mantissas truncated to 24 bits before multiplication",0
+wy_34_53:	dc.b	"fsglmul src=-m*2^0 dst=1 rp.d: both input mantissas truncated to 24 bits before multiplication",0
+wy_34_54:	dc.b	"fsglmul src=m*2^0 dst=m*2^0 rp.x: both input mantissas truncated to 24 bits before multiplication",0
+wy_34_55:	dc.b	"fsglmul src=m*2^0 dst=m*2^0 rp.s: both input mantissas truncated to 24 bits before multiplication",0
+wy_34_56:	dc.b	"fsglmul src=m*2^0 dst=m*2^0 rp.d: both input mantissas truncated to 24 bits before multiplication",0
+wy_34_57:	dc.b	"fsglmul src=m*2^0 dst=m*2^0 rp.x: product rounded to single precision, any FPCR precision",0
+wy_34_58:	dc.b	"fsglmul src=3 dst=5 rp.d",0
+wy_34_59:	dc.b	"fsglmul src=m*2^201 dst=m*2^202 rp.x: extended exponent range is kept",0
+gn_35:	dc.b	"arith_fsgldiv",0
+wy_35_0:	dc.b	"fsgldiv src=3 dst=1 rn.x: 1/3 rounded to single precision",0
+wy_35_1:	dc.b	"fsgldiv src=3 dst=-2 rn.d",0
+wy_35_2:	dc.b	"fsgldiv src=m*2^-299 dst=2^300 rn.x: extended exponent range is kept",0
+wy_35_3:	dc.b	"fsgldiv src=3 dst=1 rz.x: 1/3 rounded to single precision",0
+wy_35_4:	dc.b	"fsgldiv src=3 dst=-2 rz.d",0
+wy_35_5:	dc.b	"fsgldiv src=m*2^-299 dst=2^300 rz.x: extended exponent range is kept",0
+wy_35_6:	dc.b	"fsgldiv src=3 dst=1 rm.x: 1/3 rounded to single precision",0
+wy_35_7:	dc.b	"fsgldiv src=3 dst=-2 rm.d",0
+wy_35_8:	dc.b	"fsgldiv src=m*2^-299 dst=2^300 rm.x: extended exponent range is kept",0
+wy_35_9:	dc.b	"fsgldiv src=3 dst=1 rp.x: 1/3 rounded to single precision",0
+wy_35_10:	dc.b	"fsgldiv src=3 dst=-2 rp.d",0
+wy_35_11:	dc.b	"fsgldiv src=m*2^-299 dst=2^300 rp.x: extended exponent range is kept",0
+wy_35_12:	dc.b	"fsgldiv src=+0 dst=1 rn.x: divide by zero",0
+gn_36:	dc.b	"arith_fsd_variants",0
+wy_36_0:	dc.b	"fsadd src=m*2^-2 dst=1 rn.x: rounded to s whatever the FPCR precision",0
+wy_36_1:	dc.b	"fsadd src=m*2^-2 dst=1 rn.d: rounded to s whatever the FPCR precision",0
+wy_36_2:	dc.b	"fsadd src=m*2^-2 dst=1 rz.x: rounded to s whatever the FPCR precision",0
+wy_36_3:	dc.b	"fsadd src=m*2^-2 dst=1 rz.d: rounded to s whatever the FPCR precision",0
+wy_36_4:	dc.b	"fsadd src=m*2^-2 dst=1 rm.x: rounded to s whatever the FPCR precision",0
+wy_36_5:	dc.b	"fsadd src=m*2^-2 dst=1 rm.d: rounded to s whatever the FPCR precision",0
+wy_36_6:	dc.b	"fsadd src=m*2^-2 dst=1 rp.x: rounded to s whatever the FPCR precision",0
+wy_36_7:	dc.b	"fsadd src=m*2^-2 dst=1 rp.d: rounded to s whatever the FPCR precision",0
+wy_36_8:	dc.b	"fsadd src=+inf dst=-inf rn.x",0
+wy_36_9:	dc.b	"fdadd src=m*2^-2 dst=1 rn.x: rounded to d whatever the FPCR precision",0
+wy_36_10:	dc.b	"fdadd src=m*2^-2 dst=1 rn.s: rounded to d whatever the FPCR precision",0
+wy_36_11:	dc.b	"fdadd src=m*2^-2 dst=1 rz.x: rounded to d whatever the FPCR precision",0
+wy_36_12:	dc.b	"fdadd src=m*2^-2 dst=1 rz.s: rounded to d whatever the FPCR precision",0
+wy_36_13:	dc.b	"fdadd src=m*2^-2 dst=1 rm.x: rounded to d whatever the FPCR precision",0
+wy_36_14:	dc.b	"fdadd src=m*2^-2 dst=1 rm.s: rounded to d whatever the FPCR precision",0
+wy_36_15:	dc.b	"fdadd src=m*2^-2 dst=1 rp.x: rounded to d whatever the FPCR precision",0
+wy_36_16:	dc.b	"fdadd src=m*2^-2 dst=1 rp.s: rounded to d whatever the FPCR precision",0
+wy_36_17:	dc.b	"fdadd src=+inf dst=-inf rn.x",0
+wy_36_18:	dc.b	"fssub src=m*2^-2 dst=1 rn.x: rounded to s whatever the FPCR precision",0
+wy_36_19:	dc.b	"fssub src=m*2^-2 dst=1 rn.d: rounded to s whatever the FPCR precision",0
+wy_36_20:	dc.b	"fssub src=m*2^-2 dst=1 rz.x: rounded to s whatever the FPCR precision",0
+wy_36_21:	dc.b	"fssub src=m*2^-2 dst=1 rz.d: rounded to s whatever the FPCR precision",0
+wy_36_22:	dc.b	"fssub src=m*2^-2 dst=1 rm.x: rounded to s whatever the FPCR precision",0
+wy_36_23:	dc.b	"fssub src=m*2^-2 dst=1 rm.d: rounded to s whatever the FPCR precision",0
+wy_36_24:	dc.b	"fssub src=m*2^-2 dst=1 rp.x: rounded to s whatever the FPCR precision",0
+wy_36_25:	dc.b	"fssub src=m*2^-2 dst=1 rp.d: rounded to s whatever the FPCR precision",0
+wy_36_26:	dc.b	"fssub src=+inf dst=-inf rn.x",0
+wy_36_27:	dc.b	"fdsub src=m*2^-2 dst=1 rn.x: rounded to d whatever the FPCR precision",0
+wy_36_28:	dc.b	"fdsub src=m*2^-2 dst=1 rn.s: rounded to d whatever the FPCR precision",0
+wy_36_29:	dc.b	"fdsub src=m*2^-2 dst=1 rz.x: rounded to d whatever the FPCR precision",0
+wy_36_30:	dc.b	"fdsub src=m*2^-2 dst=1 rz.s: rounded to d whatever the FPCR precision",0
+wy_36_31:	dc.b	"fdsub src=m*2^-2 dst=1 rm.x: rounded to d whatever the FPCR precision",0
+wy_36_32:	dc.b	"fdsub src=m*2^-2 dst=1 rm.s: rounded to d whatever the FPCR precision",0
+wy_36_33:	dc.b	"fdsub src=m*2^-2 dst=1 rp.x: rounded to d whatever the FPCR precision",0
+wy_36_34:	dc.b	"fdsub src=m*2^-2 dst=1 rp.s: rounded to d whatever the FPCR precision",0
+wy_36_35:	dc.b	"fdsub src=+inf dst=-inf rn.x",0
+wy_36_36:	dc.b	"fsmul src=m*2^-2 dst=1 rn.x: rounded to s whatever the FPCR precision",0
+wy_36_37:	dc.b	"fsmul src=m*2^-2 dst=1 rn.d: rounded to s whatever the FPCR precision",0
+wy_36_38:	dc.b	"fsmul src=m*2^-2 dst=1 rz.x: rounded to s whatever the FPCR precision",0
+wy_36_39:	dc.b	"fsmul src=m*2^-2 dst=1 rz.d: rounded to s whatever the FPCR precision",0
+wy_36_40:	dc.b	"fsmul src=m*2^-2 dst=1 rm.x: rounded to s whatever the FPCR precision",0
+wy_36_41:	dc.b	"fsmul src=m*2^-2 dst=1 rm.d: rounded to s whatever the FPCR precision",0
+wy_36_42:	dc.b	"fsmul src=m*2^-2 dst=1 rp.x: rounded to s whatever the FPCR precision",0
+wy_36_43:	dc.b	"fsmul src=m*2^-2 dst=1 rp.d: rounded to s whatever the FPCR precision",0
+wy_36_44:	dc.b	"fsmul src=+inf dst=-inf rn.x",0
+wy_36_45:	dc.b	"fdmul src=m*2^-2 dst=1 rn.x: rounded to d whatever the FPCR precision",0
+wy_36_46:	dc.b	"fdmul src=m*2^-2 dst=1 rn.s: rounded to d whatever the FPCR precision",0
+wy_36_47:	dc.b	"fdmul src=m*2^-2 dst=1 rz.x: rounded to d whatever the FPCR precision",0
+wy_36_48:	dc.b	"fdmul src=m*2^-2 dst=1 rz.s: rounded to d whatever the FPCR precision",0
+wy_36_49:	dc.b	"fdmul src=m*2^-2 dst=1 rm.x: rounded to d whatever the FPCR precision",0
+wy_36_50:	dc.b	"fdmul src=m*2^-2 dst=1 rm.s: rounded to d whatever the FPCR precision",0
+wy_36_51:	dc.b	"fdmul src=m*2^-2 dst=1 rp.x: rounded to d whatever the FPCR precision",0
+wy_36_52:	dc.b	"fdmul src=m*2^-2 dst=1 rp.s: rounded to d whatever the FPCR precision",0
+wy_36_53:	dc.b	"fdmul src=+inf dst=-inf rn.x",0
+wy_36_54:	dc.b	"fsdiv src=3 dst=1 rn.x: rounded to s whatever the FPCR precision",0
+wy_36_55:	dc.b	"fsdiv src=3 dst=1 rn.d: rounded to s whatever the FPCR precision",0
+wy_36_56:	dc.b	"fsdiv src=3 dst=1 rz.x: rounded to s whatever the FPCR precision",0
+wy_36_57:	dc.b	"fsdiv src=3 dst=1 rz.d: rounded to s whatever the FPCR precision",0
+wy_36_58:	dc.b	"fsdiv src=3 dst=1 rm.x: rounded to s whatever the FPCR precision",0
+wy_36_59:	dc.b	"fsdiv src=3 dst=1 rm.d: rounded to s whatever the FPCR precision",0
+wy_36_60:	dc.b	"fsdiv src=3 dst=1 rp.x: rounded to s whatever the FPCR precision",0
+wy_36_61:	dc.b	"fsdiv src=3 dst=1 rp.d: rounded to s whatever the FPCR precision",0
+wy_36_62:	dc.b	"fsdiv src=+inf dst=-inf rn.x",0
+wy_36_63:	dc.b	"fddiv src=3 dst=1 rn.x: rounded to d whatever the FPCR precision",0
+wy_36_64:	dc.b	"fddiv src=3 dst=1 rn.s: rounded to d whatever the FPCR precision",0
+wy_36_65:	dc.b	"fddiv src=3 dst=1 rz.x: rounded to d whatever the FPCR precision",0
+wy_36_66:	dc.b	"fddiv src=3 dst=1 rz.s: rounded to d whatever the FPCR precision",0
+wy_36_67:	dc.b	"fddiv src=3 dst=1 rm.x: rounded to d whatever the FPCR precision",0
+wy_36_68:	dc.b	"fddiv src=3 dst=1 rm.s: rounded to d whatever the FPCR precision",0
+wy_36_69:	dc.b	"fddiv src=3 dst=1 rp.x: rounded to d whatever the FPCR precision",0
+wy_36_70:	dc.b	"fddiv src=3 dst=1 rp.s: rounded to d whatever the FPCR precision",0
+wy_36_71:	dc.b	"fddiv src=+inf dst=-inf rn.x",0
+wy_36_72:	dc.b	"fsmove src=m*2^0 dst=7 rn.x: rounded to s",0
+wy_36_73:	dc.b	"fsmove src=m*2^0 dst=7 rz.x: rounded to s",0
+wy_36_74:	dc.b	"fsmove src=m*2^0 dst=7 rm.x: rounded to s",0
+wy_36_75:	dc.b	"fsmove src=m*2^0 dst=7 rp.x: rounded to s",0
+wy_36_76:	dc.b	"fdmove src=m*2^0 dst=7 rn.x: rounded to d",0
+wy_36_77:	dc.b	"fdmove src=m*2^0 dst=7 rz.x: rounded to d",0
+wy_36_78:	dc.b	"fdmove src=m*2^0 dst=7 rm.x: rounded to d",0
+wy_36_79:	dc.b	"fdmove src=m*2^0 dst=7 rp.x: rounded to d",0
+wy_36_80:	dc.b	"fssqrt src=2 dst=7 rn.x: rounded to s",0
+wy_36_81:	dc.b	"fssqrt src=2 dst=7 rz.x: rounded to s",0
+wy_36_82:	dc.b	"fssqrt src=2 dst=7 rm.x: rounded to s",0
+wy_36_83:	dc.b	"fssqrt src=2 dst=7 rp.x: rounded to s",0
+wy_36_84:	dc.b	"fdsqrt src=2 dst=7 rn.x: rounded to d",0
+wy_36_85:	dc.b	"fdsqrt src=2 dst=7 rz.x: rounded to d",0
+wy_36_86:	dc.b	"fdsqrt src=2 dst=7 rm.x: rounded to d",0
+wy_36_87:	dc.b	"fdsqrt src=2 dst=7 rp.x: rounded to d",0
+wy_36_88:	dc.b	"fsabs src=-m*2^0 dst=7 rn.x: rounded to s",0
+wy_36_89:	dc.b	"fsabs src=-m*2^0 dst=7 rz.x: rounded to s",0
+wy_36_90:	dc.b	"fsabs src=-m*2^0 dst=7 rm.x: rounded to s",0
+wy_36_91:	dc.b	"fsabs src=-m*2^0 dst=7 rp.x: rounded to s",0
+wy_36_92:	dc.b	"fdabs src=-m*2^0 dst=7 rn.x: rounded to d",0
+wy_36_93:	dc.b	"fdabs src=-m*2^0 dst=7 rz.x: rounded to d",0
+wy_36_94:	dc.b	"fdabs src=-m*2^0 dst=7 rm.x: rounded to d",0
+wy_36_95:	dc.b	"fdabs src=-m*2^0 dst=7 rp.x: rounded to d",0
+wy_36_96:	dc.b	"fsneg src=-m*2^0 dst=7 rn.x: rounded to s",0
+wy_36_97:	dc.b	"fsneg src=-m*2^0 dst=7 rz.x: rounded to s",0
+wy_36_98:	dc.b	"fsneg src=-m*2^0 dst=7 rm.x: rounded to s",0
+wy_36_99:	dc.b	"fsneg src=-m*2^0 dst=7 rp.x: rounded to s",0
+wy_36_100:	dc.b	"fdneg src=-m*2^0 dst=7 rn.x: rounded to d",0
+wy_36_101:	dc.b	"fdneg src=-m*2^0 dst=7 rz.x: rounded to d",0
+wy_36_102:	dc.b	"fdneg src=-m*2^0 dst=7 rm.x: rounded to d",0
+wy_36_103:	dc.b	"fdneg src=-m*2^0 dst=7 rp.x: rounded to d",0
+gn_37:	dc.b	"trans_fsin",0
+wy_37_0:	dc.b	"fsin src=2^-1 dst=7 rn.x: within 2 ulp of the exact value",0
+wy_37_1:	dc.b	"fsin src=1 dst=7 rn.x: within 2 ulp of the exact value",0
+wy_37_2:	dc.b	"fsin src=-3/2 dst=7 rn.x: within 2 ulp of the exact value",0
+wy_37_3:	dc.b	"fsin src=11 dst=7 rn.x: within 2 ulp of the exact value",0
+wy_37_4:	dc.b	"fsin src=m*2^-10 dst=7 rn.x: within 2 ulp of the exact value",0
+wy_37_5:	dc.b	"fsin src=2^-1 dst=7 rz.x: within 2 ulp (x) of the exact value",0
+wy_37_6:	dc.b	"fsin src=2^-1 dst=7 rm.x: within 2 ulp (x) of the exact value",0
+wy_37_7:	dc.b	"fsin src=2^-1 dst=7 rp.x: within 2 ulp (x) of the exact value",0
+wy_37_8:	dc.b	"fsin src=2^-1 dst=7 rn.s: within 2 ulp (s) of the exact value",0
+wy_37_9:	dc.b	"fsin src=2^-1 dst=7 rn.d: within 2 ulp (d) of the exact value",0
+wy_37_10:	dc.b	"fsin src=+0 dst=7 rn.x: special operand",0
+wy_37_11:	dc.b	"fsin src=-0 dst=7 rn.x: special operand",0
+wy_37_12:	dc.b	"fsin src=+inf dst=7 rn.x: special operand",0
+wy_37_13:	dc.b	"fsin src=qnan dst=7 rn.x: special operand",0
+gn_38:	dc.b	"trans_fcos",0
+wy_38_0:	dc.b	"fcos src=2^-1 dst=7 rn.x: within 2 ulp of the exact value",0
+wy_38_1:	dc.b	"fcos src=1 dst=7 rn.x: within 2 ulp of the exact value",0
+wy_38_2:	dc.b	"fcos src=-3 dst=7 rn.x: within 2 ulp of the exact value",0
+wy_38_3:	dc.b	"fcos src=19/2 dst=7 rn.x: within 2 ulp of the exact value",0
+wy_38_4:	dc.b	"fcos src=2^-1 dst=7 rz.x: within 2 ulp (x) of the exact value",0
+wy_38_5:	dc.b	"fcos src=2^-1 dst=7 rm.x: within 2 ulp (x) of the exact value",0
+wy_38_6:	dc.b	"fcos src=2^-1 dst=7 rp.x: within 2 ulp (x) of the exact value",0
+wy_38_7:	dc.b	"fcos src=2^-1 dst=7 rn.s: within 2 ulp (s) of the exact value",0
+wy_38_8:	dc.b	"fcos src=2^-1 dst=7 rn.d: within 2 ulp (d) of the exact value",0
+wy_38_9:	dc.b	"fcos src=+0 dst=7 rn.x: special operand",0
+wy_38_10:	dc.b	"fcos src=+inf dst=7 rn.x: special operand",0
+gn_39:	dc.b	"trans_ftan",0
+wy_39_0:	dc.b	"ftan src=2^-1 dst=7 rn.x: within 2 ulp of the exact value",0
+wy_39_1:	dc.b	"ftan src=1 dst=7 rn.x: within 2 ulp of the exact value",0
+wy_39_2:	dc.b	"ftan src=-3/4 dst=7 rn.x: within 2 ulp of the exact value",0
+wy_39_3:	dc.b	"ftan src=2^-1 dst=7 rz.x: within 2 ulp (x) of the exact value",0
+wy_39_4:	dc.b	"ftan src=2^-1 dst=7 rm.x: within 2 ulp (x) of the exact value",0
+wy_39_5:	dc.b	"ftan src=2^-1 dst=7 rp.x: within 2 ulp (x) of the exact value",0
+wy_39_6:	dc.b	"ftan src=2^-1 dst=7 rn.s: within 2 ulp (s) of the exact value",0
+wy_39_7:	dc.b	"ftan src=2^-1 dst=7 rn.d: within 2 ulp (d) of the exact value",0
+wy_39_8:	dc.b	"ftan src=+0 dst=7 rn.x: special operand",0
+wy_39_9:	dc.b	"ftan src=-0 dst=7 rn.x: special operand",0
+wy_39_10:	dc.b	"ftan src=-inf dst=7 rn.x: special operand",0
+gn_40:	dc.b	"trans_fetox",0
+wy_40_0:	dc.b	"fetox src=1 dst=7 rn.x: within 2 ulp of the exact value",0
+wy_40_1:	dc.b	"fetox src=-1 dst=7 rn.x: within 2 ulp of the exact value",0
+wy_40_2:	dc.b	"fetox src=2^-1 dst=7 rn.x: within 2 ulp of the exact value",0
+wy_40_3:	dc.b	"fetox src=3 dst=7 rn.x: within 2 ulp of the exact value",0
+wy_40_4:	dc.b	"fetox src=-2 dst=7 rn.x: within 2 ulp of the exact value",0
+wy_40_5:	dc.b	"fetox src=1 dst=7 rz.x: within 2 ulp (x) of the exact value",0
+wy_40_6:	dc.b	"fetox src=1 dst=7 rm.x: within 2 ulp (x) of the exact value",0
+wy_40_7:	dc.b	"fetox src=1 dst=7 rp.x: within 2 ulp (x) of the exact value",0
+wy_40_8:	dc.b	"fetox src=1 dst=7 rn.s: within 2 ulp (s) of the exact value",0
+wy_40_9:	dc.b	"fetox src=1 dst=7 rn.d: within 2 ulp (d) of the exact value",0
+wy_40_10:	dc.b	"fetox src=+0 dst=7 rn.x: special operand",0
+wy_40_11:	dc.b	"fetox src=+inf dst=7 rn.x: special operand",0
+wy_40_12:	dc.b	"fetox src=-inf dst=7 rn.x: special operand",0
+wy_40_13:	dc.b	"fetox src=qnan dst=7 rn.x: special operand",0
+gn_41:	dc.b	"trans_ftwotox",0
+wy_41_0:	dc.b	"ftwotox src=2^-1 dst=7 rn.x: within 2 ulp of the exact value",0
+wy_41_1:	dc.b	"ftwotox src=-3/2 dst=7 rn.x: within 2 ulp of the exact value",0
+wy_41_2:	dc.b	"ftwotox src=3 dst=7 rn.x: within 2 ulp of the exact value",0
+wy_41_3:	dc.b	"ftwotox src=2^-1 dst=7 rz.x: within 2 ulp (x) of the exact value",0
+wy_41_4:	dc.b	"ftwotox src=2^-1 dst=7 rm.x: within 2 ulp (x) of the exact value",0
+wy_41_5:	dc.b	"ftwotox src=2^-1 dst=7 rp.x: within 2 ulp (x) of the exact value",0
+wy_41_6:	dc.b	"ftwotox src=2^-1 dst=7 rn.s: within 2 ulp (s) of the exact value",0
+wy_41_7:	dc.b	"ftwotox src=2^-1 dst=7 rn.d: within 2 ulp (d) of the exact value",0
+wy_41_8:	dc.b	"ftwotox src=+0 dst=7 rn.x: special operand",0
+wy_41_9:	dc.b	"ftwotox src=-inf dst=7 rn.x: special operand",0
+gn_42:	dc.b	"trans_ftentox",0
+wy_42_0:	dc.b	"ftentox src=2^-1 dst=7 rn.x: within 2 ulp of the exact value",0
+wy_42_1:	dc.b	"ftentox src=1 dst=7 rn.x: within 2 ulp of the exact value",0
+wy_42_2:	dc.b	"ftentox src=2^-1 dst=7 rz.x: within 2 ulp (x) of the exact value",0
+wy_42_3:	dc.b	"ftentox src=2^-1 dst=7 rm.x: within 2 ulp (x) of the exact value",0
+wy_42_4:	dc.b	"ftentox src=2^-1 dst=7 rp.x: within 2 ulp (x) of the exact value",0
+wy_42_5:	dc.b	"ftentox src=2^-1 dst=7 rn.s: within 2 ulp (s) of the exact value",0
+wy_42_6:	dc.b	"ftentox src=2^-1 dst=7 rn.d: within 2 ulp (d) of the exact value",0
+wy_42_7:	dc.b	"ftentox src=+0 dst=7 rn.x: special operand",0
+wy_42_8:	dc.b	"ftentox src=+inf dst=7 rn.x: special operand",0
+gn_43:	dc.b	"trans_flogn",0
+wy_43_0:	dc.b	"flogn src=2 dst=7 rn.x: within 2 ulp of the exact value",0
+wy_43_1:	dc.b	"flogn src=10 dst=7 rn.x: within 2 ulp of the exact value",0
+wy_43_2:	dc.b	"flogn src=2^-1 dst=7 rn.x: within 2 ulp of the exact value",0
+wy_43_3:	dc.b	"flogn src=1000 dst=7 rn.x: within 2 ulp of the exact value",0
+wy_43_4:	dc.b	"flogn src=2 dst=7 rz.x: within 2 ulp (x) of the exact value",0
+wy_43_5:	dc.b	"flogn src=2 dst=7 rm.x: within 2 ulp (x) of the exact value",0
+wy_43_6:	dc.b	"flogn src=2 dst=7 rp.x: within 2 ulp (x) of the exact value",0
+wy_43_7:	dc.b	"flogn src=2 dst=7 rn.s: within 2 ulp (s) of the exact value",0
+wy_43_8:	dc.b	"flogn src=2 dst=7 rn.d: within 2 ulp (d) of the exact value",0
+wy_43_9:	dc.b	"flogn src=+0 dst=7 rn.x: special operand",0
+wy_43_10:	dc.b	"flogn src=-0 dst=7 rn.x: special operand",0
+wy_43_11:	dc.b	"flogn src=+inf dst=7 rn.x: special operand",0
+wy_43_12:	dc.b	"flogn src=-inf dst=7 rn.x: special operand",0
+wy_43_13:	dc.b	"flogn src=-1 dst=7 rn.x: special operand",0
+wy_43_14:	dc.b	"flogn src=1 dst=7 rn.x: special operand",0
+gn_44:	dc.b	"trans_flog2",0
+wy_44_0:	dc.b	"flog2 src=3 dst=7 rn.x: within 2 ulp of the exact value",0
+wy_44_1:	dc.b	"flog2 src=m*2^-2 dst=7 rn.x: within 2 ulp of the exact value",0
+wy_44_2:	dc.b	"flog2 src=1024 dst=7 rn.x: within 2 ulp of the exact value",0
+wy_44_3:	dc.b	"flog2 src=3 dst=7 rz.x: within 2 ulp (x) of the exact value",0
+wy_44_4:	dc.b	"flog2 src=3 dst=7 rm.x: within 2 ulp (x) of the exact value",0
+wy_44_5:	dc.b	"flog2 src=3 dst=7 rp.x: within 2 ulp (x) of the exact value",0
+wy_44_6:	dc.b	"flog2 src=3 dst=7 rn.s: within 2 ulp (s) of the exact value",0
+wy_44_7:	dc.b	"flog2 src=3 dst=7 rn.d: within 2 ulp (d) of the exact value",0
+wy_44_8:	dc.b	"flog2 src=+0 dst=7 rn.x: special operand",0
+wy_44_9:	dc.b	"flog2 src=1 dst=7 rn.x: special operand",0
+gn_45:	dc.b	"trans_flog10",0
+wy_45_0:	dc.b	"flog10 src=2 dst=7 rn.x: within 2 ulp of the exact value",0
+wy_45_1:	dc.b	"flog10 src=1000 dst=7 rn.x: within 2 ulp of the exact value",0
+wy_45_2:	dc.b	"flog10 src=m*2^-3 dst=7 rn.x: within 2 ulp of the exact value",0
+wy_45_3:	dc.b	"flog10 src=2 dst=7 rz.x: within 2 ulp (x) of the exact value",0
+wy_45_4:	dc.b	"flog10 src=2 dst=7 rm.x: within 2 ulp (x) of the exact value",0
+wy_45_5:	dc.b	"flog10 src=2 dst=7 rp.x: within 2 ulp (x) of the exact value",0
+wy_45_6:	dc.b	"flog10 src=2 dst=7 rn.s: within 2 ulp (s) of the exact value",0
+wy_45_7:	dc.b	"flog10 src=2 dst=7 rn.d: within 2 ulp (d) of the exact value",0
+wy_45_8:	dc.b	"flog10 src=1 dst=7 rn.x: special operand",0
+wy_45_9:	dc.b	"flog10 src=-2 dst=7 rn.x: special operand",0
+gn_46:	dc.b	"trans_fatan",0
+wy_46_0:	dc.b	"fatan src=2^-1 dst=7 rn.x: within 2 ulp of the exact value",0
+wy_46_1:	dc.b	"fatan src=1 dst=7 rn.x: within 2 ulp of the exact value",0
+wy_46_2:	dc.b	"fatan src=-2 dst=7 rn.x: within 2 ulp of the exact value",0
+wy_46_3:	dc.b	"fatan src=100 dst=7 rn.x: within 2 ulp of the exact value",0
+wy_46_4:	dc.b	"fatan src=2^-1 dst=7 rz.x: within 2 ulp (x) of the exact value",0
+wy_46_5:	dc.b	"fatan src=2^-1 dst=7 rm.x: within 2 ulp (x) of the exact value",0
+wy_46_6:	dc.b	"fatan src=2^-1 dst=7 rp.x: within 2 ulp (x) of the exact value",0
+wy_46_7:	dc.b	"fatan src=2^-1 dst=7 rn.s: within 2 ulp (s) of the exact value",0
+wy_46_8:	dc.b	"fatan src=2^-1 dst=7 rn.d: within 2 ulp (d) of the exact value",0
+wy_46_9:	dc.b	"fatan src=+0 dst=7 rn.x: special operand",0
+wy_46_10:	dc.b	"fatan src=-0 dst=7 rn.x: special operand",0
+wy_46_11:	dc.b	"fatan src=+inf dst=7 rn.x: special operand",0
+wy_46_12:	dc.b	"fatan src=-inf dst=7 rn.x: special operand",0
+gn_47:	dc.b	"trans_fsinh",0
+wy_47_0:	dc.b	"fsinh src=2^-1 dst=7 rn.x: within 2 ulp of the exact value",0
+wy_47_1:	dc.b	"fsinh src=-2 dst=7 rn.x: within 2 ulp of the exact value",0
+wy_47_2:	dc.b	"fsinh src=2^-1 dst=7 rz.x: within 2 ulp (x) of the exact value",0
+wy_47_3:	dc.b	"fsinh src=2^-1 dst=7 rm.x: within 2 ulp (x) of the exact value",0
+wy_47_4:	dc.b	"fsinh src=2^-1 dst=7 rp.x: within 2 ulp (x) of the exact value",0
+wy_47_5:	dc.b	"fsinh src=2^-1 dst=7 rn.s: within 2 ulp (s) of the exact value",0
+wy_47_6:	dc.b	"fsinh src=2^-1 dst=7 rn.d: within 2 ulp (d) of the exact value",0
+wy_47_7:	dc.b	"fsinh src=+0 dst=7 rn.x: special operand",0
+gn_48:	dc.b	"trans_fcosh",0
+wy_48_0:	dc.b	"fcosh src=2^-1 dst=7 rn.x: within 2 ulp of the exact value",0
+wy_48_1:	dc.b	"fcosh src=2 dst=7 rn.x: within 2 ulp of the exact value",0
+wy_48_2:	dc.b	"fcosh src=2^-1 dst=7 rz.x: within 2 ulp (x) of the exact value",0
+wy_48_3:	dc.b	"fcosh src=2^-1 dst=7 rm.x: within 2 ulp (x) of the exact value",0
+wy_48_4:	dc.b	"fcosh src=2^-1 dst=7 rp.x: within 2 ulp (x) of the exact value",0
+wy_48_5:	dc.b	"fcosh src=2^-1 dst=7 rn.s: within 2 ulp (s) of the exact value",0
+wy_48_6:	dc.b	"fcosh src=2^-1 dst=7 rn.d: within 2 ulp (d) of the exact value",0
+wy_48_7:	dc.b	"fcosh src=+0 dst=7 rn.x: special operand",0
+gn_49:	dc.b	"trans_ftanh",0
+wy_49_0:	dc.b	"ftanh src=2^-1 dst=7 rn.x: within 2 ulp of the exact value",0
+wy_49_1:	dc.b	"ftanh src=-1 dst=7 rn.x: within 2 ulp of the exact value",0
+wy_49_2:	dc.b	"ftanh src=2^-1 dst=7 rz.x: within 2 ulp (x) of the exact value",0
+wy_49_3:	dc.b	"ftanh src=2^-1 dst=7 rm.x: within 2 ulp (x) of the exact value",0
+wy_49_4:	dc.b	"ftanh src=2^-1 dst=7 rp.x: within 2 ulp (x) of the exact value",0
+wy_49_5:	dc.b	"ftanh src=2^-1 dst=7 rn.s: within 2 ulp (s) of the exact value",0
+wy_49_6:	dc.b	"ftanh src=2^-1 dst=7 rn.d: within 2 ulp (d) of the exact value",0
+wy_49_7:	dc.b	"ftanh src=-0 dst=7 rn.x: special operand",0
+gn_50:	dc.b	"trans_fasin",0
+wy_50_0:	dc.b	"fasin src=2^-1 dst=7 rn.x: within 2 ulp of the exact value",0
+wy_50_1:	dc.b	"fasin src=-2^-2 dst=7 rn.x: within 2 ulp of the exact value",0
+wy_50_2:	dc.b	"fasin src=m*2^-1 dst=7 rn.x: within 2 ulp of the exact value",0
+wy_50_3:	dc.b	"fasin src=-m*2^-2 dst=7 rn.x: within 2 ulp of the exact value",0
+wy_50_4:	dc.b	"fasin src=2^-1 dst=7 rz.x: within 2 ulp (x) of the exact value",0
+wy_50_5:	dc.b	"fasin src=2^-1 dst=7 rm.x: within 2 ulp (x) of the exact value",0
+wy_50_6:	dc.b	"fasin src=2^-1 dst=7 rp.x: within 2 ulp (x) of the exact value",0
+wy_50_7:	dc.b	"fasin src=2^-1 dst=7 rn.s: within 2 ulp (s) of the exact value",0
+wy_50_8:	dc.b	"fasin src=2^-1 dst=7 rn.d: within 2 ulp (d) of the exact value",0
+wy_50_9:	dc.b	"fasin src=+0 dst=7 rn.x: special operand",0
+wy_50_10:	dc.b	"fasin src=-0 dst=7 rn.x: special operand",0
+wy_50_11:	dc.b	"fasin src=1 dst=7 rn.x: special operand",0
+wy_50_12:	dc.b	"fasin src=-1 dst=7 rn.x: special operand",0
+wy_50_13:	dc.b	"fasin src=2 dst=7 rn.x: special operand",0
+wy_50_14:	dc.b	"fasin src=+inf dst=7 rn.x: special operand",0
+gn_51:	dc.b	"trans_facos",0
+wy_51_0:	dc.b	"facos src=2^-1 dst=7 rn.x: within 2 ulp of the exact value",0
+wy_51_1:	dc.b	"facos src=-3/4 dst=7 rn.x: within 2 ulp of the exact value",0
+wy_51_2:	dc.b	"facos src=m*2^-7 dst=7 rn.x: within 2 ulp of the exact value",0
+wy_51_3:	dc.b	"facos src=m*2^-1 dst=7 rn.x: within 2 ulp of the exact value",0
+wy_51_4:	dc.b	"facos src=2^-1 dst=7 rz.x: within 2 ulp (x) of the exact value",0
+wy_51_5:	dc.b	"facos src=2^-1 dst=7 rm.x: within 2 ulp (x) of the exact value",0
+wy_51_6:	dc.b	"facos src=2^-1 dst=7 rp.x: within 2 ulp (x) of the exact value",0
+wy_51_7:	dc.b	"facos src=2^-1 dst=7 rn.s: within 2 ulp (s) of the exact value",0
+wy_51_8:	dc.b	"facos src=2^-1 dst=7 rn.d: within 2 ulp (d) of the exact value",0
+wy_51_9:	dc.b	"facos src=+0 dst=7 rn.x: special operand",0
+wy_51_10:	dc.b	"facos src=1 dst=7 rn.x: special operand",0
+wy_51_11:	dc.b	"facos src=-1 dst=7 rn.x: special operand",0
+wy_51_12:	dc.b	"facos src=-2 dst=7 rn.x: special operand",0
+wy_51_13:	dc.b	"facos src=-inf dst=7 rn.x: special operand",0
+gn_52:	dc.b	"trans_fatanh",0
+wy_52_0:	dc.b	"fatanh src=2^-1 dst=7 rn.x: within 2 ulp of the exact value",0
+wy_52_1:	dc.b	"fatanh src=-m*2^-4 dst=7 rn.x: within 2 ulp of the exact value",0
+wy_52_2:	dc.b	"fatanh src=3/4 dst=7 rn.x: within 2 ulp of the exact value",0
+wy_52_3:	dc.b	"fatanh src=-m*2^-5 dst=7 rn.x: within 2 ulp of the exact value",0
+wy_52_4:	dc.b	"fatanh src=-m*2^-4 dst=7 rn.x: within 2 ulp of the exact value",0
+wy_52_5:	dc.b	"fatanh src=2^-1 dst=7 rz.x: within 2 ulp (x) of the exact value",0
+wy_52_6:	dc.b	"fatanh src=2^-1 dst=7 rm.x: within 2 ulp (x) of the exact value",0
+wy_52_7:	dc.b	"fatanh src=2^-1 dst=7 rp.x: within 2 ulp (x) of the exact value",0
+wy_52_8:	dc.b	"fatanh src=2^-1 dst=7 rn.s: within 2 ulp (s) of the exact value",0
+wy_52_9:	dc.b	"fatanh src=2^-1 dst=7 rn.d: within 2 ulp (d) of the exact value",0
+wy_52_10:	dc.b	"fatanh src=+0 dst=7 rn.x: special operand",0
+wy_52_11:	dc.b	"fatanh src=-0 dst=7 rn.x: special operand",0
+wy_52_12:	dc.b	"fatanh src=1 dst=7 rn.x: special operand",0
+wy_52_13:	dc.b	"fatanh src=-1 dst=7 rn.x: special operand",0
+wy_52_14:	dc.b	"fatanh src=2 dst=7 rn.x: special operand",0
+wy_52_15:	dc.b	"fatanh src=+inf dst=7 rn.x: special operand",0
+gn_53:	dc.b	"trans_fetoxm1",0
+wy_53_0:	dc.b	"fetoxm1 src=2^-1 dst=7 rn.x: within 2 ulp of the exact value",0
+wy_53_1:	dc.b	"fetoxm1 src=-1 dst=7 rn.x: within 2 ulp of the exact value",0
+wy_53_2:	dc.b	"fetoxm1 src=2 dst=7 rn.x: within 2 ulp of the exact value",0
+wy_53_3:	dc.b	"fetoxm1 src=m*2^-10 dst=7 rn.x: within 2 ulp of the exact value",0
+wy_53_4:	dc.b	"fetoxm1 src=-30 dst=7 rn.x: within 2 ulp of the exact value",0
+wy_53_5:	dc.b	"fetoxm1 src=2^-1 dst=7 rz.x: within 2 ulp (x) of the exact value",0
+wy_53_6:	dc.b	"fetoxm1 src=2^-1 dst=7 rm.x: within 2 ulp (x) of the exact value",0
+wy_53_7:	dc.b	"fetoxm1 src=2^-1 dst=7 rp.x: within 2 ulp (x) of the exact value",0
+wy_53_8:	dc.b	"fetoxm1 src=2^-1 dst=7 rn.s: within 2 ulp (s) of the exact value",0
+wy_53_9:	dc.b	"fetoxm1 src=2^-1 dst=7 rn.d: within 2 ulp (d) of the exact value",0
+wy_53_10:	dc.b	"fetoxm1 src=+0 dst=7 rn.x: special operand",0
+wy_53_11:	dc.b	"fetoxm1 src=-0 dst=7 rn.x: special operand",0
+wy_53_12:	dc.b	"fetoxm1 src=+inf dst=7 rn.x: special operand",0
+wy_53_13:	dc.b	"fetoxm1 src=-inf dst=7 rn.x: special operand",0
+gn_54:	dc.b	"trans_flognp1",0
+wy_54_0:	dc.b	"flognp1 src=2^-1 dst=7 rn.x: within 2 ulp of the exact value",0
+wy_54_1:	dc.b	"flognp1 src=-2^-1 dst=7 rn.x: within 2 ulp of the exact value",0
+wy_54_2:	dc.b	"flognp1 src=10 dst=7 rn.x: within 2 ulp of the exact value",0
+wy_54_3:	dc.b	"flognp1 src=m*2^-10 dst=7 rn.x: within 2 ulp of the exact value",0
+wy_54_4:	dc.b	"flognp1 src=-m*2^-3 dst=7 rn.x: within 2 ulp of the exact value",0
+wy_54_5:	dc.b	"flognp1 src=2^-1 dst=7 rz.x: within 2 ulp (x) of the exact value",0
+wy_54_6:	dc.b	"flognp1 src=2^-1 dst=7 rm.x: within 2 ulp (x) of the exact value",0
+wy_54_7:	dc.b	"flognp1 src=2^-1 dst=7 rp.x: within 2 ulp (x) of the exact value",0
+wy_54_8:	dc.b	"flognp1 src=2^-1 dst=7 rn.s: within 2 ulp (s) of the exact value",0
+wy_54_9:	dc.b	"flognp1 src=2^-1 dst=7 rn.d: within 2 ulp (d) of the exact value",0
+wy_54_10:	dc.b	"flognp1 src=+0 dst=7 rn.x: special operand",0
+wy_54_11:	dc.b	"flognp1 src=-0 dst=7 rn.x: special operand",0
+wy_54_12:	dc.b	"flognp1 src=-1 dst=7 rn.x: special operand",0
+wy_54_13:	dc.b	"flognp1 src=-2 dst=7 rn.x: special operand",0
+wy_54_14:	dc.b	"flognp1 src=+inf dst=7 rn.x: special operand",0
+wy_54_15:	dc.b	"flognp1 src=-inf dst=7 rn.x: special operand",0
+gn_55:	dc.b	"trans_fsincos",0
+wy_55_0:	dc.b	"fsincos src=2^-1 dst=7 rn.x: sin in FP0, cos in FP2",0
+wy_55_1:	dc.b	"fsincos src=-1 dst=7 rn.x: sin in FP0, cos in FP2",0
+wy_55_2:	dc.b	"fsincos src=-m*2^1 dst=7 rn.x: sin in FP0, cos in FP2",0
+wy_55_3:	dc.b	"fsincos src=2^-1 dst=7 rz.x: sin in FP0, cos in FP2, within 2 ulp (x)",0
+wy_55_4:	dc.b	"fsincos src=2^-1 dst=7 rm.x: sin in FP0, cos in FP2, within 2 ulp (x)",0
+wy_55_5:	dc.b	"fsincos src=2^-1 dst=7 rp.x: sin in FP0, cos in FP2, within 2 ulp (x)",0
+wy_55_6:	dc.b	"fsincos src=2^-1 dst=7 rn.s: sin in FP0, cos in FP2, within 2 ulp (s)",0
+wy_55_7:	dc.b	"fsincos src=2^-1 dst=7 rn.d: sin in FP0, cos in FP2, within 2 ulp (d)",0
+wy_55_8:	dc.b	"fsincos src=+0 dst=7 rn.x: sin(+0)=+0, cos(+0)=1",0
+wy_55_9:	dc.b	"fsincos src=+inf dst=7 rn.x: infinity: OPERR, both NaN",0
+gn_56:	dc.b	"trans_fmovecr",0
+wy_56_0:	dc.b	"fmovecr_00 src=- dst=7 rn.x: ROM constant pi (RN, X)",0
+wy_56_1:	dc.b	"fmovecr_0b src=- dst=7 rn.x: ROM constant log10(2) (RN, X)",0
+wy_56_2:	dc.b	"fmovecr_0c src=- dst=7 rn.x: ROM constant e (RN, X)",0
+wy_56_3:	dc.b	"fmovecr_0d src=- dst=7 rn.x: ROM constant log2(e) (RN, X)",0
+wy_56_4:	dc.b	"fmovecr_0e src=- dst=7 rn.x: ROM constant log10(e) (RN, X)",0
+wy_56_5:	dc.b	"fmovecr_0f src=- dst=7 rn.x: constant 0.0",0
+wy_56_6:	dc.b	"fmovecr_30 src=- dst=7 rn.x: ROM constant ln(2) (RN, X)",0
+wy_56_7:	dc.b	"fmovecr_31 src=- dst=7 rn.x: ROM constant ln(10) (RN, X)",0
+wy_56_8:	dc.b	"fmovecr_32 src=- dst=7 rn.x: ROM constant 1e0 (RN, X)",0
+wy_56_9:	dc.b	"fmovecr_33 src=- dst=7 rn.x: ROM constant 1e1 (RN, X)",0
+wy_56_10:	dc.b	"fmovecr_34 src=- dst=7 rn.x: ROM constant 1e2 (RN, X)",0
+wy_56_11:	dc.b	"fmovecr_35 src=- dst=7 rn.x: ROM constant 1e4 (RN, X)",0
+wy_56_12:	dc.b	"fmovecr_36 src=- dst=7 rn.x: ROM constant 1e8 (RN, X)",0
+wy_56_13:	dc.b	"fmovecr_37 src=- dst=7 rn.x: ROM constant 1e16 (RN, X)",0
+wy_56_14:	dc.b	"fmovecr_38 src=- dst=7 rn.x: ROM constant 1e32 (RN, X)",0
+wy_56_15:	dc.b	"fmovecr_39 src=- dst=7 rn.x: ROM constant 1e64 (RN, X)",0
+wy_56_16:	dc.b	"fmovecr_3a src=- dst=7 rn.x: ROM constant 1e128 (RN, X)",0
+wy_56_17:	dc.b	"fmovecr_3b src=- dst=7 rn.x: ROM constant 1e256 (RN, X)",0
+wy_56_18:	dc.b	"fmovecr_3c src=- dst=7 rn.x: ROM constant 1e512 (RN, X)",0
+wy_56_19:	dc.b	"fmovecr_3d src=- dst=7 rn.x: ROM constant 1e1024 (RN, X)",0
+wy_56_20:	dc.b	"fmovecr_3e src=- dst=7 rn.x: ROM constant 1e2048 (RN, X)",0
+wy_56_21:	dc.b	"fmovecr_3f src=- dst=7 rn.x: ROM constant 1e4096 (RN, X)",0
+wy_56_22:	dc.b	"fmovecr_00 src=- dst=7 rn.x: pi rounded in the FPCR mode",0
+wy_56_23:	dc.b	"fmovecr_00 src=- dst=7 rz.x: pi rounded in the FPCR mode",0
+wy_56_24:	dc.b	"fmovecr_00 src=- dst=7 rm.x: pi rounded in the FPCR mode",0
+wy_56_25:	dc.b	"fmovecr_00 src=- dst=7 rp.x: pi rounded in the FPCR mode",0
+wy_56_26:	dc.b	"fmovecr_00 src=- dst=7 rn.s: pi rounded to the FPCR precision",0
+wy_56_27:	dc.b	"fmovecr_00 src=- dst=7 rn.d: pi rounded to the FPCR precision",0
 opn_0:	dc.b	"fadd",0
 opn_1:	dc.b	"fsub",0
 opn_2:	dc.b	"fmul",0

@@ -966,7 +966,7 @@ def vec(op, mode=RN, prec=PX, src=None, dst=None, srcraw=None, dstraw=None, res=
                        res=rr, fpsr=fpsr, fpsr_mask=(~dcmask) & 0xFFFFFFFF, res2=r2, rmask=rmask, why=why))
 
 
-def emit_reg(op, fn, src, dst=None, mode=RN, prec=PX, mask=MALL, note="", tol=0):
+def emit_reg(op, fn, src, dst=None, mode=RN, prec=PX, mask=MALL, note="", tol=0, enables=0):
     """run a reference op and add the vector"""
     if dst is None:
         r = fn(src, mode, prec)
@@ -982,7 +982,7 @@ def emit_reg(op, fn, src, dst=None, mode=RN, prec=PX, mask=MALL, note="", tol=0)
         res = dst_init
     vec(op, mode, prec, src=src, dst=dst_init, res=res, exc=r.exc, quot=r.quot,
         cc=r.cc if r.cc is not None else cc_of(res), fpsr_dc=r.fpsr_dc, res_dc=r.res_dc,
-        res2=r.v2, mask=mask, note=note, tol=tol)
+        res2=r.v2, mask=mask, note=note, tol=tol, enables=enables)
 
 
 MODES = (RN, RZ, RM, RP)
@@ -1125,6 +1125,38 @@ def float_out_group(sz, enc, ebits, fbits, emin, emax):
 
 float_out_group("s", s_enc, 8, 23, S_EMIN, S_EMAX)
 float_out_group("d", d_enc, 11, 52, D_EMIN, D_EMAX)
+
+# ---- exceptions enabled, none raised ---------------------------------------------
+# Every FPU exception but BSUN enabled in the FPCR, operations that raise
+# none: the results are the plain ones, nothing traps. An emulator may take
+# a slower path whenever an exception is enabled (Amiberry's JIT hands such
+# instructions to the interpreter handler); the vectors run in the hot loop
+# as all of them do, so that path runs compiled.
+group("exc_enabled_quiet")
+QUIET = 0x7F                                   # SNAN OPERR OVFL UNFL DZ INEX2 INEX1
+for op, fn, src, dst in (("fadd", op_add, fin(Fr(3, 2)), fin(Fr(9, 4))),
+                         ("fsub", lambda s, d, m, p: op_add(s, d, m, p, sub=True), fin(Fr(3, 2)), fin(Fr(9, 4))),
+                         ("fmul", op_mul, fin(Fr(3, 2)), fin(Fr(9, 4))),
+                         ("fdiv", op_div, fin(Fr(3, 2)), fin(Fr(9, 4))),
+                         ("fcmp", op_cmp, fin(Fr(3, 2)), fin(Fr(9, 4)))):
+    emit_reg(op, fn, src, dst, enables=QUIET, note="exceptions enabled, none raised")
+for op, fn, src in (("fsqrt", op_sqrt, fin(Fr(9, 4))), ("fmove", op_move, fin(Fr(3, 2))),
+                    ("fabs", op_abs, fin(Fr(-3, 2))), ("fneg", op_neg, fin(Fr(3, 2))),
+                    ("ftst", op_tst, fin(Fr(-3, 2)))):
+    emit_reg(op, fn, src, None, enables=QUIET, note="exceptions enabled, none raised")
+vec("fmove_l_in", srcraw=(0xFFFFFFF9, 0, 0), dst=fin(7), res=fin(-7), enables=QUIET, note="exceptions enabled")
+vec("fmove_w_in", srcraw=(0x00070000, 0, 0), dst=fin(1), res=fin(7), enables=QUIET, note="exceptions enabled")
+vec("fmove_b_in", srcraw=(0xF9000000, 0, 0), dst=fin(1), res=fin(-7), enables=QUIET, note="exceptions enabled")
+vec("fmove_s_in", srcraw=(s_enc(fin(Fr(3, 2))), 0, 0), dst=fin(7), res=fin(Fr(3, 2)), enables=QUIET,
+    note="exceptions enabled")
+_d = d_enc(fin(Fr(-9, 4)))
+vec("fmove_d_in", srcraw=(_d >> 32, _d & 0xFFFFFFFF, 0), dst=fin(7), res=fin(Fr(-9, 4)), enables=QUIET,
+    note="exceptions enabled")
+vec("fmove_x_in", srcraw=x_enc(fin(Fr(5, 8))), dst=fin(7), res=fin(Fr(5, 8)), enables=QUIET, note="exceptions enabled")
+vec("fmove_l_out", dst=fin(-12), mem=(0xFFFFFFF4,), enables=QUIET, note="exceptions enabled, CC unchanged")
+vec("fmove_s_out", dst=fin(Fr(3, 2)), mem=(s_enc(fin(Fr(3, 2))),), enables=QUIET, note="exceptions enabled")
+_d = d_enc(fin(Fr(-9, 4)))
+vec("fmove_d_out", dst=fin(Fr(-9, 4)), mem=(_d >> 32, _d & 0xFFFFFFFF), enables=QUIET, note="exceptions enabled")
 
 group("conv_out_x")
 for v in (ZERO, NZERO, INF, NINF, fin(1), fin(1 + P2(-60)), XMAXV, QNAN, DNAN):
