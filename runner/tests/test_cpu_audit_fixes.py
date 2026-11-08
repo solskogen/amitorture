@@ -132,7 +132,7 @@ static void fpu_exec(const struct fvec *v, struct fout *o) {
 }
 """
         source += "\n".join(function(guest, name) for name in
-                            ("ulp_ok", "x_ok", "vec_ok", "hot_fn"))
+                            ("prec_shift", "ulp_ok", "x_ok", "vec_ok", "hot_fn"))
         source += """
 int main(void) {
     struct fvec v[3] = {{0}};
@@ -161,7 +161,7 @@ int main(void) {
 """
         self.native(source, [source.replace("if (!vec_ok(v, &hot_o))", "if (0)"),
                              source.replace("v->fpsr_mask)", "UINT32_MAX)"),
-                             source.replace("return tol && ulp_ok(e, g, tol);", "return 0;")])
+                             source.replace("return tol && ulp_ok(e, g, tol, shift);", "return 0;")])
 
     def test_flags_rechecks_independent_model(self):
         guest = (MODULES / "flags.c").read_text()

@@ -94,15 +94,32 @@ static void json_x(const char *key, const ULONG *x)
 /* ------------------------------------------------------------ comparison */
 typedef unsigned long long u64;
 
-static int ulp_ok(const ULONG *e, const ULONG *g, ULONG tol)
+/* Mantissa bits below the FPCR rounding precision of a vector (single 24,
+ * double 53, extended 64 bits): a tolerance counts in ulps of that precision,
+ * and the result must be rounded to it. */
+static int prec_shift(ULONG fpcr)
+{
+    switch ((fpcr >> 6) & 3) {
+    case 1: return 40;
+    case 2: return 11;
+    default: return 0;
+    }
+}
+
+static int ulp_ok(const ULONG *e, const ULONG *g, ULONG tol, int shift)
 {
     ULONG ee = (e[0] >> 16) & 0x7fff, ge = (g[0] >> 16) & 0x7fff;
     u64 me = ((u64)e[1] << 32) | e[2], mg = ((u64)g[1] << 32) | g[2];
-    u64 hi, lo, a, b;
+    u64 hi, lo, a, b, top;
     if ((e[0] ^ g[0]) & 0x80000000UL)
         return 0;
     if (ee == 0x7fff || ge == 0x7fff)
         return 0;
+    if (mg & (((u64)1 << shift) - 1))
+        return 0;   /* not rounded to the FPCR precision */
+    me >>= shift;
+    mg >>= shift;
+    top = (u64)1 << (63 - shift);
     if (ee == ge) {
         u64 d = me > mg ? me - mg : mg - me;
         return d <= tol;
@@ -116,26 +133,30 @@ static int ulp_ok(const ULONG *e, const ULONG *g, ULONG tol)
     } else
         return 0;
     /* distance in units of the lower binade's ulp: 2*hi - lo */
-    a = hi - 0x8000000000000000ULL;
-    b = ~lo + 1;
+    a = hi - top;
+    b = (top << 1) - lo;
     if (a > tol || b > tol)
         return 0;
     return 2 * a + b <= tol;
 }
 
-/* distance in ulps for a failure report (-1: different sign, non-finite or
+/* distance in ulps (of the FPCR precision, see prec_shift()) for a failure report (-2: not rounded
+ * to the FPCR precision; -1: different sign, non-finite or
  * more than one binade apart; capped at $7fffffff) */
-static long ulp_dist(const ULONG *e, const ULONG *g)
+static long ulp_dist(const ULONG *e, const ULONG *g, int shift)
 {
     ULONG ee = (e[0] >> 16) & 0x7fff, ge = (g[0] >> 16) & 0x7fff;
-    u64 me = ((u64)e[1] << 32) | e[2], mg = ((u64)g[1] << 32) | g[2], d;
+    u64 me = (((u64)e[1] << 32) | e[2]) >> shift, mg = (((u64)g[1] << 32) | g[2]) >> shift, d;
+    const u64 top = (u64)1 << (63 - shift);
     if (((e[0] ^ g[0]) & 0x80000000UL) || ee == 0x7fff || ge == 0x7fff)
         return -1;
+    if ((((u64)g[1] << 32) | g[2]) & (((u64)1 << shift) - 1))
+        return -2;
     if (ee == ge)
         d = me > mg ? me - mg : mg - me;
     else if (ee == ge + 1 || ge == ee + 1) {
         u64 hi = ee > ge ? me : mg, lo = ee > ge ? mg : me;
-        u64 a = hi - 0x8000000000000000ULL, b = ~lo + 1;
+        u64 a = hi - top, b = (top << 1) - lo;
         if (a > 0x7fffffffULL || b > 0x7fffffffULL)
             return 0x7fffffffL;
         d = 2 * a + b;
@@ -144,11 +165,11 @@ static long ulp_dist(const ULONG *e, const ULONG *g)
     return d > 0x7fffffffULL ? 0x7fffffffL : (long)d;
 }
 
-static int x_ok(const ULONG *e, const ULONG *g, const ULONG *m, ULONG tol)
+static int x_ok(const ULONG *e, const ULONG *g, const ULONG *m, ULONG tol, int shift)
 {
     if (!((e[0] ^ g[0]) & m[0]) && !((e[1] ^ g[1]) & m[1]) && !((e[2] ^ g[2]) & m[2]))
         return 1;
-    return tol && ulp_ok(e, g, tol);
+    return tol && ulp_ok(e, g, tol, shift);
 }
 
 static const ULONG all_ones[3] = { 0xffffffffUL, 0xffffffffUL, 0xffffffffUL };
@@ -158,9 +179,9 @@ static int vec_ok(const struct fvec *v, const struct fout *o)
     ULONG tol = v->flags >> 8;
     if ((o->fpsr ^ v->fpsr) & v->fpsr_mask)
         return 0;
-    if (!x_ok(v->res, o->res, v->rmask, tol))
+    if (!x_ok(v->res, o->res, v->rmask, tol, prec_shift(v->fpcr)))
         return 0;
-    return x_ok(v->res2, o->res2, all_ones, tol);
+    return x_ok(v->res2, o->res2, all_ones, tol, prec_shift(v->fpcr));
 }
 
 /* ------------------------------------------------------------ tables */
@@ -209,7 +230,7 @@ static void vec_fields(const struct fvec *v, const struct fout *o, int full)
             json_int("tol_ulp", v->flags >> 8);
     }
     if (v->flags >> 8)
-        json_int("ulp_dist", ulp_dist(v->res, o->res));
+        json_int("ulp_dist", ulp_dist(v->res, o->res, prec_shift(v->fpcr)));
     if (v->res2[0] | v->res2[1] | v->res2[2] | o->res2[0] | o->res2[1] | o->res2[2]) {
         json_x("exp_res2", v->res2);
         json_x("got_res2", o->res2);
@@ -285,9 +306,9 @@ static void run_group(const struct fgroup *g)
         json_x("res_checked", v->rmask);
         if (v->flags >> 8) {
             json_int("tol_ulp", v->flags >> 8);
-            json_int("ulp_dist", ulp_dist(v->res, bad_o[0].res));
+            json_int("ulp_dist", ulp_dist(v->res, bad_o[0].res, prec_shift(v->fpcr)));
             if (v->res2[0] | v->res2[1] | v->res2[2])
-                json_int("ulp_dist_res2", ulp_dist(v->res2, bad_o[0].res2));
+                json_int("ulp_dist_res2", ulp_dist(v->res2, bad_o[0].res2, prec_shift(v->fpcr)));
         }
         json_str("note", "res/src/dst are extended: sign+exponent(16).pad(16), mantissa hi, mantissa lo; out-conversions show the memory written, left-aligned");
         if (nbad > 1) {

@@ -90,6 +90,13 @@ def fin(x):
     return v
 
 
+def xval(high, low):
+    """the extended value with sign/exponent word `high` and mantissa `low` (normal)"""
+    assert low >> 63 and 0 < high & 0x7fff < 0x7fff
+    v = Fr(low) * Fr(2) ** ((high & 0x7fff) - 16383 - 63)
+    return -v if high & 0x8000 else v
+
+
 ZERO, NZERO = V("z", 0), V("z", 1)
 INF, NINF = V("i", 0), V("i", 1)
 QNAN = V("n", 0, nm=0xC000000000000000)
@@ -732,12 +739,26 @@ def trans(name, x):
         if name == "ftanh":
             a, b = dx.exp(), (-dx).exp()
             return (a - b) / (a + b)
+        if name == "fasin":
+            return d_atan(dx / (1 - dx * dx).sqrt())
+        if name == "facos":
+            return d_pi() / 2 - d_atan(dx / (1 - dx * dx).sqrt())
+        if name == "fatanh":
+            return ((1 + dx).ln() - (1 - dx).ln()) / 2
+        if name == "fetoxm1":
+            return dx.exp() - 1       # |x| >= 2^-70: 90 digits keep about 70 after the cancellation
+        if name == "flognp1":
+            return (1 + dx).ln()
     raise ValueError(name)
 
 
 def op_trans(name, src, mode, prec):
     if src.k == "n":
         return R(quiet(src), SNAN if src.snan() else 0)
+    if name in ("fasin", "facos", "fatanh", "fetoxm1", "flognp1"):
+        r = op_trans_more(name, src, mode, prec)
+        if r is not None:
+            return r
     if src.k == "z":
         if name in ("fsin", "ftan", "fatan", "fsinh", "ftanh"):
             return R(src)
@@ -765,6 +786,47 @@ def op_trans(name, src, mode, prec):
     d = trans(name, x)
     f = to_frac(d)
     return rnd(1 if f < 0 else 0, Approx(abs(f)), mode, prec)
+
+
+def op_trans_more(name, src, mode, prec):
+    """special operands of FASIN, FACOS, FATANH, FETOXM1, FLOGNP1 (MC68881/882 UM
+    section 4 per-instruction tables); None: an ordinary argument"""
+    def approx(sign, d):
+        return rnd(sign, Approx(abs(to_frac(d))), mode, prec)
+    with decimal.localcontext(CTX):
+        half_pi = d_pi() / 2
+    if src.k == "z":
+        if name == "facos":
+            return approx(0, half_pi)               # acos(+-0) = pi/2
+        return R(src)                               # asin, atanh, etoxm1, lognp1 of +-0: +-0
+    if src.k == "i":
+        if name == "fetoxm1":
+            return R(fin(-1) if src.s else INF)     # e^-inf - 1 = -1, e^+inf - 1 = +inf
+        if name == "flognp1" and not src.s:
+            return R(INF)
+        return operr()                              # asin, acos, atanh of +-inf; lognp1(-inf)
+    x = src.val()
+    if name in ("fasin", "facos"):
+        if abs(x) > 1:
+            return operr()
+        if abs(x) == 1:
+            if name == "fasin":
+                return approx(src.s, half_pi)       # asin(+-1) = +-pi/2
+            if src.s:
+                with decimal.localcontext(CTX):
+                    return approx(0, d_pi())        # acos(-1) = pi
+            return R(ZERO, fpsr_dc=INEX2)           # acos(1) = +0 exact; INEX2 not specified for it
+    if name == "fatanh":
+        if abs(x) > 1:
+            return operr()
+        if abs(x) == 1:
+            return R(NINF if src.s else INF, DZ)    # atanh(+-1) = +-inf, DZ
+    if name == "flognp1":
+        if x < -1:
+            return operr()
+        if x == -1:
+            return R(NINF, DZ)                      # log(0) = -inf, DZ
+    return None
 
 
 def op_sincos(src, mode, prec):
@@ -806,7 +868,7 @@ for o in ("fgetexp", "fgetman"):
     defop(o, [f"{o}.x\tfp1,fp0"], "reg", M6888X)
 defop("ftst", ["ftst.x\tfp1"], "reg", MALL)
 TRANS = ("fsin", "fcos", "ftan", "fetox", "ftwotox", "ftentox", "flogn", "flog2", "flog10",
-         "fatan", "fsinh", "fcosh", "ftanh")
+         "fatan", "fsinh", "fcosh", "ftanh", "fasin", "facos", "fatanh", "fetoxm1", "flognp1")
 for o in TRANS:
     defop(o, [f"{o}.x\tfp1,fp0"], "reg", M6888X)
 defop("fsincos", ["fsincos.x\tfp1,fp2:fp0"], "reg", M6888X)
@@ -1294,12 +1356,22 @@ TARGS = {
     "fsinh": (Fr(1, 2), Fr(-2)),
     "fcosh": (Fr(1, 2), Fr(2)),
     "ftanh": (Fr(1, 2), Fr(-1)),
+    # the last of each: well-conditioned arguments where softfloat's FPSP
+    # algorithms are 3-6 ulp off (round to nearest, extended)
+    "fasin": (Fr(1, 2), Fr(-1, 4), Fr(9, 10), xval(0xbffd, 0xf10fbd9574635182)),
+    "facos": (Fr(1, 2), Fr(-3, 4), Fr(1, 100), xval(0x3ffe, 0x8e9f4554a24fdc05)),
+    "fatanh": (Fr(1, 2), Fr(-1, 10), Fr(3, 4), xval(0xbffa, 0xb6062affd80ab526), xval(0xbffb, 0xa2084c694feb58be)),
+    "fetoxm1": (Fr(1, 2), Fr(-1), Fr(2), Fr(1, 1000), Fr(-30)),
+    "flognp1": (Fr(1, 2), Fr(-1, 2), Fr(10), Fr(1, 1000), xval(0xbffc, 0x9f6919d6d28876fd)),
 }
 TSPEC = {
     "fsin": (ZERO, NZERO, INF, QNAN), "fcos": (ZERO, INF), "ftan": (ZERO, NZERO, NINF),
     "fetox": (ZERO, INF, NINF, QNAN), "ftwotox": (ZERO, NINF), "ftentox": (ZERO, INF),
     "flogn": (ZERO, NZERO, INF, NINF, fin(-1), fin(1)), "flog2": (ZERO, fin(1)), "flog10": (fin(1), fin(-2)),
     "fatan": (ZERO, NZERO, INF, NINF), "fsinh": (ZERO,), "fcosh": (ZERO,), "ftanh": (NZERO,),
+    "fasin": (ZERO, NZERO, fin(1), fin(-1), fin(2), INF), "facos": (ZERO, fin(1), fin(-1), fin(-2), NINF),
+    "fatanh": (ZERO, NZERO, fin(1), fin(-1), fin(2), INF), "fetoxm1": (ZERO, NZERO, INF, NINF),
+    "flognp1": (ZERO, NZERO, fin(-1), fin(-2), INF, NINF),
 }
 TOL = 2
 KAPPA_MAX = 3
@@ -1310,7 +1382,15 @@ _KAPPA = {
     "flog10": lambda x: 1 / math.log(x), "fatan": lambda x: x / ((1 + x * x) * math.atan(x)),
     "fsinh": lambda x: x / math.tanh(x), "fcosh": lambda x: x * math.tanh(x),
     "ftanh": lambda x: x / (math.sinh(x) * math.cosh(x)),
+    "fasin": lambda x: x / (math.sqrt(1 - x * x) * math.asin(x)),
+    "facos": lambda x: -x / (math.sqrt(1 - x * x) * math.acos(x)),
+    "fatanh": lambda x: x / ((1 - x * x) * math.atanh(x)), "fetoxm1": lambda x: x * math.exp(x) / math.expm1(x),
+    "flognp1": lambda x: x / ((1 + x) * math.log1p(x)),
 }
+# the other rounding modes and precisions, at the first argument of each:
+# RZ/RM/RP extended, and RN single and double (the result must be rounded to
+# that precision; the tolerance is then in its ulps)
+TMODES = ((RZ, PX), (RM, PX), (RP, PX), (RN, PS), (RN, PD))
 
 
 def kappa_ok(name, x):
@@ -1324,6 +1404,9 @@ for name in TRANS:
         assert kappa_ok(name, x), (name, x, "badly conditioned argument for a TOL vector")
         emit_reg(name, lambda s, m, p, n=name: op_trans(n, s, m, p), fin(x), None, RN, PX, mask=M6888X, tol=TOL,
                  note=f"within {TOL} ulp of the exact value")
+    for mode, prec in TMODES:
+        emit_reg(name, lambda s, m, p, n=name: op_trans(n, s, m, p), fin(TARGS[name][0]), None, mode, prec,
+                 mask=M6888X, tol=TOL, note=f"within {TOL} ulp ({PREC_NAMES[prec]}) of the exact value")
     for v in TSPEC[name]:
         r = op_trans(name, v, RN, PX)
         exact_res = r.v.k != "f" or v.k == "z" or (name.startswith("flog") and v.k == "f" and v.m == 1)
@@ -1333,6 +1416,9 @@ group("trans_fsincos")
 for x in (Fr(1, 2), Fr(-1), Fr(-12, 5)):
     assert kappa_ok("fsin", x) and kappa_ok("fcos", x), (x, "badly conditioned fsincos argument")
     emit_reg("fsincos", op_sincos, fin(x), None, RN, PX, mask=M6888X, tol=TOL, note="sin in FP0, cos in FP2")
+for mode, prec in TMODES:
+    emit_reg("fsincos", op_sincos, fin(Fr(1, 2)), None, mode, prec, mask=M6888X, tol=TOL,
+             note=f"sin in FP0, cos in FP2, within {TOL} ulp ({PREC_NAMES[prec]})")
 emit_reg("fsincos", op_sincos, ZERO, None, RN, PX, mask=M6888X, note="sin(+0)=+0, cos(+0)=1")
 emit_reg("fsincos", op_sincos, INF, None, RN, PX, mask=M6888X, note="infinity: OPERR, both NaN")
 

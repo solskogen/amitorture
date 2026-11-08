@@ -153,6 +153,50 @@ int main(void) {
         main = function(source, "void amt_run_fpu(")
         self.assertIn("i == 0 || !is060 || (amt_par.flags & AMT_F_FPUCOMPAT)", main)
 
+    def test_tolerance_counts_in_ulps_of_the_fpcr_precision(self):
+        source = SOURCE.read_text()
+        code = r"""
+#include <assert.h>
+#include <stdint.h>
+typedef uint32_t ULONG;
+""" + source[source.index("typedef unsigned long long u64;"):source.index("static const ULONG all_ones")] + r"""
+static const ULONG mask[3] = { 0xffffffffUL, 0xffffffffUL, 0xffffffffUL };
+#define FX 0x00
+#define FS 0x40
+#define FD 0x80
+static int ok(const ULONG *e, const ULONG *g, ULONG tol, ULONG fpcr) { return x_ok(e, g, mask, tol, prec_shift(fpcr)); }
+int main(void)
+{
+    const ULONG one[3] = { 0x3fff0000UL, 0x80000000UL, 0 };
+    /* extended: raw mantissa ulps, as before */
+    const ULONG x2[3] = { 0x3fff0000UL, 0x80000000UL, 2 }, x3[3] = { 0x3fff0000UL, 0x80000000UL, 3 };
+    assert(ok(one, x2, 2, FX) && !ok(one, x3, 2, FX) && ulp_dist(one, x3, prec_shift(FX)) == 3);
+    /* single: ulps of a 24-bit mantissa (bit 40), and the result must be rounded to it */
+    const ULONG s2[3] = { 0x3fff0000UL, 0x80000200UL, 0 }, s3[3] = { 0x3fff0000UL, 0x80000300UL, 0 };
+    const ULONG s_unrounded[3] = { 0x3fff0000UL, 0x80000000UL, 1 };
+    assert(ok(one, s2, 2, FS) && !ok(one, s3, 2, FS) && ulp_dist(one, s3, prec_shift(FS)) == 3);
+    assert(!ok(one, s_unrounded, 2, FS) && ulp_dist(one, s_unrounded, prec_shift(FS)) == -2);
+    assert(ok(one, s_unrounded, 2, FX));    /* 1 extended ulp: fine at extended precision */
+    /* double: bit 11 */
+    const ULONG d1[3] = { 0x3fff0000UL, 0x80000000UL, 0x800 }, d_unrounded[3] = { 0x3fff0000UL, 0x80000000UL, 0x400 };
+    assert(ok(one, d1, 1, FD) && !ok(one, d_unrounded, 2, FD) && ulp_dist(one, d1, prec_shift(FD)) == 1);
+    /* across a binade: the largest single below 2 and 2.0 are 1 single ulp apart */
+    const ULONG below2[3] = { 0x3fff0000UL, 0xffffff00UL, 0 }, two[3] = { 0x40000000UL, 0x80000000UL, 0 };
+    assert(ok(below2, two, 1, FS) && ok(two, below2, 1, FS) && ulp_dist(below2, two, prec_shift(FS)) == 1);
+    const ULONG below2x[3] = { 0x3fff0000UL, 0xffffffffUL, 0xffffffffUL };
+    assert(ok(below2x, two, 1, FX) && ulp_dist(two, below2x, prec_shift(FX)) == 1);
+    return 0;
+}
+"""
+        with tempfile.TemporaryDirectory(prefix=".fpu-ulp-", dir=ROOT / "runner/tests") as directory:
+            directory = Path(directory)
+            driver = directory / "test.c"
+            binary = directory / "test"
+            driver.write_text(code)
+            subprocess.run(["cc", "-std=c99", "-O2", "-Wall", str(driver), "-o", str(binary)],
+                           env=dict(os.environ, TMPDIR=str(directory)), check=True)
+            subprocess.run([str(binary)], check=True)
+
 
 if __name__ == "__main__":
     unittest.main()
