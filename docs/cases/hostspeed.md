@@ -196,6 +196,7 @@ named code path first, then at the cycle charge (newcpu.cpp, the `cpu_cycles` of
 | `speed_fmove_p_in` / `speed_fmove_p_out` | FMOVE.P from/to memory (k-factor 6) | 6888x | +1.2345678E+03 | packed-decimal conversion (fpp.cpp fpp_to_pack/fpp_from_pack: string and long-double conversions) |
 | `speed_fmovem` | FMOVEM.X FP0-FP7 to and from memory | FPU | | fpp_to_exten_fmovem/fpp_from_exten_fmovem: 16 extended-precision conversions per pair |
 | `speed_fsave_frestore` | FSAVE/FRESTORE of the idle frame | FPU | | fpuop_save/fpuop_restore frame building |
+| `speed_render` | a renderer's inner loop, 16 instructions repeated: FMOVE.S loads, FMUL/FADD (a vector length), FSQRT, FDIV, FCMP + FBGT, FMUL.S <mem>, FMOVE.L to Dn, FMOVE.S store, ADD.L; ns/op is per instruction of the mix | FPU | | the FPU in mixed code: under a JIT also the cost of FPU instructions it does not compile (leaving compiled code, reloading registers) |
 | `speed_ram_read` | MOVE.L (a5),d0 | all | owned RAM pool, fast RAM if available | ordinary memory reads and interpreter/JIT memory-bank dispatch |
 | `speed_custom_read` | MOVE.W (a0),d0 from VHPOSR | all | read-only custom-chip register | custom-chip access and threaded CPU handoff |
 | `speed_cia_read` | MOVE.B (a0),d0 from CIA-A PRA | all | read-only port data, not interrupt status | CIA access and threaded CPU handoff |

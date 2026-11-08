@@ -75,6 +75,7 @@ void  hs_fpu_reset(void);
 ULONG hs_pcr_get(void);
 void  hs_pcr_set(ULONG);
 ULONG hs_fadd(ULONG, void *);
+ULONG hs_render(ULONG, void *);
 ULONG hs_fmul(ULONG, void *);
 ULONG hs_fdiv(ULONG, void *);
 ULONG hs_fsqrt(ULONG, void *);
@@ -192,6 +193,7 @@ static const struct hs_blk blocks[] = {
     { "fmove_p_out",    hs_fmove_p_out,    B_FPU | B_FPSP },
     { "fmovem",         hs_fmovem,         B_FPU },
     { "fsave_frestore", hs_fsave_frestore, B_FPU },
+    { "render",         hs_render,         B_FPU },
     { "empty_end",      hs_empty,          0 },
     { "ram_read",       hs_ram_read,       0 },
     { "custom_read",    hs_custom_read,    0 },

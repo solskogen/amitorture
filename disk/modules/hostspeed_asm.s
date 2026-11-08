@@ -61,6 +61,7 @@ HS_OUT	macro
 	xdef	_hs_pcr_get
 	xdef	_hs_pcr_set
 	xdef	_hs_fadd
+	xdef	_hs_render
 	xdef	_hs_fmul
 	xdef	_hs_fdiv
 	xdef	_hs_fsqrt
@@ -614,6 +615,48 @@ _hs_fmovem:				; 8 registers out and back in
 	rept	32
 	fmovem.x fp0-fp7,(a3)
 	fmovem.x (a3),fp0-fp7
+	endr
+	dbf	d7,.i
+	subq.l	#1,d6
+	bne	.o
+	HS_OUT
+
+;--- a renderer's inner loop rather than one instruction: per 16 instructions
+; a vector from memory, its length (FMUL/FADD, FSQRT), a normalisation (FDIV),
+; a compare and FBcc, a memory operand, a conversion to an integer and a store.
+; The operands are reloaded every time, so the values stay the same.
+_hs_render:
+	HS_IN
+	bsr	hs_fset
+	lea	64(a5),a3
+	fmove.s	#1.5,fp0
+	fmove.s	fp0,(a3)
+	fmove.s	#0.5,fp0
+	fmove.s	fp0,4(a3)
+	fmove.s	#2.0,fp0
+	fmove.s	fp0,8(a3)
+	fmove.s	#0.25,fp0
+	fmove.s	fp0,12(a3)
+	moveq	#0,d1
+.o:	moveq	#15,d7
+.i:
+	rept	4
+	fmove.s	(a3),fp0
+	fmove.s	4(a3),fp1
+	fmove.s	8(a3),fp2
+	fmul.x	fp0,fp0
+	fmul.x	fp1,fp1
+	fmul.x	fp2,fp2
+	fadd.x	fp1,fp0
+	fadd.x	fp2,fp0
+	fsqrt.x	fp0,fp5
+	fdiv.x	fp5,fp1
+	fcmp.x	fp4,fp5
+	fbgt.w	*+4
+	fmul.s	12(a3),fp1
+	fmove.l	fp1,d0
+	fmove.s	fp1,16(a3)
+	add.l	d0,d1
 	endr
 	dbf	d7,.i
 	subq.l	#1,d6
