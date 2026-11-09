@@ -17,6 +17,8 @@
  *   {"t":"speed","mod":"hostspeed","ev":"end","insn":..,"pos":..,"n":<instructions>,
  *    "timing":{"cck","empty_cck","frames","units"}}
  *   {"t":"speed","mod":"hostspeed","ev":"skip","insn":..,"why":..}
+ *   benchmark-only builds, at the end (guest-timed scores, see below):
+ *   {"t":"speed","mod":"hostspeed","ev":"score","insn":"int"|"fpu","blocks":..,"x100"|"ops":..}
  * Which blocks run depends only on the CPU/FPU variant (amt_probe_result):
  * the instructions the part implements in hardware. What the 68060 traps
  * as unimplemented integer instructions (MOVEP, CAS2, CHK2, 64-bit
@@ -30,6 +32,9 @@
  * which parity and fingerprints never compare. The module reports no
  * cases. */
 #include "mod.h"
+#ifdef AMT_BENCHMARK_ONLY
+#include "screen.h"
+#endif
 
 AMT_MODULE(hostspeed, 26, AMT_PH_BARE, 0, 0, 4096);
 
@@ -288,7 +293,7 @@ static void emit(const struct hs_blk *b, ULONG idx, const char *ev)
 #endif
 }
 
-static void run_block(const struct hs_blk *b, ULONG idx, ULONG target)
+static void run_block(const struct hs_blk *b, ULONG idx, ULONG target, ULONG *n_out, ULONG *net_out)
 {
     ULONG units, empty, f0, f1, t0, t1;
     amt_watchdog_kick();
@@ -312,14 +317,220 @@ static void run_block(const struct hs_blk *b, ULONG idx, ULONG target)
     json_int("units", (long)units);
     json_obj_end();
     json_end();
+    *n_out = units * per_unit(b);
+    *net_out = (t1 - t0) > empty ? (t1 - t0) - empty : 0;
 }
+
+#ifdef AMT_BENCHMARK_ONLY
+/* Benchmark-only disk: progress and two scores on the status screen, from
+ * the guest's own clock (colour clocks). On a real Amiga or an FPGA that is
+ * real time; in an emulator it is emulated time (the runner measures the
+ * host's speed instead, docs/cases/hostspeed.md).
+ *
+ * Integer score: geometric mean over the blocks every CPU runs of the net
+ * operations per second (loop overhead subtracted), relative to a PAL A500
+ * (68000 at 7.09 MHz, 512 KB chip + 512 KB slow RAM, measured with this
+ * code on Amiberry's cycle-exact core) = 1.00. FPU score: geometric mean of
+ * the net operations per second of the FPU blocks every FPU implements in
+ * hardware (no A500 reference exists for those). */
+static const struct { hs_fn fn; ULONG ref; } int_ref[] = {
+    { hs_add_l,     879525 },
+    { hs_div_w,     54618 },
+    { hs_abcd_sbcd, 1135077 },
+    { hs_roxl_roxr, 318708 },
+    { hs_movem,     71759 },
+    { hs_trap_rte,  128194 },
+};
+static const hs_fn fpu_set[] = { hs_fadd, hs_fmul, hs_fdiv, hs_fsqrt, hs_fmovem };
+
+/* 2^(2^-(k+1)) in Q30 */
+static const ULONG pow2_frac[16] = {
+    0x5a82799aUL, 0x4c1bf829UL, 0x45cae0f2UL, 0x42d561b4UL,
+    0x4166c34cUL, 0x40b268faUL, 0x4058f6a8UL, 0x402c6be9UL,
+    0x4016321bUL, 0x400b1818UL, 0x40058bceUL, 0x4002c5d8UL,
+    0x400162e8UL, 0x4000b173UL, 0x400058b9UL, 0x40002c5dUL,
+};
+
+/* log2(x) in Q16, x > 0 */
+static LONG log2_q16(ULONG x)
+{
+    LONG r = 31;
+    ULONG bit;
+    unsigned long long y;
+    while (!(x & 0x80000000UL)) {
+        x <<= 1;
+        r--;
+    }
+    r <<= 16;
+    y = x;                              /* [1, 2) in Q31 */
+    for (bit = 0x8000; bit; bit >>= 1) {
+        y = (y * y) >> 31;
+        if (y >= 0x100000000ULL) {
+            y >>= 1;
+            r |= (LONG)bit;
+        }
+    }
+    return r;
+}
+
+/* scale * 2^(v / 65536), saturated to 32 bits */
+static ULONG exp2_q16(LONG v, ULONG scale)
+{
+    LONG i = v >> 16;
+    ULONG f = (ULONG)v & 0xffff;
+    unsigned long long m = 1ULL << 30;
+    int k, shift;
+    for (k = 0; k < 16; k++)
+        if (f & (0x8000UL >> k))
+            m = (m * pow2_frac[k]) >> 30;
+    m *= scale;                         /* < 2^31 * 2^32 */
+    shift = 30 - (int)i;
+    if (shift >= 64)
+        return 0;
+    if (shift < 0)
+        return 0xffffffffUL;
+    m >>= shift;
+    return m > 0xffffffffULL ? 0xffffffffUL : (ULONG)m;
+}
+
+static ULONG net_ops(ULONG n, ULONG net_cck)
+{
+    unsigned long long o;
+    if (!net_cck || !n)
+        return 0;
+    o = (unsigned long long)n * amt_cck_hz() / net_cck;
+    return o > 0xffffffffULL ? 0xffffffffUL : (ULONG)o;
+}
+
+static LONG int_log, fpu_log;
+static int int_n, fpu_n;
+
+static void score_add(const struct hs_blk *b, ULONG ops)
+{
+    unsigned i;
+    if (!ops)
+        return;
+    for (i = 0; i < sizeof int_ref / sizeof int_ref[0]; i++)
+        if (int_ref[i].fn == b->fn) {
+            int_log += log2_q16(ops) - log2_q16(int_ref[i].ref);
+            int_n++;
+        }
+    for (i = 0; i < sizeof fpu_set / sizeof fpu_set[0]; i++)
+        if (fpu_set[i] == b->fn) {
+            fpu_log += log2_q16(ops);
+            fpu_n++;
+        }
+}
+
+/* "12.34" from hundredths */
+static char *fmt_x100(char *p, ULONG v)
+{
+    p = amt_utoa(p, v / 100);
+    *p++ = '.';
+    *p++ = (char)('0' + (v / 10) % 10);
+    *p++ = (char)('0' + v % 10);
+    *p = 0;
+    return p;
+}
+
+/* "1.23M ops/s" */
+static void fmt_ops(char *p, ULONG ops)
+{
+    if (ops >= 1000000000UL) {
+        p = fmt_x100(p, ops / 10000000UL);
+        *p++ = 'G';
+    } else if (ops >= 1000000UL) {
+        p = fmt_x100(p, ops / 10000UL);
+        *p++ = 'M';
+    } else if (ops >= 1000UL) {
+        p = fmt_x100(p, ops / 10UL);
+        *p++ = 'k';
+    } else
+        p = amt_utoa(p, ops);
+    p[0] = ' ', p[1] = 'o', p[2] = 'p', p[3] = 's', p[4] = '/', p[5] = 's', p[6] = 0;
+}
+
+/* "Benchmark 12/48: " and "About 1:05 left." */
+static void bench_progress(const struct hs_blk *b, ULONG done, ULONG total, ULONG frames)
+{
+    char a[24], t[12], *p;
+    ULONG left, hz = amt_secs(1);
+    p = amt_utoa(a, done + 1);
+    *p++ = '/';
+    p = amt_utoa(p, total);
+    *p++ = ':';
+    *p++ = ' ';
+    *p = 0;
+    screen_bench(0, "Benchmark ", a, b->insn);
+    /* about 1.2 s per block until there is a measurement */
+    left = done ? frames * (total - done) / done / hz : total * 6 / 5;
+    p = amt_utoa(t, left / 60);
+    *p++ = ':';
+    *p++ = (char)('0' + (left % 60) / 10);
+    *p++ = (char)('0' + left % 10);
+    *p = 0;
+    screen_bench(1, "About ", t, " left.");
+}
+
+static void bench_finish(ULONG total, int host)
+{
+    char a[24];
+    ULONG v;
+    amt_utoa(a, total);
+    screen_bench(0, "Benchmark finished: ", a, " blocks.");
+    json_begin("speed");
+    json_str("mod", "hostspeed");
+    json_str("ev", "score");
+    json_str("insn", "int");
+    json_int("benchmark", 1);
+    json_int("blocks", int_n);
+    if (int_n) {
+        v = exp2_q16(int_log / int_n, 100);
+        json_int("x100", (long)(v > 0x7fffffffUL ? 0x7fffffffUL : v));
+        json_str("ref", "A500");
+        fmt_x100(a, v);
+        screen_bench(1, "Integer: ", a, " (A500 = 1.00)");
+    } else
+        screen_bench(1, "Integer: not measured", 0, 0);
+    json_end();
+    if (fpu_n) {
+        v = exp2_q16(fpu_log / fpu_n, 1);
+        json_begin("speed");
+        json_str("mod", "hostspeed");
+        json_str("ev", "score");
+        json_str("insn", "fpu");
+        json_int("benchmark", 1);
+        json_int("blocks", fpu_n);
+        json_int("ops", (long)(v > 0x7fffffffUL ? 0x7fffffffUL : v));
+        json_end();
+        fmt_ops(a, v);
+        screen_bench(2, "FPU:     ", a, 0);
+    } else
+        screen_bench(2, AMT_FPU() == AMT_FPU_NONE ? "FPU:     none" : "FPU:     not measured", 0, 0);
+    if (host) {
+        screen_bench(3, "Emulated time: host speed is in the", 0, 0);
+        screen_bench(4, "runner's report.", 0, 0);
+        /* the report keeps a picture of the result (raw/<entry>/shot-*) */
+        amt_request("screenshot", "benchmark", "{\"frames\":2}", amt_secs(10));
+    } else
+        screen_bench(3, "Per-block details: serial port.", 0, 0);
+}
+#endif
 
 void amt_run_hostspeed(void)
 {
-    ULONG i, target, pcr = 0;
+    ULONG i, target, pcr = 0, n, net;
     int fpu = AMT_FPU() != AMT_FPU_NONE;
     int is060 = AMT_CPU() >= AMT_CPU_68EC060;
+    int host;
     amt_vec_fn old_trap;
+#ifdef AMT_BENCHMARK_ONLY
+    ULONG total = 0, done = 0, f0;
+    for (i = 0; i < N_BLOCKS; i++)
+        if (!skip_why(&blocks[i]))
+            total++;
+    screen_bench(0, "Benchmark: waiting for a host (5 s)", 0, 0);
+#endif
 
     hs_mem = amt_any_pool();
     target = (amt_cck_hz() / 1000) * HS_BLOCK_MS;
@@ -327,7 +538,11 @@ void amt_run_hostspeed(void)
      * this request once it follows the mailbox, so the first block is
      * sampled from its start. Without such a host (real hardware, serial
      * only) the blocks run anyway after the timeout. */
-    amt_request("wait", "hostspeed", 0, amt_secs(5));
+    host = amt_request("wait", "hostspeed", 0, amt_secs(5));
+    (void)host;
+#ifdef AMT_BENCHMARK_ONLY
+    f0 = amt_frames_now();
+#endif
     old_trap = amt_vec_set(32, hs_rte);
     if (fpu && is060) {
         pcr = hs_pcr_get();
@@ -343,7 +558,14 @@ void amt_run_hostspeed(void)
             json_end();
             continue;
         }
-        run_block(b, i, target);
+#ifdef AMT_BENCHMARK_ONLY
+        bench_progress(b, done, total, amt_frames_now() - f0);
+#endif
+        run_block(b, i, target, &n, &net);
+#ifdef AMT_BENCHMARK_ONLY
+        score_add(b, net_ops(n, net));
+        done++;
+#endif
     }
     if (fpu) {
         hs_fpu_reset();
@@ -351,4 +573,7 @@ void amt_run_hostspeed(void)
             hs_pcr_set(pcr);
     }
     amt_vec_set(32, old_trap);
+#ifdef AMT_BENCHMARK_ONLY
+    bench_finish(total, host);
+#endif
 }

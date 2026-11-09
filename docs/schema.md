@@ -194,7 +194,7 @@ emulated time and brackets it with two records; the runner's verdict on it is th
 | Field | Type | Meaning |
 |---|---|---|
 | `mod` | string | `hostspeed` |
-| `ev` | `begin` / `end` / `skip` | before the block, after it, or not run on this CPU/FPU |
+| `ev` | `begin` / `end` / `skip` / `score` | before the block, after it, not run on this CPU/FPU, or (benchmark-only builds, after the last block) the guest's own score |
 | `insn` | string | the block: `add_l`, `fsin`, ... (`stop`, `empty`, `empty_end` are the references) |
 | `cls` | `int` / `fpu` | the class (its cost reference: `add_l` or `fadd`) |
 | `pos` | int | the mailbox case number (offset 40) while the block runs: 1000 + block index; module (offset 36) is 26 |
@@ -202,6 +202,13 @@ emulated time and brackets it with two records; the runner's verdict on it is th
 | `n` | int | `end`: instructions executed (`stop`: STOPs = frames; `empty`: DBF iterations) |
 | `timing` | object | `end`: `cck` emulated colour clocks of the block, `empty_cck` the loop alone for the same units, `frames` VBLs counted, `units` outer loop count |
 | `why` | string | `skip`: why it does not run here |
+| `blocks` | int | `score`: how many blocks went into it |
+| `x100` | int | `score`, `insn` `int`: integer score x 100, relative to `ref` (`A500`) = 100 |
+| `ops` | int | `score`, `insn` `fpu`: FPU score, net operations per second |
+
+`score` records (`insn` `int` or `fpu`; benchmark-only builds) are timed with the guest's colour
+clock: real time on real hardware, emulated time in an emulator. The runner does not judge them
+(docs/cases/hostspeed.md, "On-screen progress and scores").
 
 ```
 {"v":1,"seq":2,"t":"speed","mod":"hostspeed","ev":"begin","insn":"fsin","cls":"fpu","pos":1031} *xxxxxxxx

@@ -509,7 +509,7 @@ void screen_module(const struct amt_module *m, int begin, ULONG pass, ULONG fail
             clear_row(r_msg + 3);
     } else {
         draw_counts(row, pass, fail, skip, unt);
-        draw_state(row, aborted ? "ABRT" : fail ? "FAIL" : (pass || unt) ? "ok" : "skip");
+        draw_state(row, aborted ? "ABRT" : fail ? "FAIL" : (pass || unt) ? "ok" : skip ? "skip" : "done");
     }
     draw_time();
 }
@@ -524,6 +524,14 @@ void screen_count(const struct amt_module *m, ULONG pass, ULONG fail, ULONG skip
     if (row >= 0)
         draw_counts(row, pass, fail, skip, unt);
     draw_counts(r_total, tpass, tfail, tskip, tunt);
+    draw_time();
+}
+
+void screen_bench(int line, const char *a, const char *b, const char *c)
+{
+    if (!on || line < 0 || r_msg + 5 + line >= ROWS)
+        return;
+    msg(5 + line, a, b, c);
     draw_time();
 }
 

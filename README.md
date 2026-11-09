@@ -61,6 +61,8 @@ python3 -m amitorture run --amiberry /path/to/amiberry --kickstarts ~/Amiberry/R
 This covers 68000 through 68060, with interpreter/JIT and **threaded CPU off/on pairs** where supported.
 Unsupported CPU/FPU/MMU workloads are explicitly skipped. The report includes paired throughput and
 host CPU-cost tables; benchmark measurements do not impose a speed pass/fail threshold.
+Booted on a real Amiga or an FPGA, the benchmark disk shows its progress and an integer score
+(A500 = 1.00) plus an FPU score on screen.
 See [hostspeed.md](docs/cases/hostspeed.md#benchmark-only-build-and-threaded-cpu-comparisons).
 
 Add `--warp auto` to accelerate CPU/FPU/MMU set disks (not on JIT entries, where warp is slower) while keeping all other disks, including audio,

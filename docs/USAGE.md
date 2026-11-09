@@ -69,6 +69,12 @@ Unsupported workloads are explicitly skipped. Legal fast-core entries include ma
 off/on pairs, separately for interpreter and JIT, with throughput and CPU-cost comparison tables in
 REPORT.md. Measurements are informational, not correctness failures. Keep `--jobs 1` for comparable
 samples and repeat on the same host for each before/after emulator build.
+
+The benchmark disk also runs on its own (real Amiga, FPGA, or an emulator without the runner): the
+status screen shows `Benchmark n/N: <block>` with an estimate of the time left, then an **integer
+score** (A500 = 1.00) and, with an FPU, an **FPU score** in operations per second. Both are timed with
+the Amiga's own clock, so they are real speed on real hardware and emulated speed in an emulator.
+Per-block details go to the serial port.
 See [hostspeed.md](cases/hostspeed.md#benchmark-only-build-and-threaded-cpu-comparisons).
 
 ### "Did my change break or fix anything?" (regression check)
@@ -155,6 +161,7 @@ Every disk shows what it is doing on the Amiga's own display: the emulator windo
 | `ok` | finished: no failure, at least one pass or untestable |
 | `FAIL` | at least one case failed |
 | `skip` | finished with skips only |
+| `done` | finished without reporting cases (hostspeed: its results are `speed` records) |
 | `ABRT` | the module aborted (unexpected exception or watchdog) |
 
 The background is blue while the disk runs, green when it finished without failures, and red when a case failed or a module aborted. At the end the screen says `FINISHED: no failures.` or `FINISHED: n failed case(s).`, then `Next: insert disk n, then reset.` (or `That was the last disk of the set.`), and `Halted. Reset to continue.` with the default end action.

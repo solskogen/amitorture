@@ -60,6 +60,28 @@ VHPOSR and CIA-A PRA, neither of which acknowledges interrupts or changes hardwa
 The generation-specific blocks read control state or copy owned, aligned memory: they never enable
 MMU translation, change vector bases, alter cache controls or change PCR settings.
 
+### On-screen progress and scores (real hardware, FPGA)
+
+The benchmark-only disk needs no runner. Without a host it waits 5 s for one ("Benchmark: waiting
+for a host"), then shows `Benchmark n/N: <block>` and `About m:ss left.` on the status screen,
+updated between blocks (never while one is timed). At the end it shows:
+
+- **Integer:** the geometric mean, over the blocks every CPU runs (add_l, div_w, abcd_sbcd,
+  roxl_roxr, movem, trap_rte), of the net operations per second relative to a PAL A500 = 1.00.
+  The A500 reference values were measured with this disk on Amiberry's cycle-exact core (68000 at
+  7.09 MHz, 512 KB chip + 512 KB slow RAM) and match the 68000's documented cycle counts (ADD.L
+  Dn,Dn: 8 cycles, 887k/s; measured 880k/s with DMA).
+- **FPU:** the geometric mean of the net operations per second of fadd, fmul, fdiv, fsqrt and
+  fmovem, which every FPU (6888x, 68040, 68060) implements in hardware. There is no A500 reference.
+- "Per-block details: serial port."
+
+Net operations per second = `n` x colour clock rate / (`cck` - `empty_cck`): the guest's own clock,
+with the loop's overhead subtracted. On real hardware and FPGA that is real time. In an emulator it
+is emulated time: at `cpu_speed=max` the scores show how much emulated work fits in an emulated
+second, not the host's speed. When the runner answers the start request, the screen says so
+and the guest asks for a screenshot of the result (`raw/<entry>/shot-*-benchmark.png`). The scores
+are also sent as `speed` `score` records (docs/schema.md 1.10); the runner does not judge them.
+
 ## How a block is measured
 - **Guest** (disk/modules/hostspeed.c, hostspeed_asm.s): one block per instruction class: the instruction
   unrolled 64 times inside a DBF loop (16 iterations per unit, an outer counter of units), with operands

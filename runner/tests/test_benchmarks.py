@@ -96,6 +96,19 @@ class BenchmarkRecords(unittest.TestCase):
         self.assertIn("pmove_tc | skip | requires a 68030", text)
         self.assertNotIn("**FAIL**", text)
 
+    def test_guest_score_records_are_not_timed_blocks(self):
+        sub = self.benchmark()
+        before = cases.speed_blocks(sub, sub["_merged"])
+        recs = sub["_merged"].records
+        pos = max(r["rec"].get("pos", 0) for r in recs) + 1
+        for insn, extra in (("int", {"x100": 242, "ref": "A500"}), ("fpu", {"ops": 13825000})):
+            rec = dict({"t": "speed", "mod": "hostspeed", "ev": "score", "insn": insn,
+                        "benchmark": 1, "blocks": 6, "pos": pos}, **extra)
+            recs.append(dict(recs[-1], rec=rec))
+        after = cases.speed_blocks(sub, sub["_merged"])
+        self.assertEqual([(b["insn"], b["st"]) for b in after], [(b["insn"], b["st"]) for b in before])
+        self.assertEqual(runner.host_failed_cases(sub, sub["_merged"]), [])
+
     def test_missing_or_incomplete_measurement_is_never_claimed_measured(self):
         sub = self.benchmark(samples_present=False)
         self.assertEqual(cases.speed_blocks(sub, sub["_merged"])[0]["st"], "untestable")
