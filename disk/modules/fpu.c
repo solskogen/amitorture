@@ -660,6 +660,7 @@ static void run_excs(void)
         int code, fmt;
         const char *why = 0;
         const UBYTE *fl;
+        ULONG hot_rep = 0;
         if (!(e->mask & fm))
             continue;
         if (!e->enable && hardware_fpu_policy(e->name))
@@ -683,6 +684,21 @@ static void run_excs(void)
             why = "the FPSR exception status bit of the trapped exception is not set";
         else if (e->vec != 48 && at[5] != e->start)
             why = "FPIAR must hold the address of the instruction that caused the exception";
+        /* Then again and again, until a JIT has compiled the trapping code
+         * (its exception paths: a compiled instruction that hands enabled or
+         * pending exceptions to the interpreter): the same trap every time. */
+        if (!why) {
+            ULONG r, reps = amt_hot_reps() * 2;
+            for (r = 1; r <= reps && !why; r++) {
+                code = amt_try(fpu_exc_run);
+                fpu_after_trap(at);
+                if (code != AMT_ABORT_UNEXPECTED || amt_last_exc.vector != e->vec ||
+                    !(at[4] & e->excbit))
+                    why = "repeated (hot, compiled by a JIT): the enabled FPU exception must still trap through its vector with its FPSR status bit set";
+            }
+            if (why)
+                hot_rep = r - 1;
+        }
         amt_case_open(e->name, why ? AMT_ST_FAIL : AMT_ST_PASS);
         if (why) {
             json_obj("expect");
@@ -693,6 +709,8 @@ static void run_excs(void)
             json_obj_end();
             trap_ctx(e->start, e->fnop, code);
             json_str("why", why);
+            if (hot_rep)
+                json_int("hot_repetition", hot_rep);
             json_obj("in");
             json_hexn("fpcr", e->enable, 4);
             json_obj_end();

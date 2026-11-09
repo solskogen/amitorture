@@ -78,9 +78,13 @@ static void fpu_trap_run(void) {
     amt_last_exc.frame[3] = e->vec * 4 | ((fm == FM_040 && e->vec == 11) ? 0x2000 : 0);
     at[1] = fm == FM_040 ? 0x41300000 : 0x0000e000;
 }
+static ULONG hot_reps;                   /* 0: no repetitions (the counts below) */
+static ULONG amt_hot_reps(void) { return hot_reps; }
+static unsigned exc_runs, wrong_vector_from;   /* from this run on, no trap (0: never) */
 static void fpu_exc_run(void) {
     const struct xent *e = &fpu_exc_tab[fpu_exc_idx];
-    amt_last_exc.vector = e->vec;
+    ++exc_runs;
+    amt_last_exc.vector = wrong_vector_from && exc_runs >= wrong_vector_from ? 0 : e->vec;
     amt_last_exc.pc = e->start;
     amt_last_exc.frame[3] = e->vec * 4;
     if (e->mask & EXC_MID_6888X) {
@@ -133,6 +137,22 @@ int main(void) {
             wrong_instruction_pc = 0;
         }
     }
+    /* each passing case runs again 2 x amt_hot_reps() times (compiled by a
+     * JIT by then); one repetition that does not trap fails the case */
+    fm = 3;
+    amt_par.flags = 0;
+    hot_reps = 3;
+    calls = passed = untestable = failed = 0;
+    exc_runs = wrong_vector_from = 0;
+    run_excs();
+    assert(passed == 2 && !failed && calls == 2 * (1 + 6));
+    calls = passed = untestable = failed = 0;
+    exc_runs = 0;
+    wrong_vector_from = 3;
+    run_excs();
+    assert(failed == 2 && !passed);
+    hot_reps = 0;
+    wrong_vector_from = 0;
 }
 """
         with tempfile.TemporaryDirectory(prefix=".fpu-policy-", dir=ROOT / "runner/tests") as directory:
