@@ -32,7 +32,7 @@ class BenchmarkMatrix(unittest.TestCase):
         for base in entries.values():
             if base["twin_of"] or not base["threaded_capable"]:
                 continue
-            for suffix in ("", "-jit"):
+            for suffix in ("", "-jit") if base["jit_capable"] else ("",):
                 off = entries[base["id"] + suffix]
                 on = entries[base["id"] + suffix + "-thr"]
                 self.assertEqual(matrix.option_diff(off["options"], on["options"]),
@@ -41,8 +41,13 @@ class BenchmarkMatrix(unittest.TestCase):
                 self.assertEqual(off["params"], on["params"])
         for e in entries.values():
             if e["options"]["cpu_model"] in ("68000", "68010") or e["options"]["mmu_model"] != "0":
-                self.assertEqual(e["options"]["cpu_threaded"], "false")
                 self.assertFalse(e["jit"])
+            if e["options"]["cpu_cycle_exact"] == "true":
+                self.assertEqual(e["options"]["cpu_threaded"], "false")
+        # threaded twins where Amiberry may now run the CPU thread: 68000/010
+        # and the MMU (compatible core) too
+        for eid in ("bench-68000-thr", "bench-68010-thr", "bench-68030-thr"):
+            self.assertIn(eid, entries)
 
     def test_make_target_is_isolated_and_contains_no_correctness_module(self):
         make = shutil.which("make")

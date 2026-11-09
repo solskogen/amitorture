@@ -124,7 +124,8 @@ class Matrix(unittest.TestCase):
                 self.assertIsNone(strict["twin_of"])
 
     def test_sizes(self):
-        self.assertTrue(8 <= len(matrix.expand("smoke")) <= 15)
+        # smoke: 15, plus threaded twins of a 68000 and an MMU machine (compatible core)
+        self.assertTrue(8 <= len(matrix.expand("smoke")) <= 18)
         self.assertTrue(100 <= len(matrix.expand("standard")) <= 150)
         self.assertGreater(len(matrix.expand("full")), 300)
 
@@ -170,8 +171,9 @@ class Matrix(unittest.TestCase):
         for e in matrix.all_entries().values():
             o = e["options"]
             if o["cpu_threaded"] == "true":
-                self.assertEqual(o["mmu_model"], "0", e["id"])
-                self.assertEqual(o["cpu_compatible"], "false", e["id"])
+                # every core but cycle-exact (Amiberry's automatic CPU thread)
+                self.assertEqual(o["cpu_cycle_exact"], "false", e["id"])
+                self.assertEqual(o["cpu_memory_cycle_exact"], "false", e["id"])
             if int(o["cachesize"]):
                 self.assertEqual(o["cycle_exact"], "false", e["id"])
                 self.assertNotIn(o["cpu_model"], ("68000", "68010"), e["id"])

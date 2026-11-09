@@ -24,7 +24,7 @@ engine's:
              extended, so results may legitimately differ)
 
 Where Amiberry does not support a combination (MMU with JIT, JIT with
-cycle-exact, threaded CPU with compatible/CE/MMU/68000, FPU on a 68000 ...)
+cycle-exact, threaded CPU with cycle-exact, FPU on a 68000 ...)
 no entry is generated for it. Anything Amiberry still adjusts is found at run
 time with --dump-config, and the entry is reported as "config adjusted by
 emulator".
@@ -168,8 +168,10 @@ def cpu_supports_jit(cpu_key, core):
 
 
 def cpu_supports_threaded(cpu_key, core):
-    c = CPUS[cpu_key]
-    return c["cpu_model"] not in ("68000", "68010") and c["mmu"] == "0" and core == "fast"
+    # Amiberry runs the CPU thread for every model and core except cycle-exact
+    # (since its automatic CPU thread; an older build declines it for
+    # 68000/010, compatible and MMU, and the entry is reported as adjusted)
+    return core != "ce"
 
 
 def fpu_model_value(cpu_key, fpu):
@@ -358,9 +360,9 @@ def _twins_for(base, jit_variants, threaded, softfloat):
 # (model, cpu variant, fpu, core, ntsc, twins); None = the model's default
 SMOKE = [
     ("A500", "68000", "none", "ce", False, ()),
-    ("A600", "68000", "none", "compat", True, ()),
+    ("A600", "68000", "none", "compat", True, ("thr",)),
     ("A1200", "68EC020", "none", "fast", False, ("jit",)),
-    ("A3000", "68030", "68882", "compat", False, ()),
+    ("A3000", "68030", "68882", "compat", False, ("thr",)),
     ("A4000", "68040nommu", "internal", "fast", False, ("jit",)),
     ("A4000", "68060nommu", "internal", "fast", False, ("jit",)),
     ("AROS-AGA", "68020", "none", "fast", False, ()),
@@ -372,10 +374,10 @@ STANDARD = [
     ("A500", None, None, None, False, ()),
     ("A500", None, None, None, True, ()),
     ("A500+", None, None, None, False, ()),
-    ("A600", None, None, None, False, ()),
+    ("A600", None, None, None, False, ("thr",)),
     ("A600", None, None, None, True, ()),
     ("A2000", None, None, None, False, ()),
-    ("A3000", None, None, None, False, ("sf",)),
+    ("A3000", None, None, None, False, ("thr", "sf")),
     ("A4000", None, None, None, False, ("jit", "jitopts", "thr", "sf")),
     ("A4000T", None, None, None, False, ("jit",)),
     ("A1200", None, None, None, False, ("jit",)),
@@ -385,7 +387,7 @@ STANDARD = [
     ("AROS-ECS", None, None, None, False, ()),
     ("AROS-AGA", None, None, None, False, ("jit",)),
     # CPU variants
-    ("A2000", "68010", "none", "compat", False, ()),
+    ("A2000", "68010", "none", "compat", False, ("thr",)),
     ("A1200", "68020", "68881", "fast", False, ("jit",)),
     ("A1200", "68020", "68882", "fast", False, ("jit",)),
     ("A4000", "68EC030", "68882", "fast", False, ("jit",)),
@@ -398,7 +400,7 @@ STANDARD = [
     ("A4000", "68060", "internal", "fast", False, ()),
     ("A4000", "68060nommu", "internal", "fast", False, ("jit",)),
     # core modes on 020+
-    ("A1200", "68020", "none", "compat", False, ()),
+    ("A1200", "68020", "none", "compat", False, ("thr",)),
     ("A1200", "68020", "none", "ce", False, ()),
     ("A4000", "68030", "68882", "ce", False, ()),
     ("A4000", "68040nommu", "internal", "compat", False, ()),
