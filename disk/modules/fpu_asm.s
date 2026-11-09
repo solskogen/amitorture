@@ -18,6 +18,8 @@
 	xdef	_fpu_dyn_run
 	xdef	_fpu_dyn_buf
 	xdef	_fpu_ctl_rw
+	xdef	_fpu_const_regs
+	xdef	_fpu_const_buf
 	xdef	_fpu_reset
 	xdef	_fpu_after_trap
 	xdef	_fpu_trap_run
@@ -243,6 +245,42 @@ _fpu_ctl_rw:
 	fmove.l	#0,fpiar
 	rts
 
+; ---------------------------------------------------------------- constant registers
+; void fpu_const_regs(ULONG out[6]): 68k registers set from constants (moveq,
+; move.l #imm, lea) just before FPU instructions that read or write them, in
+; one straight-line block, so a JIT translates it as one block and still has
+; the constants in its own state when it compiles the FPU instruction.
+;   out[0] FPCR after fmove.l d0,fpcr (d0 = $10)
+;   out[1] d1 after fmove.l fp0,d1 (fp0 = 7 from moveq #7,d1; d1 = 5 before)
+;   out[2] FPIAR after fmove.l d2,fpiar (d2 = $12345678)
+;   out[3] a1 after fmove.s (a1)+,fp1 (a1 = fpu_const_buf before)
+;   out[4] fp1 as an integer (2: fpu_const_buf holds 2.0)
+;   out[5] d3 after fseq d3 (d3 = -1 before; the last result, 2.0, is not zero)
+_fpu_const_regs:
+	move.l	4(sp),a0
+	movem.l	d2-d3,-(sp)
+	moveq	#7,d1
+	fmove.l	d1,fp0
+	move.l	#$10,d0
+	fmove.l	d0,fpcr
+	fmove.l	fpcr,(a0)
+	fmove.l	#0,fpcr
+	moveq	#5,d1
+	fmove.l	fp0,d1
+	move.l	d1,4(a0)
+	move.l	#$12345678,d2
+	fmove.l	d2,fpiar
+	fmove.l	fpiar,8(a0)
+	lea	_fpu_const_buf,a1
+	fmove.s	(a1)+,fp1
+	move.l	a1,12(a0)
+	fmove.l	fp1,16(a0)
+	moveq	#-1,d3
+	fseq	d3
+	move.l	d3,20(a0)
+	movem.l	(sp)+,d2-d3
+	rts
+
 ; ---------------------------------------------------------------- after a trap
 ; void fpu_after_trap(ULONG out[8]): FSAVE first (takes the FPU out of its
 ; exception state), then FPSR, FPIAR; then a null FRESTORE resets the FPU.
@@ -448,6 +486,7 @@ _fpu_bad_frame:	dc.l	$5a5a5a5a,0,0,0
 _fpu_pred_fpsr:	dc.l	0
 _fpu_trap_idx:	dc.l	0
 _fpu_exc_idx:	dc.l	0
+_fpu_const_buf:	dc.l	$40000000		; 2.0 (single)
 
 ; data for the trap entries
 d_none:		dc.l	$3fff0000,$80000000,0		; 1.0 extended

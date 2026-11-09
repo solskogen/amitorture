@@ -46,6 +46,8 @@ ULONG fpu_fmovem_predec(const ULONG *src, ULONG *dst_end);
 void fpu_dyn_run(void);
 extern UBYTE fpu_dyn_buf[320];
 void fpu_ctl_rw(ULONG *out);
+void fpu_const_regs(ULONG *out);
+extern ULONG fpu_const_buf[];
 void fpu_after_trap(ULONG *out);
 void fpu_trap_run(void);
 void fpu_exc_run(void);
@@ -1038,6 +1040,64 @@ static void case_fmovem(void)
     }
 }
 
+/* --------------------------------------------- constant 68k registers */
+/* fpu_const_regs(): Dn/An set from constants right before FPU instructions
+ * that read or write them. A JIT that keeps such constants in its own state
+ * must store them before an FPU instruction that uses the registers in
+ * memory (a helper call, the interpreter handler), and must not store the
+ * constant over a value the FPU instruction wrote. Hot, so it is compiled. */
+static const char *const const_what[6] = {
+    "FPCR after FMOVE.L D0,FPCR (D0 = $10 from MOVE.L #imm)",
+    "D1 after FMOVE.L FP0,D1 (FP0 = 7; D1 = 5 from MOVEQ before)",
+    "FPIAR after FMOVE.L D2,FPIAR (D2 = $12345678 from MOVE.L #imm)",
+    "A1 after FMOVE.S (A1)+,FP1 (A1 from LEA): advanced by 4",
+    "FP1 after FMOVE.S (A1)+,FP1 (2.0), as an integer",
+    "D3 after FSEQ D3 (D3 = -1 from MOVEQ; the result 2.0 is not zero): low byte cleared",
+};
+static ULONG const_got[6], const_want[6], const_bad_i;
+
+static ULONG const_fn(ULONG iter)
+{
+    ULONG i;
+    (void)iter;
+    fpu_const_regs(const_got);
+    for (i = 0; i < 6; i++)
+        if (const_got[i] != const_want[i]) {
+            const_bad_i = i;
+            return i + 1;
+        }
+    return 0;
+}
+
+static void case_const_regs(void)
+{
+    ULONG first, bad;
+    long r;
+    const_want[0] = 0x10;
+    const_want[1] = 7;
+    const_want[2] = 0x12345678UL;
+    const_want[3] = (ULONG)fpu_const_buf + 4;
+    const_want[4] = 2;
+    const_want[5] = 0xffffff00UL;
+    r = amt_hot_checked(const_fn, amt_hot_reps(), &first, &bad);
+    fpu_reset();
+    if (r < 0) {
+        amt_case("const_regs", AMT_ST_PASS, 0);
+        return;
+    }
+    amt_case_open("const_regs", AMT_ST_FAIL);
+    json_obj("expect");
+    json_hexn("value", const_want[const_bad_i], 8);
+    json_obj_end();
+    json_obj("got");
+    json_hexn("value", const_got[const_bad_i], 8);
+    json_obj_end();
+    json_str("what", const_what[const_bad_i]);
+    json_int("hot_repetition", r);
+    json_str("why", "a register set from a constant just before an FPU instruction must be the value the FPU instruction reads, and the value it writes must stay");
+    amt_case_close();
+}
+
 /* ------------------------------------------------------------ main */
 void amt_run_fpu(void)
 {
@@ -1069,6 +1129,7 @@ void amt_run_fpu(void)
             run_pred((int)i);
     case_pred_ccr(!is060 || (amt_par.flags & AMT_F_FPUCOMPAT));
     case_fmovem();
+    case_const_regs();
     run_traps();
     run_excs();
 
