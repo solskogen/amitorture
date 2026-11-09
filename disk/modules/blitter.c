@@ -395,6 +395,81 @@ static void test_nasty(void)
     }
 }
 
+/* BLTPRI (blitter-nasty) holds the CPU off the chip bus: the blitter takes
+ * every bus cycle it needs, and an ABCD blit needs all of them but one idle
+ * slot near its start (HRM 6, "Blitter priority" and the cycle sequence
+ * table). After the BLTSIZE write and three DMACONR reads (the HRM's
+ * read-twice for the start delay, and one for the idle slot), a CPU read of
+ * the destination can only be granted once the blit has finished, so it sees
+ * the finished blit, without testing BBUSY. Loaders rely on that: Jim Power's
+ * compares the blitter's MFM decode output right after starting it. An
+ * emulator that lets the CPU run on during a nasty blit (Amiberry's threaded
+ * CPU) reads the old destination. */
+static void test_nasty_stall(void)
+{
+    const struct blt_case *c = find_case("bbusy_base");
+    volatile ULONG *last;
+    ULONG before[4], early[4], late[4];
+    struct result r;
+    int i, changed = 0, same = 1;
+
+    if (untestable("nasty_cpu_stall"))
+        return;
+    if (setup(c)) {
+        r.timeout = 1;
+        report("nasty_cpu_stall", c, &r, 0);
+        return;
+    }
+    /* the last 16 bytes the blit writes (ascending, no modulo) */
+    last = (volatile ULONG *)(pool + c->dpt + (ULONG)c->w * c->h * 2 - 16);
+    for (i = 0; i < 4; i++)
+        before[i] = last[i];
+    CUST(R_DMACON) = DMA_ON | DMAF_BLTPRI;
+    go(c);
+    (void)CUST(R_DMACONR);
+    (void)CUST(R_DMACONR);
+    (void)CUST(R_DMACONR);
+    early[0] = last[3];                /* the last word written first */
+    early[1] = last[2];
+    early[2] = last[1];
+    early[3] = last[0];
+    r.timeout = blt_wait() ? 1 : 0;
+    CUST(R_DMACON) = DMA_OFF;
+    if (r.timeout) {
+        report("nasty_cpu_stall", c, &r, 0);
+        return;
+    }
+    for (i = 0; i < 4; i++) {
+        late[i] = last[i];
+        if (late[i] != before[i])
+            changed = 1;
+        if (early[3 - i] != late[i])
+            same = 0;
+    }
+    if (!changed) {
+        amt_case("nasty_cpu_stall", AMT_ST_UNTESTABLE,
+                 "the blit did not change the last destination words: nothing to tell apart");
+        return;
+    }
+    if (same) {
+        amt_case("nasty_cpu_stall", AMT_ST_PASS, 0);
+        return;
+    }
+    amt_case_open("nasty_cpu_stall", AMT_ST_FAIL);
+    json_obj("expect");
+    json_hex("last_long", late[3]);
+    json_obj_end();
+    json_obj("got");
+    json_hex("last_long", early[0]);
+    json_str("matches", early[0] == before[3] ? "the destination before the blit" : "neither");
+    json_obj_end();
+    json_str("why", "with DMACON BLTPRI set, a 64x64-word ABCD blit leaves the CPU no chip bus cycle: "
+                    "a destination read after the BLTSIZE write and three DMACONR reads must see the "
+                    "finished blit (HRM 6: blitter priority, cycle sequence)");
+    emit_inputs(c);
+    amt_case_close();
+}
+
 static volatile ULONG irq_count, irq_req;
 
 static void blit_hook(ULONG ir)
@@ -588,6 +663,7 @@ void amt_run_blitter(void)
         if (blt_cases[i].flags & BF_HOT)
             run_hot(&blt_cases[i]);
     test_nasty();
+    test_nasty_stall();
     test_irq();
     test_bbusy();
 
