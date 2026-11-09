@@ -1138,7 +1138,8 @@ def engine_adjustments(options, eng):
     want_fpu = options.get("fpu_model", "0") or "0"
     if want_fpu != eng["fpu_model"]:
         add("fpu_model", want_fpu, eng["fpu_model"], [eng["line"]])
-    sf = "softfloat" in (eng["fpu_mode"] or "")
+    # "softfloat" before Amiberry's FPU core setting, "exact" since (fpu_core)
+    sf = any(k in (eng["fpu_mode"] or "") for k in ("softfloat", "exact"))
     if eng["fpu_model"] != "0" and (options.get("fpu_softfloat") == "true") != sf:
         add("fpu_softfloat", options.get("fpu_softfloat", "false"), "true" if sf else "false", [eng["line"]])
     if options.get("cpu_model") and options["cpu_model"] != eng["cpu_model"]:

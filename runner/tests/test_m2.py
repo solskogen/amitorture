@@ -184,6 +184,9 @@ class EngineFromLog(unittest.TestCase):
         e = runner.engine_from_log(['uae_start_thread "cpu" function at 0x1 arg (nil)',
                                     "CPU=68030, FPU=68882 (softfloat), MMU=0, JIT=0. fast"])
         self.assertEqual(runner.engine_adjustments(base, e), [])
+        e = runner.engine_from_log(['uae_start_thread "cpu" function at 0x1 arg (nil)',
+                                    "CPU=68030, FPU=68882 (exact), MMU=0, JIT=0. fast"])
+        self.assertEqual(runner.engine_adjustments(base, e), [])
         e = runner.engine_from_log(["Selected CPU emulation has no CPU thread, running the CPU on the main thread.",
                                     "CPU=68030, FPU=68882 (host 64b), MMU=0, JIT=0. fast"])
         got = {a["option"] for a in runner.engine_adjustments(base, e)}
