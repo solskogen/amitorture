@@ -119,6 +119,43 @@ class Streams(unittest.TestCase):
         sp = records.parse_bytes(rec(0) + rec(1) + rec(0) + rec(1), "serial")
         self.assertEqual([r.boot for r in sp.records], [0, 0, 1, 1])
 
+    def test_new_boot_without_hello(self):
+        # --resets: the runner resets the emulator; the next mailbox ring has
+        # wrapped before it is found, so its hello (seq 0) is lost
+        sp = records.StreamParser("mailbox")
+        sp.feed(rec(0) + rec(1) + rec(2) + rec(3)[:10])   # a partial line of the old boot
+        sp.new_boot(1)
+        sp.feed(rec(2) + rec(3))
+        self.assertEqual([(r.boot, r.seq) for r in sp.records if r.crc_ok], [(0, 0), (0, 1), (0, 2), (1, 2), (1, 3)])
+
+    def test_new_boot_then_hello_counts_once(self):
+        sp = records.StreamParser("mailbox")
+        sp.feed(rec(0) + rec(1))
+        sp.new_boot(1)
+        sp.feed(rec(0) + rec(1))
+        self.assertEqual([r.boot for r in sp.records], [0, 0, 1, 1])
+
+    def test_new_boot_before_any_record(self):
+        # the mailbox was never found on the first boot: its first records are
+        # still the second boot's, as on serial
+        sp = records.StreamParser("mailbox")
+        sp.new_boot(1)
+        sp.feed(rec(0))
+        self.assertEqual([r.boot for r in sp.records], [1])
+
+    def test_reset_boots_merge_with_serial(self):
+        # serial has both boots; the mailbox lost the second boot's hello
+        serial = records.parse_bytes(rec(0) + rec(1) + rec(2) + rec(0) + rec(1) + rec(2), "serial").records
+        sp = records.StreamParser("mailbox")
+        sp.feed(rec(0) + rec(1) + rec(2))
+        sp.new_boot(1)
+        sp.feed(rec(1) + rec(2))
+        m = records.merge({"serial": serial, "mailbox": sp.records})
+        self.assertEqual([(x["boot"], x["seq"]) for x in m.records], [(0, 0), (0, 1), (0, 2), (1, 0), (1, 1), (1, 2)])
+        self.assertEqual(m.schema_problems, [])
+        self.assertEqual([x["sources"] for x in m.records if x["boot"] == 1 and x["seq"] > 0],
+                         [["serial", "mailbox"], ["serial", "mailbox"]])
+
 
 class Merge(unittest.TestCase):
     def parse(self, data, src):

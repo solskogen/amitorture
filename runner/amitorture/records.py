@@ -231,6 +231,16 @@ class StreamParser:
         self.splitter.skip(n)
         self._resync = n > 0
 
+    def new_boot(self, boot: int):
+        """The runner reset the emulator: what this source delivers next is
+        boot ``boot`` (the runner's count, the same on every transport), even
+        when its hello is lost (a mailbox ring that wrapped before it was found
+        again). A partial line of the old boot is dropped."""
+        self.splitter.skip(0)
+        self._boot = max(self._boot, boot)
+        self._last_seq = None
+        self._resync = False
+
     def close(self):
         return [r for r in (self._line(o, l) for o, l in self.splitter.flush()) if r is not None]
 

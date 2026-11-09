@@ -26,6 +26,7 @@ class Options:
         self.sets = kw.get("sets") or {}
         self.timeout = kw.get("timeout", 300.0)
         self.hang = kw.get("hang", 30.0)
+        self.resets = int(kw.get("resets", 0) or 0)    # IPC resets after done, each followed by another boot
         self.adf = kw.get("adf")
         self.disk_set = kw.get("disk_set")
         self.no_disk = kw.get("no_disk", False)
@@ -207,11 +208,28 @@ class EntryRun:
                     if r.obj.get("t") in ("request", "capture"):
                         self.requests.offer(r.obj, src)
 
-    def done_seen(self):
+    def done_seen(self, min_boot=0):
+        """A done record (of boot min_boot or later) on serial, on the mailbox."""
         with self.lock:
-            s = any(r.type == "done" and r.crc_ok for r in self.serial_parser.records)
-            m = any(r.type == "done" and r.crc_ok for r in self.mbox_parser.records)
+            s = any(r.type == "done" and r.crc_ok and r.boot >= min_boot for r in self.serial_parser.records)
+            m = any(r.type == "done" and r.crc_ok and r.boot >= min_boot for r in self.mbox_parser.records)
         return s, m
+
+    def reset_emulator(self, ipc, boot):
+        """--resets: an emulator reset (IPC RESET) for another boot of the disk.
+        The old mailbox's magic is cleared first: chip RAM survives the reset
+        and a scan would otherwise pick it (it has the most output) instead
+        of the new boot's one."""
+        if self.follower is not None:
+            ipc.write_long(self.follower.addr, 0)
+        self.follower = None
+        with self.lock:
+            # the next mailbox is the new boot's even if its ring wraps before
+            # a scan finds it (the hello lost): boots must match serial's
+            self.mbox_parser.new_boot(boot)
+        reply = ipc.request("RESET")
+        self.mb.setdefault("resets", []).append({"t": round(time.monotonic() - self.t0, 3), "reply": reply})
+        self.last_progress = time.monotonic()
 
     def any_records(self):
         with self.lock:
@@ -1175,6 +1193,8 @@ def observe(opts, entry, run, proc, serial, ipc, res):
     last_scan = 0.0
     n_scans = 0
     done_at = None
+    resets_left = 0 if opts.selftest else opts.resets
+    min_boot = 0       # the boot whose done record ends the launch (it grows with each --resets reset)
     # Host requests wait for the runner's next poll: at POLL (0.25 s) each
     # key event of input.kbd_keycode_set cost ~0.2 s of waiting. Right
     # after a request, poll fast, so a burst is served at once.
@@ -1222,8 +1242,8 @@ def observe(opts, entry, run, proc, serial, ipc, res):
                     raise
                 if run.follower is not None:
                     run.last_progress = time.monotonic()
-        s_done, m_done = run.done_seen()
-        finished_state = h is not None and h.state in (2, 3, 4)
+        s_done, m_done = run.done_seen(min_boot)
+        finished_state = h is not None and h.state in (2, 3, 4) and (min_boot == 0 or m_done)
         if (s_done or m_done or finished_state) and done_at is None:
             done_at = now
             if run.follower is None and not opts.selftest:
@@ -1243,6 +1263,17 @@ def observe(opts, entry, run, proc, serial, ipc, res):
             serial_quiet = serial.last_data is None or now - serial.last_data > 1.0
             both = s_done and (m_done or run.follower is None)
             if both or (now - done_at > run.DONE_GRACE and serial_quiet) or opts.selftest:
+                if resets_left > 0:
+                    resets_left -= 1
+                    with run.lock:
+                        boots = [r.boot for r in run.serial_parser.records + run.mbox_parser.records]
+                    min_boot = max(boots, default=0) + 1
+                    log(opts, f"{entry['id']}: reset for boot {min_boot}")
+                    run.reset_emulator(ipc, min_boot)
+                    done_at = None
+                    last_scan = now
+                    deadline = time.monotonic() + opts.timeout
+                    continue
                 return "selftest" if opts.selftest else "done"
         if h is not None and h.state == 1:
             if run.watch.update(h.heartbeat) > opts.hang:

@@ -228,7 +228,7 @@ def make_options(a, binary):
         raise RunnerError(f"--kickstarts {a.kickstarts}: not a directory")
     return runner.Options(
         binary=binary, kickstarts=a.kickstarts, workdir=a.workdir, configs=a.config, matrix=a.matrix,
-        sets=parse_sets(a), timeout=a.timeout, hang=a.hang, adf=a.adf, disk_set=getattr(a, "disk_set", None),
+        sets=parse_sets(a), timeout=a.timeout, hang=a.hang, resets=max(0, getattr(a, "resets", 0) or 0), adf=a.adf, disk_set=getattr(a, "disk_set", None),
         no_disk=getattr(a, "no_disk", False) or getattr(a, "selftest", False), selftest=getattr(a, "selftest", False),
         params=parse_params(a), verbose=not a.quiet, keep=a.keep, jobs=a.jobs,
         narrow=not getattr(a, "no_narrow", False), narrow_budget=getattr(a, "narrow_budget", 0.0),
@@ -371,6 +371,11 @@ def _common(p, kick_required=True, param_defaults=True):
     p.add_argument("--timeout", type=float, default=600.0, metavar="S",
                    help="per disk launch (default 600: the slowest launch, the core disk of a cycle-exact A500 at "
                         "floppy_speed=100, took 243 s; the CDTV core disk 225 s)")
+    p.add_argument("--resets", type=int, default=0, metavar="N",
+                   help="after the guest's done record, reset the emulator over IPC (RESET, a keyboard reset) and "
+                        "run the disk again, N times per launch: catches state that only a reset sets up (e.g. "
+                        "the JIT's opcode table). Each boot gets the full --timeout; every boot's cases count "
+                        "towards the verdict, the case tables show the last boot (default 0)")
     p.add_argument("--hang", type=float, default=120.0, metavar="S",
                    help="heartbeat unchanged this long = hang (default 120: OS-phase modules doing floppy I/O "
                         "do not tick the heartbeat)")
