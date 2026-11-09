@@ -341,6 +341,7 @@ SPEED_PREFIX = "host.speed_"
 # above SPEED_MAX_NOISE the block is untestable (never fail on noise).
 SPEED_RTF_LIMIT = 1.01
 SPEED_MAX_NOISE = 0.005
+SPEED_BENCH_MAX_REL_NOISE = 0.05  # benchmark 3-sigma uncertainty relative to measured rtf
 # A real slowdown keeps the emulation thread busy: it fell behind because the
 # instruction costs too much host time. If the thread was mostly idle while
 # the emulator still lagged (host scheduling, another process), the lag is not
@@ -423,9 +424,10 @@ def speed_blocks(sub, merged):
         ev = r.get("ev")
         if ev == "skip":
             blocks.append({"insn": r.get("insn"), "cls": r.get("cls"), "pos": r.get("pos"), "st": "skip",
-                           "why": r.get("why")})
+                           "why": r.get("why"), "benchmark": r.get("benchmark") == 1})
         elif ev == "begin":
-            b = {"insn": r.get("insn"), "cls": r.get("cls"), "pos": r.get("pos"), "st": None, "ended": False}
+            b = {"insn": r.get("insn"), "cls": r.get("cls"), "pos": r.get("pos"), "st": None, "ended": False,
+                 "benchmark": r.get("benchmark") == 1}
             blocks.append(b)
             by_pos[r.get("pos")] = b
         elif ev == "end" and r.get("pos") in by_pos:
@@ -497,7 +499,13 @@ def speed_blocks(sub, merged):
         b.update(fps=round(1.0 / fit, 4), frame_hz=round(fhz, 4), rtf=round(rtf, 5), sigma=round(sigma, 6),
                  own_noise_ms=None if own is None else round(own * 1e3, 4),
                  ipc_bound=round(polls * SPEED_IPC_WAIT_S / span, 5) if span else None)
-        if rtf > SPEED_RTF_LIMIT + 3 * sigma:
+        if b.get("benchmark"):
+            if 3 * sigma > SPEED_BENCH_MAX_REL_NOISE * rtf:
+                b.update(st="untestable", why=f"benchmark timing noise exceeds "
+                         f"{SPEED_BENCH_MAX_REL_NOISE:.0%}: rtf {rtf:.4f} +- {3 * sigma:.4f} (3 sigma)")
+            else:
+                b.update(st="measured", why="informational benchmark; no correctness or real-time threshold verdict")
+        elif rtf > SPEED_RTF_LIMIT + 3 * sigma:
             b.update(st="fail", why=f"the emulator ran at {1 / rtf:.2f}x real time (rtf {rtf:.3f})")
         elif rtf + 3 * sigma <= SPEED_RTF_LIMIT or 3 * sigma <= SPEED_MAX_NOISE:
             b.update(st="pass", why=f"rtf {rtf:.4f} +- {3 * sigma:.3%} (3 sigma): not above {SPEED_RTF_LIMIT} "
@@ -524,6 +532,8 @@ def speed_blocks(sub, merged):
         t = b.get("timing") or {}
         if b.get("n") and t.get("cck"):
             b["ops_per_emu_s"] = b["n"] * cck_hz / t["cck"]
+            if rtf > 0:
+                b["ops_per_host_s"] = b["ops_per_emu_s"] / rtf
     # 3. host cost per instruction: CPU per emulated second minus the
     # emulator's own (the STOP block: chipset, display, frame pacing), per
     # instruction, minus the share of the loop (the empty block's cost per
@@ -585,7 +595,7 @@ def host_desc(ctx):
 def speed_case(b, sub):
     """One block -> {"st", "fp", "expect", "got", "why", "timing"} (None for
     a skipped block): the host.speed_<insn> pseudo case."""
-    if b.get("st") in (None, "skip"):
+    if b.get("benchmark") or b.get("st") in (None, "skip"):
         return None
     st = b["st"]
     timing = {k: b[k] for k in ("rtf", "sigma", "fps", "cpu_per_emu_s", "cpu_total_per_emu_s", "ns_per_op",

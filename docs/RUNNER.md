@@ -130,7 +130,7 @@ excluded from comparisons, or added to the xfail registry.
 
 ### roms
 ```
-amitorture roms --kickstarts ~/Amiberry/ROMs [--matrix smoke|standard|full] [--recursive] [--json]
+amitorture roms --kickstarts ~/Amiberry/ROMs [--matrix smoke|standard|full|benchmarks] [--recursive] [--json]
 ```
 `--recursive` also scans subdirectories. Identifies every file by CRC32/SHA1 (romdb.json, from Amiberry's rommgr) and shows which ROM each entry of the
 matrix would use, or `SKIP: needs ...`.
@@ -150,6 +150,7 @@ The matrices (runner/amitorture/matrix.py):
 
 | name | size | contents |
 |---|---|---|
+| benchmarks | 19 | hostspeed only on 68000, 68010, 68020, 68030+68882/MMU, EC030, 68040 and 68060; each legal fast core has interpreter and JIT threaded CPU off/on pairs. The 040/060 use their internal FPUs. Defaults to the standalone disk from `make -C disk benchmarks`; measurements and capability skips, no performance pass/fail threshold. Use `--jobs 1 --warp off`. |
 | smoke | 10 | A500 68000 CE, A600 ECS NTSC compat, A1200 68EC020 (+JIT), A3000 68030+68882 MMU compat, A4000 68040 (+JIT), A4000 68060 (+JIT), AROS AGA 68020 |
 | standard | 142 | every model preset (A1000, A500, A500+, A600, A2000, A3000, A4000, A4000T, A1200, CD32 and CDTV booting from CD, AROS ECS/AGA), PAL+NTSC samples, every CPU variant, compat/CE on 020-060, JIT twins of every JIT-capable entry, every JIT sub-option on the A4000 68040, threaded CPU, softfloat; MMU configurations (68030/68040/68060 with their MMU in compat/CE, the EC MMU modes `mmu_model=68ec030/68ec040/68ec060`; no JIT twin: the JIT does not support the MMU); one entry per expansion board (below) |
 | full | 540 | every CPU variant (68000, 68010, 68EC020, 68020, 68EC030 (mmu 0 and mmu_model=68ec030), 68030, 68EC040, 68LC040, 68040, 68040 without MMU emulation, 68EC060, 68LC060, 68060, 68060 without MMU emulation) x every FPU it can have (none/68881/68882/internal) x fast/compatible/cycle-exact; 68060 PCR revisions; CE with cpu_multiplier=0; every model x PAL/NTSC; OCS/ECS-Agnus/ECS-Denise/ECS; and for every entry that allows it: JIT default + cachesize 128/16384 + comp_trust{byte,word,long,naddr}=indirect + compfpu off + comp_constjump off + comp_flushmode hard + comp_nf off + comp_catchfault off, threaded CPU, JIT+threaded, softfloat, JIT+softfloat; the MMU configurations and every board entry of standard, plus the full-only boards |

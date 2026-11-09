@@ -29,6 +29,7 @@ You need an Amiga cross toolchain (vasm and bebbo's m68k-amigaos-gcc) in `/opt/a
 ```
 make -C disk             # the disk set: disk/build/set/amitorture-<n>-<group>.adf
 make -C disk check       # verify every disk
+make -C disk benchmarks  # standalone benchmark-only disk/build/benchmarks/amitorture.adf
 ```
 
 All the modules together don't fit on one 880 KB disk, so the test is a set of seven disks. Each one is a complete, bootable payload that runs on a 512 KB Kickstart 1.x machine.
@@ -50,6 +51,18 @@ python3 -m amitorture check    --amiberry /path/to/new/amiberry --kickstarts ~/A
 ```
 
 Emulators run headless; add `--show` to watch their windows. At most `nproc` emulators run at once, machine-wide.
+For lightweight measurements rather than correctness tests, build `benchmarks` and run:
+
+```
+python3 -m amitorture run --amiberry /path/to/amiberry --kickstarts ~/Amiberry/ROMs \
+    --matrix benchmarks --jobs 1 --warp off
+```
+
+This covers 68000 through 68060, with interpreter/JIT and **threaded CPU off/on pairs** where supported.
+Unsupported CPU/FPU/MMU workloads are explicitly skipped. The report includes paired throughput and
+host CPU-cost tables; benchmark measurements do not impose a speed pass/fail threshold.
+See [hostspeed.md](docs/cases/hostspeed.md#benchmark-only-build-and-threaded-cpu-comparisons).
+
 Add `--warp auto` to accelerate CPU/FPU/MMU set disks (not on JIT entries, where warp is slower) while keeping all other disks, including audio,
 input, RTC and host-speed tests, normally paced. No tests are removed. `--warp off` uses normal pacing
 everywhere; `--warp on` is an experimental forced mode, not a correctness-equivalent run.

@@ -360,7 +360,8 @@ def _common(p, kick_required=True, param_defaults=True):
                    help="which machines to run (default smoke): smoke = 15 machines, covering CPU classes, chipsets "
                         "and strict instruction policies; standard = 145, every CPU/FPU variant, board and controller; "
                         "full = 543, also every JIT "
-                        "sub-option, threaded and softfloat twin. `amitorture matrix --matrix NAME` lists them")
+                        "sub-option, threaded and softfloat twin; benchmarks = 19, CPU-family benchmarks with "
+                        "JIT and threaded off/on pairs. `amitorture matrix --matrix NAME` lists them")
     p.add_argument("--config", action="append", metavar="NAME",
                    help="run only these entries: an entry id or a glob such as 'a1200*', from any matrix "
                         "(repeatable; replaces --matrix)")
@@ -377,7 +378,8 @@ def _common(p, kick_required=True, param_defaults=True):
                    help="disk set: every *.adf in DIR runs per entry, in name order (default disk/build/set if "
                         "it exists and --adf is not given)")
     p.add_argument("--adf", metavar="PATH", help="a single test disk instead of the set "
-                                                 "(default disk/build/amitorture.adf when there is no set)")
+                                                 "(default disk/build/amitorture.adf when there is no set; "
+                                                 "matrix benchmarks uses disk/build/benchmarks/amitorture.adf)")
     p.add_argument("--mode", default="full" if param_defaults else None, choices=["full", "quick"], help=MODE_HELP)
     p.add_argument("--seed", type=int, default=1 if param_defaults else None, help=SEED_HELP)
     p.add_argument("--end-action", default="halt" if param_defaults else None, choices=["halt", "reboot", "return"],

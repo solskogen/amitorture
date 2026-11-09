@@ -55,6 +55,22 @@ Do not dismiss such differences merely because the warp policy changed.
 
 `python3 -m amitorture matrix --matrix standard` lists the entries.
 
+### Lightweight benchmarks (including threaded CPU off/on)
+
+Build `make -C disk benchmarks` from the repository root, then from `runner/`:
+
+```
+python3 -m amitorture run --amiberry /path/to/amiberry --kickstarts ~/Amiberry/ROMs \
+    --matrix benchmarks --jobs 1 --warp off
+```
+
+This runs only CPU/FPU/memory/I/O benchmark blocks, covering 68000 through 68060.
+Unsupported workloads are explicitly skipped. Legal fast-core entries include matched threaded CPU
+off/on pairs, separately for interpreter and JIT, with throughput and CPU-cost comparison tables in
+REPORT.md. Measurements are informational, not correctness failures. Keep `--jobs 1` for comparable
+samples and repeat on the same host for each before/after emulator build.
+See [hostspeed.md](cases/hostspeed.md#benchmark-only-build-and-threaded-cpu-comparisons).
+
 ### "Did my change break or fix anything?" (regression check)
 1. **Once, with a build you trust,** record a baseline: 3 runs, so flaky cases are recognised.
    ```

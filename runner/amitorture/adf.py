@@ -10,6 +10,7 @@ from .emulator import RunnerError, sha256_file
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 DEFAULT_ADF = os.path.join(REPO, "disk", "build", "amitorture.adf")
+BENCHMARK_ADF = os.path.join(REPO, "disk", "build", "benchmarks", "amitorture.adf")
 DEFAULT_SET = os.path.join(REPO, "disk", "build", "set")
 MKADF = os.path.join(REPO, "tools", "mkadf.py")
 ADF_SIZE = 901120

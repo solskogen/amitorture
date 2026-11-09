@@ -3,6 +3,8 @@
 #   make            the disk set: build/set/amitorture-<n>-<group>.adf (all modules)
 #   make MODS="rt x" one ADF with only those modules: build/amitorture.adf
 #   make check      mkadf.py --dump on the ADF (header, params, CRC, relocs)
+#   make benchmarks       benchmark-only ADF: build/benchmarks/amitorture.adf
+#   make check-benchmarks verify the benchmark-only ADF
 #   make clean
 #
 # AMIGA_TOOLCHAIN   toolchain bin dir (default /opt/amiga/bin)
@@ -23,6 +25,9 @@ B ?= build
 CFLAGS  := -m68000 -Os -ffreestanding -nostdlib -fno-builtin -noixemul -fomit-frame-pointer -MMD -MP \
            -fno-tree-loop-distribute-patterns -Wall -Wextra -Wno-unused-parameter \
            -I$(NDK_INCLUDE) -Irt -Iprobe
+ifeq ($(BENCHMARK_ONLY),1)
+CFLAGS += -DAMT_BENCHMARK_ONLY
+endif
 ASFLAGS := -Fhunk -quiet -m68000 -I$(NDK_INCLUDE)
 LDFLAGS := -m68000 -nostdlib -nostartfiles -noixemul
 LIBGCC  := $(shell $(CC) -m68000 -print-libgcc-file-name)
@@ -68,6 +73,14 @@ else
 all: $(B)/amitorture.adf
 endif
 one: $(B)/amitorture.adf
+
+.PHONY: benchmarks check-benchmarks
+benchmarks:
+	$(MAKE) --no-print-directory B=$(B)/benchmarks MODS=hostspeed BENCHMARK_ONLY=1 \
+		BUILD_ID="$(BUILD_ID) benchmarks" one
+
+check-benchmarks: benchmarks
+	$(MKADF) --dump $(B)/benchmarks/amitorture.adf
 
 $(B)/bootblock.bin: boot/bootblock.s
 	@mkdir -p $(dir $@)

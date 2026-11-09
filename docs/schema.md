@@ -198,6 +198,7 @@ emulated time and brackets it with two records; the runner's verdict on it is th
 | `insn` | string | the block: `add_l`, `fsin`, ... (`stop`, `empty`, `empty_end` are the references) |
 | `cls` | `int` / `fpu` | the class (its cost reference: `add_l` or `fadd`) |
 | `pos` | int | the mailbox case number (offset 40) while the block runs: 1000 + block index; module (offset 36) is 26 |
+| `benchmark` | int, optional | `1` on benchmark-only builds: informational measurements, no real-time pass/fail pseudo case |
 | `n` | int | `end`: instructions executed (`stop`: STOPs = frames; `empty`: DBF iterations) |
 | `timing` | object | `end`: `cck` emulated colour clocks of the block, `empty_cck` the loop alone for the same units, `frames` VBLs counted, `units` outer loop count |
 | `why` | string | `skip`: why it does not run here |
@@ -595,7 +596,7 @@ per-module case totals:
     `side_ok`; `why` says both frequencies, the channel, the tolerance and the offset in %; `ctx.wav` is the
     segment. The host requests section of REPORT.md shows each tone's verdict under its audio line.
 
-- on **every** entry whose launch ran the hostspeed module, each timed block becomes the pseudo case
+- on entries whose launch ran the normal hostspeed module, each timed block becomes the pseudo case
   `host.speed_<insn>` (docs/cases/hostspeed.md). Fingerprint: `{"mod":"host","case":"speed_<insn>","st"}`
   only, because the measurement depends on the host. Its `timing` holds `rtf` (host seconds per emulated
   second), `sigma`, `fps`, `cpu_per_emu_s`, `cpu_total_per_emu_s`, `ns_per_op`, `gross_ns_per_op`,
@@ -615,9 +616,18 @@ per-module case totals:
     "ipc_bound"}`, `ctx.host` the host context, `ctx.block` the guest's block; `why` reads like "FSIN: the
     emulator ran at 0.75x real time while executing it (rtf 1.337, ...); 250 ns host per instruction,
     3.5x FADD. Measured on Cortex-A76 x4 (Raspberry Pi 500 Rev 1.0), --jobs 1, ...".
-  - `summary.json` `hostspeed`: `[{"entry","disk","jit","cpu_speed","host","blocks":[{"insn","cls","st",
+  - Benchmark-only blocks (`benchmark:1`) produce no correctness pseudo case. Their `st` is `measured`,
+    `skip` or `untestable`; missing end records/samples or 3-sigma timing uncertainty over 5% of
+    measured rtf are not measurements. The real-time test's CPU-busy rejection does not apply.
+    Reports retain CPU costs, rates and skip reasons. `ops_per_emu_s` is `n * cck_hz / cck`;
+    `ops_per_host_s` divides that by rtf. This includes frame pacing. Ordinary instruction blocks count
+    instructions, STOP counts frames and empty loops count DBF iterations.
+  - `summary.json` `hostspeed`: `[{"entry","disk","jit","cpu_speed","cpu_threaded","thread_reference","host","blocks":[{"insn","cls","st","benchmark",
     "rtf","sigma","fps","frame_hz","samples","cpu_per_emu_s","cpu_total_per_emu_s","ns_per_op",
-    "ns_per_iter","ratio_ref","ref","why"}]}]`; REPORT.md shows it as "Host speed per instruction".
+    "ns_per_iter","ops_per_emu_s","ops_per_host_s","ratio_ref","ref","why"}]}]`; REPORT.md shows it as
+    "Host speed per instruction". Threaded benchmark entries additionally get paired off/on tables:
+    `thread_reference` matches a nonthreaded entry with otherwise identical emulator options, binary,
+    run parameters and disk. Interpreter and JIT pairs remain separate; no match means no comparison.
 
 ### 5.2 `raw/<entry>/<disk>/` (added files)
 | File | Content |

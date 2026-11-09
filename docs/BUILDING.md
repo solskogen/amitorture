@@ -60,6 +60,24 @@ Variables:
 It rejects payload/relocation ranges and sector spans that extend beyond the physical image, even if the
 available bytes have a matching CRC.
 
+### Benchmark-only disk
+
+```
+make -C disk benchmarks
+make -C disk check-benchmarks
+```
+
+This builds only `hostspeed` plus the boot/runtime/probe needed to run it, into
+`disk/build/benchmarks/amitorture.adf`. It does not build the correctness modules or the disk set.
+`B=dir` places it in `dir/benchmarks/amitorture.adf`; that separate directory prevents stale module tables
+or benchmark-mode objects from leaking into normal builds. Normal `make -C disk` is unchanged.
+
+Benchmark-only records carry `benchmark:1`: the runner reports measurements and CPU-specific skips
+instead of turning real-time performance into correctness verdicts. The same workloads in a normal
+disk retain the existing `host.speed_*` verdicts. See
+[hostspeed.md](cases/hostspeed.md#benchmark-only-build-and-threaded-cpu-comparisons) for running the
+CPU-family matrix and threaded CPU off/on comparisons.
+
 ---------------------------------------------------------------------------
 ## 3. Generated tables
 

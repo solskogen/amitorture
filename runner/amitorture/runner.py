@@ -1376,13 +1376,14 @@ def classify(res, merged, ended):
 
 def resolve_disk_set(opts):
     """The disk-set directory to use: --disk-set, else (when no --adf is
-    given) disk/build/set if it exists. None means the single --adf."""
+    given) disk/build/set if it exists. The benchmark matrix defaults to
+    its standalone disk. None means a single ADF."""
     if getattr(opts, "disk_set", None):
         d = os.path.abspath(opts.disk_set)
         if not os.path.isdir(d):
             raise RunnerError(f"--disk-set {d}: not a directory")
         return d
-    if opts.adf:
+    if opts.adf or opts.matrix == "benchmarks":
         return None
     return adfmod.DEFAULT_SET if os.path.isdir(adfmod.DEFAULT_SET) else None
 
@@ -1435,8 +1436,12 @@ class Context:
                 self.d["adf_src"] = self.d["disks"][0][1]
                 self.d["disk_set"] = set_dir
             else:
-                self.d["adf_src"] = os.path.abspath(opts.adf or adfmod.DEFAULT_ADF)
+                default_adf = adfmod.BENCHMARK_ADF if opts.matrix == "benchmarks" else adfmod.DEFAULT_ADF
+                self.d["adf_src"] = os.path.abspath(opts.adf or default_adf)
                 if not os.path.isfile(self.d["adf_src"]):
+                    if default_adf == adfmod.BENCHMARK_ADF and not opts.adf:
+                        raise RunnerError(f"benchmark disk {default_adf} not found (build it with "
+                                          "`make -C disk benchmarks`, or pass --adf PATH)")
                     raise RunnerError(f"test disk {self.d['adf_src']} not found (build it with `make -C disk set` "
                                       "or `make -C disk`, pass --disk-set DIR / --adf PATH, or use --no-disk)")
         for d in (self.tmp, self.d["media"], os.path.join(self.results, "configs"), os.path.join(self.results, "raw")):

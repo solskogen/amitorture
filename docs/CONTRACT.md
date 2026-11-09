@@ -114,7 +114,7 @@ compatibility must not be reported as having tested those strict assertions.
 | `case` | `mod`, `case`, `st` ("pass"/"fail"/"skip"/"untestable"); on fail: `expect`, `got`, `why`; optional `ctx`, `in` | one test case result |
 | `capture` | `what` ("screen"/"audio_start"/"audio_stop"), `tag` | asks the host to capture now (best effort) |
 | `perf` | `mod`, `ops`, `ticks`; optional `tick_hz`, `unit` | throughput; `amt_perf()` uses colour clocks (`unit:"cck"`), while `amt_perf_hz()` specifies its clock |
-| `speed` | `mod`, `ev` ("begin"/"end"/"skip"), `insn`; begin/end also `cls`, `pos`; end also `n` and `timing` (`cck`, `empty_cck`, `frames`, `units`); skip also `why` | a hostspeed timed block (docs/schema.md 1.10); not a case |
+| `speed` | `mod`, `ev` ("begin"/"end"/"skip"), `insn`; begin/end also `cls`, `pos`; end also `n` and `timing` (`cck`, `empty_cck`, `frames`, `units`); skip also `why`; optional `benchmark:1` | a hostspeed timed block (docs/schema.md 1.10); not a case; benchmark-only blocks are informational rather than real-time verdicts |
 | `done` | `pass`, `fail`, `skip`, `untestable`, `aborted`, `records` (count of all records sent this boot, including `done`) | last record |
 
 New disks also emit `hello.modules`, an object mapping every selected compiled module name to its unique id
@@ -274,7 +274,7 @@ The API is in `disk/rt/mod.h`, which is authoritative; read it. In short:
 | 23 | dmacontention | BARE | CPU vs blitter/copper/bitplane/audio DMA (disk: cpux) |
 | 24 | misc_hw_os | OS | Zorro autoconfig consistency: ConfigDev ExpansionRom, sizes, address ranges, overlaps with boards and memory (OS-phase half of misc_hw; disk: exp) |
 | 25 | memory_os | OS | allocates the per-region test blocks of memory (21) while exec is alive (OS-phase half of memory; disk: cpux) |
-| 26 | hostspeed | BARE | timed blocks of costly CPU/FPU instructions for the runner's real-time check; `speed` records, no cases (disk: cpux) |
+| 26 | hostspeed | BARE | timed CPU/FPU/memory/I/O blocks for the runner's real-time check or standalone benchmark disk; `speed` records, no cases (disk: cpux) |
 | 27-63 | reserved | | later |
 
 Disk groups are in disk/Makefile (`DISK_SET_*`). `make check-groups` fails if a module is in no group or in two.

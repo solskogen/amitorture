@@ -172,10 +172,13 @@ VERIFY_IGNORE = {
 
 # Options --dump-config writes only when they differ from the default
 # (cfgfile_dwrite*): when one is missing from the dump, Amiberry resolved it
-# to this default. Used to see e.g. cpu_threaded=true silently reset.
+# to this default. Used to see e.g. mmu_model silently reset. Not
+# cpu_threaded: its default depends on the Amiberry version (false before the
+# CPU thread was chosen automatically, true since), so a missing one is not
+# checked.
 DWRITE_DEFAULTS = {
     "warp": "false",
-    "cpu_threaded": "false", "fpu_softfloat": "false", "mmu_model": "0", "fpu_model": "0",
+    "fpu_softfloat": "false", "mmu_model": "0", "fpu_model": "0",
     "debugging_features": "", "cpu_data_cache": "false", "fpu_strict": "false",
     "cpu_no_unimplemented": "false", "fpu_no_unimplemented": "false",
 }

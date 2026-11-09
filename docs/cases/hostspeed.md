@@ -13,13 +13,63 @@ the question is "does this emulator keep real time on this machine". Every failu
 measured on (CPU model, core count, board, `--jobs`, load average). Compare baselines and checks of
 `host.speed_*` only between runs on the same host with the same `--jobs`.
 
+## Benchmark-only build and threaded CPU comparisons
+
+From the repository root, `make -C disk benchmarks` builds just this module and the shared runtime,
+not the correctness suite. `make -C disk check-benchmarks` verifies the resulting ADF.
+From `runner/`:
+
+```
+python3 -m amitorture run --amiberry /path/to/amiberry --kickstarts ~/Amiberry/ROMs \
+    --matrix benchmarks --jobs 1 --warp off
+```
+
+The matrix automatically selects `disk/build/benchmarks/amitorture.adf`; for a custom build directory
+pass `--adf /path/to/benchmarks/amitorture.adf`. Its 19 entries cover every CPU family, including a real
+68030 MMU core with a 68882 and an EC030 without MMU. The fast 68020/EC030 lanes omit the external FPU
+to keep their four-way CPU comparisons focused; the 040/060 lanes also cover their internal FPUs.
+The supported fast-core 68020, EC030, 68040 and 68060 entries
+each run **interpreter off/on** and **JIT off/on** pairs of `cpu_threaded`. Every other emulator option
+in a pair is identical. 68000/68010, compatible cores and MMU cores cannot use Amiberry's threaded CPU,
+so no unsupported threaded configuration is generated. The report has a separate paired comparison
+table, including host operations/s, net ns/op and total process CPU seconds per emulated second.
+Pairs are matched by emulator options, binary and run parameters, not by an entry-name suffix.
+
+Benchmark-only `speed` records carry `benchmark:1`. Supported, adequately sampled blocks are
+**measured**, not pass/fail. Missing or incomplete samples, or 3-sigma timing uncertainty exceeding
+5% of the measured rtf, remain **untestable**. Waiting for synchronization is part of the benchmark,
+not grounds for applying the normal real-time test's "lag while idle" rejection.
+Unsupported instructions emit **skip** with a reason before any calibration or execution.
+These are informational measurements, not correctness pseudo cases; a slow host does not fail the
+benchmark. Crashes, hangs, malformed records and other infrastructure failures still fail normally.
+The normal correctness disk retains its existing real-time speed verdicts.
+
+Use `--jobs 1`, normal pacing and the same host, load and Amiberry configuration when comparing runs.
+For just one family, retain the matrix selector and add e.g. `--config 'bench-68020*'`.
+Run both the before-change and after-change binaries and repeat runs: off/on is a comparison of the
+option, not proof that a particular code change improved it. No single timing sample establishes a
+speedup. Fast 020+ benchmark entries use `cpu_speed=max`: host throughput and CPU cost matter, not
+the paced frame rate. Host ops/s is the block's operation count per emulated second divided by rtf,
+so it includes frame pacing; it is not an unrestricted CPU MHz estimate. Net instruction costs can
+round to zero when below loop/idle subtraction resolution. The total CPU/s comparison includes all
+process threads, so less spinning is visible even if throughput stays the same.
+
+The new RAM, custom-chip and CIA read loops exercise both ordinary memory access and the
+CPU-to-chipset handoffs that Amiberry's multi-threaded CPU changes affect. Hardware loops only read
+VHPOSR and CIA-A PRA, neither of which acknowledges interrupts or changes hardware state.
+The generation-specific blocks read control state or copy owned, aligned memory: they never enable
+MMU translation, change vector bases, alter cache controls or change PCR settings.
+
 ## How a block is measured
 - **Guest** (disk/modules/hostspeed.c, hostspeed_asm.s): one block per instruction class: the instruction
   unrolled 64 times inside a DBF loop (16 iterations per unit, an outer counter of units), with operands
   that keep it on its normal path for the whole block (no exception, overflow, denormal, NaN or infinity;
   an instruction that changes its own operand alternates with its inverse, or uses a fixed point). The
   number of units is sized from a short trial run (amt_ticks()) so that the block takes 1 s of
-  **emulated** time (HS_BLOCK_MS). The module first asks the host to follow the mailbox (a `wait`
+  **emulated** time (HS_BLOCK_MS). The signed-32-bit record-count limit is applied using the block's
+  actual operations per unit, so fast empty reference loops are not needlessly capped at the same
+  unit count as 1024-instruction bodies. A capped block may still be too short to sample and then is
+  explicitly untestable. The module first asks the host to follow the mailbox (a `wait`
   request, 5 s timeout). While a block runs, the mailbox position says which one it is (module 26, case
   1000 + block index); before it the guest sends `speed` `begin`, after it `speed` `end` with `n`
   (instructions executed) and `timing` (`cck` emulated colour clocks, `empty_cck` the loop alone for the
@@ -34,7 +84,7 @@ measured on (CPU model, core count, board, `--jobs`, load average). Compare base
   or more are left). **rtf** (real-time factor) = b x the emulated frame rate (PAL 3546895 / (313 x 227)
   = 49.920 Hz, NTSC 3579545 / (263 x 227.5)): host seconds per emulated second. **sigma** = per-sample
   noise / sqrt(Sxx) x frame rate, the noise being the larger of the block's own residual RMS and the run's
-  reference noise (the median residual RMS of `stop`, `empty`, `empty_end`, `add_l`, `fadd`).
+  reference noise (the median residual RMS of `stop`, the `empty*` blocks, `add_l`, `fadd`).
   - **fail**: rtf > 1.01 + 3 sigma (`SPEED_RTF_LIMIT`): the emulator ran more than 1 % slower than real
     time while executing the instruction.
   - **pass**: not a fail, and either rtf + 3 sigma <= 1.01 or 3 sigma <= 0.5 % (`SPEED_MAX_NOISE`).
@@ -65,7 +115,7 @@ Where the rtf is meaningful: at cpu_speed=real, the cpu_speed=real fast-core ent
 matrix.SPEED_SPECS, with JIT twins) and the compatible and cycle-exact entries. At cpu_speed=max (the
 other fast and JIT entries) Amiberry gives the CPU whatever host time a frame leaves: the frames stay on
 time and a slow instruction only lowers the emulated CPU's throughput, so the rtf stays near 1 and only
-`ns_per_op` tells the cost. Those entries therefore leave the module out (matrix.py
+`ns_per_op` tells the cost. Normal correctness entries therefore leave the module out (matrix.py
 `_hostspeed_only_at_real_speed`: their module mask clears hostspeed), which keeps its 10-55 emulated
 seconds per entry off the ~115 max-speed entries of `standard`.
 
@@ -74,9 +124,9 @@ busy (`SPEED_CPU_BOUND`) is `untestable`, not `fail`: the lag came from the host
 process), not from the instruction. Seen once on a cycle-exact-speed A500 with two emulators running:
 ABCD/SBCD at rtf 1.026 with the thread 38 % busy.
 
-Cost: 1 s of emulated time per block, plus ~0.05 s of sizing; a block that falls behind takes rtf x 1 s
-of host time. Blocks per CPU/FPU: 68000/010 10; 68020/030 20, plus 35 with a 6888x; 68040 20 + 6 FPU;
-68060 15 + 8 FPU: 10 to 55 emulated seconds per entry.
+Cost: 1 s of emulated time per supported block, plus sizing; a block that falls behind takes rtf x 1 s
+of host time. There are 63 block slots, including reference loops; CPU/FPU/MMU and memory capabilities
+determine how many are executed. Skipped blocks are not timed.
 
 Not done yet: per-block host profiling. A non-stripped Amiberry build would allow `perf record -p <pid>`
 per block (perf_event_paranoid 2 allows user-space sampling of one's own processes), which would name
@@ -94,7 +144,7 @@ named code path first, then at the cycle charge (newcpu.cpp, the `cpu_cycles` of
 | case | instruction(s) | runs on | operands (normal path) | a failure usually means |
 |---|---|---|---|---|
 | `speed_stop` | STOP #$2000, woken by the VBL | all | one unit = one frame | the emulator cannot keep real time with the CPU idle: chipset/display emulation or frame pacing (custom.cpp framewait), not an instruction |
-| `speed_empty` / `speed_empty_end` | the DBF loop alone | all | first and last block: drift reference | as `stop`, plus the interpreter's/JIT's basic dispatch (newcpu.cpp m68k_run_*, the JIT's compiled loop) |
+| `speed_empty` / `speed_empty_end` / `speed_empty_final` | the DBF loop alone | all | drift references; empty_end keeps its original mailbox position, empty_final follows the new blocks | as `stop`, plus the interpreter's/JIT's basic dispatch (newcpu.cpp m68k_run_*, the JIT's compiled loop) |
 | `speed_add_l` | ADD.L Dn,Dn | all | integer reference | basic instruction dispatch too slow for the cycle charge (interpreter cpuemu_*, JIT compemu) |
 | `speed_div_w` | DIVU.W / DIVS.W | all | $03E80BB8 / 21846 = 3000 r 1000: a fixed point | cpuemu DIVU/DIVS (getDivu68kCycles/getDivs68kCycles on CE) |
 | `speed_abcd_sbcd` | ABCD / SBCD Dn | all | $45 + $27 and back, X clear | BCD helpers in cpuemu |
@@ -124,6 +174,13 @@ named code path first, then at the cycle charge (newcpu.cpp, the `cpu_cycles` of
 | `speed_fmove_p_in` / `speed_fmove_p_out` | FMOVE.P from/to memory (k-factor 6) | 6888x | +1.2345678E+03 | packed-decimal conversion (fpp.cpp fpp_to_pack/fpp_from_pack: string and long-double conversions) |
 | `speed_fmovem` | FMOVEM.X FP0-FP7 to and from memory | FPU | | fpp_to_exten_fmovem/fpp_from_exten_fmovem: 16 extended-precision conversions per pair |
 | `speed_fsave_frestore` | FSAVE/FRESTORE of the idle frame | FPU | | fpuop_save/fpuop_restore frame building |
+| `speed_ram_read` | MOVE.L (a5),d0 | all | owned RAM pool, fast RAM if available | ordinary memory reads and interpreter/JIT memory-bank dispatch |
+| `speed_custom_read` | MOVE.W (a0),d0 from VHPOSR | all | read-only custom-chip register | custom-chip access and threaded CPU handoff |
+| `speed_cia_read` | MOVE.B (a0),d0 from CIA-A PRA | all | read-only port data, not interrupt status | CIA access and threaded CPU handoff |
+| `speed_movec_vbr` | MOVEC VBR,d0 | 68010+ | read vector base, never write it | supervisor control-register access |
+| `speed_pmove_tc` | PMOVE TC,(a5) | 68030 with integrated MMU only | read translation control into owned RAM | 68030 MMU instruction handling; skipped on 68020, EC030 and 68040/060, regardless of FPU |
+| `speed_move16` | MOVE16 (a0)+,(a1)+ | 68040/68060, including EC/LC | 64 aligned 16-byte copies per inner loop within the pool; n counts MOVE16s, not bytes | 040/060 memory-copy path |
+| `speed_movec_pcr` | MOVEC PCR,d0 | 68060, including EC/LC | read processor control, never write it | 060 control-register path |
 
 Skipped, with a `speed` `skip` record (deterministic per CPU/FPU variant): 68020+ instructions on the
 68000/010; on the 68060 what it traps as unimplemented integer instructions (MOVEP, CAS2, CHK2, 64-bit
@@ -131,4 +188,6 @@ MUL/DIV: the 060 ISP emulates them on real hardware); on the 68040/68060 FPU wha
 (FMOD FREM FSCALE FGETEXP FGETMAN, the transcendentals, FMOVECR, packed decimal; FINT/FINTRZ on the 68040
 only; docs/cases/fpu.md "040/060 restrictions"); CAS/CAS2 without non-chip-bus RAM (chip RAM and
 slow RAM at $C00000-$DBFFFF, even when marked MEMF_FAST, have no indivisible read-modify-write
-cycle); every FPU block without an FPU.
+cycle); every FPU block without an FPU. The new blocks additionally check VBR availability (010+),
+the 030 integrated MMU, MOVE16 (040+) and PCR (060 only). For example a 68020 reports `pmove_tc`
+as skipped, not failed, even with a 68882.

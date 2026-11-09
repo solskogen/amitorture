@@ -496,8 +496,9 @@ def host_summary(results):
     return out
 
 
-SPEED_KEYS = ("insn", "cls", "st", "rtf", "sigma", "fps", "frame_hz", "samples", "cpu_per_emu_s",
-              "cpu_total_per_emu_s", "ns_per_op", "ns_per_iter", "ratio_ref", "ref", "why")
+SPEED_KEYS = ("insn", "cls", "st", "benchmark", "rtf", "sigma", "fps", "frame_hz", "samples", "cpu_per_emu_s",
+              "cpu_total_per_emu_s", "ops_per_emu_s", "ops_per_host_s", "ns_per_op", "ns_per_iter",
+              "ratio_ref", "ref", "why")
 
 
 def speed_summary(results):
@@ -505,12 +506,21 @@ def speed_summary(results):
     their verdicts, real-time factors and host cost per instruction."""
     from . import cases as casemod
     out = []
+
+    def thread_key(r):
+        options = tuple(sorted((k, v) for k, v in (r.get("options") or {}).items() if k != "cpu_threaded"))
+        return r.get("binary"), json.dumps(r.get("params") or {}, sort_keys=True), options
+
+    refs = {thread_key(r): r["id"] for r in results
+            if str((r.get("options") or {}).get("cpu_threaded", "false")).lower() == "false"}
     for r in results:
         for sub in r.get("disks") or [r]:
             bl = casemod.speed_blocks(sub, sub.get("_merged"))
             if not bl:
                 continue
             out.append({"entry": r["id"], "disk": sub.get("disk_name"), "jit": r.get("jit"),
+                        "cpu_threaded": str((r.get("options") or {}).get("cpu_threaded", "false")).lower() == "true",
+                        "thread_reference": refs.get(thread_key(r)),
                         "cpu_speed": (r.get("options") or {}).get("cpu_speed"), "host": sub.get("host_context"),
                         "blocks": [{k: b.get(k) for k in SPEED_KEYS if b.get(k) is not None} for b in bl]})
     return out
@@ -523,12 +533,14 @@ def _speed_lines(speeds):
          "real time), +- 3 sigma. **CPU/s**: host CPU seconds of the emulation thread per emulated second (1.0 "
          "= no headroom left). **ns/op**: host CPU per instruction, net of the emulator's own cost (the STOP "
          "block) and of the loop (the empty block); **x ref**: that cost relative to ADD.L / FADD. The verdict "
-         "depends on the host: compare it only with runs on the same host.", ""]
+         "depends on the host: compare it only with runs on the same host. Benchmark-only disks report "
+         "**measured** instead of pass/fail; unsupported workloads are **skip** with a reason.", ""]
     for e in speeds:
         h = e.get("host") or {}
         from . import cases as casemod
         L.append(f"- `{e['entry']}`" + (f" [{e['disk']}]" if e.get("disk") else "")
-                 + f", cpu_speed={e.get('cpu_speed')}, JIT {'on' if e.get('jit') else 'off'}; "
+                 + f", cpu_speed={e.get('cpu_speed')}, JIT {'on' if e.get('jit') else 'off'}, "
+                 + f"threaded CPU {'on' if e.get('cpu_threaded') else 'off'}; "
                  + f"host {casemod.host_desc(h)}")
         L.append("")
         L.append("  | insn | verdict | rtf (+-3 sigma) | CPU/s | ns/op | x ref |")
@@ -542,6 +554,49 @@ def _speed_lines(speeds):
             L.append(f"  | {b['insn']} | {'**FAIL**' if b['st'] == 'fail' else b['st']} | {rtf} | "
                      f"{b.get('cpu_per_emu_s', '-')} | {'-' if ns is None else f'{ns:.1f}'} | "
                      f"{b.get('ratio_ref', '')} |")
+        L.append("")
+    L.extend(_threaded_speed_lines(speeds))
+    return L
+
+
+def _threaded_speed_lines(speeds):
+    """Only compare like-for-like benchmark entries: CPU threading is the sole option difference."""
+    def value(block, key):
+        n = block.get(key)
+        return "-" if n is None else f"{n:.3g}"
+
+    by_entry = {(e["entry"], e.get("disk")): e for e in speeds}
+    L = []
+    for on in speeds:
+        off = by_entry.get((on.get("thread_reference"), on.get("disk")))
+        if not on.get("cpu_threaded") or off is None:
+            continue
+        refs = {b["insn"]: b for b in off["blocks"] if b.get("benchmark")}
+        blocks = [(refs[b["insn"]], b) for b in on["blocks"] if b.get("benchmark") and b["insn"] in refs]
+        if not blocks:
+            continue
+        if not L:
+            L.extend(["### Threaded CPU off/on benchmarks", "",
+                      "Each pair differs only in `cpu_threaded`, including the same JIT setting. Values are "
+                      "**off / on**. Throughput on/off > 1 is faster; lower ns/op and total CPU/s are cheaper. "
+                      "Host ops/s includes frame pacing; STOP counts frames and empty counts loop iterations. "
+                      "Treat a single run as a sample, not proof of a speedup.", ""])
+        L.extend([f"`{off['entry']}` / `{on['entry']}`" + (f" [{on['disk']}]" if on.get("disk") else ""), "",
+                  "| workload | host ops/s off / on | throughput on/off | ns/op off / on | total CPU/s off / on |",
+                  "|---|---|---|---|---|"])
+        for a, b in blocks:
+            if a["st"] == "skip" or b["st"] == "skip":
+                skipped = a if a["st"] == "skip" else b
+                L.append(f"| {b['insn']} | skip: {skipped.get('why') or ''} | | | |")
+                continue
+            if a["st"] != "measured" or b["st"] != "measured":
+                L.append(f"| {b['insn']} | {a['st']} / {b['st']} | - | - | - |")
+                continue
+            rate_a, rate_b = a.get("ops_per_host_s"), b.get("ops_per_host_s")
+            ratio = f"{rate_b / rate_a:.3f}x" if rate_a and rate_b is not None else "-"
+            L.append(f"| {b['insn']} | {value(a, 'ops_per_host_s')} / {value(b, 'ops_per_host_s')} | {ratio} | "
+                     f"{value(a, 'ns_per_op')} / {value(b, 'ns_per_op')} | "
+                     f"{value(a, 'cpu_total_per_emu_s')} / {value(b, 'cpu_total_per_emu_s')} |")
         L.append("")
     return L
 

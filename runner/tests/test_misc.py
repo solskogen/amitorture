@@ -107,7 +107,7 @@ class RomDB(unittest.TestCase):
 
 class Matrix(unittest.TestCase):
     def test_strict_policy_lanes_preserve_hardware_trap_coverage(self):
-        for name in matrix.MATRICES:
+        for name in ("smoke", "standard", "full"):
             entries = {e["id"]: e for e in matrix.expand(name)}
             for base_id in ("a3000-68030-882-compat", "a4000-68040nommu-fast", "a4000-68060nommu-fast"):
                 base = entries[base_id]

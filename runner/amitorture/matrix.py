@@ -4,13 +4,14 @@ An *entry* is one emulated machine: a model preset (chipset_compatible), a
 Motorola CPU variant, an FPU, a core mode (fast / compatible / cycle-exact),
 a video standard, the ROM(s) it needs and the exact Amiberry options.
 
-Three named matrices:
+Named matrices:
   smoke     one per big code path, plus hostspeed and strict instruction policies
   standard  about 60: every model preset, every CPU variant, the core modes,
             JIT twins, the JIT sub-options on one machine, threaded CPU,
             softfloat
   full      everything: every CPU variant x FPU x core mode, every model x
             PAL/NTSC, and every twin of every entry that allows it
+  benchmarks hostspeed only, every CPU family plus legal JIT/threaded twins
 
 *Twins.* A twin differs from its reference entry (``twin_of``) only in the
 options its ``twin_kind`` is about, so a difference in results is the
@@ -35,7 +36,7 @@ from __future__ import annotations
 import copy
 import fnmatch
 
-MATRICES = ("smoke", "standard", "full")
+MATRICES = ("smoke", "standard", "full", "benchmarks")
 
 # ---------------------------------------------------------------------------
 # ROMs (romdb ids in order of preference, see romdb.json / `amitorture roms`)
@@ -644,6 +645,29 @@ def speed_entries(name):
     return out
 
 
+def benchmark_entries():
+    """CPU-family coverage without the normal max-speed hostspeed exclusion."""
+    out = []
+    for model, cpu, fpu, core in (
+        ("A500", "68000", "none", "compat"),
+        ("A2000", "68010", "none", "compat"),
+        ("A1200", "68020", "none", "fast"),
+        ("A3000", "68030", "68882", "compat"),
+        ("A4000", "68EC030", "none", "fast"),
+        ("A4000", "68040nommu", "internal", "fast"),
+        ("A4000", "68060nommu", "internal", "fast"),
+    ):
+        base = make_entry(model, cpu, fpu, core, eid=f"bench-{cpu.lower()}",
+                          title_extra=", benchmarks only")
+        base["disk_groups"] = ["cpux"]
+        base["params"] = {"modules": module_mask(["hostspeed"])}
+        entries = [base] + _twins_for(base, [""], True, False)
+        for entry in entries:
+            entry["matrices"] = {"benchmarks"}
+        out.extend(entries)
+    return out
+
+
 def strict_policy_entries(name):
     """Hardware-only traps need an interpreter lane without compatibility emulation."""
     out = []
@@ -768,7 +792,10 @@ def expand(name="standard"):
     if name not in MATRICES:
         raise ValueError(f"unknown matrix {name!r}; known: {', '.join(MATRICES)}")
     if name not in _CACHE:
-        if name == "smoke":
+        if name == "benchmarks":
+            _CACHE[name] = benchmark_entries()
+            return copy.deepcopy(_CACHE[name])
+        elif name == "smoke":
             _CACHE[name] = _dedupe(_from_specs(SMOKE, "smoke") + speed_entries("smoke"))
         elif name == "standard":
             ents = _from_specs(STANDARD + MMU_SPECS, "standard") + hardware_entries() + speed_entries("standard")

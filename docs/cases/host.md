@@ -1,6 +1,11 @@
 # host (pseudo cases, made by the runner)
 
 Not a disk module: the runner turns some host records (the screenshots and audio captures the guest asks for, docs/schema.md §5.1, CONTRACT §13) and its own timing of the hostspeed blocks (docs/schema.md 1.10) into pseudo cases, so they are judged and fingerprinted like guest cases (runner/amitorture/cases.py). They are not counted in the per-entry and per-module case totals.
+
+The standalone disk from `make -C disk benchmarks` marks its speed blocks `benchmark:1`:
+these produce informational measurements/skips, not `host.speed_*` correctness pseudo cases.
+The benchmark matrix includes threaded CPU off/on comparisons, separately for interpreter and JIT;
+see [hostspeed.md](hostspeed.md#benchmark-only-build-and-threaded-cpu-comparisons).
 Their failures do count toward the disk and entry verdict: a zero guest
 `done.fail` does not override a failed host speed or audio measurement.
 

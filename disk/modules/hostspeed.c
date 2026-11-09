@@ -31,7 +31,7 @@
  * cases. */
 #include "mod.h"
 
-AMT_MODULE(hostspeed, 26, AMT_PH_BARE, 0, 0, 1024);
+AMT_MODULE(hostspeed, 26, AMT_PH_BARE, 0, 0, 4096);
 
 #define HS_BLOCK_MS   1000     /* emulated time per timed block */
 #define HS_POS0       1000     /* mailbox case number of block 0 */
@@ -59,6 +59,13 @@ ULONG hs_cas(ULONG, void *);
 ULONG hs_cas2(ULONG, void *);
 ULONG hs_chk2(ULONG, void *);
 ULONG hs_pack_unpk(ULONG, void *);
+ULONG hs_ram_read(ULONG, void *);
+ULONG hs_custom_read(ULONG, void *);
+ULONG hs_cia_read(ULONG, void *);
+ULONG hs_movec_vbr(ULONG, void *);
+ULONG hs_pmove_tc(ULONG, void *);
+ULONG hs_move16(ULONG, void *);
+ULONG hs_movec_pcr(ULONG, void *);
 void  hs_fpu_reset(void);
 ULONG hs_pcr_get(void);
 void  hs_pcr_set(ULONG);
@@ -106,6 +113,10 @@ ULONG hs_fsave_frestore(ULONG, void *);
 #define B_FPSP040 0x0010   /* FPSP-emulated on the 68040 only */
 #define B_RMW     0x0020   /* indivisible read-modify-write: not in chip RAM */
 #define B_HALF    0x0040   /* body = 32 pairs of (reload, instruction): 512 per unit */
+#define B_010     0x0080   /* 68010 and up */
+#define B_030MMU  0x0100   /* 68030 with its integrated MMU; not EC030 or 68851 */
+#define B_040     0x0200   /* 68040/68060 instruction set */
+#define B_060     0x0400   /* 68060 only */
 
 struct hs_blk {
     const char *insn;      /* host.speed_<insn> */
@@ -118,8 +129,9 @@ struct hs_blk {
  * is the emulator's own cost (chipset, display, frame pacing), which the
  * host cost per instruction leaves out. "empty" and "empty_end": the loop
  * alone, its own cost per iteration, and the run's noise and drift
- * reference at both ends; add_l and fadd: the class references the host
- * cost is compared with. */
+ * references; add_l and fadd: the class references the host cost is
+ * compared with. New blocks follow empty_end to preserve existing mailbox
+ * positions; empty_final brackets those additions. */
 static const struct hs_blk blocks[] = {
     { "stop",           hs_stop,           0 },
     { "empty",          hs_empty,          0 },
@@ -176,6 +188,14 @@ static const struct hs_blk blocks[] = {
     { "fmovem",         hs_fmovem,         B_FPU },
     { "fsave_frestore", hs_fsave_frestore, B_FPU },
     { "empty_end",      hs_empty,          0 },
+    { "ram_read",       hs_ram_read,       0 },
+    { "custom_read",    hs_custom_read,    0 },
+    { "cia_read",       hs_cia_read,       0 },
+    { "movec_vbr",      hs_movec_vbr,      B_010 },
+    { "pmove_tc",       hs_pmove_tc,       B_030MMU },
+    { "move16",         hs_move16,         B_040 },
+    { "movec_pcr",      hs_movec_pcr,      B_060 },
+    { "empty_final",    hs_empty,          0 },
 };
 #define N_BLOCKS (sizeof(blocks) / sizeof(blocks[0]))
 
@@ -185,6 +205,14 @@ static void *hs_mem;
 static const char *skip_why(const struct hs_blk *b)
 {
     int cpu = AMT_CPU(), fpu = AMT_FPU();
+    if ((b->flags & B_010) && cpu < AMT_CPU_68010)
+        return "requires 68010 or later (MOVEC VBR)";
+    if ((b->flags & B_030MMU) && (cpu != AMT_CPU_68030 || !AMT_MMU()))
+        return "requires a 68030 with its integrated MMU (not 68020, EC030 or 68040/68060)";
+    if ((b->flags & B_040) && cpu < AMT_CPU_68EC040)
+        return "requires 68040 or 68060 (MOVE16)";
+    if ((b->flags & B_060) && cpu < AMT_CPU_68EC060)
+        return "requires 68060 (MOVEC PCR)";
     if ((b->flags & B_020) && cpu < AMT_CPU_68EC020)
         return "68020+ instruction: illegal on the 68000/68010";
     if ((b->flags & B_NO060) && cpu >= AMT_CPU_68EC060)
@@ -221,9 +249,11 @@ static ULONG time_units(hs_fn fn, ULONG units)
 /* units for about `target` colour clocks: warm up (the JIT translates a
  * block after a few runs), then double a trial run until it takes at least
  * 1/64 of the target, and scale. */
-static ULONG size_units(hs_fn fn, ULONG target)
+static ULONG size_units(const struct hs_blk *b, ULONG target)
 {
+    hs_fn fn = b->fn;
     ULONG u = 1, t, r;
+    ULONG max_units = 0x7fffffffUL / per_unit(b);
     fn(1, hs_mem);
     fn(1, hs_mem);
     fn(1, hs_mem);
@@ -240,8 +270,8 @@ static ULONG size_units(hs_fn fn, ULONG target)
     if (r > 0x7ff)
         r = 0x7ff;
     u = (u * r) >> 3;               /* u <= 2^20, r < 2^11 */
-    if (u > 0x1fffffUL)             /* n = units x 1024 must stay below 2^31 (a */
-        u = 0x1fffffUL;             /* JIT at cpu_speed=max): a shorter block */
+    if (u > max_units)             /* keep n below 2^31 without shortening */
+        u = max_units;             /* fast reference loops unnecessarily */
     return u ? u : 1;
 }
 
@@ -253,13 +283,16 @@ static void emit(const struct hs_blk *b, ULONG idx, const char *ev)
     json_str("insn", b->insn);
     json_str("cls", (b->flags & B_FPU) ? "fpu" : "int");
     json_int("pos", (long)(HS_POS0 + idx));
+#ifdef AMT_BENCHMARK_ONLY
+    json_int("benchmark", 1);
+#endif
 }
 
 static void run_block(const struct hs_blk *b, ULONG idx, ULONG target)
 {
     ULONG units, empty, f0, f1, t0, t1;
     amt_watchdog_kick();
-    units = size_units(b->fn, target);
+    units = size_units(b, target);
     empty = time_units(hs_empty, units);
     emit(b, idx, "begin");
     json_end();

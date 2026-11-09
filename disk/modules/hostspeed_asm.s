@@ -4,7 +4,7 @@
 ;   units  outer loop count (>= 1); one unit = 16 DBF iterations of a body
 ;          of 64 unrolled instructions = 1024 instructions (512 for the
 ;          blocks whose body is 32 reload+instruction pairs, see hostspeed.c)
-;   mem    1 KB of the module's any-RAM pool (16-byte aligned)
+;   mem    4 KB of the module's any-RAM pool (16-byte aligned)
 ; The operands keep every instruction on its normal path for the whole
 ; block: no exception, no overflow, no denormal/NaN/infinity; where an
 ; instruction changes its own operand the body alternates it with its
@@ -50,6 +50,13 @@ HS_OUT	macro
 	xdef	_hs_cas2
 	xdef	_hs_chk2
 	xdef	_hs_pack_unpk
+	xdef	_hs_ram_read
+	xdef	_hs_custom_read
+	xdef	_hs_cia_read
+	xdef	_hs_movec_vbr
+	xdef	_hs_pmove_tc
+	xdef	_hs_move16
+	xdef	_hs_movec_pcr
 	xdef	_hs_fpu_reset
 	xdef	_hs_pcr_get
 	xdef	_hs_pcr_set
@@ -218,6 +225,100 @@ _hs_trap_rte:				; TRAP #0 -> vector 32 = _hs_rte (hostspeed.c)
 
 _hs_rte:
 	rte
+
+; Read-only hardware registers: neither VHPOSR nor CIA-A PRA acknowledges IRQs.
+_hs_ram_read:
+	HS_IN
+.o:	moveq	#15,d7
+.i:
+	rept	64
+	move.l	(a5),d0
+	endr
+	dbf	d7,.i
+	subq.l	#1,d6
+	bne	.o
+	HS_OUT
+
+_hs_custom_read:
+	HS_IN
+	lea	$dff006,a0
+.o:	moveq	#15,d7
+.i:
+	rept	64
+	move.w	(a0),d0
+	endr
+	dbf	d7,.i
+	subq.l	#1,d6
+	bne	.o
+	HS_OUT
+
+_hs_cia_read:
+	HS_IN
+	lea	$bfe001,a0
+.o:	moveq	#15,d7
+.i:
+	rept	64
+	move.b	(a0),d0
+	endr
+	dbf	d7,.i
+	subq.l	#1,d6
+	bne	.o
+	HS_OUT
+
+; 68010+: read VBR, without changing exception vectors.
+_hs_movec_vbr:
+	HS_IN
+.o:	moveq	#15,d7
+.i:
+	rept	64
+	movec	vbr,d0
+	endr
+	dbf	d7,.i
+	subq.l	#1,d6
+	bne	.o
+	HS_OUT
+
+; 68030 MMU only: PMOVE TC to our pool, never change translation state.
+_hs_pmove_tc:
+	HS_IN
+.o:	moveq	#15,d7
+.i:
+	rept	64
+	dc.w	$f015,$4200		; pmove tc,(a5)
+	endr
+	dbf	d7,.i
+	subq.l	#1,d6
+	bne	.o
+	HS_OUT
+
+; 68040/68060: 64 aligned 16-byte copies per inner loop, within our pool.
+	machine	68040
+_hs_move16:
+	HS_IN
+.o:	moveq	#15,d7
+.i:	move.l	a5,a0
+	lea	1024(a5),a1
+	rept	64
+	move16	(a0)+,(a1)+
+	endr
+	dbf	d7,.i
+	subq.l	#1,d6
+	bne	.o
+	HS_OUT
+	machine	68020
+
+; 68060 only: PCR read, preserving FPU enable and superscalar controls.
+_hs_movec_pcr:
+	HS_IN
+.o:	moveq	#15,d7
+.i:
+	rept	64
+	dc.w	$4e7a,$0808		; movec pcr,d0
+	endr
+	dbf	d7,.i
+	subq.l	#1,d6
+	bne	.o
+	HS_OUT
 
 ; ------------------------------------------------------------ 68020 and up
 _hs_mul_l:				; 32-bit forms: x * a * a^-1 = x (mod 2^32)
