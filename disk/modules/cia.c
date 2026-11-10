@@ -1318,6 +1318,53 @@ static void eclock_perf(int b)
     amt_perf(b ? "ciab_ta_eclock_65536" : "ciaa_ta_eclock_65536", 65536, t1 - t0);
 }
 
+/* ------------------------------------------------------------ access rate */
+/* Every CIA access is synchronised to the E clock (MOS 8520 data sheet; HRM:
+ * "8520 Complex Interface Adapters"), so a CPU reads a CIA register at most
+ * once per E clock, 5 colour clocks. An emulator at fastest CPU speed may
+ * shorten that wait, but loops that delay, or poll with an iteration bound,
+ * by reading a CIA rely on it: at more than PRA_READS_PER_E_MAX reads per E
+ * clock they end that many times early. The bound is loose: unthreaded fast
+ * emulation makes about 10. CIA-A PRA, the register polled for the fire
+ * buttons, read READS_N times; the fastest of PRA_RUNS runs counts (a JIT
+ * compiles the loop in the first). */
+#define PRA_READS_N 4096
+#define PRA_READS_PER_E_MAX 32
+#define PRA_RUNS 8
+static void pra_read_rate(void)
+{
+    ULONG best = 0xffffffffUL, t0, t1, i;
+    int r;
+    UBYTE acc = 0;
+    (void)cia_rd(CIAA_BASE, C_PRA);
+    for (r = 0; r < PRA_RUNS; r++) {
+        t0 = cia_now();
+        for (i = 0; i < PRA_READS_N; i++)
+            acc ^= cia_rd(CIAA_BASE, C_PRA);
+        t1 = cia_now();
+        if (t1 - t0 < best)
+            best = t1 - t0;
+    }
+    (void)acc;
+    if (best * PRA_READS_PER_E_MAX >= E2CC(PRA_READS_N)) {
+        amt_case_open("ciaa_pra_read_rate", AMT_ST_PASS);
+    } else {
+        amt_case_open("ciaa_pra_read_rate", AMT_ST_FAIL);
+        json_obj("expect");
+        json_int("max_reads_per_e", PRA_READS_PER_E_MAX);
+        json_obj_end();
+        json_str("why", "CIA accesses are synchronised to the E clock (one per E clock, 5 colour clocks): "
+                        "4096 reads of CIA-A PRA must not take less than 1/32 of that, or CIA delay and "
+                        "polling loops end too early (MOS 8520 data sheet; HRM: 8520 CIAs)");
+    }
+    json_obj("timing");
+    json_int("reads", PRA_READS_N);
+    json_int("cc", (long)best);
+    json_int("reads_per_e_x100", best ? (long)(E2CC(PRA_READS_N) * 100UL / best) : -1);
+    json_obj_end();
+    amt_case_close();
+}
+
 /* ------------------------------------------------------------ main */
 static char *hx2(char *d, UBYTE v)
 {
@@ -1366,6 +1413,7 @@ static void body(void)
         tod_tests(b);
     }
     sdr_test();
+    pra_read_rate();
     eclock_perf(0);
     eclock_perf(1);
 }
