@@ -398,7 +398,7 @@ def _common(p, kick_required=True, param_defaults=True):
     p.add_argument("--param", action="append", metavar="KEY=VALUE", help=PARAM_HELP)
     p.add_argument("--jobs", type=int, default=1, metavar="N",
                    help="entries run in parallel (default 1), capped at the machine-wide emulator limit "
-                        "(nproc, or $AMT_MAX_EMU)")
+                        "(nproc - 1, or a lower $AMT_MAX_EMU)")
     p.add_argument("--keep", action="store_true",
                    help="keep the per-run temp dir under WORKDIR/tmp (emulator homes, generated configs and media) "
                         "for debugging; normally removed at the end")

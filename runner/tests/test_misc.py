@@ -423,6 +423,22 @@ class Interrupt(unittest.TestCase):
         with self.assertRaises(self.em.Interrupted):
             self.em.Process("/bin/true", [], {}, os.devnull)
 
+    def test_max_slots_leaves_a_core(self):
+        # nproc - 1, at least 1; AMT_MAX_EMU only lowers it
+        import amislot
+        from unittest import mock
+        old = os.environ.pop("AMT_MAX_EMU", None)
+        self.addCleanup(lambda: os.environ.__setitem__("AMT_MAX_EMU", old) if old is not None
+                        else os.environ.pop("AMT_MAX_EMU", None))
+        for cpus, want in ((8, 7), (4, 3), (2, 1), (1, 1), (None, 1)):
+            with mock.patch.object(amislot.os, "cpu_count", return_value=cpus):
+                self.assertEqual(amislot.max_slots(), want, cpus)
+        with mock.patch.object(amislot.os, "cpu_count", return_value=8):
+            os.environ["AMT_MAX_EMU"] = "2"
+            self.assertEqual(amislot.max_slots(), 2)
+            os.environ["AMT_MAX_EMU"] = "8"
+            self.assertEqual(amislot.max_slots(), 7)       # never above nproc - 1
+
     def test_slot_wait_is_cancellable(self):
         import amislot
         d = tempfile.mkdtemp()

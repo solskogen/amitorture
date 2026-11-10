@@ -15,7 +15,10 @@ slot while an emulator runs, and should tell the slot the emulator's PID:
 Design:
 - One lock directory per user/machine (~/.cache/amitorture/locks, or
   $AMT_LOCK_DIR), so several checkouts or worktrees share the same limit.
-- Number of slots: os.cpu_count(); AMT_MAX_EMU may lower it, never raise it.
+- Number of slots: os.cpu_count() - 1 (at least 1), so a core stays free for
+  the runner and the host while every slot runs an emulator (with Amiberry's
+  CPU thread an emulator keeps two cores busy); AMT_MAX_EMU may lower it,
+  never raise it.
 - A slot is taken under a gate lock: amiberry processes that are alive but
   not registered by any slot holder (orphans whose launcher died, launchers
   that don't use this module) count against the limit too:
@@ -43,7 +46,7 @@ def lock_dir():
 
 
 def max_slots():
-    n = os.cpu_count() or 1
+    n = max(1, (os.cpu_count() or 1) - 1)
     try:
         req = int(os.environ.get("AMT_MAX_EMU", "0"))
     except ValueError:

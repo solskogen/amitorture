@@ -13,7 +13,7 @@ check in every report).
   - A run's temp root is `WORKDIR/tmp/<cmd><pid>-XXXX/` with one short `eNNN/` per entry (`entry.txt` names it).
     The names are short because the IPC socket path must fit AF_UNIX's 107 bytes.
   - The temp root is deleted after the run unless `--keep` is given.
-- **Emulator slots.** At most `nproc` Amiberry processes run on the machine at a time, shared by every agent and
+- **Emulator slots.** At most `nproc - 1` (at least 1) Amiberry processes run on the machine at a time, shared by every agent and
   tool. `tools/amislot.py` (flock on `~/.cache/amitorture/locks/emu-slot-N`, or `$XDG_CACHE_HOME/amitorture/locks` when that is set, or `$AMT_LOCK_DIR`, shared by every checkout; `AMT_MAX_EMU` can lower the count, never raise it; live Amiberry processes no slot holder accounts for count too) is held for the
   whole lifetime of every Amiberry process the runner starts: `--version`, `--dump-config`, emulation runs,
   narrowing reruns, baseline repetitions, repro runs. `--jobs N` (default 1) runs N entries at once and is capped at

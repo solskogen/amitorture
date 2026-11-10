@@ -50,7 +50,7 @@ python3 -m amitorture check    --amiberry /path/to/new/amiberry --kickstarts ~/A
                                --baseline mybase                     # regressions and fixes vs the baseline
 ```
 
-Emulators run headless; add `--show` to watch their windows. At most `nproc` emulators run at once, machine-wide.
+Emulators run headless; add `--show` to watch their windows. At most `nproc - 1` emulators run at once, machine-wide (at least 1), so a core stays free for the runner and the host.
 For lightweight measurements rather than correctness tests, build `benchmarks` and run:
 
 ```

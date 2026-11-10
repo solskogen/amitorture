@@ -102,7 +102,7 @@ def run_parallel(fn, items, jobs):
 # ---------------------------------------------------------------------------
 # Machine-wide limit on concurrent emulator instances (shared by every
 # launcher on this host): tools/amislot.py, flock()ed ~/.cache/amitorture/locks/emu-slot-<n>,
-# os.cpu_count() slots (AMT_MAX_EMU overrides). Every Amiberry process the
+# os.cpu_count() - 1 slots, at least 1 (AMT_MAX_EMU may lower it). Every Amiberry process the
 # runner starts (--version, --dump-config, emulation runs) holds a slot for
 # its whole lifetime. If tools/amislot.py cannot be imported, the same scheme
 # is used from here (same lock files).
