@@ -28,6 +28,9 @@ from . import matrix
 OPTION_GROUPS = {
     "cpu": ("cpu_model", "mmu_model", "cpu060_revision", "cpu_24bit_addressing", "cpu_no_unimplemented"),
     "fpu": ("fpu_model", "fpu_softfloat", "fpu_strict", "fpu_no_unimplemented", "compfpu"),
+    # the CPU variant beyond cpu/mmu_model: 68040 / 68LC040 / 68EC040 differ in
+    # fpu_model (project: only on a 68040/68060, where the FPU is on the chip)
+    "cpu_variant": ("fpu_model",),
     "core": ("cpu_compatible", "cycle_exact", "cpu_cycle_exact", "cpu_memory_cycle_exact", "blitter_cycle_exact",
              "cpu_speed", "cpu_multiplier"),
     "engine_class": ("cachesize", "cpu_threaded"),
@@ -44,17 +47,20 @@ FIELD_GROUPS = {
     "model": ("model", "rom", "ext_rom"),
     "boot": ("boot", "media", "media_files"),
     "flags": ("flags",),
-    "boards": ("board_roms",),
+    # a disk controller (media.controller: A2091, A4091, ...) is an expansion board
+    "boards": ("board_roms", "media"),
 }
 
 # The groups each module's results may depend on (docs/cases/<module>.md, the
 # module sources, the xfail rules). engine_class: JIT on/off and the CPU
-# thread; engine: also every JIT sub-option.
+# thread; engine: also every JIT sub-option. The CPU modules have cpu_variant: the
+# CPU variant (68040 / 68LC040 / 68EC040) is cpu_model + fpu_model + mmu_model,
+# and their skip reasons name it (axes check on standard, 2026-11-10).
 AXES = {
     "takeover": ("model", "cpu", "core", "engine_class"),
     "rt": ("cpu", "core", "engine_class"),
-    "cpu_basic": ("cpu", "core", "engine"),
-    "flags": ("cpu", "core", "engine"),
+    "cpu_basic": ("cpu", "cpu_variant", "core", "engine"),
+    "flags": ("cpu", "cpu_variant", "core", "engine"),
     "exceptions": ("cpu", "fpu", "core", "engine", "flags"),
     "smc": ("cpu", "core", "engine", "memory"),
     "interrupts": ("video", "chipset", "model", "cpu", "core", "engine_class", "boards", "boot"),
@@ -71,9 +77,9 @@ AXES = {
     "expsound": ("boards", "model", "cpu", "core", "video", "engine_class", "flags"),
     "network": ("boards", "model", "flags"),
     "misc_hw": ("model", "boards", "chipset", "memory", "flags", "boot"),
-    "mmu": ("cpu", "core", "model", "memory"),
+    "mmu": ("cpu", "cpu_variant", "core", "model", "memory"),
     "memory": ("memory", "model", "cpu", "engine", "boards"),
-    "dispatch": ("cpu", "core", "engine"),
+    "dispatch": ("cpu", "cpu_variant", "core", "engine"),
     "dmacontention": ("chipset", "video", "cpu", "core", "boot", "engine_class"),
     "misc_hw_os": ("model", "boards", "memory"),
     "memory_os": ("memory", "model", "boards"),
@@ -135,9 +141,13 @@ def project(entry, groups):
     engine_class keeps only whether the JIT is on (not its cache size) and
     the CPU thread."""
     out = []
+    on_chip_fpu = str(entry["options"].get("cpu_model")) in ("68040", "68060")
     for k, v in entry["options"].items():
         gs = option_group(k)
-        if "engine" in groups and "engine" in gs:
+        if "cpu_variant" in groups and "cpu_variant" in gs and "fpu" not in groups:
+            if on_chip_fpu:            # 68040 / 68LC040 / 68EC040; an external 68881/2 is no CPU variant
+                out.append((k, str(v)))
+        elif "engine" in groups and "engine" in gs:
             out.append((k, str(v)))
         elif "engine_class" in groups and "engine_class" in gs:
             out.append((k, str(_jit_on(v)) if k == "cachesize" else str(v)))
@@ -150,8 +160,8 @@ def project(entry, groups):
     return tuple(sorted(set(out), key=lambda kv: kv[0]))
 
 
-def key(module, entry):
-    return (module, project(entry, AXES[module]))
+def key(module, entry, axes=None):
+    return (module, project(entry, (axes or AXES)[module]))
 
 
 def required(entries):
@@ -166,3 +176,145 @@ def required(entries):
 def unclassified_options(entries):
     """Options set by some entry that belong to no group."""
     return sorted({k for e in entries for k in e["options"] if not option_group(k)})
+
+
+# ---------------------------------------------------------------- validation
+def fingerprints(results_dir):
+    """{entry id: {module: {case: (status, fingerprint)}}} from the raw
+    records of a results dir (the last boot of every disk)."""
+    import json
+    import os
+
+    from . import cases as casemod
+    raw = os.path.join(results_dir, "raw")
+    out = {}
+    for eid in sorted(os.listdir(raw)) if os.path.isdir(raw) else []:
+        mods = {}
+        edir = os.path.join(raw, eid)
+        for d in sorted(os.listdir(edir)):
+            rp = os.path.join(edir, d, "records.jsonl")
+            if not os.path.isfile(rp):
+                continue
+            with open(rp, encoding="utf-8") as fh:
+                recs = [json.loads(line) for line in fh if line.strip()]
+            recs = [r for r in recs if not r.get("host")]
+            last = recs[-1]["boot"] if recs else 0
+            ex = casemod.extract_records([r["rec"] for r in recs if r["boot"] == last])
+            for c in ex["cases"].values():
+                if c.get("pseudo"):
+                    continue
+                mods.setdefault(c["mod"], {})[c["case"]] = (c["st"], c["fp"])
+        if mods:
+            out[eid] = mods
+    return out
+
+
+def validate(results_dirs, entries=None, axes=None):
+    """Checks the axes against old-style results: two entries with the same
+    coverage key for a module must give that module the same results.
+    Returns {module: {"keys": n compared, "differ": [{"key_entries": [a, b],
+    "cases": [...], "verdict_cases": [...], "detail_only": bool, "options": [...]}]}}.
+    detail_only: the same verdicts, other details (addresses, a skip reason
+    naming the CPU variant): look at them, they are not counted as a missing
+    axis by the axes command. Entries are
+    looked up by id in every matrix (or ``entries``); an id found in more than
+    one results dir uses the first. ``axes``: {module: groups} to check
+    instead of AXES (narrower candidates: which entries would merge)."""
+    from . import matrix as matrixmod
+    by_id = {e["id"]: e for e in (entries or matrixmod.all_entries().values())}
+    fps = {}
+    for rd in ([results_dirs] if isinstance(results_dirs, dict) else results_dirs):
+        if isinstance(rd, dict):        # fingerprints already loaded
+            for eid, mods in rd.items():
+                fps.setdefault(eid, mods)
+            continue
+        for eid, mods in fingerprints(rd).items():
+            fps.setdefault(eid, mods)
+    groups = {}
+    for eid, mods in fps.items():
+        e = by_id.get(eid)
+        if e is None:
+            continue
+        for m in mods:
+            if m in AXES:
+                groups.setdefault(key(m, e, axes), []).append(eid)
+    out = {}
+    for (m, proj), eids in sorted(groups.items(), key=lambda kv: kv[0][0]):
+        o = out.setdefault(m, {"keys": 0, "differ": []})
+        if len(eids) < 2:
+            continue
+        o["keys"] += 1
+        ref = eids[0]
+        for other in eids[1:]:
+            a, b = fps[ref][m], fps[other][m]
+            bad = sorted(c for c in set(a) | set(b) if a.get(c) != b.get(c))
+            if not bad:
+                continue
+            # a verdict that differs (or a case only one ran) vs the same
+            # verdict with other details (addresses, reasons naming the CPU)
+            verdict = [c for c in bad if a.get(c, (None,))[0] != b.get(c, (None,))[0]]
+            diff = [k for k, _, _ in matrixmod.option_diff(by_id[ref]["options"], by_id[other]["options"])]
+            o["differ"].append({"entries": [ref, other], "cases": bad[:20], "n_cases": len(bad),
+                                "verdict_cases": verdict[:20], "n_verdict": len(verdict),
+                                "status": {c: [a.get(c, (None,))[0], b.get(c, (None,))[0]] for c in bad[:20]},
+                                "detail_only": not verdict, "options": diff})
+    return out
+
+
+def format_validation(v):
+    lines = []
+    for m, o in sorted(v.items()):
+        if not o["keys"]:
+            continue
+        nv = sum(1 for d in o["differ"] if not d["detail_only"])
+        lines.append(f"{m}: {o['keys']} keys with 2+ entries, {nv} pair(s) with different verdicts, "
+                     f"{len(o['differ']) - nv} with the same verdicts but other details")
+        for d in sorted(o["differ"], key=lambda d: d["detail_only"])[:10]:
+            sts = ", ".join(f"{c} {x}/{y}" for c, (x, y) in list(d["status"].items())[:6])
+            lines.append(f"  {'detail ' if d['detail_only'] else 'VERDICT'} {d['entries'][0]} vs {d['entries'][1]} "
+                         f"(options differ: {', '.join(d['options']) or 'none'}): {d['n_cases']} case(s): {sts}")
+    return "\n".join(lines)
+
+
+def axis_drops(results_dirs, modules=None, entries=None):
+    """For every module and each of its axes: what dropping that axis would
+    merge, and whether the merged entries agree. {module: {axis: {"keys": n
+    with 2+ entries, "differ": n pairs, "pairs": [...]}}}. Evidence for a
+    narrower axis set, from old-style results; never proof."""
+    fps = {}
+    for rd in results_dirs:
+        for eid, mods in (rd.items() if isinstance(rd, dict) else fingerprints(rd).items()):
+            fps.setdefault(eid, mods)
+    out = {}
+    for m in modules or sorted(AXES):
+        for ax in AXES[m]:
+            cand = dict(AXES)
+            cand[m] = tuple(a for a in AXES[m] if a != ax)
+            v = validate(fps, entries=entries, axes=cand).get(m, {"keys": 0, "differ": []})
+            verdict = [d for d in v["differ"] if not d["detail_only"]]
+            out.setdefault(m, {})[ax] = {"keys": v["keys"], "differ": len(verdict),
+                                         "detail": len(v["differ"]) - len(verdict), "pairs": verdict[:5]}
+    return out
+
+
+def outcome_diff(dir_a, dir_b):
+    """Case verdicts of two runs, per (entry, module) both ran: a plan run
+    against an old-style one, warped against paced. {"compared": {"entries",
+    "modules", "cases"}, "verdicts": [{entry, mod, case, a, b}], "missing":
+    [{entry, mod, case, only}]}: missing are cases one run has and the other
+    lacks within a module both ran."""
+    fa, fb = fingerprints(dir_a), fingerprints(dir_b)
+    out = {"compared": {"entries": 0, "modules": 0, "cases": 0}, "verdicts": [], "missing": []}
+    for eid in sorted(set(fa) & set(fb)):
+        out["compared"]["entries"] += 1
+        for m in sorted(set(fa[eid]) & set(fb[eid])):
+            out["compared"]["modules"] += 1
+            a, b = fa[eid][m], fb[eid][m]
+            for c in sorted(set(a) | set(b)):
+                if c in a and c in b:
+                    out["compared"]["cases"] += 1
+                    if a[c][0] != b[c][0]:
+                        out["verdicts"].append({"entry": eid, "mod": m, "case": c, "a": a[c][0], "b": b[c][0]})
+                else:
+                    out["missing"].append({"entry": eid, "mod": m, "case": c, "only": "a" if c in a else "b"})
+    return out

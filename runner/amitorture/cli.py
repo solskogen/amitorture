@@ -372,6 +372,45 @@ def cmd_times(a):
     return EXIT_OK
 
 
+def cmd_axes(a):
+    from . import coverage
+    dirs = [os.path.abspath(d) for d in a.results]
+    fps = [coverage.fingerprints(d) for d in dirs]
+    if a.drops:
+        out = coverage.axis_drops(fps, modules=a.module or None)
+        if a.json:
+            print(json.dumps(out, indent=1))
+        else:
+            for m, axs in out.items():
+                print(f"{m}: " + ", ".join(f"-{ax} {o['keys']} merged/{o['differ']} verdicts differ/{o['detail']} details"
+                                          for ax, o in axs.items()))
+        return EXIT_OK
+    v = coverage.validate(fps)
+    if a.module:
+        v = {m: o for m, o in v.items() if m in a.module}
+    if a.json:
+        print(json.dumps(v, indent=1))
+    else:
+        print(coverage.format_validation(v) or "no coverage key has two entries in these results")
+    return EXIT_OK if not any(not d["detail_only"] for o in v.values() for d in o["differ"]) else EXIT_PROBLEMS
+
+
+def cmd_outcomes(a):
+    from . import coverage
+    d = coverage.outcome_diff(os.path.abspath(a.a), os.path.abspath(a.b))
+    if a.json:
+        print(json.dumps(d, indent=1))
+    else:
+        c = d["compared"]
+        print(f"{c['entries']} entries, {c['modules']} (entry, module) pairs, {c['cases']} cases in both; "
+              f"{len(d['verdicts'])} verdict(s) differ, {len(d['missing'])} case(s) in one run only")
+        for v in d["verdicts"][:a.top]:
+            print(f"  {v['entry']} {v['mod']}.{v['case']}: {v['a']} -> {v['b']}")
+        for v in d["missing"][:a.top]:
+            print(f"  {v['entry']} {v['mod']}.{v['case']}: only in {v['only'].upper()}")
+    return EXIT_OK if not d["verdicts"] and not d["missing"] else EXIT_PROBLEMS
+
+
 def cmd_import(a):
     from . import report, runner
     label = a.label or ("import-" + runner.new_run_id())
@@ -593,6 +632,24 @@ def build_parser():
     p.add_argument("--entry", action="append", metavar="GLOB", help="only these entries (repeatable)")
     p.add_argument("--json", action="store_true", help="JSON instead of a summary")
     p.set_defaults(fn=cmd_times)
+
+    p = sub.add_parser("axes", help="check the coverage axes (coverage.py) against old-style results: entries "
+                                    "with the same key must give a module the same results")
+    p.add_argument("results", nargs="+", metavar="RESULTS_DIR", help="results dirs of old-style runs (--plan off)")
+    p.add_argument("--module", action="append", metavar="NAME", help="only these modules (repeatable)")
+    p.add_argument("--drops", action="store_true",
+                   help="for each axis of each module: how many keys dropping it would merge, and how many of "
+                        "the merged entries disagree (evidence for narrower axes)")
+    p.add_argument("--json", action="store_true", help="JSON instead of a summary")
+    p.set_defaults(fn=cmd_axes)
+
+    p = sub.add_parser("outcomes", help="case verdicts of two results dirs, per (entry, module) both ran: a plan "
+                                        "run against an old-style one, per-module warp against paced")
+    p.add_argument("a", metavar="RESULTS_A")
+    p.add_argument("b", metavar="RESULTS_B")
+    p.add_argument("--top", type=int, default=40, metavar="N", help="list at most N of each (default 40)")
+    p.add_argument("--json", action="store_true", help="JSON instead of a summary")
+    p.set_defaults(fn=cmd_outcomes)
 
     p = sub.add_parser("import", help="build a report from serial captures / mailbox dumps made elsewhere")
     p.add_argument("files", nargs="+",
