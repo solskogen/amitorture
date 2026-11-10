@@ -168,9 +168,11 @@ def cpu_supports_jit(cpu_key, core):
 
 
 def cpu_supports_threaded(cpu_key, core):
-    # Amiberry runs the CPU thread for every model and core except cycle-exact
-    # (since its automatic CPU thread; an older build declines it for
-    # 68000/010, compatible and MMU, and the entry is reported as adjusted)
+    # Amiberry decides where the CPU thread runs (a 68020+ without MMU at
+    # fastest speed, since the thread became automatic; before, the plain
+    # 68020+ core only). Twins exist wherever it may run, every core but
+    # cycle-exact, so that a change of that choice is tested; where the
+    # emulator declines the thread the entry is reported as adjusted.
     return core != "ce"
 
 
@@ -361,8 +363,8 @@ def _twins_for(base, jit_variants, threaded, softfloat):
 SMOKE = [
     ("A500", "68000", "none", "ce", False, ()),
     ("A600", "68000", "none", "compat", True, ("thr",)),
-    ("A1200", "68EC020", "none", "fast", False, ("jit",)),
-    ("A3000", "68030", "68882", "compat", False, ("thr",)),
+    ("A1200", "68EC020", "none", "fast", False, ("jit", "thr")),
+    ("A3000", "68030", "68882", "compat", False, ()),
     ("A4000", "68040nommu", "internal", "fast", False, ("jit",)),
     ("A4000", "68060nommu", "internal", "fast", False, ("jit",)),
     ("AROS-AGA", "68020", "none", "fast", False, ()),

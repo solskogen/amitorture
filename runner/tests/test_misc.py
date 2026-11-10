@@ -124,7 +124,7 @@ class Matrix(unittest.TestCase):
                 self.assertIsNone(strict["twin_of"])
 
     def test_sizes(self):
-        # smoke: 15, plus threaded twins of a 68000 and an MMU machine (compatible core)
+        # smoke: 15, plus threaded twins of the A600 68000 and the A1200 (JIT and not)
         self.assertTrue(8 <= len(matrix.expand("smoke")) <= 18)
         self.assertTrue(100 <= len(matrix.expand("standard")) <= 150)
         self.assertGreater(len(matrix.expand("full")), 300)
