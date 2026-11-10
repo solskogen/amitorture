@@ -235,6 +235,7 @@ def make_options(a, binary):
         narrow_reruns=getattr(a, "narrow_reruns", 3), narrow_binaries=getattr(a, "narrow_binary", None),
         baseline=getattr(a, "baseline", None), amiberry_src=a.amiberry_src, repro=not getattr(a, "no_repro", False),
         xfail_path=a.xfail, audio=getattr(a, "audio", "auto"), warp=getattr(a, "warp", None),
+        boot_warp=getattr(a, "boot_warp", "on") != "off",
         ports=parse_ports(getattr(a, "ports", None)),
         show=_check_show(a))
 
@@ -373,9 +374,9 @@ def _common(p, kick_required=True, param_defaults=True):
     p.add_argument("--set", action="append", metavar="OPTION=VALUE",
                    help="override an Amiberry config option on every selected entry, e.g. --set cpu_threaded=true "
                         "(repeatable)")
-    p.add_argument("--timeout", type=float, default=900.0, metavar="S",
-                   help="per disk launch (default 900: the slowest launch, the core disk of a cycle-exact A500 at "
-                        "floppy_speed=100, took 441 s)")
+    p.add_argument("--timeout", type=float, default=600.0, metavar="S",
+                   help="per disk launch (default 600: the slowest launch, the core disk of a cycle-exact A500 at "
+                        "floppy_speed=100, takes about 275 s)")
     p.add_argument("--resets", type=int, default=0, metavar="N",
                    help="after the guest's done record, reset the emulator over IPC (RESET, a keyboard reset) and "
                         "run the disk again, N times per launch: catches state that only a reset sets up (e.g. "
@@ -418,6 +419,10 @@ def _common(p, kick_required=True, param_defaults=True):
                         "pacing for all other disks and audio captures; on: force warp everywhere "
                         "(experimental, invalidates audio/input/RTC/hostspeed tests). check inherits the "
                         "baseline's policy unless specified. Cannot combine with --set warp=...")
+    p.add_argument("--boot-warp", choices=["on", "off"], default="on",
+                   help="on (default): warp Kickstart, the loader and the probe of every normally paced disk; "
+                        "the runner restores the disk's pacing when the guest asks for it, before the first "
+                        "module. off: boot at the disk's own pacing")
     p.add_argument("--ports", metavar="LO-HI",
                    help="serial port range for the emulators (default $AMT_PORTS or 23540-23599)")
     p.add_argument("-q", "--quiet", action="store_true", help="no progress lines, only the final verdict")

@@ -169,7 +169,9 @@ int main(void) {
 struct tcase { ULONG n, w; ULONG (*run)(void); void (*model)(ULONG, ULONG *); };
 static const struct tcase *cur_tc;
 static ULONG got[4], wrong;
-""" + function(guest, "first_bad") + function(guest, "tramp") + """
+""" + function(guest, "crc_got") + function(guest, "first_bad") + """
+static ULONG tc_hash, tc_bad_hash;
+""" + function(guest, "tramp") + """
 static void model(ULONG i, ULONG *e) { e[0] = i; }
 static ULONG run(void) {
     ULONG i;
@@ -178,14 +180,20 @@ static ULONG run(void) {
 }
 int main(void) {
     struct tcase t = {4, 1, run, model};
+    ULONG nbad, e[1];
     cur_tc = &t;
-    assert(tramp(0) == 0);
+    run();
+    assert(first_bad(&t, &nbad, e) < 0);   /* the first pass: checked against the model */
+    tc_hash = crc_got(4);
+    assert(tramp(0) == 0 && tramp(1) == 0);
     wrong = 1;
-    assert(tramp(0) == 4 && tramp(1) == 4);
+    /* got[] differs from the verified pass although run() returns the same */
+    assert(tramp(0) == 1 && tramp(1) == 1 && tc_bad_hash != tc_hash);
 }
 """
-        self.native(source, [source.replace("return first_bad(cur_tc, &nbad, e) < 0 ? 0 : nbad;",
-                                            "return 0;")])
+        self.native(source, [source.replace("h = crc_got(cur_tc->n * cur_tc->w);",
+                                            "h = cur_tc->run();"),
+                             source.replace("if (h == tc_hash)", "if (1)")])
 
     def test_cpu_coverage_each_snippet_and_vector_after_warmup(self):
         guest = (MODULES / "cpu_basic.c").read_text()

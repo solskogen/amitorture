@@ -119,6 +119,8 @@ Baselines live in `work/baselines/<name>/` and are not part of the repository: r
                                        #   ids in CONTRACT.md §10); 0x400000 = dispatch, which is on
                                        #   the cpu disk, so combine it with the --adf above
 --disk-set DIR                         # another disk set (e.g. one built from a branch)
+--boot-warp off                        # boot at the disk's own pacing (default: warp until the
+                                       #   first module, see RUNNER.md "Automatic warp")
 --timeout S --hang S                   # see section 6
 ```
 
@@ -335,7 +337,7 @@ These boot from CD (CONTRACT §14): for an emulator run, the runner turns each b
 | `AMT_MAX_EMU=N` | at most N emulators machine-wide (default and maximum: `nproc`). The limit is shared by every amitorture process and checkout (lock files in `$AMT_LOCK_DIR`, default `$XDG_CACHE_HOME/amitorture/locks`, else `~/.cache/amitorture/locks`). |
 | `--jobs N` | entries in parallel for one run (≤ the emulator slots) |
 | `--ports LO-HI` / `AMT_PORTS` | TCP port range for the emulators' serial ports (default 23540-23599) |
-| `--timeout S` / `--hang S` | per-disk launch limit (default 900 s) / no-progress limit (default 120 s) |
+| `--timeout S` / `--hang S` | per-disk launch limit (default 600 s) / no-progress limit (default 120 s) |
 | `--audio auto|on|off` | capture emulator audio for audio checks (default: only disks that ask for it) |
 | `--keep` | keep per-run temp directories (otherwise removed) |
 | `--show` | show the emulator windows on your desktop (`run`, `baseline`, `check`, `repro`, and `tests/smoke_disk.py`); one window per running emulator, so `--jobs 4` gives four. Your own display settings are used as they are (your `SDL_*` video variables, `DISPLAY`, `WAYLAND_DISPLAY`); audio stays the runner's. HOME and `XDG_RUNTIME_DIR` stay isolated (Amiberry names its IPC socket `$XDG_RUNTIME_DIR/amiberry.sock`, which a test emulator must never take from your own Amiberry), so a relative `WAYLAND_DISPLAY` is passed as the full path of the same socket and an unset `XAUTHORITY` as your `~/.Xauthority`. Run it from a terminal on the desktop. Timing values may differ from a headless run. |

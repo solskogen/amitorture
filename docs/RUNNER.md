@@ -79,9 +79,8 @@ How the runner uses it:
   recognised by its header (build id `... <n>/<m> <group>`) and gets the same speed; the all-in-one ADF and unknown
   disks run at real speed. An explicit `floppy_speed` (`--set` or an entry's options) always wins. Turbo breaks raw
   disk-controller DMA: in disk.cpp's doreaddma turbo path DSKBLK comes early and raw MFM reads get bad checksums,
-  which the paula module reports as failures. `--timeout` is per disk launch (default 900 s). Measured at floppy_speed=100: the core disk, the slowest
-  launch, took 441 s on a cycle-exact A500 (the cpu and exp disks 118 s and 138 s; the whole set about as long as
-  the earlier seven-disk set).
+  which the paula module reports as failures. `--timeout` is per disk launch (default 600 s). Measured at floppy_speed=100 with boot warp: the core disk, the
+  slowest launch, takes about 275 s on a cycle-exact A500 (the cpu and exp disks about 90 s and 110 s).
 
 ### Automatic warp
 
@@ -101,6 +100,17 @@ checks the resolved config and `GET_WARP` at launch; an unsupported command, mal
 reply or unexpected mode is a host error, not a successful fallback. Warped launches
 poll the mailbox every 10 ms instead of 250 ms; overruns, serial recovery and record
 integrity remain visible through the existing transport checks.
+
+**Boot warp.** Whatever the disk's pacing, Kickstart, the bootblock loader, the payload load and the probe
+run in warp (`--boot-warp on`, the default): they take about 5 s instead of 43 s on a cycle-exact A500. The
+runtime sends a `pacing` request (CONTRACT §13) right after its `hello` record, before the first module; the runner
+switches the emulator to the disk's own pacing with `SET_WARP`, checks it with `GET_WARP`, and only then acks, so
+no module ever runs at a different pacing than without boot warp. If a module, case or done record arrives
+while boot warp is still on (a disk built before the `pacing` request), the runner switches warp off at once and
+records a host error for the launch. Boot warp is not used for disks that already run in warp, selftests, launches
+without a disk, or entries with the `nombox` flag (no mailbox, so no ack). The config says `warp=true` for a
+boot-warped launch, and the launch check expects warp on; results record `boot` and `boot_reason` next to the
+disk's policy. `--boot-warp off` boots at the disk's pacing.
 
 Normal pacing remains the default (`--warp off`). `--warp on` forces continuous warp
 for experiments and **invalidates timing-sensitive coverage**: Amiberry suppresses
@@ -207,7 +217,7 @@ The matrices (runner/amitorture/matrix.py):
 ```
 amitorture run --amiberry BIN --kickstarts DIR [--matrix smoke] [--config GLOB ...] [--set OPT=VAL ...]
                [--adf disk/build/amitorture.adf] [--mode full|quick] [--seed N] [--param KEY=VAL]
-               [--disk-set DIR] [--jobs N] [--keep] [--timeout S per disk (900)] [--hang S (120)]
+               [--disk-set DIR] [--jobs N] [--keep] [--timeout S per disk (600)] [--hang S (120)]
                [--narrow-budget S (7200)] [--narrow-reruns N (3)] [--narrow-binary BIN ...] [--no-narrow]
                [--baseline NAME] [--no-repro] [--amiberry-src DIR] [--xfail FILE]
                [--audio auto|on|off] [--warp off|auto|on] [--ports LO-HI] [--end-action halt|reboot|return] [-q] [--show]
@@ -425,6 +435,7 @@ a duplicate) and serves them in order (`hostreq.py`):
 | `joy` | none: Amiberry's IPC has no joystick injection | not acked |
 | `cd32pad` | no injection either; `{"buttons":0}` is acked when `joyport<port>mode=cd32joy` (default port 1; CD32 entries have `joyport1=kbd1`, `joyport1mode=cd32joy`, and no host key is ever pressed, so every button reads released) | released state, or not acked |
 | `wait` | none | acked at once |
+| `pacing` | if the boot was warped: `SET_WARP <disk pacing>`, checked with `GET_WARP` (boot warp, "Automatic warp" above) | `warp`, `was`, `switched`; refused (id \| $80000000) if the switch fails |
 
 - **The ack.** After acting, the runner writes the id to `host_ack` (mailbox+44) with `WRITE_MEM <addr> 4 <id>`
   (put_long, big-endian).

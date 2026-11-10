@@ -35,7 +35,7 @@ import struct
 import time
 
 ACK_OFFSET = 44
-KNOWN = ("screenshot", "audio_mark", "key", "mouse", "joy", "cd32pad", "wait")
+KNOWN = ("screenshot", "audio_mark", "key", "mouse", "joy", "cd32pad", "wait", "pacing")
 
 NO_JOY = ("Amiberry's IPC (src/osdep/amiberry_ipc_socket.cpp) has no joystick/CD32 pad injection: only "
           "SEND_KEY (Amiga keyboard), SEND_MOUSE (mouse device 0) and SET_JOYPORT_MODE")
@@ -80,13 +80,17 @@ class Requests:
     rawdir      where screenshots/audio segments go (raw/<entry>/<disk>/)
     rel         the same, relative to the results dir (for the paths in results)
     options     the entry's Amiberry options (joyport mapping for mouse)
+    pacing      warp state (0/1) the disk's modules run at: a ``pacing``
+                request sets it (ending a warped boot) before it is acked
     audio       audio.Capture or None (no capture in this launch)
     frame_hz    50 (PAL) / 60 (NTSC): screenshot {"frames": n} waits n frames
     """
 
     def __init__(self, ipc, rawdir, rel="", options=None, audio=None, frame_hz=50, clock=time.monotonic,
-                 sleep=time.sleep, t0=None, log=None):
+                 sleep=time.sleep, t0=None, log=None, pacing=0):
         self.ipc, self.rawdir, self.rel = ipc, rawdir, rel
+        self.pacing = 1 if pacing else 0
+        self.pacing_done = False
         self.options = options or {}
         self.audio = audio
         self.frame_hz = frame_hz or 50
@@ -195,6 +199,22 @@ class Requests:
     # -- actions: each returns (ok, result) -----------------------------------
     def _do_wait(self, obj, args, rid, tag):
         return True, {}
+
+    def _do_pacing(self, obj, args, rid, tag):
+        """End of the (possibly warped) boot: set the disk's own warp state
+        and verify it before the ack lets the first module start."""
+        want = f"OK\t{self.pacing}"
+        before = self.ipc.request("GET_WARP")
+        switched = before != want
+        if switched:
+            reply = self.ipc.request(f"SET_WARP\t{self.pacing}")
+            if not reply.startswith("OK"):
+                return False, {"error": f"IPC SET_WARP {self.pacing}: {reply}"}
+        after = self.ipc.request("GET_WARP")
+        if after != want:
+            return False, {"error": f"warp state after SET_WARP: expected {want!r}, got {after!r}"}
+        self.pacing_done = True
+        return True, {"warp": self.pacing, "was": before.split("\t")[-1], "switched": switched}
 
     def _do_screenshot(self, obj, args, rid, tag):
         frames = max(0, min(_int(args.get("frames")), 50 * 60))

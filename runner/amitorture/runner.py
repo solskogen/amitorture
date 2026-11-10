@@ -47,6 +47,7 @@ class Options:
         self.media = kw.get("media", True)
         self.audio = kw.get("audio", "auto")          # auto | on | off (SDL disk audio capture)
         self.warp = kw.get("warp")
+        self.boot_warp = kw.get("boot_warp", True)    # warp Kickstart and the loader until the guest's pacing request
         if self.warp not in (None, "off", "auto", "on"):
             raise RunnerError(f"unknown warp policy {self.warp!r}")
         if self.warp is not None and "warp" in self.sets:
@@ -82,10 +83,11 @@ class EntryRun:
     URGENT_SCAN = 0.25      # full scans this often while a request waits for the mailbox
     DONE_GRACE = 5.0
 
-    def __init__(self, opts, entry, rawdir, rel="", audio=None, warp=False):
+    def __init__(self, opts, entry, rawdir, rel="", audio=None, warp=False, boot_warp=False):
         self.opts, self.entry, self.rawdir, self.rel = opts, entry, rawdir, rel
         if warp:
             self.POLL = self.POLL_BUSY
+        self.boot_warp = boot_warp  # warped until the pacing request is served (or a module starts)
         self.audio = audio          # audio.Capture (SDL disk driver) or None
         self.requests = None        # hostreq.Requests, once the IPC is up
         self._taken = {"serial": 0, "mailbox": 0}
@@ -383,7 +385,8 @@ def _launch_once(opts, entry, run, argv, env, home, rawdir, port, res):
             run.requests = hostreq.Requests(
                 ipc, rawdir, run.rel, options=entry["options"], audio=run.audio,
                 frame_hz=60 if entry["options"].get("ntsc") == "true" else 50, t0=run.t0,
-                log=(lambda m: log(opts, f"{entry['id']}: {m}")) if opts.verbose else None)
+                log=(lambda m: log(opts, f"{entry['id']}: {m}")) if opts.verbose else None,
+                pacing=res["warp"]["effective"])
             ended = observe(opts, entry, run, proc, serial, ipc, res)
     except (OSError, RunnerError) as e:
         emulator.check_interrupt()          # the IPC broke because Ctrl+C stopped the emulator
@@ -615,12 +618,40 @@ def disk_warp(opts, entry, info, capture=False, extra=None):
     return {"requested": mode, "effective": enabled, "group": group, "reason": reason}
 
 
+def _flag_on(params, name):
+    fl = params.get("flags", 0)
+    try:
+        return bool((int(fl, 0) if isinstance(fl, str) else int(fl)) & FLAG_BITS[name])
+    except ValueError:
+        return name in [x.strip() for x in str(fl).replace("+", ",").split(",")]
+
+
+def boot_warp(opts, policy, params, has_disk=True):
+    """Warp the boot (Kickstart, loader, probe) of a normally paced disk:
+    the guest asks for its pacing (a ``pacing`` request) before the first
+    module, and the runner switches warp off before acking it. Adds "boot"
+    and "boot_reason" to the policy."""
+    if policy["effective"]:
+        on, why = False, "the whole disk runs warped"
+    elif not getattr(opts, "boot_warp", True):
+        on, why = False, "disabled (--boot-warp off)"
+    elif getattr(opts, "selftest", False) or not has_disk:
+        on, why = False, "no test disk"
+    elif _flag_on(params, "nombox"):
+        on, why = False, "no mailbox: the pacing request cannot be acked"
+    else:
+        on, why = True, "warped until the guest's pacing request"
+    policy["boot"], policy["boot_reason"] = on, why
+    return policy
+
+
 def verify_warp(ipc, policy):
+    want = int(policy["effective"] or policy.get("boot", False))
     reply = ipc.request("GET_WARP")
     policy["reply"] = reply
-    policy["verified"] = reply == f"OK\t{int(policy['effective'])}"
+    policy["verified"] = reply == f"OK\t{want}"
     if not policy["verified"]:
-        raise RunnerError(f"warp state verification failed: expected {int(policy['effective'])}, got {reply!r}")
+        raise RunnerError(f"warp state verification failed: expected {want}, got {reply!r}")
 
 
 def adf_set_group(path):
@@ -756,8 +787,9 @@ def _run_disk(opts, ctx, entry, binary=None, extra_options=None, disk=None):
         extra.update(extra_options)
     src_disk = disk[1] if disk else (None if opts.no_disk else ctx.get("adf_src"))
     capture = audio_wanted(opts, entry, src_disk)
-    res["warp"] = disk_warp(opts, entry, res.get("disk"), capture, extra)
-    extra["warp"] = "true" if res["warp"]["effective"] else "false"
+    res["warp"] = boot_warp(opts, disk_warp(opts, entry, res.get("disk"), capture, extra), params,
+                            has_disk=res.get("disk") is not None)
+    extra["warp"] = "true" if res["warp"]["effective"] or res["warp"]["boot"] else "false"
     port = emulator.pick_port(*(opts.ports or emulator.PORT_RANGE))
     cfg_entry = dict(entry, options={k: (v.replace("{media}", media_dir) if isinstance(v, str) else v)
                                      for k, v in entry["options"].items()})
@@ -823,11 +855,13 @@ def _run_disk(opts, ctx, entry, binary=None, extra_options=None, disk=None):
                 if os.path.exists(audio_path):
                     os.remove(audio_path)
                 cap = audiomod.Capture(audio_path, rawdir, rel)
-            run = EntryRun(eopts, entry, rawdir, rel, audio=cap, warp=res["warp"]["effective"])
+            run = EntryRun(eopts, entry, rawdir, rel, audio=cap, warp=res["warp"]["effective"],
+                           boot_warp=res["warp"]["boot"])
             log(opts, f"{rid}{(' [' + dname + ']') if dname else ''}: launching ({entry['title']}), serial port {port}"
                 + (f", attempt {attempt}" if attempt > 1 else "")
                 + (f", binary {binary}" if binary != opts.binary else "")
-                + f", warp {'on' if res['warp']['effective'] else 'off'} ({res['warp']['reason']})")
+                + f", warp {'on' if res['warp']['effective'] else 'off'} ({res['warp']['reason']})"
+                + (", warped boot" if res["warp"]["boot"] else ""))
             proc, serial, ipc, ended, exit_before_stop, stop = _launch_once(eopts, entry, run, argv, env, home,
                                                                             rawdir, port, res)
             emulator.check_interrupt()      # stopped by Ctrl+C: not a result
@@ -1257,6 +1291,8 @@ def observe(opts, entry, run, proc, serial, ipc, res):
                     raise
                 if run.follower is not None:
                     run.last_progress = time.monotonic()
+        if run.boot_warp:
+            end_boot_warp(run, ipc, res)
         s_done, m_done = run.done_seen(min_boot)
         finished_state = h is not None and h.state in (2, 3, 4) and (min_boot == 0 or m_done)
         if (s_done or m_done or finished_state) and done_at is None:
@@ -1304,7 +1340,31 @@ def observe(opts, entry, run, proc, serial, ipc, res):
             n = run.requests.stats.get("requests", 0)
             if n != last_req_n:
                 last_req_n, last_req_t = n, now
-        time.sleep(run.POLL_BUSY if now - last_req_t < run.BUSY_WINDOW else run.POLL)
+        time.sleep(run.POLL_BUSY if run.boot_warp or now - last_req_t < run.BUSY_WINDOW else run.POLL)
+
+
+def end_boot_warp(run, ipc, res):
+    """A warped boot ends with the guest's pacing request (hostreq sets the
+    disk's warp state before the ack). Should a module or the end of the
+    disk come first (a disk without the request, the request lost or timed
+    out), warp goes off at once and the launch says so."""
+    w = res["warp"]
+    if run.requests is not None and run.requests.pacing_done:
+        run.boot_warp = False
+        w["boot_ended_s"] = round(time.monotonic() - run.t0, 3)
+        return
+    with run.lock:
+        early = next((r for r in run.serial_parser.records + run.mbox_parser.records
+                      if r.crc_ok and r.type in ("mod", "case", "done")), None)
+    if early is None:
+        return
+    run.boot_warp = False
+    ipc.request("SET_WARP\t0")
+    reply = ipc.request("GET_WARP")
+    w["boot_ended_s"] = round(time.monotonic() - run.t0, 3)
+    w["boot_error"] = (f"no pacing request was served before a {early.type!r} record: warp switched off "
+                       f"late ({reply}); the first tests may have run warped")
+    log(run.opts, f"{run.entry['id']}: {w['boot_error']}")
 
 
 def summarize_records(merged, run):

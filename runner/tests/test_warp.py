@@ -100,8 +100,10 @@ class Warp(unittest.TestCase):
                     r = runner._run_disk(self.opts(warp=mode), ctx, self.entry, disk=(name, "source.adf"))
                 self.assertEqual(r["status"], "error")
                 self.assertEqual(r["warp"]["effective"], enabled)
+                # a normally paced disk boots warped until its pacing request
+                self.assertEqual(r["warp"]["boot"], not enabled)
                 cfg = self.root / "results" / r["config"]["file"]
-                self.assertEqual(amiberry_cfg.parse(cfg.read_text())["warp"], str(enabled).lower())
+                self.assertEqual(amiberry_cfg.parse(cfg.read_text())["warp"], "true")
 
     def test_runtime_state_must_match_and_be_supported(self):
         for expected in (True, False):
@@ -116,6 +118,60 @@ class Warp(unittest.TestCase):
                 with self.assertRaisesRegex(runner.RunnerError, "verification failed"):
                     runner.verify_warp(ipc, w)
                 self.assertFalse(w["verified"])
+
+    def test_boot_warp_policy(self):
+        normal = {"effective": False}
+        cases = (({}, {}, True, True),
+                 ({"boot_warp": False}, {}, True, False),
+                 ({"selftest": True}, {}, True, False),
+                 ({}, {}, False, False),
+                 ({}, {"flags": "4"}, True, False),
+                 ({}, {"flags": "noserial,nombox"}, True, False),
+                 ({}, {"flags": "2"}, True, True))
+        for kw, params, has_disk, want in cases:
+            with self.subTest(kw=kw, params=params, has_disk=has_disk):
+                w = runner.boot_warp(self.opts(**kw), dict(normal), params, has_disk=has_disk)
+                self.assertEqual(w["boot"], want)
+                self.assertTrue(w["boot_reason"])
+        w = runner.boot_warp(self.opts(), {"effective": True}, {})
+        self.assertFalse(w["boot"])
+        self.assertTrue(cli.build_parser().parse_args(["run"]).boot_warp == "on")
+        self.assertEqual(cli.build_parser().parse_args(["run", "--boot-warp", "off"]).boot_warp, "off")
+
+    def test_launch_with_boot_warp_expects_warp_on(self):
+        ipc = mock.Mock()
+        ipc.request.return_value = "OK\t1"
+        w = {"effective": False, "boot": True}
+        runner.verify_warp(ipc, w)
+        self.assertTrue(w["verified"])
+        ipc.request.return_value = "OK\t0"
+        with self.assertRaisesRegex(runner.RunnerError, "expected 1"):
+            runner.verify_warp(ipc, dict(w))
+
+    def test_boot_warp_ends_when_a_module_starts_without_pacing(self):
+        run = runner.EntryRun(self.opts(verbose=False), self.entry, str(self.root), boot_warp=True)
+        try:
+            run.requests = mock.Mock(pacing_done=False)
+            ipc = mock.Mock()
+            ipc.request.return_value = "OK\t0"
+            res = {"warp": {"effective": False, "boot": True}}
+            run.serial_parser.feed(b"")
+            runner.end_boot_warp(run, ipc, res)
+            self.assertTrue(run.boot_warp)
+            ipc.request.assert_not_called()
+            run.serial_parser.records.append(mock.Mock(crc_ok=True, type="mod"))
+            runner.end_boot_warp(run, ipc, res)
+            self.assertFalse(run.boot_warp)
+            ipc.request.assert_any_call("SET_WARP\t0")
+            self.assertIn("no pacing request", res["warp"]["boot_error"])
+            run.boot_warp = True
+            res = {"warp": {"effective": False, "boot": True}}
+            run.requests.pacing_done = True
+            runner.end_boot_warp(run, ipc, res)
+            self.assertFalse(run.boot_warp)
+            self.assertNotIn("boot_error", res["warp"])
+        finally:
+            run.close()
 
     def test_only_warped_launches_increase_transport_poll_frequency(self):
         for warp in (True, False):

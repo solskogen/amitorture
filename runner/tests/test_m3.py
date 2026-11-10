@@ -105,6 +105,44 @@ class HostRequests(unittest.TestCase):
         self.rq.new_boot()        # after a reboot the same id/seq is a new request
         self.assertTrue(self.rq.offer(req(5, 1, "wait"), "serial"))
 
+    def test_pacing_ends_a_warped_boot_before_the_ack(self):
+        class WarpIPC(FakeIPC):
+            def __init__(self, warp, stuck=False):
+                super().__init__()
+                self.warp, self.stuck = warp, stuck
+
+            def request(self, line, timeout=15):
+                if line == "GET_WARP":
+                    self.lines.append(line)
+                    return f"OK\t{self.warp}"
+                if line.startswith("SET_WARP") and not self.stuck:
+                    self.warp = int(line.split("\t")[1])
+                return super().request(line, timeout)
+
+        for disk_warp, boot_warp, switched in ((0, 1, True), (0, 0, False), (1, 1, False)):
+            with self.subTest(disk_warp=disk_warp, boot_warp=boot_warp):
+                ipc = WarpIPC(boot_warp)
+                rq = hostreq.Requests(ipc, self.d, pacing=disk_warp)
+                rq.offer(req(1, 1, "pacing", "boot"), "serial")
+                h = rq.service(self.MBOX)[0]
+                self.assertTrue(h["acked"])
+                self.assertEqual(h["result"]["switched"], switched)
+                self.assertEqual(ipc.warp, disk_warp)
+                self.assertTrue(rq.pacing_done)
+                acks = [i for i, ln in enumerate(ipc.lines) if ln.startswith("WRITE_MEM")]
+                sets = [i for i, ln in enumerate(ipc.lines) if ln.startswith("SET_WARP")]
+                self.assertEqual(len(sets), int(switched))
+                self.assertTrue(all(s < acks[0] for s in sets))
+        # warp cannot be switched off: refused, the guest goes on at once
+        ipc = WarpIPC(1, stuck=True)
+        rq = hostreq.Requests(ipc, self.d, pacing=0)
+        rq.offer(req(1, 7, "pacing", "boot"), "serial")
+        h = rq.service(self.MBOX)[0]
+        self.assertFalse(h["acked"])
+        self.assertIn("warp state", h["result"]["error"])
+        self.assertFalse(rq.pacing_done)
+        self.assertEqual(ipc.mem[self.MBOX + 44], 7 | 0x80000000)
+
     def test_unknown_and_joystick_are_refused_not_acked(self):
         self.rq.offer(req(1, 1, "teleport"), "serial")
         self.rq.offer(req(2, 2, "joy", args={"port": 1, "dirs": "u", "fire": 1}), "serial")

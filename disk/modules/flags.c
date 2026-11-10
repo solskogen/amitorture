@@ -218,12 +218,21 @@ static long first_bad(const struct tcase *t, ULONG *nbad, ULONG *ebad)
     return fb;
 }
 
+/* The first pass is checked against the model; every repetition, including
+ * potentially compiled execution, must reproduce its got[] exactly. tramp
+ * hashes got[] itself (run()'s return value is not evidence): re-running the
+ * model per repetition cost ~70 % of the module on a 68000. */
+static ULONG tc_hash, tc_bad_hash;
 static ULONG tramp(ULONG it)
 {
-    ULONG nbad, e[12];
+    ULONG h;
     (void)it;
     cur_tc->run();
-    return first_bad(cur_tc, &nbad, e) < 0 ? 0 : nbad;
+    h = crc_got(cur_tc->n * cur_tc->w);
+    if (h == tc_hash)
+        return 0;
+    tc_bad_hash = h;
+    return 1;
 }
 
 static void run_tcase(const struct tcase *t)
@@ -233,6 +242,7 @@ static void run_tcase(const struct tcase *t)
 
     cur_tc = t;
     t->run();
+    tc_hash = crc_got(t->n * t->w);
     fb = first_bad(t, &nbad, e);
     if (fb < 0) {
         hot = amt_hot_checked(tramp, reps_for(t->n), &first, &bad);
@@ -240,6 +250,8 @@ static void run_tcase(const struct tcase *t)
             amt_case(t->id, AMT_ST_PASS, 0);
             return;
         }
+        first = tc_hash;
+        bad = tc_bad_hash;
         /* got[] now holds the diverging pass */
         fb = first_bad(t, &nbad, e);
     }

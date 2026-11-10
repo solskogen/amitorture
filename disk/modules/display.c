@@ -12,7 +12,11 @@
  * under sprite 2n has that plane bit set. Reads are timing-independent:
  * the scene is static from frame to frame, the CPU changes CLXCON/sprite
  * lists at a vertical blank, throws away CLXDAT at the next one and reads
- * it two frames later (clean_clx): the OR of two complete frames. One probe
+ * it two frames later (clean_clx): the OR of two complete frames. When only
+ * CLXCON changes (scan_mask, sprite/sprite collisions) and the CPU is still
+ * before line $14 of the frame whose CLXDAT it just read, that read serves
+ * as the discard and the vertical-blank wait is skipped (FC_SAME): sprite
+ * DMA starts at line $19. One probe
  * group (4 sprites) and one plane per measurement; the colour index under
  * each probe is assembled from one measurement per plane. Fetch widths,
  * modulos, scrolling, window edges and sprite widths are all turned into
@@ -120,12 +124,15 @@ static void cptr(UWORD reg, const void *p) { cm(reg, (UWORD)((ULONG)p >> 16)); c
  * PY(i)+dy; empty lists for slots without a probe */
 static void build_group(int i, int first, int count)
 {
+    /* no libgcc multiply/modulo: on a 68000 they would push the first read
+     * of the group past early_vblank() (count is 2 or 4) */
+    UWORD y0 = (UWORD)(PY0 + (UWORD)pstep * (UWORD)i);
     int s;
     for (s = 0; s < 4; s++) {
         UWORD *sl = spr_list[s * 2];
-        struct probe *p = &pr[i][first + (s % count)];
+        struct probe *p = &pr[i][first + (s & (count - 1))];
         if (s < count && p->data) {
-            UWORD y = (UWORD)(PY(i) + p->dy);
+            UWORD y = (UWORD)(y0 + p->dy);
             *sl++ = (UWORD)((y << 8) | ((p->h >> 1) & 0xff));
             *sl++ = (UWORD)(((y + 1) << 8) | (p->h & 1) | ((p->fine & 2) << 3) |
                             ((p->fine & 1) << 3) | sc.sprctl_or);
@@ -187,6 +194,9 @@ static void cop_palette(void)
     }
 }
 
+/* the frame wait_vbl last saw begin (~0: none, the VBL interrupt stalled) */
+static ULONG vbl_seen = ~0UL;
+
 static int wait_vbl(void)
 {
     ULONG f = amt_frames_now();
@@ -199,11 +209,22 @@ static int wait_vbl(void)
             amt_abort(AMT_ABORT_WATCHDOG);
         }
         v = hw_vline();
-        if (v < last && ++wraps > 3)
+        if (v < last && ++wraps > 3) {
+            vbl_seen = ~0UL;
             return 0;
+        }
         last = v;
     }
+    vbl_seen = f + 1;
     return 1;
+}
+
+/* Still in the vertical blank of the frame wait_vbl just saw begin, before
+ * any sprite or bitplane DMA of it (sprite DMA starts at line $19). */
+#define EARLY_VLINES 0x14
+static int early_vblank(void)
+{
+    return vbl_seen != ~0UL && amt_frames_now() == vbl_seen && hw_vline() < EARLY_VLINES;
 }
 
 static void wait_frames(int n)
@@ -212,11 +233,14 @@ static void wait_frames(int n)
         wait_vbl();
 }
 
-/* build the copper list for the current scene + probes and start it */
-static void apply(void)
+/* build the copper list for the current scene + probes and start it;
+ * apply() then waits two frames, apply_nowait() is for scan_mask, whose
+ * first clean_clx synchronises to a VBL and discards a frame itself */
+static void apply_nowait(void)
 {
     UWORD *base;
     int i;
+    vbl_seen = ~0UL;        /* the scene changes mid-frame: next read synchronises */
     copi ^= 1;
     base = (UWORD *)(pool + OFF_COP + copi * COP_BYTES);
     cw = base;
@@ -236,6 +260,11 @@ static void apply(void)
     CU(DMACON) = (sc.flags & SF_NOSPR) ? DMAF_SPREN : 0;
     CU(DMACON) = (UWORD)(DMAF_SET | DMAF_DMAEN | DMAF_BPLEN | DMAF_COPEN |
                          ((sc.flags & SF_NOSPR) ? 0 : DMAF_SPREN));
+}
+
+static void apply(void)
+{
+    apply_nowait();
     wait_frames(2);
 }
 
@@ -262,6 +291,12 @@ static void wait_line(UWORD y)
  * OR of two complete, fully set up frames. A CPU that reads late only adds
  * collisions of identical frames. */
 #define FC_REVERSE 1                  /* write CLXCON2 before CLXCON */
+/* Nothing changed since the last VBL wait but sprite data in memory: when
+ * that VBL is still early_vblank(), the frame now starting already shows the
+ * whole scene, so it serves as the synchronising VBL (it is discarded like
+ * one) and one frame is saved. scan_mask (always right after
+ * apply_nowait()) and clx_spr_spr (CLXCON changes only) read this way. */
+#define FC_SAME 2
 /* Frames thrown away after a change. 3 were used first, against cores that
  * deliver a frame's collisions late; an A/B on 4 machines (a1200, a4000
  * fast, AROS, a500 cycle-exact), 3 rounds each, gave the same results with
@@ -273,7 +308,8 @@ static void wait_line(UWORD y)
 static UWORD clean_clx(UWORD clx, UWORD clx2, int flags)
 {
     UWORD r;
-    wait_vbl();
+    if (!(flags & FC_SAME) || !early_vblank())
+        wait_vbl();
     if (flags & FC_REVERSE) {
         if (aga)
             CU(CLXCON2) = clx2;
@@ -324,7 +360,7 @@ static void scan_mask(UBYTE mask)
                     clx = clx_plane(p);
                 else
                     clx2 = (p == 6) ? 0x41 : 0x82;
-                r = clean_clx(clx, clx2, 0);
+                r = clean_clx(clx, clx2, FC_SAME);
                 pr_clx[i][p] |= r;
                 for (s = 0; s < slots; s++)
                     if (pr[i][first + s].data && (r & (bit << s)))
@@ -489,7 +525,7 @@ static int edge_scan(int res, int np_plane, UWORD hfrom, int n, int *first)
         p->data = 0x8000;
     }
     pr_n = (n + 3) / 4;
-    apply();
+    apply_nowait();
     scan_mask((UBYTE)(1 << np_plane));
     for (j = 0; j < n; j++) {
         int hit = (pr_col[j / 4][j % 4] >> np_plane) & 1;
@@ -602,7 +638,7 @@ static void mode_case(const char *id, int res, int np, UWORD con0x, const char *
     rb = fill_cells(np, 1 << res, 20, cellcol);
     sc.mod1 = sc.mod2 = (WORD)-rb;
     cell_probes(res, 20);
-    apply();
+    apply_nowait();
     scan_colors(np);
     ok = check_cells(20, mask, &bad);
     if (want_shot)
@@ -986,7 +1022,7 @@ static void clx_sprspr_tests(void)
                                                              { 0, 0, 0, 14 }, { 0 } };
                             x |= (UWORD)(1 << bit[a][b]);
                         }
-            g = frame_clx(clx, 0, 0) & 0x7e00;
+            g = frame_clx(clx, 0, FC_SAME) & 0x7e00;
             if (g != x) {
                 badl = l;
                 bade = e;
@@ -1267,7 +1303,7 @@ static void edge_measure(UWORD hfrom, int n, int pl, int np, int *first, int *la
         p->data = 0x8000;
     }
     pr_n = (n + 3) / 4;
-    apply();
+    apply_nowait();
     scan_mask((UBYTE)(1 << pl));
     (void)np;
     *first = *last = -1;
@@ -1423,7 +1459,7 @@ static void diw_v_test(void)
             pr[6][0].h = 0xa0; pr[6][0].dy = 0; pr[6][0].data = 0xffff;
             pr[6][1].h = 0xc0; pr[6][1].dy = 1; pr[6][1].data = 0xffff;
         }
-        apply();
+        apply_nowait();
         scan_colors(1);
         if (!k) {
             got[0] = pr_col[2][0] & 1;
@@ -1562,7 +1598,7 @@ static void ddf_tests(void)
                     pr[i][s].h = (UWORD)(origin[d->res] + (k0 + col) * wpx + wpx / 2 - (d->res ? 1 : 2));
                 }
         }
-        apply();
+        apply_nowait();
         scan_colors(np);
         display_off();
         {
@@ -1757,7 +1793,7 @@ static void fmode_tests(void)
                 pr[i][s].data = 0xf000;
             }
         }
-        apply();
+        apply_nowait();
         scan_colors(8);
         display_off();
         for (i = 0; i < 8; i++)
@@ -1870,7 +1906,7 @@ static void spr_aga_tests(void)
             for (i = 0; i < 8; i++)
                 q[i] = 0;
         }
-        apply();
+        apply_nowait();
         scan_colors(5);
         display_off();
         got = pr_col[0][0];
@@ -1919,7 +1955,7 @@ static void spr_aga_tests(void)
             pr[0][0].data = 0x7ffe;
             pr[0][2].h = (UWORD)(origin[0] + 64 + 10);
             pr[0][2].data = 0x7ffe;
-            apply();
+            apply_nowait();
             scan_colors(2);
             display_off();
             a = pr_col[0][0];

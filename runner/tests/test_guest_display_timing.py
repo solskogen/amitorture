@@ -45,7 +45,9 @@ typedef uint16_t UWORD;
 typedef uint32_t ULONG;
 enum { AMT_ST_PASS, AMT_ST_FAIL, AMT_ST_UNTESTABLE };
 #define NPL 48
-#define PY(i) (0x48 + pstep * (i))
+#define PY0 0x48
+#define PY(i) (PY0 + pstep * (i))
+#define FC_SAME 2
 #define SF_CUSTSPR 0x20
 struct probe { UWORD h; UBYTE fine, dy; UWORD data; };
 static struct probe pr[NPL][4];
@@ -82,7 +84,7 @@ static UWORD clean_clx(UWORD clx, UWORD clx2, int flags)
         p = selecting++ % 7;
         if (!p) group++;
     }
-    assert(!flags);
+    assert(flags == FC_SAME);   /* only CLXCON changes between scan_mask reads */
     assert(clx == (p < 6 ? ((0x40 << p) | (1 << p)) : 0));
     assert(clx2 == (p == 6 ? 0x41 : 0));
     for (s = 0; s < slots; s++)

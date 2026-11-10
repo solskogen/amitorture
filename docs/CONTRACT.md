@@ -411,6 +411,7 @@ Used for things the guest can't do or observe itself: screenshots, audio capture
 | `joy` | `{"port":p,"dirs":"<subset of udlr>","fire":b}`: absolute state, "" = centred; b bit0 = fire 1 (pin 6), bit1 = fire 2 (pin 9) | IPC joystick injection, if the emulator has one. Amiberry's IPC has none (only SEND_KEY, SEND_MOUSE, SET_JOYPORT_MODE; SEND_KEY codes > $7F are AKS_* input events, not joystick events): not acked. |
 | `cd32pad` | `{"port":p,"buttons":mask}`: absolute; mask bit0 blue, 1 red, 2 yellow, 3 green, 4 forward, 5 reverse, 6 play (the pad's shift order) | as above (not acked on Amiberry). A host that has a CD32 pad attached on that port (Amiberry: `joyportN=<device>`, `joyportNmode=cd32joy`, e.g. joyport1=kbd1) but cannot press its buttons may ack `buttons:0` only: the guest then checks the pad id/released state. |
 | `wait` | `{}` | host acks immediately (round-trip/latency test) |
+| `pacing` | `{}` (tag `boot`) | sent once by the runtime right after `hello`, before the first module. A host that warped the boot (Kickstart, loader, probe) switches the emulator to the disk's own pacing (Amiberry: IPC `SET_WARP`, checked with `GET_WARP`) and acks only after that; result: `warp`, `was`, `switched`. A host that cannot switch refuses it (N \| $80000000). Either way the guest just continues: this request has no case. |
 
 Unknown `what` values are never acknowledged.
 
