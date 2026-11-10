@@ -39,7 +39,48 @@ def host():
     except OSError:
         pass
     d["cpu_model"] = host_brief().get("cpu_model")
+    freq = cpufreq()
+    if freq:
+        d["cpufreq"] = freq
     return d
+
+
+def _read(path):
+    try:
+        with open(path, encoding="utf-8") as fh:
+            return fh.read().strip()
+    except OSError:
+        return None
+
+
+def cpufreq(root="/sys/devices/system/cpu"):
+    """Linux CPU frequency scaling: the governor(s), driver, energy/performance
+    preference and boost. Timing and benchmark numbers depend on them (e.g.
+    "powersave" delays waking an idle core), so they are recorded with the
+    host. Values that differ between CPUs are joined with "/". {} without
+    cpufreq (not Linux, a VM, or no permission)."""
+    try:
+        cpus = sorted((n for n in os.listdir(root) if n.startswith("cpu") and n[3:].isdigit()),
+                      key=lambda n: int(n[3:]))
+    except OSError:
+        return {}
+    out = {}
+    for key, name in (("governor", "scaling_governor"), ("driver", "scaling_driver"),
+                      ("epp", "energy_performance_preference")):
+        vals = []
+        for c in cpus:
+            v = _read(os.path.join(root, c, "cpufreq", name))
+            if v is not None and v not in vals:
+                vals.append(v)
+        if vals:
+            out[key] = "/".join(vals)
+    boost = _read(os.path.join(root, "cpufreq", "boost"))
+    if boost is None:
+        no_turbo = _read(os.path.join(root, "intel_pstate", "no_turbo"))
+        boost = None if no_turbo is None else ("0" if no_turbo == "1" else "1")
+    if boost is not None:
+        out["boost"] = boost == "1"
+    return out
 
 
 # ARM "CPU part" ids (/proc/cpuinfo) of common cores, for host_brief()
@@ -56,7 +97,8 @@ def host_brief():
     on (host.speed_* failures name it)."""
     global _BRIEF
     if _BRIEF is not None:
-        return dict(_BRIEF)
+        freq = cpufreq()
+        return dict(_BRIEF, **({"cpufreq": freq} if freq else {}))
     model = None
     try:
         with open("/proc/cpuinfo", encoding="utf-8", errors="replace") as fh:
@@ -81,4 +123,4 @@ def host_brief():
     except OSError:
         pass
     _BRIEF = d
-    return dict(d)
+    return host_brief()

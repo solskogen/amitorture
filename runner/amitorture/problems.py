@@ -138,7 +138,8 @@ def group(items, results, narrowing=None):
     others = {}
     # an engine mismatch on a case that also fails on that entry is the same
     # finding: it stays in failures.jsonl but is folded into the case_fail problem
-    failing = {(i["entry"], i.get("case_key")) for i in items if i["kind"] == "case_fail" and not i.get("xfail")}
+    # (or into its xfail when the failure is a known bug)
+    failing = {(i["entry"], i.get("case_key")) for i in items if i["kind"] == "case_fail"}
     folded = {}
     for it in items:
         if it["kind"] == "engine_mismatch" and (it["entry"], it.get("case_key")) in failing:

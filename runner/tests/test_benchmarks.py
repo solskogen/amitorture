@@ -226,7 +226,7 @@ int main(void) {
 """
         cfile = binary.with_suffix(".c")
         cfile.write_text(c)
-        subprocess.run([compiler, "-std=c99", "-Wall", "-Wextra", "-Werror", str(cfile), "-o", str(binary)],
+        subprocess.run([compiler, "-std=c99", "-Wall", "-Wextra", "-Werror", "-DAMT_BENCHMARK_ONLY", str(cfile), "-o", str(binary)],
                        check=True, capture_output=True, text=True)
         result = subprocess.run([str(binary)], check=True, capture_output=True, text=True, timeout=10)
         cls.rows = [(int(cpu), int(fpu), int(mmu), int(chip), name, why)
@@ -234,7 +234,8 @@ int main(void) {
                     (line.split("\t") for line in result.stdout.splitlines())]
 
     def test_generation_specific_and_universal_workloads_across_every_variant(self):
-        universal = {"stop", "empty", "add_l", "ram_read", "custom_read", "cia_read", "empty_final"}
+        universal = {"stop", "empty", "add_l", "ram_read", "custom_read", "cia_read", "empty_final",
+                     "vbl_poll", "chipset_load"}
         checks = 0
         for cpu, fpu, mmu, chip, name, why in self.rows:
             allowed = (True if name in universal else cpu >= 1 if name == "movec_vbr" else
@@ -246,7 +247,7 @@ int main(void) {
             self.assertEqual(not why, allowed, (cpu, fpu, mmu, chip, name, why))
             if not allowed:
                 self.assertIn("requires", why)
-        self.assertEqual(checks, 12 * 5 * 2 * 2 * 11)
+        self.assertEqual(checks, 12 * 5 * 2 * 2 * 13)
 
     def test_existing_fpu_integer_and_memory_restrictions_remain_intact(self):
         for cpu, fpu, mmu, chip, name, why in self.rows:

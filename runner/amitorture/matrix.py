@@ -650,10 +650,13 @@ def speed_entries(name):
 
 
 def benchmark_entries():
-    """CPU-family coverage without the normal max-speed hostspeed exclusion."""
+    """CPU-family coverage without the normal max-speed hostspeed exclusion,
+    plus a cycle-exact A500: real-speed pacing, where the frame blocks
+    (stop, vbl_poll, chipset_load) show the host cost of the CE chipset."""
     out = []
     for model, cpu, fpu, core in (
         ("A500", "68000", "none", "compat"),
+        ("A500", "68000", "none", "ce"),
         ("A2000", "68010", "none", "compat"),
         ("A1200", "68020", "none", "fast"),
         ("A3000", "68030", "68882", "compat"),
@@ -661,7 +664,7 @@ def benchmark_entries():
         ("A4000", "68040nommu", "internal", "fast"),
         ("A4000", "68060nommu", "internal", "fast"),
     ):
-        base = make_entry(model, cpu, fpu, core, eid=f"bench-{cpu.lower()}",
+        base = make_entry(model, cpu, fpu, core, eid=f"bench-{cpu.lower()}" + ("-ce" if core == "ce" else ""),
                           title_extra=", benchmarks only")
         base["disk_groups"] = ["cpux"]
         base["params"] = {"modules": module_mask(["hostspeed"])}

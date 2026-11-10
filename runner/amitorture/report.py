@@ -497,8 +497,8 @@ def host_summary(results):
 
 
 SPEED_KEYS = ("insn", "cls", "st", "benchmark", "rtf", "sigma", "fps", "frame_hz", "samples", "cpu_per_emu_s",
-              "cpu_total_per_emu_s", "ops_per_emu_s", "ops_per_host_s", "ns_per_op", "ns_per_iter",
-              "ratio_ref", "ref", "why")
+              "cpu_total_per_emu_s", "over_idle_per_emu_s", "ops_per_emu_s", "ops_per_host_s", "ns_per_op",
+              "ns_per_iter", "ratio_ref", "ref", "why")
 
 
 def speed_summary(results):
@@ -511,15 +511,18 @@ def speed_summary(results):
         options = tuple(sorted((k, v) for k, v in (r.get("options") or {}).items() if k != "cpu_threaded"))
         return r.get("binary"), json.dumps(r.get("params") or {}, sort_keys=True), options
 
-    refs = {thread_key(r): r["id"] for r in results
-            if str((r.get("options") or {}).get("cpu_threaded", "false")).lower() == "false"}
+    def requested(r):
+        return str((r.get("options") or {}).get("cpu_threaded", "false")).lower() == "true"
+
+    refs = {thread_key(r): r["id"] for r in results if not requested(r) and not casemod.cpu_thread_active(r)}
     for r in results:
         for sub in r.get("disks") or [r]:
             bl = casemod.speed_blocks(sub, sub.get("_merged"))
             if not bl:
                 continue
             out.append({"entry": r["id"], "disk": sub.get("disk_name"), "jit": r.get("jit"),
-                        "cpu_threaded": str((r.get("options") or {}).get("cpu_threaded", "false")).lower() == "true",
+                        "cpu_threaded": casemod.cpu_thread_active(sub if sub.get("adjusted") else r),
+                        "cpu_threaded_requested": requested(r),
                         "thread_reference": refs.get(thread_key(r)),
                         "cpu_speed": (r.get("options") or {}).get("cpu_speed"), "host": sub.get("host_context"),
                         "blocks": [{k: b.get(k) for k in SPEED_KEYS if b.get(k) is not None} for b in bl]})
@@ -534,7 +537,9 @@ def _speed_lines(speeds):
          "= no headroom left). **ns/op**: host CPU per instruction, net of the emulator's own cost (the STOP "
          "block) and of the loop (the empty block); **x ref**: that cost relative to ADD.L / FADD. The verdict "
          "depends on the host: compare it only with runs on the same host. Benchmark-only disks report "
-         "**measured** instead of pass/fail; unsupported workloads are **skip** with a reason.", ""]
+         "**measured** instead of pass/fail; unsupported workloads are **skip** with a reason. The frame "
+         "blocks (stop, vbl_poll, chipset_load) idle for a number of frames: their measure is CPU/s, and "
+         "**x ref** shows vbl_poll's and chipset_load's CPU/s over stop's.", ""]
     for e in speeds:
         h = e.get("host") or {}
         from . import cases as casemod
@@ -551,9 +556,12 @@ def _speed_lines(speeds):
                 continue
             rtf = f"{b['rtf']:.4f} +- {3 * b.get('sigma', 0):.4f}" if b.get("rtf") is not None else "-"
             ns = b.get("ns_per_op", b.get("ns_per_iter"))
+            xref = b.get("ratio_ref", "")
+            if b.get("over_idle_per_emu_s") is not None:
+                xref = f"{b['over_idle_per_emu_s']:+.4f} CPU/s vs stop"
             L.append(f"  | {b['insn']} | {'**FAIL**' if b['st'] == 'fail' else b['st']} | {rtf} | "
                      f"{b.get('cpu_per_emu_s', '-')} | {'-' if ns is None else f'{ns:.1f}'} | "
-                     f"{b.get('ratio_ref', '')} |")
+                     f"{xref} |")
         L.append("")
     L.extend(_threaded_speed_lines(speeds))
     return L
@@ -561,12 +569,15 @@ def _speed_lines(speeds):
 
 def _threaded_speed_lines(speeds):
     """Only compare like-for-like benchmark entries: CPU threading is the sole option difference."""
+    from . import cases as casemod
+
     def value(block, key):
         n = block.get(key)
         return "-" if n is None else f"{n:.3g}"
 
     by_entry = {(e["entry"], e.get("disk")): e for e in speeds}
     L = []
+    inactive = [on for on in speeds if on.get("cpu_threaded_requested") and not on.get("cpu_threaded")]
     for on in speeds:
         off = by_entry.get((on.get("thread_reference"), on.get("disk")))
         if not on.get("cpu_threaded") or off is None:
@@ -579,7 +590,8 @@ def _threaded_speed_lines(speeds):
             L.extend(["### Threaded CPU off/on benchmarks", "",
                       "Each pair differs only in `cpu_threaded`, including the same JIT setting. Values are "
                       "**off / on**. Throughput on/off > 1 is faster; lower ns/op and total CPU/s are cheaper. "
-                      "Host ops/s includes frame pacing; STOP counts frames and empty counts loop iterations. "
+                      "Host ops/s includes frame pacing; empty counts loop iterations. The frame blocks (stop, vbl_poll, "
+                      "chipset_load) count frames, so only their total CPU/s means anything. "
                       "Treat a single run as a sample, not proof of a speedup.", ""])
         L.extend([f"`{off['entry']}` / `{on['entry']}`" + (f" [{on['disk']}]" if on.get("disk") else ""), "",
                   "| workload | host ops/s off / on | throughput on/off | ns/op off / on | total CPU/s off / on |",
@@ -594,10 +606,18 @@ def _threaded_speed_lines(speeds):
                 continue
             rate_a, rate_b = a.get("ops_per_host_s"), b.get("ops_per_host_s")
             ratio = f"{rate_b / rate_a:.3f}x" if rate_a and rate_b is not None else "-"
+            if b["insn"] in casemod.FRAME_BLOCKS:
+                ratio = "- (frames)"
             L.append(f"| {b['insn']} | {value(a, 'ops_per_host_s')} / {value(b, 'ops_per_host_s')} | {ratio} | "
                      f"{value(a, 'ns_per_op')} / {value(b, 'ns_per_op')} | "
                      f"{value(a, 'cpu_total_per_emu_s')} / {value(b, 'cpu_total_per_emu_s')} |")
         L.append("")
+    if inactive:
+        L.extend(["### Threaded CPU requested but not active", "",
+                  "These entries asked for `cpu_threaded=true`, but the emulator log says the CPU ran on the "
+                  "main thread (see the entry's adjusted options), so they are left out of the off/on "
+                  "comparison:", ""]
+                 + [f"- `{e['entry']}`" + (f" [{e['disk']}]" if e.get("disk") else "") for e in inactive] + [""])
     return L
 
 

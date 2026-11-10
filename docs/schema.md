@@ -448,8 +448,10 @@ the same command (a serial capture is just the bytes).
 
 - `resolved_options`: options as Amiberry resolved them.
 - `engine`: what the emulator log says ran: `{line, cpu_model, fpu_model, fpu_mode, mmu_model, jit_kind,
-  cachesize, mode, cpu_thread_started, cpu_thread_refused, jit_refused}`. Differences from the config end up in
-  `adjusted` with `"source": "emulator log"`.
+  cachesize, mode, cpu_thread_started, cpu_thread_runs_on, cpu_thread_runs_line, cpu_thread_switches,
+  cpu_thread_refused, jit_refused}`. `cpu_thread_runs_on` is `"CPU"`, `"main"` or null: the last "CPU emulation
+  runs on the CPU/main thread" line of newer builds, which decides over `cpu_thread_started` (a started thread
+  can stay unused). Differences from the config end up in `adjusted` with `"source": "emulator log"`.
 - `adjusted`.
 - `twin_kind`, `twin_options`, `overrides` (`--set`), `params` (per-entry run parameters, e.g. the narrowing
   module mask), `narrow` (for narrowing launches: `{axis, label, changes, of}`).
@@ -612,7 +614,11 @@ per-module case totals:
     1000 + block), `[t, heartbeat, case, cpu_main_ns, cpu_total_ns, cpu_top_ns]`: host seconds since
     launch, the guest's frame count, and /proc/<pid>/task/*/schedstat CPU times. They are in the disk's
     `result.json` as `hostspeed: {"fields","samples","poll_s","pos0"}`, with `host_context:
-    {"cpu_model","cpus","board","jobs","loadavg_start","loadavg_end","slot_wait_s"}`.
+    {"cpu_model","cpus","board","jobs","loadavg_start","loadavg_end","slot_wait_s","cpufreq"}`; `cpufreq`
+    (Linux only, omitted when unreadable) is `{"governor","driver","epp","boost"}`, values that differ between
+    CPUs joined with "/".
+  - Benchmark summaries add `over_idle_per_emu_s` to the frame blocks `vbl_poll` and `chipset_load`
+    (`cases.FRAME_BLOCKS`): their total CPU s per emulated second minus the `stop` block's.
   - `st`: `fail` when rtf > 1.01 + 3 sigma (`cases.SPEED_RTF_LIMIT`); `pass` when not, and either rtf + 3
     sigma <= 1.01 or 3 sigma <= 0.5 %; `untestable` without samples, with fewer than 3 in the block, or
     when the noise is too large to tell. A `skip` record makes no case.

@@ -36,7 +36,12 @@
 #include "screen.h"
 #endif
 
-AMT_MODULE(hostspeed, 26, AMT_PH_BARE, 0, 0, 4096);
+#ifdef AMT_BENCHMARK_ONLY
+#define HS_CHIP_BYTES 16384    /* chipset_load: bitplane line, sprites, copper list */
+#else
+#define HS_CHIP_BYTES 0
+#endif
+AMT_MODULE(hostspeed, 26, AMT_PH_BARE, 0, HS_CHIP_BYTES, 4096);
 
 #define HS_BLOCK_MS   1000     /* emulated time per timed block */
 #define HS_POS0       1000     /* mailbox case number of block 0 */
@@ -45,6 +50,7 @@ typedef ULONG (*hs_fn)(ULONG units, void *mem);
 
 /* hostspeed_asm.s */
 ULONG hs_stop(ULONG, void *);
+ULONG hs_vbl_poll(ULONG, void *);
 ULONG hs_empty(ULONG, void *);
 ULONG hs_add_l(ULONG, void *);
 ULONG hs_div_w(ULONG, void *);
@@ -123,12 +129,114 @@ ULONG hs_fsave_frestore(ULONG, void *);
 #define B_030MMU  0x0100   /* 68030 with its integrated MMU; not EC030 or 68851 */
 #define B_040     0x0200   /* 68040/68060 instruction set */
 #define B_060     0x0400   /* 68060 only */
+#define B_FRAME   0x0800   /* one unit = one frame: host cost per emulated second, not per op */
 
 struct hs_blk {
     const char *insn;      /* host.speed_<insn> */
     hs_fn fn;
     UWORD flags;
 };
+
+#ifdef AMT_BENCHMARK_ONLY
+/* chipset_load: STOP (one unit = one frame, as "stop") with the display
+ * chipset as busy as a game screen: 6 lowres bitplanes (every plane
+ * repeats one line, modulo -40), all 8 sprites over 200 lines, a copper
+ * list that rewrites 8 colours on every line from $2C to $FF, and
+ * collision detection on for every sprite and plane. What the host spends
+ * per emulated second here, minus "stop", is the cost of emulating that
+ * display. Built once in the module's chip pool; the status screen comes
+ * back after the block (screen_bare). */
+#define LOAD_FIRST  0x2c
+#define LOAD_LAST   0xff
+#define LOAD_SPR_H  200
+#define LOAD_COLS   8
+#define LOAD_SPR_WORDS (2 + 2 * LOAD_SPR_H + 2)
+
+static UWORD *load_cop;
+
+static UWORD *load_move(UWORD *c, UWORD reg, UWORD val)
+{
+    *c++ = reg;
+    *c++ = val;
+    return c;
+}
+
+static void load_build(void)
+{
+    UBYTE *chip = amt_chip_pool();
+    UWORD *line = (UWORD *)chip;                    /* 64 bytes: each plane fetches 40 */
+    UWORD *spr = (UWORD *)(chip + 64);
+    UWORD *c = spr + 8 * LOAD_SPR_WORDS;
+    int aga = amt_probe_result.chipset && amt_probe_result.chipset[0] == 'A';
+    UWORD vstop = LOAD_FIRST + LOAD_SPR_H;
+    int i, y;
+    load_cop = c;
+    for (i = 0; i < 32; i++)
+        line[i] = (UWORD)(0x0ff0 ^ (i * 0x1357));
+    for (i = 0; i < 8; i++) {
+        UWORD *s = spr + i * LOAD_SPR_WORDS;
+        UWORD h = (UWORD)(0x60 + 0x10 * i);         /* HSTART / 2: overlapping, so they collide */
+        s[0] = (UWORD)((LOAD_FIRST << 8) | h);
+        s[1] = (UWORD)(((vstop & 0xff) << 8) | ((vstop & 0x100) ? 2 : 0));
+        for (y = 0; y < LOAD_SPR_H; y++) {
+            s[2 + 2 * y] = (UWORD)(0xffff >> (y & 15));
+            s[3 + 2 * y] = (UWORD)(0x8001 | (y << 4));
+        }
+        s[2 + 2 * LOAD_SPR_H] = 0;
+        s[3 + 2 * LOAD_SPR_H] = 0;
+    }
+    c = load_move(c, 0x08e, (LOAD_FIRST << 8) | 0x81);     /* DIWSTRT */
+    c = load_move(c, 0x090, 0x2cc1);                        /* DIWSTOP */
+    c = load_move(c, 0x092, 0x0038);                        /* DDFSTRT */
+    c = load_move(c, 0x094, 0x00d0);                        /* DDFSTOP */
+    c = load_move(c, 0x100, 0x6200);                        /* BPLCON0: 6 planes, COLOR */
+    c = load_move(c, 0x102, 0x0000);                        /* BPLCON1 */
+    c = load_move(c, 0x104, 0x0024);                        /* BPLCON2 */
+    if (aga) {
+        c = load_move(c, 0x106, 0x0c00);                    /* BPLCON3 */
+        c = load_move(c, 0x10c, 0x0011);                    /* BPLCON4 */
+        c = load_move(c, 0x1fc, 0x0000);                    /* FMODE */
+    }
+    c = load_move(c, 0x108, (UWORD)-40);                    /* BPL1MOD: repeat the line */
+    c = load_move(c, 0x10a, (UWORD)-40);                    /* BPL2MOD */
+    for (i = 0; i < 6; i++) {
+        ULONG a = (ULONG)line + 2 * i;
+        c = load_move(c, (UWORD)(0x0e0 + 4 * i), (UWORD)(a >> 16));
+        c = load_move(c, (UWORD)(0x0e2 + 4 * i), (UWORD)a);
+    }
+    for (i = 0; i < 8; i++) {
+        ULONG a = (ULONG)(spr + i * LOAD_SPR_WORDS);
+        c = load_move(c, (UWORD)(0x120 + 4 * i), (UWORD)(a >> 16));
+        c = load_move(c, (UWORD)(0x122 + 4 * i), (UWORD)a);
+    }
+    for (y = LOAD_FIRST; y <= LOAD_LAST; y++) {
+        *c++ = (UWORD)((y << 8) | 0x07);                    /* WAIT line y */
+        *c++ = 0xfffe;
+        for (i = 0; i < LOAD_COLS; i++)
+            c = load_move(c, (UWORD)(0x182 + 2 * i), (UWORD)((y * 0x0013 + i * 0x0247) & 0x0fff));
+    }
+    *c++ = 0xffff;                                          /* wait forever */
+    *c++ = 0xfffe;
+}
+
+static ULONG hs_chipset_load(ULONG units, void *mem)
+{
+    ULONG r;
+    if (!load_cop)
+        load_build();
+    CREG(0x098) = 0xffc0;                                   /* CLXCON: every sprite and plane */
+    CREG(0x080) = (UWORD)((ULONG)load_cop >> 16);           /* COP1LC */
+    CREG(0x082) = (UWORD)(ULONG)load_cop;
+    CREG(0x088) = 0;                                        /* COPJMP1 (no blit runs here) */
+    CREG(R_DMACON) = 0x83a0;                                /* SET | DMAEN | BPLEN | COPEN | SPREN */
+    r = hs_stop(units, mem);
+    CREG(R_DMACON) = 0x01a0;                                /* BPLEN | COPEN | SPREN off */
+    CREG(0x098) = 0;
+    (void)CREG(0x00e);                                      /* CLXDAT: clear */
+    screen_bare(1);
+    return r;
+}
+#endif
 
 /* The order is the report's. "stop" first: the CPU idle in STOP, woken by
  * the VBL once per frame, so what the host spends per emulated second there
@@ -203,6 +311,13 @@ static const struct hs_blk blocks[] = {
     { "move16",         hs_move16,         B_040 },
     { "movec_pcr",      hs_movec_pcr,      B_060 },
     { "empty_final",    hs_empty,          0 },
+#ifdef AMT_BENCHMARK_ONLY
+    /* idle the way games and demos idle: polling the beam, and STOP with
+     * the chipset busy (after empty_final: positions above stay the same
+     * on both disks) */
+    { "vbl_poll",       hs_vbl_poll,       B_FRAME },
+    { "chipset_load",   hs_chipset_load,   B_FRAME },
+#endif
 };
 #define N_BLOCKS (sizeof(blocks) / sizeof(blocks[0]))
 
@@ -238,7 +353,7 @@ static const char *skip_why(const struct hs_blk *b)
 /* instructions per unit ("stop": STOPs = frames, "empty": DBF iterations) */
 static ULONG per_unit(const struct hs_blk *b)
 {
-    if (b->fn == hs_stop)
+    if (b->fn == hs_stop || (b->flags & B_FRAME))
         return 1;
     if (b->fn == hs_empty)
         return 16;

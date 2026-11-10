@@ -1124,6 +1124,14 @@ def engine_from_log(lines):
     if eng is None:
         return None
     eng["cpu_thread_started"] = any('uae_start_thread "cpu"' in line for line in lines)
+    # Newer builds log every switch: 'CPU emulation runs on the CPU thread.' /
+    # '... on the main thread.' The thread can be started and still unused,
+    # so when present the last such line decides.
+    runs = [(m.group(1), line.strip()) for line in lines
+            for m in [_re.search(r"CPU emulation runs on the (CPU|main) thread", line)] if m]
+    eng["cpu_thread_runs_on"] = runs[-1][0] if runs else None
+    eng["cpu_thread_runs_line"] = runs[-1][1] if runs else None
+    eng["cpu_thread_switches"] = len(runs)
     eng["cpu_thread_refused"] = [line.strip() for line in lines if "running the CPU on the main thread" in line
                                  or "Threaded CPU mode is not compatible" in line][:3]
     eng["jit_refused"] = [line.strip() for line in lines if "JIT and cycle-exact can't" in line
@@ -1148,10 +1156,17 @@ def engine_adjustments(options, eng):
         add("cachesize", str(want_jit), "0 (JIT not active)", eng["jit_refused"] + [eng["line"]])
     elif not want_jit and got_jit:
         add("cachesize", "0", f"{got_jit} (JIT active)", [eng["line"]])
-    if options.get("cpu_threaded") == "true" and (eng["cpu_thread_refused"] or not eng["cpu_thread_started"]):
+    runs_on = eng.get("cpu_thread_runs_on")
+    if runs_on is not None:
+        if options.get("cpu_threaded") == "true" and runs_on == "main":
+            add("cpu_threaded", "true", "false (the CPU ran on the main thread)",
+                eng["cpu_thread_refused"] + [eng["cpu_thread_runs_line"]])
+        elif options.get("cpu_threaded", "false") != "true" and runs_on == "CPU":
+            add("cpu_threaded", "false", "true (the CPU ran on the CPU thread)", [eng["cpu_thread_runs_line"]])
+    elif options.get("cpu_threaded") == "true" and (eng["cpu_thread_refused"] or not eng["cpu_thread_started"]):
         add("cpu_threaded", "true", "false (threaded CPU not active)",
             eng["cpu_thread_refused"] or ['no \'uae_start_thread "cpu"\' in the log'])
-    if options.get("cpu_threaded", "false") != "true" and eng["cpu_thread_started"]:
+    elif options.get("cpu_threaded", "false") != "true" and eng["cpu_thread_started"]:
         add("cpu_threaded", "false", "true (a CPU thread was started)", [])
     want_fpu = options.get("fpu_model", "0") or "0"
     if want_fpu != eng["fpu_model"]:

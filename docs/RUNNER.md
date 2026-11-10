@@ -150,7 +150,7 @@ The matrices (runner/amitorture/matrix.py):
 
 | name | size | contents |
 |---|---|---|
-| benchmarks | 19 | hostspeed only on 68000, 68010, 68020, 68030+68882/MMU, EC030, 68040 and 68060; each legal fast core has interpreter and JIT threaded CPU off/on pairs. The 040/060 use their internal FPUs. Defaults to the standalone disk from `make -C disk benchmarks`; measurements and capability skips, no performance pass/fail threshold. Use `--jobs 1 --warp off`. |
+| benchmarks | 23 | hostspeed only on 68000, 68010, 68020, 68030+68882/MMU, EC030, 68040 and 68060, plus an A500 68000 cycle-exact entry at real speed (`bench-68000-ce`, chipset load); each legal fast core has interpreter and JIT threaded CPU off/on pairs. The 040/060 use their internal FPUs. Defaults to the standalone disk from `make -C disk benchmarks`; measurements and capability skips, no performance pass/fail threshold. Use `--jobs 1 --warp off`. |
 | smoke | 10 | A500 68000 CE, A600 ECS NTSC compat, A1200 68EC020 (+JIT), A3000 68030+68882 MMU compat, A4000 68040 (+JIT), A4000 68060 (+JIT), AROS AGA 68020 |
 | standard | 142 | every model preset (A1000, A500, A500+, A600, A2000, A3000, A4000, A4000T, A1200, CD32 and CDTV booting from CD, AROS ECS/AGA), PAL+NTSC samples, every CPU variant, compat/CE on 020-060, JIT twins of every JIT-capable entry, every JIT sub-option on the A4000 68040, threaded CPU, softfloat; MMU configurations (68030/68040/68060 with their MMU in compat/CE, the EC MMU modes `mmu_model=68ec030/68ec040/68ec060`; no JIT twin: the JIT does not support the MMU); one entry per expansion board (below) |
 | full | 540 | every CPU variant (68000, 68010, 68EC020, 68020, 68EC030 (mmu 0 and mmu_model=68ec030), 68030, 68EC040, 68LC040, 68040, 68040 without MMU emulation, 68EC060, 68LC060, 68060, 68060 without MMU emulation) x every FPU it can have (none/68881/68882/internal) x fast/compatible/cycle-exact; 68060 PCR revisions; CE with cpu_multiplier=0; every model x PAL/NTSC; OCS/ECS-Agnus/ECS-Denise/ECS; and for every entry that allows it: JIT default + cachesize 128/16384 + comp_trust{byte,word,long,naddr}=indirect + compfpu off + comp_constjump off + comp_flushmode hard + comp_nf off + comp_catchfault off, threaded CPU, JIT+threaded, softfloat, JIT+softfloat; the MMU configurations and every board entry of standard, plus the full-only boards |
@@ -192,7 +192,8 @@ The matrices (runner/amitorture/matrix.py):
     exit code and stderr. An unverified entry is never marked "as designed".
   - **Emulator log.** After the run, the log is checked for what actually ran: build_cpufunctbl's
     `CPU=68040, FPU=68040 (host 64b), MMU=0, JIT=CPU/FPU=8192. fast` line (JIT on or off, FPU, softfloat, MMU,
-    CPU), and `uae_start_thread "cpu"` versus "... running the CPU on the main thread" for the threaded CPU.
+    CPU), and for the threaded CPU the last "CPU emulation runs on the CPU/main thread" line when the build logs
+    it, else `uae_start_thread "cpu"` versus "... running the CPU on the main thread".
     This catches the cases Amiberry refuses only at start-up, e.g. "JIT and cycle-exact can't be enabled
     simultaneously".
   - Either way, the entry is marked **"config adjusted by emulator: X"** (`adjusted`, with `source: emulator log`
@@ -477,6 +478,25 @@ the entries that must report them), or `not_covered` with the reason. `report.py
 - `not_covered`: no matching case ran, or no test can reach it.
 
 REPORT.md shows the table at the top of the coverage section; `summary.json` has it as `catalogue`.
+
+### compare
+```
+amitorture compare --amiberry OLD --amiberry NEW [--label old --label new] [--config 'bench-68020*'] \
+                   [--repeat 3] [--threshold 2] [--pin 2-5] [--set OPTION=VALUE] [--adf PATH]
+```
+A/B performance check of two binaries on the hostspeed benchmarks (default `--matrix benchmarks` and its
+disk). It runs `run --jobs 1 --warp off` once per binary per repeat, alternating the order (A B, B A, ...) so
+drift and thermal effects hit both, and with `--pin` every emulator runs on the given host CPUs. Per entry
+and block it compares the medians of the measured runs:
+- operation blocks: host ops/s, higher is better; frame blocks (`stop`, `vbl_poll`, `chipset_load`): total
+  process CPU s per emulated second, lower is better;
+- **slower** / **faster**: the median moved by more than `--threshold` percent and the two sets of repeats do
+  not overlap; **borderline**: beyond the threshold but overlapping (repeat it); **same**: within it;
+  **incomplete**: a side has no measured run.
+
+Output: `WORKDIR/compare/<time>/COMPARE.md` and `compare.json` (binaries with their SHA-256, the host and
+governor, every run's results directory). Exit status 1 when any block is slower, else 0. Compare like with
+like: same host, load and governor; a `powersave` governor makes the threaded CPU's numbers noisier.
 
 ### repro
 ```

@@ -381,6 +381,87 @@ static void run_hot(const struct blt_case *c)
 }
 
 /* ------------------------------------------------------------ special */
+#define NASTY_MAX 100000UL     /* reads: ends the loop if BBUSY never clears */
+
+/* How many chip RAM reads the CPU completes while the nasty_base blit runs
+ * (DMACONR BBUSY set), with DMACON BLTPRI `pri`. -1 if a blit never ended. */
+static int nasty_reads(const struct blt_case *c, UWORD pri, ULONG *reads)
+{
+    volatile UWORD *probe = (volatile UWORD *)pool;     /* not touched by the blit */
+    ULONG n = 0, f0;
+    int to;
+    if (setup(c)) {
+        CUST(R_DMACON) = DMA_OFF;
+        return -1;
+    }
+    CUST(R_DMACON) = DMA_ON | pri;
+    go(c);
+    (void)CUST(R_DMACONR);          /* the first read after BLTSIZE can miss BBUSY on old Agnus */
+    f0 = amt_frames_now();
+    while (CUST(R_DMACONR) & DMAF_BBUSY) {
+        (void)*probe;
+        if (++n >= NASTY_MAX || amt_frames_now() - f0 > WAIT_FRAMES)
+            break;
+    }
+    to = blt_wait();
+    CUST(R_DMACON) = DMA_OFF;
+    *reads = n;
+    return to;
+}
+
+/* BLTPRI set and a blit that uses every memory cycle (ABCD): the CPU gets
+ * no chip bus cycle until the blit ends (HRM 6: blitter priority). With
+ * BLTPRI clear the blitter lets a waiting CPU have every fourth cycle. So
+ * the CPU's chip reads during the blit must collapse with BLTPRI set: at
+ * most 1/16 of those it completes with BLTPRI clear (on hardware zero; the
+ * slack covers a read or two that an emulator lets through as the blit
+ * starts or ends, not a CPU that keeps running at a lower rate). Software relies on this: loaders start a blit and use its
+ * result without waiting for BBUSY. */
+static void test_nasty_cpu(const struct blt_case *c)
+{
+    ULONG off = 0, on = 0;
+    int to;
+    if (untestable("nasty_cpu"))
+        return;
+    to = nasty_reads(c, 0, &off);
+    if (!to)
+        to = nasty_reads(c, DMAF_BLTPRI, &on);
+    if (to) {
+        struct result r;
+        r.timeout = 1;
+        report("nasty_cpu", c, &r, 0);
+        return;
+    }
+    if (off < 16) {
+        amt_case_open("nasty_cpu", AMT_ST_UNTESTABLE);
+        json_str("why", "the CPU completed fewer than 16 chip reads during the blit with BLTPRI clear: "
+                        "too few to compare with BLTPRI set");
+        json_obj("timing");
+        json_int("reads_bltpri_off", (long)off);
+        json_int("reads_bltpri_on", (long)on);
+        json_obj_end();
+        amt_case_close();
+        return;
+    }
+    amt_case_open("nasty_cpu", on * 16 <= off ? AMT_ST_PASS : AMT_ST_FAIL);
+    json_obj("expect");
+    json_str("cpu_locked_out", "with BLTPRI set at most 1/16 of the reads made with it clear (0 on hardware)");
+    json_obj_end();
+    json_obj("got");
+    json_bool("cpu_locked_out", on * 16 <= off);
+    json_obj("timing");             /* host-speed dependent: not compared between engines */
+    json_int("reads_bltpri_off", (long)off);
+    json_int("reads_bltpri_on", (long)on);
+    json_obj_end();
+    json_obj_end();
+    if (on * 16 > off)
+        json_str("why", "with DMACON BLTPRI set, a blit that uses every memory cycle must lock the CPU "
+                        "out of chip RAM and the custom registers until it ends; the CPU kept running "
+                        "(HRM 6: blitter priority)");
+    emit_inputs(c);
+    amt_case_close();
+}
+
 static void test_nasty(void)
 {
     const struct blt_case *c = find_case("nasty_base");
@@ -393,6 +474,7 @@ static void test_nasty(void)
         run_case(c, DMAF_BLTPRI, &r);
         report("nasty_on", c, &r, 0);
     }
+    test_nasty_cpu(c);
 }
 
 /* BLTPRI (blitter-nasty) holds the CPU off the chip bus: the blitter takes

@@ -1,4 +1,4 @@
-"""Command line: python3 -m amitorture {roms,matrix,run,baseline,check,repro,import} ..."""
+"""Command line: python3 -m amitorture {roms,matrix,run,baseline,check,compare,repro,import} ..."""
 from __future__ import annotations
 
 import argparse
@@ -326,6 +326,11 @@ def cmd_check(a):
     return EXIT_OK if v.startswith("NO REGRESSIONS") else EXIT_PROBLEMS
 
 
+def cmd_compare(a):
+    from . import compare
+    return compare.run(a)
+
+
 def cmd_repro(a):
     from . import regress
     _setup_tmp(os.path.join(os.path.abspath(a.pack), "work"))
@@ -491,6 +496,31 @@ def build_parser():
     p.add_argument("--repeat", type=int, default=1, metavar="N",
                    help="runs per entry and binary (>1 also detects cases that became unstable)")
     p.set_defaults(fn=cmd_check)
+
+    p = sub.add_parser("compare", help="A/B: the hostspeed benchmarks of two binaries, alternating, repeated; "
+                                       "per block slower/faster/borderline/same")
+    p.add_argument("--amiberry", action="append", metavar="PATH", required=True,
+                   help="give it twice: binary A (the reference), then binary B")
+    p.add_argument("--label", action="append", metavar="NAME",
+                   help="names for A and B in the report, in the same order (default A, B)")
+    p.add_argument("--kickstarts", default=DEFAULT_KICKSTARTS, metavar="DIR", help=KICK_HELP)
+    p.add_argument("--matrix", default="benchmarks", choices=matrix.MATRICES,
+                   help="matrix of the entries (default benchmarks)")
+    p.add_argument("--config", action="append", metavar="NAME",
+                   help="only entries matching this id or glob (repeatable; default every entry)")
+    p.add_argument("--set", action="append", metavar="OPTION=VALUE",
+                   help="Amiberry option for every entry on both binaries (repeatable), e.g. cpu_threaded=true")
+    p.add_argument("--adf", metavar="PATH",
+                   help="test disk (default disk/build/benchmarks/amitorture.adf for matrix benchmarks)")
+    p.add_argument("--repeat", type=int, default=3, metavar="N",
+                   help="launches per binary (default 3); the order alternates: A B, B A, ...")
+    p.add_argument("--threshold", type=float, default=2.0, metavar="PCT",
+                   help="smallest change of the median that counts (default 2 percent)")
+    p.add_argument("--pin", metavar="CPUS",
+                   help="run the runner and every emulator on these host CPUs, e.g. 2-5 (sched_setaffinity)")
+    p.add_argument("--workdir", default=DEFAULT_WORKDIR, metavar="DIR", help=WORKDIR_HELP)
+    p.add_argument("-q", "--quiet", action="store_true", help="no progress lines, only the final verdict")
+    p.set_defaults(fn=cmd_compare)
 
     p = sub.add_parser("repro", help="rerun a repro pack (repro/<problem>/) and print the case result")
     p.add_argument("pack", metavar="PACKDIR")

@@ -31,6 +31,7 @@ HS_OUT	macro
 	endm
 
 	xdef	_hs_stop
+	xdef	_hs_vbl_poll
 	xdef	_hs_empty
 	xdef	_hs_add_l
 	xdef	_hs_div_w
@@ -101,6 +102,23 @@ HS_OUT	macro
 _hs_stop:				; STOP until the next interrupt (the runtime's
 	HS_IN				; VBL): one unit = one frame, the CPU idle
 .o:	stop	#$2000
+	subq.l	#1,d6
+	bne	.o
+	HS_OUT
+
+_hs_vbl_poll:				; poll the beam until line $2C starts, then
+	HS_IN				; until it ends: one unit = one frame, the
+	lea	$dff004,a0		; CPU busy-waiting as games do
+	move.l	#$1ff00,d2		; VPOSR V8 and VHPOSR V7-V0
+	move.l	#$2c00,d3
+.o:	move.l	(a0),d0
+	and.l	d2,d0
+	cmp.l	d3,d0
+	bne	.o
+.n:	move.l	(a0),d0
+	and.l	d2,d0
+	cmp.l	d3,d0
+	beq	.n
 	subq.l	#1,d6
 	bne	.o
 	HS_OUT

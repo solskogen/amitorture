@@ -25,15 +25,27 @@ python3 -m amitorture run --amiberry /path/to/amiberry --kickstarts ~/Amiberry/R
 ```
 
 The matrix automatically selects `disk/build/benchmarks/amitorture.adf`; for a custom build directory
-pass `--adf /path/to/benchmarks/amitorture.adf`. Its 19 entries cover every CPU family, including a real
-68030 MMU core with a 68882 and an EC030 without MMU. The fast 68020/EC030 lanes omit the external FPU
+pass `--adf /path/to/benchmarks/amitorture.adf`. Its 23 entries cover every CPU family, including a real
+68030 MMU core with a 68882 and an EC030 without MMU, plus `bench-68000-ce`: an A500 on the cycle-exact
+core at real speed, where the chipset, not the CPU, sets the host cost (no threaded twin: the threaded CPU
+does not run cycle-exact). The fast 68020/EC030 lanes omit the external FPU
 to keep their four-way CPU comparisons focused; the 040/060 lanes also cover their internal FPUs.
 The supported fast-core 68020, EC030, 68040 and 68060 entries
 each run **interpreter off/on** and **JIT off/on** pairs of `cpu_threaded`. Every other emulator option
-in a pair is identical. 68000/68010, compatible cores and MMU cores cannot use Amiberry's threaded CPU,
-so no unsupported threaded configuration is generated. The report has a separate paired comparison
+in a pair is identical. The 68000, 68010 and 68030/MMU entries get an interpreter `-thr` twin as well;
+an emulator that declines the thread for them runs unthreaded and the entry is reported as adjusted.
+Cycle-exact entries never get a threaded twin. The report has a separate paired comparison
 table, including host operations/s, net ns/op and total process CPU seconds per emulated second.
 Pairs are matched by emulator options, binary and run parameters, not by an entry-name suffix.
+The table and the summary use the CPU thread that actually ran (the emulator log's "CPU emulation runs
+on the CPU/main thread" line), not the requested option; an entry that asked for `cpu_threaded=true` but
+ran on the main thread is listed under "requested but not active". The host line records the CPU
+frequency governor and driver (e.g. `powersave (amd-pstate-epp)`): a power-saving governor adds wake-up
+latency that mostly hurts the threaded CPU's hand-offs.
+
+**Frame blocks** (`stop`, `vbl_poll`, `chipset_load`) count frames, not operations: their figure is the
+total process CPU seconds per emulated second, lower is better, and `over_idle_per_emu_s` is that minus
+the `stop` block's (the extra host cost over an idle CPU). No ns/op is given for them.
 
 Benchmark-only `speed` records carry `benchmark:1`. Supported, adequately sampled blocks are
 **measured**, not pass/fail. Missing or incomplete samples, or 3-sigma timing uncertainty exceeding
@@ -47,7 +59,9 @@ The normal correctness disk retains its existing real-time speed verdicts.
 Use `--jobs 1`, normal pacing and the same host, load and Amiberry configuration when comparing runs.
 For just one family, retain the matrix selector and add e.g. `--config 'bench-68020*'`.
 Run both the before-change and after-change binaries and repeat runs: off/on is a comparison of the
-option, not proof that a particular code change improved it. No single timing sample establishes a
+option, not proof that a particular code change improved it. `amitorture compare` does exactly that
+(see RUNNER.md): it alternates the two binaries over several launches and calls each block slower,
+faster, borderline or the same. No single timing sample establishes a
 speedup. Fast 020+ benchmark entries use `cpu_speed=max`: host throughput and CPU cost matter, not
 the paced frame rate. Host ops/s is the block's operation count per emulated second divided by rtf,
 so it includes frame pacing; it is not an unrestricted CPU MHz estimate. Net instruction costs can
@@ -167,6 +181,8 @@ named code path first, then at the cycle charge (newcpu.cpp, the `cpu_cycles` of
 |---|---|---|---|---|
 | `speed_stop` | STOP #$2000, woken by the VBL | all | one unit = one frame | the emulator cannot keep real time with the CPU idle: chipset/display emulation or frame pacing (custom.cpp framewait), not an instruction |
 | `speed_empty` / `speed_empty_end` / `speed_empty_final` | the DBF loop alone | all | drift references; empty_end keeps its original mailbox position, empty_final follows the new blocks | as `stop`, plus the interpreter's/JIT's basic dispatch (newcpu.cpp m68k_run_*, the JIT's compiled loop) |
+| `speed_vbl_poll` | benchmark disk only, after `empty_final`: per frame, poll VPOSR.L until line $2C, then until it moves on | all | one unit = one frame; the game/demo beam-wait idiom | each custom-register read is expensive: with the threaded CPU every read is a hand-off to the main thread, so a polling loop can keep two host cores busy |
+| `speed_chipset_load` | benchmark disk only: STOP per frame with 6 lowres bitplanes, 8 sprites, a copper list writing 8 colours on every line $2C-$FF and sprite collision detection on | all | one unit = one frame; DMA is switched off and the status screen restored afterwards | chipset emulation cost (custom.cpp bitplane/sprite/copper, drawing.cpp), the cost a busy game adds over `stop` |
 | `speed_add_l` | ADD.L Dn,Dn | all | integer reference | basic instruction dispatch too slow for the cycle charge (interpreter cpuemu_*, JIT compemu) |
 | `speed_div_w` | DIVU.W / DIVS.W | all | $03E80BB8 / 21846 = 3000 r 1000: a fixed point | cpuemu DIVU/DIVS (getDivu68kCycles/getDivs68kCycles on CE) |
 | `speed_abcd_sbcd` | ABCD / SBCD Dn | all | $45 + $27 and back, X clear | BCD helpers in cpuemu |

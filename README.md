@@ -64,6 +64,15 @@ host CPU-cost tables; benchmark measurements do not impose a speed pass/fail thr
 Booted on a real Amiga or an FPGA, the benchmark disk shows its progress and an integer score
 (A500 = 1.00) plus an FPU score on screen.
 See [hostspeed.md](docs/cases/hostspeed.md#benchmark-only-build-and-threaded-cpu-comparisons).
+To check a change for performance regressions, compare two binaries:
+
+```
+python3 -m amitorture compare --amiberry ./amiberry-old --amiberry ./amiberry-new \
+    --kickstarts ~/Amiberry/ROMs --config 'bench-68020*' --repeat 3
+```
+
+It alternates the binaries, repeats the launches and writes COMPARE.md with a slower/faster/borderline/same
+verdict per block (exit status 1 if anything got slower).
 
 Add `--warp auto` to accelerate CPU/FPU/MMU set disks (not on JIT entries, where warp is slower) while keeping all other disks, including audio,
 input, RTC and host-speed tests, normally paced. No tests are removed. `--warp off` uses normal pacing

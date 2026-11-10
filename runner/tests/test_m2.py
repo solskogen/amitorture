@@ -192,6 +192,59 @@ class EngineFromLog(unittest.TestCase):
         got = {a["option"] for a in runner.engine_adjustments(base, e)}
         self.assertEqual(got, {"cpu_threaded", "fpu_softfloat"})
 
+    def test_cpu_thread_runs_on_line_decides(self):
+        from amitorture import runner
+        base = {"cachesize": "0", "fpu_model": "0", "cpu_model": "68020", "mmu_model": "0",
+                "cpu_threaded": "true", "fpu_softfloat": "false"}
+        cpu = "CPU=68020, FPU=0, MMU=0, JIT=0. fast"
+        # started, then the emulation moved back to the main thread: not active
+        e = runner.engine_from_log(['uae_start_thread "cpu" function at 0x1 arg (nil)',
+                                    "CPU emulation runs on the CPU thread.", cpu,
+                                    "CPU emulation runs on the main thread."])
+        self.assertEqual((e["cpu_thread_runs_on"], e["cpu_thread_switches"]), ("main", 2))
+        adj = runner.engine_adjustments(base, e)
+        self.assertEqual([(a["option"], a["resolved"]) for a in adj],
+                         [("cpu_threaded", "false (the CPU ran on the main thread)")])
+        self.assertIn("CPU emulation runs on the main thread.", adj[0]["because"])
+        e = runner.engine_from_log(['uae_start_thread "cpu" function at 0x1 arg (nil)',
+                                    "CPU emulation runs on the CPU thread.", cpu])
+        self.assertEqual(runner.engine_adjustments(base, e), [])
+        adj = runner.engine_adjustments(dict(base, cpu_threaded="false"), e)
+        self.assertEqual([a["resolved"] for a in adj], ["true (the CPU ran on the CPU thread)"])
+        # older builds without the line: thread start decides, as before
+        e = runner.engine_from_log([cpu])
+        self.assertIsNone(e["cpu_thread_runs_on"])
+        self.assertEqual([a["option"] for a in runner.engine_adjustments(base, e)], ["cpu_threaded"])
+
+    def test_cpu_thread_active(self):
+        rec = {"options": {"cpu_threaded": "true"}}
+        self.assertTrue(cases.cpu_thread_active(rec))
+        rec["adjusted"] = [{"option": "cpu_threaded", "resolved": "false (the CPU ran on the main thread)"}]
+        self.assertFalse(cases.cpu_thread_active(rec))
+        self.assertTrue(cases.cpu_thread_active(
+            {"options": {}, "adjusted": [{"option": "cpu_threaded", "resolved": "true (a CPU thread was started)"}]}))
+        self.assertFalse(cases.cpu_thread_active(None))
+
+    def test_cpufreq(self):
+        from amitorture import envinfo
+        d = tempfile.mkdtemp()
+        try:
+            for n, gov in ((0, "powersave"), (1, "powersave"), (2, "performance")):
+                os.makedirs(os.path.join(d, f"cpu{n}", "cpufreq"))
+                for name, v in (("scaling_governor", gov), ("scaling_driver", "amd-pstate-epp")):
+                    with open(os.path.join(d, f"cpu{n}", "cpufreq", name), "w") as fh:
+                        fh.write(v + "\n")
+            os.makedirs(os.path.join(d, "cpufreq"))
+            with open(os.path.join(d, "cpufreq", "boost"), "w") as fh:
+                fh.write("0\n")
+            self.assertEqual(envinfo.cpufreq(d), {"governor": "powersave/performance",
+                                                  "driver": "amd-pstate-epp", "boost": False})
+            self.assertEqual(envinfo.cpufreq(os.path.join(d, "missing")), {})
+        finally:
+            shutil.rmtree(d)
+        desc = cases.host_desc({"cpu_model": "X", "cpus": 4, "cpufreq": {"governor": "powersave", "boost": False}})
+        self.assertIn("governor powersave (boost off)", desc)
+
     def test_adjusted_twin_not_compared(self):
         ref = fake_result("m", [{"case": "add", "st": "pass"}])
         twin = fake_result("m-jit", [{"case": "add", "st": "fail", "expect": 1, "got": 2, "why": "w"}],
@@ -669,6 +722,14 @@ class Problems(unittest.TestCase):
         self.assertNotIn(("cpu.x",), by)          # xfail is not a problem
         self.assertEqual(probs[0]["kind"], "crash")
         self.assertIn("2 cpu cases fail", by[("cpu.addx", "cpu.subx")]["title"])
+
+    def test_engine_mismatch_folds_into_xfailed_case_fail(self):
+        items = [{"id": "F1", "kind": "case_fail", "entry": "e-thr", "mod": "blitter", "case": "nasty_cpu",
+                  "case_key": "blitter.nasty_cpu", "xfail": {"ref": "r"}},
+                 {"id": "F2", "kind": "engine_mismatch", "entry": "e-thr", "mod": "blitter", "case": "nasty_cpu",
+                  "case_key": "blitter.nasty_cpu", "why": "w"}]
+        self.assertEqual(problems.group(items, [{"id": "e-thr", "status": "pass"}], None), [])
+        self.assertTrue(items[1]["folded_into_case_fail"])
 
     def test_case_doc_lookup(self):
         d = tempfile.mkdtemp(dir=os.path.abspath(WORK_TMP) if os.path.isdir(WORK_TMP) else None)

@@ -360,6 +360,11 @@ SPEED_IPC_WAIT_S = 0.002
 CCK_HZ = {"PAL": 3546895, "NTSC": 3579545}
 FRAME_HZ = {"PAL": 3546895 / (313 * 227), "NTSC": 3579545 / (263 * 227.5)}
 SPEED_REFS = {"int": "add_l", "fpu": "fadd"}
+# One unit = one frame (hostspeed B_FRAME): the CPU idles, so the measure is
+# the host cost per emulated second (CPU/s), not ops/s or ns/op. "stop" is
+# the emulator's own cost; vbl_poll (CPU polling the beam) and chipset_load
+# (STOP with a busy display) report their cost over it (over_idle_per_emu_s).
+FRAME_BLOCKS = ("stop", "vbl_poll", "chipset_load")
 
 
 def _fit(pts):
@@ -443,8 +448,7 @@ def speed_blocks(sub, merged):
         lst = samples.setdefault(d.get("case"), [])
         if not lst or lst[-1]["heartbeat"] != d.get("heartbeat"):   # one per frame
             lst.append(d)
-    opts = (sub or {}).get("options") or {}
-    threaded = str(opts.get("cpu_threaded", "false")).lower() == "true"
+    threaded = cpu_thread_active(sub)
 
     def emu_cpu(d):
         if d.get("cpu_main_ns") is None:
@@ -549,7 +553,9 @@ def speed_blocks(sub, merged):
         if b.get("cpu_per_emu_s") is None or not b.get("ops_per_emu_s") or idle is None:
             continue
         ns = (b["cpu_per_emu_s"] - idle) * 1e9 / b["ops_per_emu_s"]
-        if b["insn"] == "stop":
+        if b["insn"] in FRAME_BLOCKS:
+            if b["insn"] != "stop":
+                b["over_idle_per_emu_s"] = round(b["cpu_per_emu_s"] - idle, 4)
             continue
         if str(b["insn"]).startswith("empty"):
             b["ns_per_iter"] = round(ns, 3)
@@ -579,6 +585,17 @@ def speed_name(insn):
     return "speed_" + str(insn)
 
 
+def cpu_thread_active(rec):
+    """Whether the CPU ran on its own thread: the cpu_threaded option, unless
+    the emulator log said otherwise (an "adjusted" cpu_threaded entry from
+    runner.engine_adjustments)."""
+    rec = rec or {}
+    for a in rec.get("adjusted") or []:
+        if a.get("option") == "cpu_threaded":
+            return str(a.get("resolved", "")).startswith("true")
+    return str((rec.get("options") or {}).get("cpu_threaded", "false")).lower() == "true"
+
+
 def host_desc(ctx):
     """'Cortex-A76 x4 (Raspberry Pi 500), --jobs 1, load 0.97': the host a
     host.speed_* verdict was measured on (the verdict is host-relative)."""
@@ -586,6 +603,12 @@ def host_desc(ctx):
     cpu = ctx.get("cpu_model") or "unknown CPU"
     s = f"{cpu} x{ctx.get('cpus') or '?'}" + (f" ({ctx['board']})" if ctx.get("board") else "")
     s += f", --jobs {ctx.get('jobs') or 1}"
+    freq = ctx.get("cpufreq") or {}
+    if freq.get("governor"):
+        extra = ", ".join(x for x in (freq.get("driver"), freq.get("epp") and f"EPP {freq['epp']}",
+                                      "boost" + ("" if freq.get("boost", True) else " off")
+                                      if "boost" in freq else None) if x)
+        s += f", governor {freq['governor']}" + (f" ({extra})" if extra else "")
     la = ctx.get("loadavg_start")
     if la:
         s += f", load average {la[0]} at the start of the launch"

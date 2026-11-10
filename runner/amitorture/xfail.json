@@ -758,5 +758,28 @@
   },
   "tbd": false,
   "seen": "amitorture softfloat triage 2026-11-05 (also fail on native, hidden there by the F2/F3 fpu.* entry); see docs/findings"
- }
+ },
+ "blitter.nasty_cpu": [
+  {
+   "ref": "JIT nasty-blit stall (newcpu.cpp do_specialties)",
+   "why": "unthreaded JIT: m68k_run_jit calls do_specialties(0), and the SPCFLAG_BLTNASTY stall loop needs cycles > 0, so compiled code is never held off the chip bus while a BLTPRI blit runs (same in WinUAE); the count is noisy, so a run can pass by chance",
+   "configs": "*",
+   "when": {
+    "cachesize": "!0",
+    "cpu_threaded": "false"
+   },
+   "tbd": false,
+   "seen": "a4000-68040nommu-fast-jit and a1200-68020-882-fast-jit on master e07bdb393 and PR #2641 3e628039f (2026-11-10)"
+  },
+  {
+   "ref": "amiberry PR #2641",
+   "why": "threaded CPU (master): the worker gets the BLTSIZE write reply immediately and keeps running while a BLTPRI blit runs; PR #2641 holds the reply until the blit ends (Jim Power hang)",
+   "configs": "*",
+   "when": {
+    "cpu_threaded": "true"
+   },
+   "tbd": false,
+   "seen": "a4000-68040nommu-fast-thr and -jit-thr on master e07bdb393 (2026-11-10); pass with PR #2641"
+  }
+ ]
 }
