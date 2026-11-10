@@ -346,6 +346,16 @@ def cmd_report(a):
     return EXIT_OK if summ["verdict"].startswith("PASS") else EXIT_PROBLEMS
 
 
+def cmd_times(a):
+    from . import times
+    t = times.run_times(os.path.abspath(a.results), a.entry)
+    if a.json:
+        print(json.dumps(t, indent=1))
+    else:
+        print(times.format_times(t))
+    return EXIT_OK
+
+
 def cmd_import(a):
     from . import report, runner
     label = a.label or ("import-" + runner.new_run_id())
@@ -545,6 +555,12 @@ def build_parser():
                    help="registry of known emulator bugs (default runner/amitorture/xfail.json)")
     p.add_argument("--workdir", default=DEFAULT_WORKDIR, metavar="DIR", help=WORKDIR_HELP)
     p.set_defaults(fn=cmd_report)
+
+    p = sub.add_parser("times", help="host time per disk and module of a results dir (from serial arrival times)")
+    p.add_argument("results", metavar="RESULTS_DIR", help="a results dir written by run (work/results/<run-id>)")
+    p.add_argument("--entry", action="append", metavar="GLOB", help="only these entries (repeatable)")
+    p.add_argument("--json", action="store_true", help="JSON instead of a summary")
+    p.set_defaults(fn=cmd_times)
 
     p = sub.add_parser("import", help="build a report from serial captures / mailbox dumps made elsewhere")
     p.add_argument("files", nargs="+",
