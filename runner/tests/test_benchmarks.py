@@ -21,7 +21,7 @@ class BenchmarkMatrix(unittest.TestCase):
                          {"68000", "68010", "68020", "68030", "68040", "68060"})
         for e in entries:
             self.assertEqual(e["params"]["modules"], matrix.module_mask(["hostspeed"]))
-            self.assertEqual(e["disk_groups"], ["cpux"])
+            self.assertEqual(e["disk_groups"], ["exp"])
             self.assertEqual(e["options"]["fpu_softfloat"], "false")
             self.assertFalse(e["id"].endswith("-strict"))
         mmu = next(e for e in entries if e["id"] == "bench-68030")

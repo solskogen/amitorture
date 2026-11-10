@@ -28,10 +28,12 @@ def header_info(path):
     if hdr[:4] != b"AMTP":
         info["problem"] = "no AMTP payload header in sector 2"
         return info
-    (ver, image_size, bss, nrel, entry, sectors, crc, alloc, flags) = struct.unpack_from(">9I", hdr, 4)
+    (ver, image_size, bss, nrel, entry, sectors, crc, alloc, flags,
+     data_size, data_sectors, data_alloc) = struct.unpack_from(">12I", hdr, 4)
     info.update({"header_version": ver, "image_size": image_size, "bss_size": bss, "reloc_count": nrel,
                  "entry_offset": entry, "blob_sectors": sectors, "blob_crc32": f"{crc:08x}",
                  "alloc_size": alloc, "alloc_flags": f"{flags:#x}",
+                 "data_size": data_size, "data_sectors": data_sectors, "data_alloc": data_alloc,
                  "build_id": hdr[128:192].split(b"\0")[0].decode("ascii", "replace")})
     p = hdr[64:128]
     if p[:4] == b"PARM":

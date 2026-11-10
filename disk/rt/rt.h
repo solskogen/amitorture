@@ -38,15 +38,18 @@ struct amt_params {
 struct amt_header {
     char  magic[4];          /* "AMTP" */
     ULONG version;
-    ULONG image_size;
-    ULONG bss_size;
+    ULONG image_size;        /* code (segment 0) */
+    ULONG bss_size;          /* after the data in segment 1 */
     ULONG reloc_count;
     ULONG entry_offset;
     ULONG blob_sectors;
     ULONG blob_crc32;
-    ULONG alloc_size;
+    ULONG alloc_size;        /* segment 0 */
     ULONG alloc_flags;
-    ULONG pad[6];
+    ULONG data_size;         /* segment 1 stored bytes */
+    ULONG data_sectors;
+    ULONG data_alloc;        /* segment 1 */
+    ULONG pad[3];
     struct amt_params params;    /* offset 64 */
     char  build_id[64];          /* offset 128 */
     UBYTE rest[512 - 192];
@@ -56,7 +59,8 @@ struct amt_header {
 extern struct ExecBase *SysBase;
 extern const struct amt_header *amt_hdr;
 extern struct IOStdReq *amt_bootio;
-extern void *amt_base;
+extern void *amt_base;        /* segment 0: code */
+extern void *amt_base2;       /* segment 1: data + BSS */
 
 /* effective run parameters (defaults filled in) */
 extern struct amt_params amt_par;

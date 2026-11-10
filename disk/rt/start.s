@@ -1,6 +1,6 @@
 ; amitorture payload entry (CONTRACT.md sections 3 and 14)
 ;
-; long amt_entry(SysBase:A6, hdr:A0, bootio:A1, base:A2)
+; long amt_entry(SysBase:A6, hdr:A0, bootio:A1, base0:A2, base1:A3)
 ; Saves the registers, stores the arguments in globals and calls amt_main().
 ; amt_main's int result goes back to the bootblock in D0. The bootblock
 ; jumps to amt_entry (mkadf takes entry_offset from the _amt_entry symbol).
@@ -12,12 +12,14 @@
 ; A0/D0 = arguments and no SysBase in A6, so the shim loads SysBase from 4,
 ; points A0 at the header copy embedded below (the runner writes the ADF's
 ; sector 2 there: run parameters and build id), passes bootio = NULL and
-; returns RETURN_OK (0) to the CLI if amt_main ever returns.
+; returns RETURN_OK (0) to the CLI if amt_main ever returns. The runner lays
+; segment 1 out at alloc_size in that one hunk, so base1 = base0 + alloc_size.
 
 	xref	_SysBase
 	xref	_amt_hdr
 	xref	_amt_bootio
 	xref	_amt_base
+	xref	_amt_base2
 	xref	_amt_main
 	xdef	_amt_entry
 	xdef	amt_entry
@@ -31,6 +33,8 @@ amt_cli_entry:
 	lea	_amt_cli_hdr,a0
 	sub.l	a1,a1
 	lea	amt_cli_entry(pc),a2
+	move.l	a2,a3
+	add.l	32(a0),a3		; hdr->alloc_size
 	bsr.s	amt_entry
 	movem.l	(sp)+,d2-d7/a2-a6
 	moveq	#0,d0
@@ -43,6 +47,7 @@ _amt_entry:
 	move.l	a0,_amt_hdr
 	move.l	a1,_amt_bootio
 	move.l	a2,_amt_base
+	move.l	a3,_amt_base2
 	jsr	_amt_main
 	movem.l	(sp)+,d2-d7/a2-a6
 	rts

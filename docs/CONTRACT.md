@@ -13,45 +13,48 @@ Standard 880 KB DD ADF (901120 bytes, 1760 sectors × 512).
 |---|---|---|
 | 0 | 1024 | Bootblock: `"DOS\0"`, the standard bootblock checksum at +4, rootblock 880 at +8, code from +12 (`disk/boot/bootblock.s`). |
 | 1024 | 512 | **Payload header** (sector 2), described below. |
-| 1536 | n×512 | **Payload blob**: the image bytes, then the relocation table; zero-padded to a multiple of 512. |
+| 1536 | n×512 | **Payload blob**: the code segment zero-padded to `alloc_size`, then the data segment and the relocation table, zero-padded to a multiple of 512. |
 | rest | | Zero, or reserved for future module payloads. |
 
 ### Payload header (sector 2, 512 bytes)
 | Off | Type | Field |
 |---|---|---|
 | 0 | char[4] | magic `"AMTP"` |
-| 4 | u32 | header version = 1 |
-| 8 | u32 | `image_size`: bytes of image stored in the blob (code+data, relocated; multiple of 4) |
-| 12 | u32 | `bss_size`: zeroed bytes that follow the image in memory (not stored) |
-| 16 | u32 | `reloc_count`: number of u32 entries in the reloc table that follows the image in the blob |
-| 20 | u32 | `entry_offset`: offset of the entry point from the image base (mkadf takes it from the `_amt_entry` symbol, else the start of hunk 0) |
-| 24 | u32 | `blob_sectors`: number of 512-byte sectors in the blob |
-| 28 | u32 | `blob_crc32`: CRC-32 (IEEE, zlib) of the blob bytes `image_size + reloc_count*4` |
-| 32 | u32 | `alloc_size` = max(blob_sectors*512, image_size + bss_size) |
-| 36 | u32 | `alloc_flags`: exec MEMF_ flags used by the bootblock for AllocMem (default `MEMF_ANY|MEMF_CLEAR` = 0x10000) |
+| 4 | u32 | header version = 2 |
+| 8 | u32 | `image_size`: bytes of code in segment 0 (relocated; multiple of 4) |
+| 12 | u32 | `bss_size`: zeroed bytes that follow the data in segment 1 (not stored) |
+| 16 | u32 | `reloc_count`: number of u32 entries in the reloc table that follows the data in the blob |
+| 20 | u32 | `entry_offset`: offset of the entry point in segment 0 (mkadf takes it from the `_amt_entry` symbol, else the start of hunk 0) |
+| 24 | u32 | `blob_sectors`: number of 512-byte sectors in the blob (code sectors + `data_sectors`) |
+| 28 | u32 | `blob_crc32`: CRC-32 (IEEE, zlib) of the blob bytes `alloc_size + data_size + reloc_count*4` (the padded code, then data and relocs) |
+| 32 | u32 | `alloc_size`: segment 0 size = code sectors × 512 |
+| 36 | u32 | `alloc_flags`: exec MEMF_ flags used by the bootblock for both segments (default `MEMF_ANY|MEMF_CLEAR` = 0x10000) |
+| 40 | u32 | `data_size`: bytes of initialised data at the start of segment 1 (multiple of 4) |
+| 44 | u32 | `data_sectors`: sectors holding data + relocs = ceil((data_size + reloc_count*4)/512) |
+| 48 | u32 | `data_alloc`: segment 1 size = max(data_sectors*512, data_size + bss_size, 4) |
 | 64 | 64 bytes | **Run parameters** (§4), baked in per run by the runner via `mkadf.py --param` |
 | 128 | 64 bytes | build id: an ASCII, NUL-padded string (git rev + build date) |
 | rest | | zero |
 
 ### Relocation semantics
-- `mkadf.py` flattens the linked AmigaOS hunk executable. CODE and DATA hunks go in order, each aligned to 8 bytes. BSS hunks are not allowed in the middle: if there are any, they must come last and are covered by `bss_size`.
-- Each HUNK_RELOC32 entry is resolved at build time to the target hunk's flat offset. The image is patched with that offset, and the patch location (relative to the image base) goes in the reloc table.
-- At load time, for every reloc offset `r`, the bootblock does `*(u32*)(base + r) += base`.
+- `mkadf.py` flattens the linked AmigaOS hunk executable into two segments. CODE hunks go to segment 0, DATA hunks then BSS hunks to segment 1, each aligned to 8 bytes. The hunk order must be CODE*, DATA*, BSS*; the BSS hunks are covered by `bss_size`.
+- Two segments let a 512 KB chip + 512 KB slow RAM machine hold a payload that is bigger than either free region.
+- Each HUNK_RELOC32 entry is resolved at build time to the target hunk's offset in its segment. The image is patched with that offset, and the entry records where the patch is: bit 31 = the longword is in segment 1 (else 0), bit 30 = the target is in segment 1 (else 0), bits 29-0 = the longword's offset in its segment.
+- At load time, for every entry, the bootblock adds the target segment's base to the longword.
 
 ---------------------------------------------------------------------------
 ## 2. Bootblock behaviour (`disk/boot/bootblock.s`)
 
 Entry is the standard Kickstart bootblock entry: A1 = the trackdisk IOStdReq, A6 = SysBase. It must work on Kickstart 1.2-3.2 and AROS ROM.
 
-1. Read sector 2 (header) with DoIO(CMD_READ) into a 512-byte AllocMem buffer (MEMF_ANY). If the magic or version is bad, exit with a failure (step 6).
-   - On exec < 36 the bootblock adds MEMF_CHIP to this and to the step 2 allocation, because trackdisk.device before V36 needs chip RAM buffers.
-2. AllocMem(`alloc_size`, `alloc_flags`), giving `base`.
-3. DoIO CMD_READ `blob_sectors*512` bytes from offset 1536 into `base`.
-4. Verify `blob_crc32`. On a mismatch, flash the screen red (COLOR00 = $F00 for ~1 s) and exit with a failure.
-5. Apply the relocs, then zero `[base+image_size, base+image_size+bss_size)`. This is done after the relocs because the reloc table sits in that range. Turn off the drive motor (TD_MOTOR 0). If exec ≥ 37, call CacheClearU() (LVO -636).
-6. `jsr base+entry_offset` with: A6 = SysBase, **A0 = pointer to the 512-byte header copy** (it stays allocated), A1 = the boot IOStdReq, A2 = base.
+1. AllocMem a 512-byte header buffer and an 11-sector (one track) bounce buffer, both MEMF_CHIP, because trackdisk.device before V36 needs chip RAM buffers. Read sector 2 (header) with DoIO(CMD_READ) into the header buffer. If the magic or version is bad, exit with a failure (step 6).
+2. AllocMem(`alloc_size`, `alloc_flags`), giving `base0` (code), and AllocMem(`data_alloc`, `alloc_flags`), giving `base1` (data + BSS). AllocMem already prefers fast and slow RAM to chip RAM, so on an A500 with slow RAM the two segments can land in different regions.
+3. Read the blob through the bounce buffer: `alloc_size` bytes from offset 1536 into `base0`, then `data_sectors*512` bytes into `base1`. Free the bounce buffer.
+4. Verify `blob_crc32` over `base0` (`alloc_size` bytes), then `base1` (`data_size + reloc_count*4` bytes). On a mismatch, flash the screen red (COLOR00 = $F00 for ~1 s) and exit with a failure.
+5. Apply the relocs (the table starts at `base1+data_size`), then zero `[base1+data_size, base1+data_size+bss_size)`. This is done after the relocs because the reloc table sits in that range. Turn off the drive motor (TD_MOTOR 0). If exec ≥ 37, call CacheClearU() (LVO -636).
+6. `jsr base0+entry_offset` with: A6 = SysBase, **A0 = pointer to the 512-byte header copy** (it stays allocated), A1 = the boot IOStdReq, A2 = base0, A3 = base1.
    - On return with D0 = 0: do a normal bootblock exit, i.e. FindResident("dos.library"), A0 = rt_Init, D0 = 0, rts.
-   - On D0 ≠ 0 (or failure in steps 1-4): moveq #-1,d0 / rts.
+   - On D0 ≠ 0 (or failure in steps 1-4, which frees what was allocated): moveq #-1,d0 / rts.
 
 The bootblock must not touch anything else. It must fit in 1012 bytes of code.
 
@@ -61,9 +64,9 @@ The bootblock must not touch anything else. It must fit in 1012 bytes of code.
 ```c
 /* called by the bootblock; exec is alive, multitasking on */
 long amt_entry(struct ExecBase *SysBase /* A6 */, const struct amt_header *hdr /* A0 */,
-               struct IOStdReq *bootio /* A1 */, void *base /* A2 */);
+               struct IOStdReq *bootio /* A1 */, void *base /* A2 */, void *base2 /* A3 */);
 ```
-- It lives in `disk/rt/start.s`, which saves the registers, stores SysBase/hdr/bootio/base in globals and calls `int amt_main(void)` in C.
+- It lives in `disk/rt/start.s`, which saves the registers, stores SysBase/hdr/bootio/base/base2 in globals (`amt_base` = segment 0, code; `amt_base2` = segment 1, data + BSS) and calls `int amt_main(void)` in C.
 - The same file has the CLI entry at image offset 0 (`amt_cli_entry`, §14), used when the payload runs as an AmigaDOS program (CD boot); then bootio is NULL.
 - The result goes back to the bootblock in D0. 0 means "continue booting DOS", which isn't used in v1. The v1 end actions are in §4.
 - C runtime: freestanding, no libnix/ixemul. `-m68000 -Os -ffreestanding -nostdlib -fno-builtin -noixemul -fomit-frame-pointer`, linked with `-nostartfiles`. Exec calls use bebbo's inlines (`<proto/exec.h>` with a global `SysBase`).
@@ -260,21 +263,21 @@ The API is in `disk/rt/mod.h`, which is authoritative; read it. In short:
 | 9 | fpu | BARE | directed FPU edge cases per FPU type |
 | 10 | timing | BARE | throughput fingerprint (perf records) |
 | 11 | devio | OS | trackdisk/scsi.device I/O on signed test-owned media (disk: exp) |
-| 12 | display | BARE | Denise/Lisa: modes, palettes, playfields, sprites, collisions, AGA (disk: chip) |
-| 13 | copper | BARE | copper instruction set, timing, danger bit, register classes (disk: chip) |
-| 14 | paula | BARE | audio DMA/interrupts/modulation, disk controller DMA/MFM/sync (disk: chip) |
-| 15 | input | BARE | keyboard, mouse/joystick counters, pot ports, CD32 pad, via host requests (disk: chip) |
+| 12 | display | BARE | Denise/Lisa: modes, palettes, playfields, sprites, collisions, AGA (disk: core) |
+| 13 | copper | BARE | copper instruction set, timing, danger bit, register classes (disk: core) |
+| 14 | paula | BARE | audio DMA/interrupts/modulation, disk controller DMA/MFM/sync (disk: core) |
+| 15 | input | BARE | keyboard, mouse/joystick counters, pot ports, CD32 pad, via host requests (disk: core) |
 | 16 | rtg | BARE | graphics cards, register level (disk: exp) |
 | 17 | expsound | BARE | sound cards, register level (disk: exp) |
 | 18 | network | BARE | network cards, register level (disk: exp) |
 | 19 | misc_hw | BARE | RTC, Gayle/PCMCIA, Akiko, CDTV hardware (disk: exp); Zorro autoconfig is module 24 |
-| 20 | mmu | BARE | 030/040/060 MMU (disk: mmu) |
-| 21 | memory | BARE | memory paths per bank type, widths, bank boundaries, RMW (disk: cpux) |
-| 22 | dispatch | BARE | seeded random code blocks, gencode.py (disk: cpux) |
-| 23 | dmacontention | BARE | CPU vs blitter/copper/bitplane/audio DMA (disk: cpux) |
+| 20 | mmu | BARE | 030/040/060 MMU (disk: cpu) |
+| 21 | memory | BARE | memory paths per bank type, widths, bank boundaries, RMW (disk: exp) |
+| 22 | dispatch | BARE | seeded random code blocks, gencode.py (disk: cpu) |
+| 23 | dmacontention | BARE | CPU vs blitter/copper/bitplane/audio DMA (disk: core) |
 | 24 | misc_hw_os | OS | Zorro autoconfig consistency: ConfigDev ExpansionRom, sizes, address ranges, overlaps with boards and memory (OS-phase half of misc_hw; disk: exp) |
-| 25 | memory_os | OS | allocates the per-region test blocks of memory (21) while exec is alive (OS-phase half of memory; disk: cpux) |
-| 26 | hostspeed | BARE | timed CPU/FPU/memory/I/O blocks for the runner's real-time check or standalone benchmark disk; `speed` records, no cases (disk: cpux) |
+| 25 | memory_os | OS | allocates the per-region test blocks of memory (21) while exec is alive (OS-phase half of memory; disk: exp) |
+| 26 | hostspeed | BARE | timed CPU/FPU/memory/I/O blocks for the runner's real-time check or standalone benchmark disk; `speed` records, no cases (disk: exp) |
 | 27-63 | reserved | | later |
 
 Disk groups are in disk/Makefile (`DISK_SET_*`). `make check-groups` fails if a module is in no group or in two.
@@ -371,25 +374,21 @@ this signature; it is not implemented yet.
 ---------------------------------------------------------------------------
 ## 12. Disk set
 
-The test ships as several ADFs, built by `make -C disk` (or `make -C disk set`) into `disk/build/set/`:
+The test ships as three ADFs, built by `make -C disk` (or `make -C disk set`) into `disk/build/set/`:
 
-| ADF | Modules | In memory |
+| ADF | Modules | Code + data in memory |
 |---|---|---|
-| `amitorture-1-core.adf` | takeover rt flags exceptions smc interrupts cia blitter timing | ~280 KB |
-| `amitorture-2-cpu.adf` | cpu_basic | ~265 KB |
-| `amitorture-3-fpu.adf` | fpu | ~285 KB |
-| `amitorture-4-chip.adf` | display copper paula input | ~160 KB |
-| `amitorture-5-exp.adf` | rtg expsound network misc_hw misc_hw_os devio | ~195 KB |
-| `amitorture-6-cpux.adf` | memory memory_os dispatch dmacontention hostspeed | ~210 KB |
-| `amitorture-7-mmu.adf` | mmu | ~110 KB |
+| `amitorture-1-core.adf` | takeover rt flags exceptions smc interrupts cia blitter timing display copper paula input dmacontention | ~345 KB + ~66 KB |
+| `amitorture-2-cpu.adf` | cpu_basic mmu dispatch | ~229 KB + ~241 KB |
+| `amitorture-3-exp.adf` | fpu rtg expsound network misc_hw misc_hw_os devio memory memory_os hostspeed | ~234 KB + ~290 KB |
 
-- Each ADF is a complete payload (runtime + probe + its modules) and boots on its own, even on a 512 KB-chip Kickstart 1.x machine.
+- Each ADF is a complete payload (runtime + probe + its modules) and boots on its own. The minimum machine is 1 MB: 512 KB chip + 512 KB slow RAM on Kickstart 1.x (A500). The two segments (§1) are allocated separately, so neither has to fit in one region together with the other.
 - Every module is on exactly one disk, so (mod, case) is unique across the set.
 - The runner boots each config once per disk and merges the records into one result per config.
 - On real hardware / FPGA, boot each disk in turn and `import` the captures together (docs/USAGE.md section 5). The build id of each disk ends with `<n>/<N> <group>`: the status screen shows it and says which disk to insert next, and `import` matches the boots to their disks by it.
 - `make` (no target) builds the disk set. All modules together no longer fit on one 880 KB ADF; `make MODS="rt <modules>"` builds a single ADF with a subset (module development, repro packs).
 
-Module grouping lives in disk/Makefile (`DISK_SET_*`). Move a module to its own disk when its tables push a disk past ~300 KB.
+Module grouping lives in disk/Makefile (`DISK_SET_*`). Keep each segment under ~400 KB so that it fits the free chip or slow RAM of a 512 KB + 512 KB A500 with the module pools (blitter, display, dmacontention, rtg, mmu) still allocatable, and keep every disk within 1760 sectors.
 
 ---------------------------------------------------------------------------
 ## 13. Host request channel
@@ -433,7 +432,7 @@ The CD32 and the CDTV boot from CD, so on those entries the payload runs as an A
 
 ### CLI entry (`disk/rt/start.s`)
 - Offset 0 of the image (the start of the first hunk) is `amt_cli_entry`. AmigaDOS starts a program there, with A0/D0 = the argument line and no SysBase in A6.
-- The shim loads SysBase from address 4, sets A0 = the embedded header copy, A1 = **bootio = NULL**, A2 = the image base, and calls `amt_entry`. If `amt_main` ever returns, the shim returns RETURN_OK (0) to the CLI.
+- The shim loads SysBase from address 4, sets A0 = the embedded header copy, A1 = **bootio = NULL**, A2 = the image base, A3 = A2 + `alloc_size` (where the CD image puts segment 1), and calls `amt_entry`. If `amt_main` ever returns, the shim returns RETURN_OK (0) to the CLI.
 - The bootblock still jumps to `amt_entry`. mkadf takes `entry_offset` from the `_amt_entry` symbol, so it is no longer 0.
 - **Header slot:** the data section holds the 16-byte marker `AMT-CLI-HEADER!!`, followed by 512 bytes. The runner copies the ADF's payload header (sector 2: run parameters, build id) into those 512 bytes. All zeros means default parameters and an empty build id.
 - **bootio = NULL:** the runtime and the modules use `amt_bootio` nowhere: devio opens its own units. A module that ever needs the boot IOStdReq must check it for NULL and skip that path.
@@ -444,7 +443,7 @@ The image is a plain ISO 9660, built by the runner from the already parameter-ba
 
 | Path | Content |
 |---|---|
-| `AMITORTURE` | A one-hunk executable: HUNK_CODE = the ADF's image followed by the BSS as zeros, with the header copied into the slot. HUNK_RELOC32 = the ADF's reloc table. |
+| `AMITORTURE` | A one-hunk executable: HUNK_CODE = the ADF's segment 0 (padded to `alloc_size`), then segment 1 (data, then the BSS as zeros), with the header copied into the slot. HUNK_RELOC32 = the ADF's reloc table, converted to offsets in that one hunk. |
 | `S/STARTUP-SEQUENCE` | `AMITORTURE` |
 | `CD32.TM` (2048 bytes) or `CDTV.TM` (22152 bytes) | The trademark file of the machine. The PVD's application-use area (byte 884) has a `TM` tag pointing at it. |
 

@@ -4,13 +4,16 @@
 ; Exit:  D0 = 0, A0 = dos.library rt_Init  -> boot DOS
 ;        D0 = -1                           -> boot failure
 ;
-; Loads the payload header (sector 2), allocates the payload, reads the blob,
-; checks its CRC-32, relocates, clears the BSS, stops the motor, clears the
-; caches (exec >= 37) and calls the payload entry.
+; Loads the payload header (sector 2), allocates the payload's two segments
+; (code; data + BSS), reads the blob through a chip RAM track buffer, checks
+; its CRC-32, relocates, clears the BSS, stops the motor, clears the caches
+; (exec >= 37) and calls the payload entry.
 ;
 ; Only exec LVOs from KS1.2 are used, except CacheClearU (guarded).
-; Before V36, trackdisk.device needs chip RAM buffers, so on exec < 36 every
-; buffer is allocated with MEMF_CHIP added.
+; Before V36, trackdisk.device needs chip RAM buffers: the header copy and
+; the track buffer are chip RAM, the segments go wherever AllocMem puts them
+; (fast or slow RAM first), so a 512K chip + 512K slow A500 can hold the
+; payload in two pieces.
 ;
 ; Build: vasmm68k_mot -Fbin -m68000 -no-opt -o bootblock.bin bootblock.s
 ; mkadf.py fills in the checksum at +4.
@@ -35,6 +38,8 @@ TD_MOTOR		equ	9
 
 MEMF_CHIP		equ	2
 
+BOUNCE			equ	11*512		; one track
+
 ; payload header fields
 H_MAGIC			equ	0
 H_VERSION		equ	4
@@ -46,6 +51,9 @@ H_BLOB_SECTORS		equ	24
 H_BLOB_CRC		equ	28
 H_ALLOC_SIZE		equ	32
 H_ALLOC_FLAGS		equ	36
+H_DATA_SIZE		equ	40
+H_DATA_SECTORS		equ	44
+H_DATA_ALLOC		equ	48
 
 CUSTOM			equ	$dff000
 VHPOSR			equ	$006
@@ -63,22 +71,22 @@ bb_code:
 	movem.l	d2-d7/a2-a6,-(sp)
 	move.l	a1,a5			; a5 = boot IOStdReq
 	sub.l	a4,a4			; a4 = header buffer (none yet)
-	sub.l	a2,a2			; a2 = payload base (none yet)
+	sub.l	a2,a2			; a2 = segment 0 (code)
+	sub.l	a3,a3			; a3 = segment 1 (data + BSS)
+	moveq	#0,d5			; d5 = track buffer
 
-	; d7 = extra MEMF flags (MEMF_CHIP before V36)
-	moveq	#0,d7
-	cmp.w	#36,LIB_VERSION(a6)
-	bhs.s	.newtd
-	moveq	#MEMF_CHIP,d7
-.newtd:
-
-	; 1. header buffer + read sector 2
+	; 1. header buffer and track buffer, read sector 2
 	move.l	#512,d0
-	move.l	d7,d1			; MEMF_ANY (| CHIP)
+	moveq	#MEMF_CHIP,d1
 	jsr	_LVOAllocMem(a6)
+	move.l	d0,a4
 	tst.l	d0
 	beq	.fail
-	move.l	d0,a4
+	move.l	#BOUNCE,d0
+	moveq	#MEMF_CHIP,d1
+	jsr	_LVOAllocMem(a6)
+	move.l	d0,d5
+	beq	.fail
 
 	move.l	a4,a0
 	move.l	#512,d0
@@ -88,52 +96,54 @@ bb_code:
 
 	cmp.l	#'AMTP',H_MAGIC(a4)
 	bne	.fail
-	cmp.l	#1,H_VERSION(a4)
+	cmp.l	#2,H_VERSION(a4)
 	bne	.fail
 
-	; 2. payload memory
+	; 2. the two segments
 	move.l	H_ALLOC_SIZE(a4),d0
 	beq	.fail
 	move.l	H_ALLOC_FLAGS(a4),d1
-	or.l	d7,d1
 	jsr	_LVOAllocMem(a6)
+	move.l	d0,a2
 	tst.l	d0
 	beq	.fail
-	move.l	d0,a2
-
-	; 3. read the blob
-	move.l	a2,a0
-	move.l	H_BLOB_SECTORS(a4),d0
+	move.l	H_DATA_ALLOC(a4),d0
 	beq	.fail
-	moveq	#9,d1
-	lsl.l	d1,d0			; * 512
-	move.l	#1536,d1
-	bsr	td_read
-	bne	.fail
+	move.l	H_ALLOC_FLAGS(a4),d1
+	jsr	_LVOAllocMem(a6)
+	move.l	d0,a3
+	tst.l	d0
+	beq	.fail
 
-	; 4. CRC-32 (IEEE, reflected, poly $EDB88320) of image + reloc table
+	; 3. read the blob: code sectors into segment 0, data + relocs into 1
+	move.l	a2,a0
+	move.l	H_ALLOC_SIZE(a4),d3
+	move.l	#1536,d4
+	bsr	bounce_read
+	bne	.fail
+	move.l	a3,a0
+	move.l	H_DATA_SECTORS(a4),d3
+	moveq	#9,d0
+	lsl.l	d0,d3			; * 512
+	bsr	bounce_read		; d4 = offset after the code
+	bne	.fail
+	move.l	d5,a1
+	move.l	#BOUNCE,d0
+	jsr	_LVOFreeMem(a6)
+	moveq	#0,d5
+
+	; 4. CRC-32 (IEEE, reflected, poly $EDB88320) of the blob bytes:
+	;    segment 0 (alloc_size bytes), then data + reloc table
+	moveq	#-1,d1
+	move.l	a2,a0
+	move.l	H_ALLOC_SIZE(a4),d6
+	bsr	crc32
+	move.l	a3,a0
 	move.l	H_RELOC_COUNT(a4),d6
 	add.l	d6,d6
 	add.l	d6,d6
-	add.l	H_IMAGE_SIZE(a4),d6	; d6 = byte count
-	move.l	a2,a0
-	moveq	#-1,d1
-	move.l	#$edb88320,d3
-	tst.l	d6
-	beq.s	.crcdone
-.crcbyte:
-	move.b	(a0)+,d2
-	eor.b	d2,d1
-	moveq	#7,d4
-.crcbit:
-	lsr.l	#1,d1
-	bcc.s	.crcnox
-	eor.l	d3,d1
-.crcnox:
-	dbf	d4,.crcbit
-	subq.l	#1,d6
-	bne.s	.crcbyte
-.crcdone:
+	add.l	H_DATA_SIZE(a4),d6
+	bsr	crc32
 	not.l	d1
 	cmp.l	H_BLOB_CRC(a4),d1
 	beq.s	.crcok
@@ -153,22 +163,32 @@ bb_code:
 	bra	.fail
 
 .crcok:
-	; 5. relocate: for each r, *(u32 *)(base + r) += base
-	move.l	a2,a0
-	add.l	H_IMAGE_SIZE(a4),a0	; a0 = reloc table
+	; 5. relocate. Entry: bit 31 = the longword is in segment 1, bit 30 =
+	;    add segment 1's base (else segment 0's), bits 29-0 = its offset
+	move.l	a3,a0
+	add.l	H_DATA_SIZE(a4),a0	; a0 = reloc table
 	move.l	H_RELOC_COUNT(a4),d2
-	move.l	a2,d1
 	bra.s	.relnext
 .relloop:
 	move.l	(a0)+,d0
-	add.l	d1,0(a2,d0.l)
+	move.l	a2,a1
+	bclr	#31,d0
+	beq.s	.relloc
+	move.l	a3,a1
+.relloc:
+	move.l	a2,d1
+	bclr	#30,d0
+	beq.s	.reltgt
+	move.l	a3,d1
+.reltgt:
+	add.l	d1,0(a1,d0.l)
 .relnext:
 	subq.l	#1,d2
 	bcc.s	.relloop
 
-	; clear [base+image_size, base+image_size+bss_size)
-	move.l	a2,a0
-	add.l	H_IMAGE_SIZE(a4),a0
+	; clear [base1+data_size, base1+data_size+bss_size) (over the relocs)
+	move.l	a3,a0
+	add.l	H_DATA_SIZE(a4),a0
 	move.l	H_BSS_SIZE(a4),d2
 	moveq	#0,d0
 	bra.s	.bssnext
@@ -178,11 +198,7 @@ bb_code:
 	subq.l	#1,d2
 	bcc.s	.bssloop
 
-	; motor off
-	move.w	#TD_MOTOR,IO_COMMAND(a5)
-	clr.l	IO_LENGTH(a5)
-	move.l	a5,a1
-	jsr	_LVODoIO(a6)
+	bsr	motor_off
 
 	; caches
 	cmp.w	#37,LIB_VERSION(a6)
@@ -191,12 +207,12 @@ bb_code:
 .nocache:
 
 	; 6. call the payload
-	move.l	a2,a3
-	add.l	H_ENTRY(a4),a3
 	move.l	a4,a0			; A0 = header copy (stays allocated)
+	move.l	a2,a4
+	add.l	H_ENTRY(a0),a4
 	move.l	a5,a1			; A1 = boot IOStdReq
-					; A2 = base, A6 = SysBase
-	jsr	(a3)
+					; A2 = base0, A3 = base1, A6 = SysBase
+	jsr	(a4)
 	movem.l	(sp)+,d2-d7/a2-a6
 	tst.l	d0
 	bne.s	.retfail
@@ -213,26 +229,91 @@ bb_code:
 
 ; failure in steps 1-4: free what we allocated, return -1
 .fail:
+	move.l	a3,d0
+	beq.s	.noseg1
+	move.l	a3,a1
+	move.l	H_DATA_ALLOC(a4),d0
+	jsr	_LVOFreeMem(a6)
+.noseg1:
 	move.l	a2,d0
-	beq.s	.nobase
+	beq.s	.noseg0
 	move.l	a2,a1
 	move.l	H_ALLOC_SIZE(a4),d0
 	jsr	_LVOFreeMem(a6)
-.nobase:
+.noseg0:
+	tst.l	d5
+	beq.s	.nobounce
+	move.l	d5,a1
+	move.l	#BOUNCE,d0
+	jsr	_LVOFreeMem(a6)
+.nobounce:
 	move.l	a4,d0
 	beq.s	.nohdr
 	move.l	a4,a1
 	move.l	#512,d0
 	jsr	_LVOFreeMem(a6)
 .nohdr:
-	; motor off
-	move.w	#TD_MOTOR,IO_COMMAND(a5)
-	clr.l	IO_LENGTH(a5)
-	move.l	a5,a1
-	jsr	_LVODoIO(a6)
+	bsr	motor_off
 	movem.l	(sp)+,d2-d7/a2-a6
 .retfail:
 	moveq	#-1,d0
+	rts
+
+motor_off:
+	move.w	#TD_MOTOR,IO_COMMAND(a5)
+	clr.l	IO_LENGTH(a5)
+	move.l	a5,a1
+	jmp	_LVODoIO(a6)
+
+; bounce_read: a0 = destination, d3 = length (a multiple of 512), d4 = disk
+; offset; reads through the track buffer (d5). Returns Z set on success,
+; d4 advanced past the data. Uses d0-d3, a0, a1.
+bounce_read:
+	tst.l	d3
+	beq.s	.done
+	move.l	#BOUNCE,d2
+	cmp.l	d2,d3
+	bhs.s	.full
+	move.l	d3,d2
+.full:
+	move.l	a0,-(sp)
+	move.l	d5,a0
+	move.l	d2,d0
+	move.l	d4,d1
+	bsr.s	td_read
+	move.l	(sp)+,a1		; flags kept
+	bne.s	.done
+	move.l	d5,a0
+	move.l	d2,d0
+	lsr.l	#2,d0
+	subq.w	#1,d0
+.copy:
+	move.l	(a0)+,(a1)+
+	dbf	d0,.copy
+	move.l	a1,a0
+	add.l	d2,d4
+	sub.l	d2,d3
+	bra.s	bounce_read
+.done:
+	rts
+
+; crc32: a0 = data, d6 = byte count, d1 = running CRC. Uses d2-d4, d6.
+crc32:
+	move.l	#$edb88320,d3
+	bra.s	.next
+.byte:
+	move.b	(a0)+,d2
+	eor.b	d2,d1
+	moveq	#7,d4
+.bit:
+	lsr.l	#1,d1
+	bcc.s	.nox
+	eor.l	d3,d1
+.nox:
+	dbf	d4,.bit
+.next:
+	subq.l	#1,d6
+	bcc.s	.byte
 	rts
 
 ; td_read: a0 = buffer, d0 = length, d1 = offset. Returns Z set on success.

@@ -29,19 +29,15 @@ make -C disk check       # verify every disk: bootblock checksum, payload CRC, r
 make -C disk clean
 ```
 
-`make` builds the **disk set**: seven bootable ADFs in `disk/build/set/`, one per module group. Each disk is a complete payload: bootblock, runtime, probe and its own modules.
+`make` builds the **disk set**: three bootable ADFs in `disk/build/set/`, one per module group. Each disk is a complete payload: bootblock, runtime, probe and its own modules.
 
 | Disk | Modules |
 |---|---|
-| `amitorture-1-core.adf` | takeover rt flags exceptions smc interrupts cia blitter timing |
-| `amitorture-2-cpu.adf` | cpu_basic |
-| `amitorture-3-fpu.adf` | fpu |
-| `amitorture-4-chip.adf` | display copper paula input |
-| `amitorture-5-exp.adf` | rtg expsound network misc_hw misc_hw_os devio |
-| `amitorture-6-cpux.adf` | memory memory_os dispatch dmacontention hostspeed |
-| `amitorture-7-mmu.adf` | mmu |
+| `amitorture-1-core.adf` | takeover rt flags exceptions smc interrupts cia blitter timing display copper paula input dmacontention |
+| `amitorture-2-cpu.adf` | cpu_basic mmu dispatch |
+| `amitorture-3-exp.adf` | fpu rtg expsound network misc_hw misc_hw_os devio memory memory_os hostspeed |
 
-The build prints each disk's size in memory. Every disk must stay under about 300 KB so that it runs on a 512 KB Kickstart 1.x machine. All the modules together are too big for one 880 KB ADF, which is why the set exists.
+The build prints each disk's code and data sizes in memory. The bootblock loads them as two separate allocations (CONTRACT §1-2), so the minimum machine is 1 MB: a 512 KB chip + 512 KB slow RAM Kickstart 1.x A500. Keep each segment under about 400 KB, so that it fits one of those regions with the module pools still allocatable (CONTRACT §12). All the modules together are too big for one 880 KB ADF, which is why the set exists.
 
 The runner picks up `disk/build/set` by itself. Rebuild after any change under `disk/` or to a generator in `tools/`.
 C objects have compiler-generated `.d` dependencies, so changes to module-local headers also rebuild their
@@ -53,7 +49,7 @@ Variables:
 |---|---|
 | `MODS="rt cia"` | build one ADF with only these modules, `$(B)/amitorture.adf` (development) |
 | `B=dir` | build directory, default `build`. Use one per `MODS` selection, so different builds don't share objects. |
-| `BUILD_ID=…` | string baked into the disk header (default: git revision and date). The set build appends ` <n>/<N> <group>` (e.g. `1/7 core`); the status screen shows "disk n of N" from it when the id before it has at least two words, as the default has. |
+| `BUILD_ID=…` | string baked into the disk header (default: git revision and date). The set build appends ` <n>/<N> <group>` (e.g. `1/3 core`); the status screen shows "disk n of N" from it when the id before it has at least two words, as the default has. |
 | `PARAMS="mode=quick seed=5"` | default run parameters baked into the disk (the keys are listed at the top of `tools/mkadf.py` and in [USAGE.md](USAGE.md) section 5). The runner patches its own parameters into a copy anyway. |
 
 `tools/mkadf.py --dump some.adf` shows any disk's header, baked-in parameters, sizes and CRCs.

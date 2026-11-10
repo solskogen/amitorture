@@ -3173,6 +3173,7 @@ void amt_run_mmu(void)
     need_add(0xdf0000UL, 0xe00000UL);
     need_add(rom, 0x1000000UL);
     need_add(A(amt_base), A(amt_base) + amt_hdr->alloc_size);
+    need_add(A(amt_base2), A(amt_base2) + amt_hdr->data_alloc);
     sp = A(&sp);
     need_add(sp - 0xa000UL, sp + 0x2000UL);
     need_add(A(amt_vbr()), A(amt_vbr()) + 0x400);

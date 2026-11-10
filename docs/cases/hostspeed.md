@@ -1,4 +1,4 @@
-# hostspeed (module 26, bare phase, cpux disk)
+# hostspeed (module 26, bare phase, exp disk)
 
 How fast the emulator runs each costly CPU and FPU instruction, measured against real time. The guest
 cannot see host time, so the guest only runs the instructions and the **runner** judges them: the cases

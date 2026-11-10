@@ -9,6 +9,7 @@ struct ExecBase *SysBase;
 const struct amt_header *amt_hdr;
 struct IOStdReq *amt_bootio;
 void *amt_base;
+void *amt_base2;
 struct amt_params amt_par;
 
 #define probe amt_probe_result

@@ -46,10 +46,10 @@ check in every report).
 ## Disk set
 
 The test ships as a set of disks: `make -C disk` (= `make -C disk set`) writes `disk/build/set/amitorture-1-core.adf`,
-`-2-cpu.adf`, `-3-fpu.adf`, `-4-chip.adf`, `-5-exp.adf`, `-6-cpux.adf` and `-7-mmu.adf` (the groups are `DISK_SET_*` in
-disk/Makefile; a group without modules yet is skipped, and the numbers stay fixed).
-- Each disk is a complete payload of under about 300 KB (the fpu disk, the largest, is about 285 KB), so it fits a
-  512 KB chip-only KS1.x machine.
+`-2-cpu.adf` and `-3-exp.adf` (the groups are `DISK_SET_*` in disk/Makefile; a group without modules yet is skipped,
+and the numbers stay fixed).
+- Each disk is a complete payload in two segments, code and data + BSS, each under about 400 KB (the largest segment,
+  the core disk's code, is about 345 KB), so it fits a 512 KB chip + 512 KB slow RAM KS1.x A500.
 - The set build appends `<n>/<N> <group>` to each disk's build id. The disk's status screen shows "disk n of N"
   from it, and `import` uses the group as the disk's name.
 - Every module is on exactly one disk; rt and takeover are on core only.
@@ -73,23 +73,23 @@ How the runner uses it:
   first disk.
 - **Narrowing and repro packs.** Narrowing reruns only the disk that holds the failing module (`disk_only`). A repro
   pack carries just that disk, with the module mask baked in.
-- **Floppy speed.** Set disks that don't test the floppy hardware load at turbo (`floppy_speed=0`); the chip disk
-  (paula: raw disk DMA, DSKSYNC, motor timing) and the cpux disk (dmacontention: disk DMA under load) run at
+- **Floppy speed.** Set disks that don't test the floppy hardware load at turbo (`floppy_speed=0`); the core disk
+  (paula: raw disk DMA, DSKSYNC, motor timing; dmacontention: disk DMA under load) runs at
   `floppy_speed=100`, the real drive speed (runner.py `REAL_SPEED_GROUPS`). A set disk passed alone with `--adf` is
   recognised by its header (build id `... <n>/<m> <group>`) and gets the same speed; the all-in-one ADF and unknown
   disks run at real speed. An explicit `floppy_speed` (`--set` or an entry's options) always wins. Turbo breaks raw
   disk-controller DMA: in disk.cpp's doreaddma turbo path DSKBLK comes early and raw MFM reads get bad checksums,
-  which the paula module reports as failures. `--timeout` is per disk launch (default 600 s). Measured at floppy_speed=100: the core
-  disk takes 243 s on a cycle-exact A500 (cpu 125 s, chip 127 s, cpux 101 s, fpu/exp about 35 s) and 225 s on the
-  CDTV, the slowest launches.
+  which the paula module reports as failures. `--timeout` is per disk launch (default 900 s). Measured at floppy_speed=100: the core disk, the slowest
+  launch, took 441 s on a cycle-exact A500 (the cpu and exp disks 118 s and 138 s; the whole set about as long as
+  the earlier seven-disk set).
 
 ### Automatic warp
 
-`--warp auto` accelerates only the `cpu`, `fpu` and `mmu` set disks, and not on JIT entries (`cachesize`
+`--warp auto` accelerates only the `cpu` set disk (cpu_basic, mmu, dispatch), and not on JIT entries (`cachesize`
 non-zero): with warp the JIT runs these disks slower (smoke on a Pi 500: 16-18 s -> 46-52 s per JIT entry,
 while the cycle-exact entries gained about 48 s). The baked disk's
 build id, not its filename, identifies its group; renamed set disks passed with `--adf`
-get the same policy. `core`, `chip`, `exp`, `cpux`, mixed/unknown disks, selftests and
+get the same policy. `core`, `exp` (which holds fpu), mixed/unknown disks, selftests and
 any launch requiring audio capture stay normally paced. `--audio off` does not make
 a timing-sensitive disk eligible for warp. Module masks never change this decision.
 All selected disks and cases still run with their existing assertions and verdict rules.
@@ -207,7 +207,7 @@ The matrices (runner/amitorture/matrix.py):
 ```
 amitorture run --amiberry BIN --kickstarts DIR [--matrix smoke] [--config GLOB ...] [--set OPT=VAL ...]
                [--adf disk/build/amitorture.adf] [--mode full|quick] [--seed N] [--param KEY=VAL]
-               [--disk-set DIR] [--jobs N] [--keep] [--timeout S per disk (600)] [--hang S (120)]
+               [--disk-set DIR] [--jobs N] [--keep] [--timeout S per disk (900)] [--hang S (120)]
                [--narrow-budget S (7200)] [--narrow-reruns N (3)] [--narrow-binary BIN ...] [--no-narrow]
                [--baseline NAME] [--no-repro] [--amiberry-src DIR] [--xfail FILE]
                [--audio auto|on|off] [--warp off|auto|on] [--ports LO-HI] [--end-action halt|reboot|return] [-q] [--show]

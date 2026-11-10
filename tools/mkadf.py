@@ -26,7 +26,8 @@ ADF_SIZE = 901120
 SECTOR = 512
 HDR_OFF = 1024
 BLOB_OFF = 1536
-HDR_VERSION = 1
+HDR_VERSION = 2
+HDR_FMT = ">4sIIIIIIIIIIII"   # magic .. data_alloc (offsets 0..48)
 MEMF_ANY_CLEAR = 0x10000
 MEMF_CHIP = 0x2
 MEMF_FAST = 0x4
@@ -188,16 +189,17 @@ def parse_hunks(blob):
     return hunks
 
 
+RELOC_LOC_SEG1 = 1 << 31            # the longword to patch is in segment 1
+RELOC_TGT_SEG1 = 1 << 30            # add segment 1's base (else segment 0's)
+RELOC_OFF_MASK = RELOC_TGT_SEG1 - 1
+
+
 def flatten(hunks, alloc_flags):
-    """Lay the hunks out per section 1. Returns (image, bss_size, relocs, entry_offset)."""
-    # trailing BSS: BSS hunks, plus any zero-only tail of the last hunk
+    """Lay the hunks out per section 1 in two segments: segment 0 holds the
+    CODE hunks, segment 1 the DATA hunks followed by the BSS hunks.
+    Returns (code, data, bss_size, relocs, entry_offset): code and data are
+    the stored bytes of the two segments, relocs the encoded reloc entries."""
     n = len(hunks)
-    first_bss = n
-    while first_bss > 0 and hunks[first_bss - 1].kind == HUNK_BSS:
-        first_bss -= 1
-    for h in hunks[:first_bss]:
-        if h.kind == HUNK_BSS:
-            raise Fail(f"BSS hunk {h.index} is followed by a CODE/DATA hunk; BSS must come last")
     for h in hunks:
         if h.kind is None:
             raise Fail(f"hunk {h.index} has no content")
@@ -206,59 +208,82 @@ def flatten(hunks, alloc_flags):
                        "use AllocMem for chip buffers or pass --alloc-flags")
         if h.memflags & MEMF_FAST and alloc_flags & MEMF_CHIP:
             raise Fail(f"hunk {h.index} asks for fast RAM but alloc_flags has MEMF_CHIP")
+    order = {HUNK_CODE: 0, HUNK_DATA: 1, HUNK_BSS: 2}
+    for a, b in zip(hunks, hunks[1:]):
+        if order[a.kind] > order[b.kind]:
+            raise Fail(f"hunk {b.index} ({HUNK_NAMES[b.kind]}) follows hunk {a.index} "
+                       f"({HUNK_NAMES[a.kind]}); the payload must be CODE hunks, then DATA, then BSS")
+    if hunks[0].kind != HUNK_CODE:
+        raise Fail("hunk 0 is not code")
 
-    off = 0
+    seg = {}
+    off = [0, 0]
     for h in hunks:
-        off = align(off, 8)
-        h.flat = off
-        off += h.alloc
-    total = align(off, 4)
-
-    image_end = 0
-    for h in hunks[:first_bss]:
-        image_end = h.flat + len(h.data)
-    # the zero tail of the last stored hunk need not be stored ... unless relocs point into it
-    image = bytearray(align(image_end, 4))
-    for h in hunks[:first_bss]:
-        image[h.flat:h.flat + len(h.data)] = h.data
+        s = 0 if h.kind == HUNK_CODE else 1
+        off[s] = align(off[s], 8)
+        h.flat = off[s]
+        seg[h.index] = s
+        off[s] += h.alloc
+    code_end = align(off[0], 4)
+    data_end = 0
+    for h in hunks:
+        if h.kind == HUNK_DATA:
+            data_end = h.flat + len(h.data)
+    data_end = align(data_end, 4)
+    bss_size = align(off[1], 4) - data_end
+    images = [bytearray(code_end), bytearray(data_end)]
+    for h in hunks:
+        if h.kind != HUNK_BSS:
+            images[seg[h.index]][h.flat:h.flat + len(h.data)] = h.data
 
     relocs = []
     for h in hunks:
         if h.relocs and h.kind == HUNK_BSS:
             raise Fail(f"relocations in BSS hunk {h.index}")
-        for off, target in h.relocs:
+        s = seg[h.index]
+        for roff, target in h.relocs:
             if target >= n:
                 raise Fail(f"hunk {h.index}: reloc to missing hunk {target}")
-            if off + 4 > len(h.data):
-                raise Fail(f"hunk {h.index}: reloc at {off:#x} outside the hunk's stored data")
-            loc = h.flat + off
+            if roff + 4 > len(h.data):
+                raise Fail(f"hunk {h.index}: reloc at {roff:#x} outside the hunk's stored data")
+            loc = h.flat + roff
             if loc & 1:
                 raise Fail(f"hunk {h.index}: reloc at odd address {loc:#x} (68000 cannot do that)")
-            val = struct.unpack_from(">I", image, loc)[0] + hunks[target].flat
+            if loc > RELOC_OFF_MASK:
+                raise Fail("reloc location too large")
+            val = struct.unpack_from(">I", images[s], loc)[0] + hunks[target].flat
             if val > 0xFFFFFFFF:
                 raise Fail("reloc value overflow")
-            struct.pack_into(">I", image, loc, val & 0xFFFFFFFF)
-            relocs.append(loc)
+            struct.pack_into(">I", images[s], loc, val & 0xFFFFFFFF)
+            relocs.append(loc | (RELOC_LOC_SEG1 if s else 0) | (RELOC_TGT_SEG1 if seg[target] else 0))
     relocs.sort()
-    if len(set(relocs)) != len(relocs):
+    locs = [r & ~RELOC_TGT_SEG1 for r in relocs]
+    if len(set(locs)) != len(locs):
         raise Fail("duplicate reloc locations")
 
     entry = None
     for name in ENTRY_SYMBOLS:
         for h in hunks:
             if name in h.symbols:
+                if seg[h.index] != 0:
+                    raise Fail(f"{name} is not in a code hunk")
                 entry = h.flat + h.symbols[name]
                 break
         if entry is not None:
             break
     if entry is None:
-        if hunks[0].kind != HUNK_CODE:
-            raise Fail("no amt_entry symbol and hunk 0 is not code")
         entry = hunks[0].flat
     if entry & 1:
         raise Fail("odd entry offset")
-    bss_size = total - len(image)
-    return bytes(image), bss_size, relocs, entry
+    return bytes(images[0]), bytes(images[1]), bss_size, relocs, entry
+
+
+def layout(code, data, bss, nrel):
+    """(code_sectors, data_sectors, data_alloc) of a payload (section 1)."""
+    code_sectors = align(len(code), SECTOR) // SECTOR
+    data_sectors = align(len(data) + nrel * 4, SECTOR) // SECTOR
+    data_alloc = max(data_sectors * SECTOR, len(data) + bss, 4)
+    return code_sectors, data_sectors, data_alloc
 
 
 # ---------------------------------------------------------------------------
@@ -363,14 +388,15 @@ def build(args):
         exe = f.read()
     alloc_flags = parse_num(args.alloc_flags)
     hunks = parse_hunks(exe)
-    image, bss, relocs, entry = flatten(hunks, alloc_flags)
-    blob = image + b"".join(struct.pack(">I", r) for r in relocs)
-    blob_sectors = align(len(blob), SECTOR) // SECTOR
+    code, data, bss, relocs, entry = flatten(hunks, alloc_flags)
+    code_sectors, data_sectors, data_alloc = layout(code, data, bss, len(relocs))
+    alloc = code_sectors * SECTOR
+    blob_sectors = code_sectors + data_sectors
+    blob = code.ljust(alloc, b"\0") + data + b"".join(struct.pack(">I", r) for r in relocs)
     if BLOB_OFF + blob_sectors * SECTOR > ADF_SIZE:
         raise Fail(f"payload does not fit on the disk: it needs {(BLOB_OFF + blob_sectors * SECTOR) // 1024} KB, "
                    f"an ADF holds {ADF_SIZE // 1024} KB. Build the disk set instead (`make -C disk` or "
                    f"`make -C disk set`), or build fewer modules (`make -C disk MODS=\"rt <modules>\"`).")
-    alloc = max(blob_sectors * SECTOR, len(image) + bss)
     params = default_params()
     for item in args.param or []:
         apply_param(params, item)
@@ -378,8 +404,9 @@ def build(args):
     if len(bid) > 63:
         raise Fail("build id longer than 63 bytes")
     hdr = bytearray(SECTOR)
-    struct.pack_into(">4sIIIIIIIII", hdr, 0, b"AMTP", HDR_VERSION, len(image), bss, len(relocs),
-                     entry, blob_sectors, zlib.crc32(blob) & 0xFFFFFFFF, alloc, alloc_flags)
+    struct.pack_into(HDR_FMT, hdr, 0, b"AMTP", HDR_VERSION, len(code), bss, len(relocs), entry,
+                     blob_sectors, zlib.crc32(blob) & 0xFFFFFFFF, alloc, alloc_flags,
+                     len(data), data_sectors, data_alloc)
     hdr[64:128] = pack_params(params)
     hdr[128:128 + len(bid)] = bid
     adf = bytearray(ADF_SIZE)
@@ -387,8 +414,8 @@ def build(args):
     adf[HDR_OFF:HDR_OFF + SECTOR] = hdr
     adf[BLOB_OFF:BLOB_OFF + len(blob)] = blob
     write_out(args.output, adf)
-    print(f"{args.output}: image {len(image)} bss {bss} relocs {len(relocs)} entry {entry:#x} "
-          f"blob {blob_sectors} sectors, alloc {alloc}")
+    print(f"{args.output}: code {len(code)} data {len(data)} bss {bss} relocs {len(relocs)} "
+          f"entry {entry:#x} blob {blob_sectors} sectors, alloc {alloc} + {data_alloc}")
 
 
 def write_out(path, data):
@@ -432,18 +459,20 @@ def dump(path):
     cs = struct.unpack_from(">I", boot, 4)[0]
     if cs != boot_checksum(boot):
         errors.append(f"bootblock checksum {cs:08x} != {boot_checksum(boot):08x}")
-    (magic, ver, image, bss, nrel, entry, sectors, crc, alloc, aflags) = \
-        struct.unpack_from(">4sIIIIIIIII", adf, HDR_OFF)
+    (magic, ver, code, bss, nrel, entry, sectors, crc, alloc, aflags, data, dsectors, dalloc) = \
+        struct.unpack_from(HDR_FMT, adf, HDR_OFF)
     bid = adf[HDR_OFF + 128:HDR_OFF + 192].split(b"\0")[0].decode("ascii", "replace")
     print(f"bootblock     checksum {cs:08x} ({'ok' if cs == boot_checksum(boot) else 'BAD'})")
     print(f"magic         {magic.decode('latin-1')}  version {ver}")
-    print(f"image_size    {image}")
+    print(f"image_size    {code}  (code, segment 0)")
+    print(f"data_size     {data}  (segment 1)")
     print(f"bss_size      {bss}")
     print(f"reloc_count   {nrel}")
     print(f"entry_offset  {entry:#x}")
-    print(f"blob_sectors  {sectors}")
+    print(f"blob_sectors  {sectors}  (data {dsectors})")
     print(f"blob_crc32    {crc:08x}")
-    print(f"alloc_size    {alloc}")
+    print(f"alloc_size    {alloc}  (segment 0)")
+    print(f"data_alloc    {dalloc}  (segment 1)")
     print(f"alloc_flags   {aflags:#x}")
     print(f"build_id      {bid!r}")
     p = unpack_params(adf[HDR_OFF + 64:HDR_OFF + 128])
@@ -454,15 +483,23 @@ def dump(path):
         print(f"params        mode={p['mode']}({mode}) seed={p['seed']} end_action={p['end_action']} "
               f"flags={p['flags']:#x} baud={p['baud']} modules={p['modules']:#018x}")
     if ver != HDR_VERSION:
-        errors.append(f"header version {ver}")
-    if image % 4:
-        errors.append("image_size not a multiple of 4")
-    nbytes = image + nrel * 4
-    if align(nbytes, SECTOR) // SECTOR != sectors:
-        errors.append(f"blob_sectors {sectors} does not match {nbytes} bytes")
-    if alloc != max(sectors * SECTOR, image + bss):
-        errors.append("alloc_size mismatch")
-    if max(nbytes, sectors * SECTOR) > len(adf) - BLOB_OFF:
+        errors.append(f"header version {ver}, expected {HDR_VERSION}")
+        for e in errors:
+            print(f"ERROR: {e}", file=sys.stderr)
+        return 1
+    if code % 4 or data % 4:
+        errors.append("image_size or data_size not a multiple of 4")
+    code_sectors = align(code, SECTOR) // SECTOR
+    if alloc != code_sectors * SECTOR:
+        errors.append(f"alloc_size {alloc} != {code_sectors} code sectors")
+    if dsectors != align(data + nrel * 4, SECTOR) // SECTOR:
+        errors.append(f"data_sectors {dsectors} does not match {data + nrel * 4} bytes")
+    if sectors != code_sectors + dsectors:
+        errors.append("blob_sectors != code sectors + data sectors")
+    if dalloc != max(dsectors * SECTOR, data + bss, 4):
+        errors.append("data_alloc mismatch")
+    nbytes = alloc + data + nrel * 4
+    if sectors * SECTOR > len(adf) - BLOB_OFF:
         errors.append("blob extends beyond the ADF")
         for e in errors:
             print(f"ERROR: {e}", file=sys.stderr)
@@ -472,19 +509,27 @@ def dump(path):
     print(f"blob crc      {real:08x} ({'ok' if real == crc else 'BAD'})")
     if real != crc:
         errors.append("blob CRC mismatch")
-    if entry >= image or entry & 1:
-        errors.append("entry_offset outside the image or odd")
+    if entry >= code or entry & 1:
+        errors.append("entry_offset outside the code or odd")
+    seg_bytes = (alloc, data)                 # patchable bytes per segment
+    seg_top = (alloc, data + bss)             # valid target offsets per segment
+    seg_at = (0, alloc)                       # segment offset within the blob
     bad = 0
     for i in range(nrel):
-        r = struct.unpack_from(">I", blob, image + 4 * i)[0]
-        if r & 1 or r + 4 > image:
+        r = struct.unpack_from(">I", blob, alloc + data + 4 * i)[0]
+        ls = 1 if r & RELOC_LOC_SEG1 else 0
+        ts = 1 if r & RELOC_TGT_SEG1 else 0
+        o = r & RELOC_OFF_MASK
+        if o & 1 or o + 4 > seg_bytes[ls]:
             bad += 1
             continue
-        if struct.unpack_from(">I", blob, r)[0] > image + bss:
+        if struct.unpack_from(">I", blob, seg_at[ls] + o)[0] > seg_top[ts]:
             bad += 1
     print(f"relocs        {nrel} ({'ok' if bad == 0 else f'{bad} BAD'})")
     if bad:
         errors.append(f"{bad} relocs out of range")
+    if any(adf[BLOB_OFF + code:BLOB_OFF + alloc]):
+        errors.append("code padding not zero")
     if any(adf[BLOB_OFF + nbytes:BLOB_OFF + sectors * SECTOR]):
         errors.append("blob padding not zero")
     for e in errors:

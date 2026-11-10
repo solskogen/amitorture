@@ -570,12 +570,12 @@ def base_result(entry):
 
 
 # Disks whose modules test the floppy hardware itself and need real drive
-# speed: chip (paula: raw disk DMA, DSKSYNC, motor/ready timing) and cpux
-# (dmacontention: disk DMA under load). Turbo (floppy_speed=0, disk.cpp's
+# speed: core (paula: raw disk DMA, DSKSYNC, motor/ready timing;
+# dmacontention: disk DMA under load). Turbo (floppy_speed=0, disk.cpp's
 # turbo DMA path) breaks raw disk-DMA timing, but loads the payload through
-# trackdisk in a fraction of the time (about 9 s of a disk's ~12 s start).
-REAL_SPEED_GROUPS = ("chip", "cpux")
-WARP_GROUPS = ("cpu", "fpu", "mmu")
+# trackdisk in a fraction of the time.
+REAL_SPEED_GROUPS = ("core",)
+WARP_GROUPS = ("cpu",)
 
 
 def build_group(info):

@@ -816,7 +816,7 @@ static void df0_read_tests(void)
 {
     static ULONG bb[256];
     const UBYTE *hdr = (const UBYTE *)amt_hdr;
-    ULONG crc_len = amt_hdr->image_size + amt_hdr->reloc_count * 4, done = 0, crc = 0;
+    ULONG crc_len = amt_hdr->alloc_size + amt_hdr->data_size + amt_hdr->reloc_count * 4, done = 0, crc = 0;
     ULONG last_lba = 2 + (crc_len + 511) / 512, t_total = 0, retries = 0;
     int ntracks = (int)(last_lba / 11) + 1, t, s, k, bad_t = -1, hdr_diff = -1, have = 0;
     struct tres tr, bad_tr;

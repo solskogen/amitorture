@@ -32,7 +32,7 @@ make -C disk check       # verify every disk
 make -C disk benchmarks  # standalone benchmark-only disk/build/benchmarks/amitorture.adf
 ```
 
-All the modules together don't fit on one 880 KB disk, so the test is a set of seven disks. Each one is a complete, bootable payload that runs on a 512 KB Kickstart 1.x machine.
+All the modules together don't fit on one 880 KB disk, so the test is a set of three disks. Each one is a complete, bootable payload that runs on a 1 MB (512 KB chip + 512 KB slow RAM) Kickstart 1.x A500 or anything bigger.
 
 ## Use it
 

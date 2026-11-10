@@ -66,7 +66,7 @@ cpuflag = $(if $(findstring _010.,$1),-m68010,$(if $(findstring _020.,$1),-m6802
 # `make`: the disk set (all modules; one ADF can't hold them any more).
 # `make MODS="rt cia"`: a single ADF with just those modules ($(B)/amitorture.adf),
 # for developing a module or for a repro pack.
-.PHONY: all one check clean
+.PHONY: all one check clean FORCE
 ifeq ($(MODS),)
 all: set
 else
@@ -86,7 +86,13 @@ $(B)/bootblock.bin: boot/bootblock.s
 	@mkdir -p $(dir $@)
 	$(VASM) -Fbin -m68000 -no-opt -quiet -o $@ $<
 
-$(B)/modlist.c: $(MOD_C) ../tools/genmodlist.py
+# rewritten only when the module selection changes, so that removing a
+# module from MODS (or a disk group) regenerates modlist.c
+$(B)/mods.list: FORCE
+	@mkdir -p $(dir $@)
+	@echo '$(MOD_C)' | cmp -s - $@ || echo '$(MOD_C)' > $@
+
+$(B)/modlist.c: $(MOD_C) $(B)/mods.list ../tools/genmodlist.py
 	@mkdir -p $(dir $@)
 	$(PYTHON) ../tools/genmodlist.py $@ $(MOD_C)
 
@@ -122,20 +128,25 @@ clean:
 	rm -rf $(B)
 
 # ---------------------------------------------------------------- disk set
-# The full payload does not fit a 512 KB machine (Kickstart 1.x loads it into
-# chip RAM), so the test ships as a set of disks. Each disk is a complete
+# The full payload needs more memory than a 512K chip + 512K slow A500 has
+# in one piece, so the test ships as a set of disks. Each disk is a complete
 # payload (runtime + probe) with one group of modules; the runner boots every
 # config once per disk and merges the records. Every module must be in exactly
-# one group (`make check-groups`); keep each disk below ~300 KB in memory
-# (`make set` prints the sizes).
-DISK_SETS      := core cpu fpu chip exp cpux mmu
-DISK_SET_core  := takeover rt flags exceptions smc interrupts cia blitter timing
-DISK_SET_cpu   := cpu_basic
-DISK_SET_fpu   := fpu
-DISK_SET_chip  := display copper paula input
-DISK_SET_exp   := rtg expsound network misc_hw misc_hw_os devio
-DISK_SET_cpux  := memory memory_os dispatch dmacontention hostspeed
-DISK_SET_mmu   := mmu
+# one group (`make check-groups`). The bootblock loads a disk's code and its
+# data + BSS as two allocations, so each must fit the largest free block of
+# that A500 (about 470 KB of chip, 490 KB of slow RAM, less the test pools);
+# `make set` prints the sizes.
+#   core  timing-sensitive hardware, floppy DMA (real floppy speed, no warp)
+#   cpu   integer CPU, MMU, random code blocks (functional: warp in
+#         --warp auto)
+#   exp   FPU, expansion hardware, devices, memory, hostspeed
+# cpu_basic and fpu each carry over 200 KB of test vectors: keep them apart.
+# devio needs a 128 KB I/O buffer after the pools on a 1 MB chip-only A600:
+# keep the exp disk small enough for that.
+DISK_SETS      := core cpu exp
+DISK_SET_core  := takeover rt flags exceptions smc interrupts cia blitter timing display copper paula input dmacontention
+DISK_SET_cpu   := cpu_basic mmu dispatch
+DISK_SET_exp   := fpu rtg expsound network misc_hw misc_hw_os devio memory memory_os hostspeed
 SET := $(B)/set
 ALL_MODULE_NAMES := $(shell $(PYTHON) ../tools/genmodlist.py --names $(wildcard modules/*.c))
 
@@ -144,18 +155,17 @@ set: check-groups
 	@mkdir -p $(SET)
 	@rm -f $(SET)/*.adf
 	@n=0; for g in $(DISK_SETS); do n=$$((n+1)); \
-	  case $$g in core) m="$(DISK_SET_core)";; cpu) m="$(DISK_SET_cpu)";; fpu) m="$(DISK_SET_fpu)";; \
-	    chip) m="$(DISK_SET_chip)";; exp) m="$(DISK_SET_exp)";; cpux) m="$(DISK_SET_cpux)";; mmu) m="$(DISK_SET_mmu)";; esac; \
+	  case $$g in core) m="$(DISK_SET_core)";; cpu) m="$(DISK_SET_cpu)";; exp) m="$(DISK_SET_exp)";; esac; \
 	  have=""; for x in $$m; do grep -q "^AMT_MODULE( *$$x *," modules/*.c && have="$$have $$x"; done; \
 	  [ -n "$$have" ] || { echo "set: group $$g has no modules yet, skipped"; continue; }; \
 	  $(MAKE) --no-print-directory B=$(B)/set-$$g MODS="$$have" BUILD_ID="$(BUILD_ID) $$n/$(words $(DISK_SETS)) $$g" || exit 1; \
 	  cp $(B)/set-$$g/amitorture.adf $(SET)/amitorture-$$n-$$g.adf; \
 	done
-	@for f in $(SET)/*.adf; do printf '%s: ' $$f; $(MKADF) --dump $$f | awk '/image_size/{i=$$2}/bss_size/{b=$$2}END{print i+b " bytes in memory"}'; done
+	@for f in $(SET)/*.adf; do printf '%s: ' $$f; $(MKADF) --dump $$f | awk '/^alloc_size/{c=$$2}/^data_alloc/{d=$$2}END{print c " code + " d " data bytes in memory"}'; done
 
 check-groups:
 	@bad=0; for m in $(ALL_MODULE_NAMES); do c=0; \
-	  for g in $(DISK_SET_core) $(DISK_SET_cpu) $(DISK_SET_fpu) $(DISK_SET_chip) $(DISK_SET_exp) $(DISK_SET_cpux) $(DISK_SET_mmu); do \
+	  for g in $(foreach d,$(DISK_SETS),$(DISK_SET_$(d))); do \
 	    [ "$$g" = "$$m" ] && c=$$((c+1)); done; \
 	  [ $$c -eq 1 ] || { echo "module $$m is in $$c disk groups (must be exactly 1): edit DISK_SET_* in disk/Makefile"; bad=1; }; \
 	done; exit $$bad
@@ -165,3 +175,5 @@ check-gen:
 	../tools/check_generated.sh
 
 -include $(C_SRCS:%.c=$(B)/%.d) $(B)/modlist.d
+
+FORCE:

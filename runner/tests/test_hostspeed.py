@@ -147,7 +147,7 @@ class SpeedVerdict(unittest.TestCase):
         self.assertEqual(c["fp"], cases.canonical({"mod": "host", "case": "speed_fsin", "st": "fail"}))
         self.assertTrue(c["pseudo"] and c["engine_dependent"])
         self.assertAlmostEqual(c["timing"]["rtf"], 1.6, places=3)
-        res = {"id": "e1", "status": "pass", "disks": [dict(sub, disk_name="6-cpux", status="pass")]}
+        res = {"id": "e1", "status": "pass", "disks": [dict(sub, disk_name="3-exp", status="pass")]}
         items = [i for i in report.collect_failures([res]) if i["kind"] == "case_fail"]
         self.assertEqual([i["case"] for i in items], ["speed_fsin"])
         why = items[0]["why"]
@@ -161,7 +161,7 @@ class SpeedVerdict(unittest.TestCase):
         self.assertEqual(status, "fail")
         self.assertIn("2 failed host case(s)", why)
         self.assertIn("host.speed_ftentox", why)
-        sub.update(status="pass", reason="done, no failures", disk_name="6-cpux")
+        sub.update(status="pass", reason="done, no failures", disk_name="3-exp")
         result = {"id": "real", "status": "pass", "disks": [sub]}
         runner.integrate_host_verdicts(result)
         self.assertEqual(result["status"], "fail")
@@ -180,7 +180,7 @@ class SpeedVerdict(unittest.TestCase):
 
     def test_report_and_saved_reanalysis_do_not_restore_a_false_pass(self):
         _, sub = self.blocks([("ftentox", 1.21644)])
-        sub.update(status="pass", reason="done, no failures", disk_name="6-cpux", raw="raw/real/6-cpux/",
+        sub.update(status="pass", reason="done, no failures", disk_name="3-exp", raw="raw/real/3-exp/",
                    records=records.summarize(sub["_merged"]))
         result = {"id": "real", "status": "pass", "disks": [sub], "raw": "raw/real/",
                   "records": records.summarize(sub["_merged"])}
@@ -272,14 +272,14 @@ class SpeedMatrix(unittest.TestCase):
             e = std[eid]
             self.assertEqual(e["options"]["cpu_speed"], "real")
             self.assertEqual(e["options"]["cycle_exact"], "false")
-            self.assertEqual(e["disk_groups"], ["cpux"])
+            self.assertEqual(e["disk_groups"], ["exp"])
             self.assertEqual(e["params"]["modules"], matrix.module_mask(["hostspeed"]))
             t = std.get(eid + "-jit")
             if twin:
                 self.assertEqual(t["twin_of"], eid)
                 self.assertEqual(t["options"]["cachesize"], matrix.JIT_CACHE)
                 self.assertEqual(t["options"]["cpu_speed"], "real")
-                self.assertEqual(t["disk_groups"], ["cpux"])
+                self.assertEqual(t["disk_groups"], ["exp"])
                 self.assertEqual(t["params"]["modules"], e["params"]["modules"])
             else:
                 self.assertIsNone(t)

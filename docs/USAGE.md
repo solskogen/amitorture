@@ -114,10 +114,10 @@ Baselines live in `work/baselines/<name>/` and are not part of the repository: r
 --config 'a1200*'                      # glob on entry ids; repeatable
 --config a4000-68040nommu-fast-jit     # one entry
 --set gfx_resolution=superhires        # override an Amiberry option on every selected entry
---adf ../disk/build/set/amitorture-6-cpux.adf   # one disk of the set instead of all of them
+--adf ../disk/build/set/amitorture-2-cpu.adf    # one disk of the set instead of all of them
 --param modules=0x400000               # module mask patched into the disks (bit n = module id n,
                                        #   ids in CONTRACT.md §10); 0x400000 = dispatch, which is on
-                                       #   the cpux disk, so combine it with the --adf above
+                                       #   the cpu disk, so combine it with the --adf above
 --disk-set DIR                         # another disk set (e.g. one built from a branch)
 --timeout S --hang S                   # see section 6
 ```
@@ -125,7 +125,7 @@ Baselines live in `work/baselines/<name>/` and are not part of the repository: r
 ### Boot one disk quickly, without the runner
 ```
 python3 tests/smoke_disk.py --model A1200 --cpu 68020 --chipset aga --rom /path/to/kick31.rom \
-    [-s option=value …] [--adf disk/build/set/amitorture-4-chip.adf]     # --rom aros for the AROS ROM
+    [-s option=value …] [--adf disk/build/set/amitorture-2-cpu.adf]     # --rom aros for the AROS ROM
 ```
 Run it from the repository root. It boots the core disk by default, prints every record and checks the CRCs. It doesn't answer host requests (screenshots, key/mouse injection, audio), so those cases come out `untestable` here.
 
@@ -258,13 +258,13 @@ Failures that share a cause are grouped into one problem: same module, same narr
 The disks are meant to run unchanged on a real Amiga or an FPGA core. **Nobody has run them there yet:** everything in this section comes from the code, not from a run on real hardware.
 
 ### What you need
-- **The seven ADFs** from `disk/build/set/` (section 1), in one of these forms:
+- **The three ADFs** from `disk/build/set/` (section 1), in one of these forms:
   - written to real DD floppies, with an ADF transfer tool on an Amiga or a USB flux-level floppy interface on a PC (a PC floppy controller can't write Amiga tracks);
   - as image files for a floppy emulator in the drive (Gotek, HxC), on its USB stick or SD card;
   - as image files on an FPGA core's SD card, inserted as DF0.
 
   Each disk boots from DF0 on its own. No Workbench, no hard disk and no OS files are needed, only the Kickstart in the machine.
-- **Memory:** 512 KB is enough. Every disk of the set is built to fit a 512 KB Kickstart 1.x machine (each payload is under about 300 KB, CONTRACT §12). If a disk can't get its test pools, each of its modules reports one `module` skip "not enough memory on this machine for this disk".
+- **Memory:** 1 MB, e.g. an A500 with 512 KB chip + 512 KB slow (trapdoor) RAM. Every disk of the set is built to fit that: the payload loads as two pieces, code and data, each under about 400 KB (CONTRACT §12). A 512 KB machine is not enough. If a disk can't get its test pools, each of its modules reports one `module` skip "not enough memory on this machine for this disk".
 - **To get the results out:** a null-modem cable from the Amiga's serial port to a PC, directly or through a USB serial adapter (below). An FPGA core must route Paula's serial port to a UART you can reach. Without serial you only have the status screen.
 
 ### Running the set
@@ -281,7 +281,7 @@ The runtime drives Paula's UART itself (rt/out.c), polled, never through serial.
 stty -F /dev/ttyUSB0 115200 cs8 -parenb -cstopb -crtscts raw -echo
 cat /dev/ttyUSB0 > capture.txt
 ```
-- One long capture across all seven disks works: each boot is told apart by its `hello` record, and the lines between them (noise around a reset) are ignored.
+- One long capture across all three disks works: each boot is told apart by its `hello` record, and the lines between them (noise around a reset) are ignored.
 - Separate files work too, one per disk, with any names.
 - **Baud rate accuracy:** Paula's rate is the colour clock divided by an integer, so 115200 comes out as 114416 baud on PAL (0.7% slow) and 115469 on NTSC (0.2% fast), well within what a PC UART accepts. If the capture is still garbled, or `import` finds bad CRCs or no records (a long or poor cable), use a lower rate such as 38400.
 
@@ -312,7 +312,7 @@ python3 -m amitorture import ~/core.txt ~/cpu.txt ~/fpu.txt … --label hw-a1200
 
 ### What the disks do to the machine
 - **Memory and hardware:** a module touches only its pools, its own stack and BSS, the vector table (through `amt_vec_set`) and the hardware it tests. No writes to unmapped addresses unless the run has the `unsafe` flag (CONTRACT §10, rule 4). After every module the runtime resets the interrupts, DMA and vectors. Default halt resumes OS execution for the screen/mailbox, but CIA timer-latch restoration is only best-effort: counters cannot reveal the original reload values. Use halt/reboot only in a disposable emulator or a machine intended for reboot, not on a working desktop. `end_action=return` therefore runs OS modules but skips bare tests before takeover; it releases pools, mailbox and per-region allocations before returning.
-- **Floppies and hard disks:** nothing is written to a disk unit unless it carries the test-owned signature in its first and its last block (CONTRACT §11). devio (exp disk) reads only block 0 of any other unit, to look for the signature. The paula module (chip disk) only reads DF0, its own boot disk, and writes DF1 only when it is signed and not write-protected. Only the runner makes such media (`runner/amitorture/media.py`), for emulator runs, so your own disks are never written.
+- **Floppies and hard disks:** nothing is written to a disk unit unless it carries the test-owned signature in its first and its last block (CONTRACT §11). devio (exp disk) reads only block 0 of any other unit, to look for the signature. The paula module (core disk) only reads DF0, its own boot disk, and writes DF1 only when it is signed and not write-protected. Only the runner makes such media (`runner/amitorture/media.py`), for emulator runs, so your own disks are never written.
 - **Takeover guard** (rt/mod.c): before it takes the machine over, the runtime waits until floppy DMA and the blitter are idle, and, when started from a CLI, the Gayle or A4000 IDE port too. If they are still busy after 10 s it refuses: nothing is taken over, and every bare module reports one `module` skip with the reason (CONTRACT §14).
 - **Other hardware:** on a Gayle machine (A600/A1200) misc_hw sends IDENTIFY DEVICE to the IDE drive, a command that only reads, and restores the task file. The battery-backed clock is saved and set back at the end, adjusted for the time the test took. A network card sends no frame onto the network unless the `net` or `unsafe` flag is set (the A2065 tests use the LANCE's internal loopback; the one external frame is an ARP broadcast).
 - **The `unsafe` flag** is off by default; leave it off on real hardware. It allows: a read of an unmapped address to provoke a bus error (exceptions), reading block 0 of units that are not test-owned (devio, read only), writes to the ZZ9000's RAM (rtg), probing for a Prelude 1200 on the clock port (expsound), transmitting on a network card (network), and the Gayle IDE tests when started from a CLI (misc_hw).
@@ -335,7 +335,7 @@ These boot from CD (CONTRACT §14): for an emulator run, the runner turns each b
 | `AMT_MAX_EMU=N` | at most N emulators machine-wide (default and maximum: `nproc`). The limit is shared by every amitorture process and checkout (lock files in `$AMT_LOCK_DIR`, default `$XDG_CACHE_HOME/amitorture/locks`, else `~/.cache/amitorture/locks`). |
 | `--jobs N` | entries in parallel for one run (≤ the emulator slots) |
 | `--ports LO-HI` / `AMT_PORTS` | TCP port range for the emulators' serial ports (default 23540-23599) |
-| `--timeout S` / `--hang S` | per-disk launch limit (default 600 s) / no-progress limit (default 120 s) |
+| `--timeout S` / `--hang S` | per-disk launch limit (default 900 s) / no-progress limit (default 120 s) |
 | `--audio auto|on|off` | capture emulator audio for audio checks (default: only disks that ask for it) |
 | `--keep` | keep per-run temp directories (otherwise removed) |
 | `--show` | show the emulator windows on your desktop (`run`, `baseline`, `check`, `repro`, and `tests/smoke_disk.py`); one window per running emulator, so `--jobs 4` gives four. Your own display settings are used as they are (your `SDL_*` video variables, `DISPLAY`, `WAYLAND_DISPLAY`); audio stays the runner's. HOME and `XDG_RUNTIME_DIR` stay isolated (Amiberry names its IPC socket `$XDG_RUNTIME_DIR/amiberry.sock`, which a test emulator must never take from your own Amiberry), so a relative `WAYLAND_DISPLAY` is passed as the full path of the same socket and an unset `XAUTHORITY` as your `~/.Xauthority`. Run it from a terminal on the desktop. Timing values may differ from a headless run. |
@@ -353,7 +353,7 @@ Isolation: every emulator gets its own HOME and XDG directories under the work d
 | entry `skip`: "no Kickstart …" | the ROM that machine needs isn't in `--kickstarts`; `roms` lists what each entry needs |
 | entry `timeout` with no records | the disk didn't boot: check `raw/<entry>/<disk>/amiberry.log`. Also "SDL could not initialize": the runner sets the SDL drivers itself; make sure nothing in your environment overrides them. |
 | entry `crash` | Amiberry crashed (the log shows its crash handler). That is a finding in itself. |
-| a disk reports `module` skip "not enough memory on this machine for this disk" | the disk's test pools or its 32 KB bare-phase stack could not be allocated. Each disk of the set is built to fit a 512 KB machine (CONTRACT §12), so look for a machine with less free memory than that, or a single ADF built with many modules (`MODS=…`). |
+| a disk reports `module` skip "not enough memory on this machine for this disk" | the disk's test pools or its 32 KB bare-phase stack could not be allocated. Each disk of the set is built to fit a 512 KB chip + 512 KB slow RAM machine (CONTRACT §12), so look for a machine with less free memory than that, or a single ADF built with many modules (`MODS=…`). |
 | `mkadf: payload does not fit on the disk` | the disks were built as one ADF with every module: build the set, see [BUILDING.md](BUILDING.md) |
 | `transport_corrupt_recovered` | the serial line delivered a corrupt line (an Amiberry serial bug), but the mailbox copy was intact: no data lost |
 | verdict `INTERRUPTED (n of m entries finished)`, exit code 130 | the run was stopped with Ctrl+C or SIGTERM. The report covers only the finished entries; rerun the rest (see "Stopping a run" in section 2). |

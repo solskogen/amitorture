@@ -59,9 +59,12 @@ ROMS = {
 }
 
 # ---------------------------------------------------------------------------
-# Model presets. chip in 512K units, bogo (slow) in 256K units (cfgfile.cpp).
+# Model presets. chip in 512K units, bogo (slow) in 256K units, fast (Zorro II)
+# in MB (cfgfile.cpp). Every machine has at least 1 MB, the disk set's minimum:
+# the A1000 (512K chip at most) gets a 1 MB autoconfig fast RAM expansion.
 MODELS = {
-    "A1000": {"cs": "A1000", "chipset": "ocs", "rom": "A1000", "cpu": "68000", "core": "ce", "chip": "1", "bogo": "0"},
+    "A1000": {"cs": "A1000", "chipset": "ocs", "rom": "A1000", "cpu": "68000", "core": "ce", "chip": "1", "bogo": "0",
+              "fast": "1"},
     "A500": {"cs": "A500", "chipset": "ocs", "rom": "A500", "cpu": "68000", "core": "ce", "chip": "1", "bogo": "2"},
     "A500+": {"cs": "A500+", "chipset": "ecs", "rom": "A500+", "cpu": "68000", "core": "ce", "chip": "2", "bogo": "0"},
     "A600": {"cs": "A600", "chipset": "ecs", "rom": "A600", "cpu": "68000", "core": "compat", "chip": "2", "bogo": "0"},
@@ -193,7 +196,7 @@ def _memory(model, cpu_key):
     fast) so the probe can tell a 68020 from a 68EC020 by the address bus."""
     m = MODELS[model]
     c = CPUS[cpu_key]
-    mem = {"chipmem_size": m["chip"], "bogomem_size": m["bogo"], "fastmem_size": "0", "z3mem_size": "0",
+    mem = {"chipmem_size": m["chip"], "bogomem_size": m["bogo"], "fastmem_size": m.get("fast", "0"), "z3mem_size": "0",
            "mbresmem_size": "0", "a3000mem_size": "0"}
     if c["addr24"]:
         if c["cpu_model"] not in ("68000", "68010"):
@@ -544,8 +547,9 @@ def hardware_entries(full=False):
             _board_only(e, ["expsound", "paula"] if name.startswith("uaesnd") else ["expsound"])
             if name.startswith("uaesnd"):
                 # paula's uaesnd_mono_keeps_right (a Paula tone next to a
-                # uaesnd mono stream) is on the chip disk
-                e["disk_groups"] = e["disk_groups"] + ["chip"]
+                # uaesnd mono stream) is on the core disk
+                if "core" not in e["disk_groups"]:
+                    e["disk_groups"] = ["core"] + e["disk_groups"]
             out.append(e)
             if model != "A500" and bus != "pci":
                 e["jit_capable"] = True
@@ -568,12 +572,12 @@ def hardware_entries(full=False):
     # and the PCMCIA SRAM card (4 MB + CIS), so a600-68000-compat (KS 2.05)
     # is the "A600 Gayle IDE + SRAM card" machine; no separate entry.
     # Zorro II + Zorro III RAM and a Zorro III RTG board on the big-box
-    # machines: the memory modules (cpux disk) test the RAM, rtg the board
+    # machines: the memory modules (exp disk) test the RAM, rtg the board
     for model in ("A3000", "A4000"):
         o = {"fastmem_size": "4", "z3mem_size": "16", "gfxcard_type": "CV64_Z3", "gfxcard_size": "4"}
         e = _hw_entry(model, f"{model.lower()}-z2z3-rtg", "Zorro II 4 MB + Zorro III 16 MB RAM, CV64 Z3", o,
                       cpu_key="68030" if model == "A3000" else None,
-                      fpu="68882" if model == "A3000" else None, disk_groups=["cpux", "exp"])
+                      fpu="68882" if model == "A3000" else None, disk_groups=["exp"])
         e.setdefault("params", {})["modules"] = module_mask(["memory", "memory_os", "rtg", "misc_hw_os"])
         out.append(e)
     # SCSI controllers with their boot ROMs (media.py attaches a test-owned
@@ -604,7 +608,7 @@ def hardware_entries(full=False):
             model = "A1200" if cb.startswith("Blizzard") else "A4000"
             out.append(_hw_entry(model, f"{model.lower()}-cpu-{_slug(cb)}", f"accelerator {cb}", o,
                                  board_roms=[rom], cpu_key="68060nommu", fpu="internal",
-                                 disk_groups=["core", "exp", "cpux", "mmu"]))
+                                 disk_groups=["core", "cpu", "exp"]))
     for e in out:
         e["matrices"] = set()
     return out
@@ -616,11 +620,11 @@ def hardware_entries(full=False):
 # lowers the emulated CPU's throughput. At cpu_speed=real the emulated CPU
 # has a fixed speed, and an instruction the host cannot emulate fast enough
 # makes the emulation fall behind real time, which the runner measures. These
-# entries run only the cpux disk with only hostspeed; the 020+ ones have a
+# entries run only the exp disk with only hostspeed; the 020+ ones have a
 # JIT twin (Amiberry keeps the JIT on at cpu_speed=real: fixup_cpu has no
 # rule against it, and the run's log says "JIT: ..."). The cycle-exact and
 # compatible entries run at real speed anyway and run hostspeed with the rest
-# of the cpux disk.
+# of the exp disk.
 # (model, cpu variant, fpu, JIT twin, matrices)
 SPEED_SPECS = [
     ("A1200", "68020", "68882", True, ("smoke", "standard")),
@@ -639,7 +643,7 @@ def speed_entries(name):
         parts = [model.lower(), cpu_key.lower()] + ([fpu[-3:]] if fpu in ("68881", "68882") else []) + ["fast", "real"]
         e = make_entry(model, cpu_key, fpu, "fast", extra={"cpu_speed": "real"}, eid="-".join(parts),
                        title_extra=", cpu_speed=real (hostspeed only)")
-        e["disk_groups"] = ["cpux"]
+        e["disk_groups"] = ["exp"]
         e.setdefault("params", {})["modules"] = module_mask(["hostspeed"])
         out.append(e)
         if jit and e["jit_capable"]:
@@ -666,7 +670,7 @@ def benchmark_entries():
     ):
         base = make_entry(model, cpu, fpu, core, eid=f"bench-{cpu.lower()}" + ("-ce" if core == "ce" else ""),
                           title_extra=", benchmarks only")
-        base["disk_groups"] = ["cpux"]
+        base["disk_groups"] = ["exp"]
         base["params"] = {"modules": module_mask(["hostspeed"])}
         entries = [base] + _twins_for(base, [""], True, False)
         for entry in entries:
@@ -687,7 +691,7 @@ def strict_policy_entries(name):
                               "fpu_strict": "true"},
                        eid=f"{base_id}-strict",
                        title_extra=", hardware instruction/operand policy")
-        e["disk_groups"] = ["core", "fpu"]
+        e["disk_groups"] = ["core", "exp"]
         e["params"] = {"modules": module_mask(["exceptions", "fpu"])}
         e["jit_capable"] = e["threaded_capable"] = False
         e["matrices"] = {name}

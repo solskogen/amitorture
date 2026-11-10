@@ -13,8 +13,9 @@ at least 16 KB as a one-track data CD, src/blkdev_cdimage.cpp parse_image):
     S/STARTUP-SEQUENCE   one line: AMITORTURE
 
 The executable is made from the (already parameter-baked) ADF, not from a
-separate build: its one code hunk is the ADF's flattened image with the BSS
-appended as zeros and the ADF's reloc table as HUNK_RELOC32 (the same
+separate build: its one code hunk is the ADF's segment 0 (code, alloc_size
+bytes) followed by segment 1 (data, then the BSS as zeros), the ADF's reloc
+table rewritten for that one hunk as HUNK_RELOC32 (the same
 ``*(base+r) += base`` LoadSeg does), and the ADF's 512-byte payload header
 (run parameters, build id) copied into the slot after the
 ``AMT-CLI-HEADER!!`` marker. Offset 0 of the image is amt_cli_entry
@@ -66,17 +67,26 @@ class CdError(Exception):
 # ADF -> hunk executable
 
 def read_adf_payload(adf_bytes):
-    """(header 512 bytes, image bytes, bss_size, [reloc offsets]) from an ADF (CONTRACT §1)."""
+    """(header 512 bytes, image bytes, bss_size, [reloc offsets]) from an ADF
+    (CONTRACT §1), with the two segments flattened into one image: segment 1
+    at offset alloc_size, relocs as plain offsets into that image."""
     hdr = adf_bytes[1024:1536]
     if hdr[:4] != b"AMTP":
         raise CdError("ADF has no AMTP payload header in sector 2")
-    ver, image_size, bss, nrel, entry, sectors = struct.unpack_from(">6I", hdr, 4)
+    ver, code_size, bss, nrel, entry, sectors, crc, alloc, flags, data_size = struct.unpack_from(">10I", hdr, 4)
+    if ver != 2:
+        raise CdError(f"ADF payload header version {ver}, expected 2: rebuild the disk")
     blob = adf_bytes[1536:1536 + sectors * 512]
-    image = blob[:image_size]
-    relocs = list(struct.unpack_from(f">{nrel}I", blob, image_size)) if nrel else []
-    if len(image) != image_size:
+    if len(blob) < alloc + data_size + nrel * 4:
         raise CdError("ADF payload blob is truncated")
-    return hdr, image, bss, relocs
+    image = bytearray(blob[:alloc + data_size])
+    relocs = []
+    for r in struct.unpack_from(f">{nrel}I", blob, alloc + data_size) if nrel else ():
+        loc = (r & 0x3FFFFFFF) + (alloc if r & 0x80000000 else 0)
+        if r & 0x40000000:
+            struct.pack_into(">I", image, loc, (struct.unpack_from(">I", image, loc)[0] + alloc) & 0xFFFFFFFF)
+        relocs.append(loc)
+    return hdr, bytes(image), bss, relocs
 
 
 def hunk_exe(adf_bytes):

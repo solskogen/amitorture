@@ -373,9 +373,9 @@ def _common(p, kick_required=True, param_defaults=True):
     p.add_argument("--set", action="append", metavar="OPTION=VALUE",
                    help="override an Amiberry config option on every selected entry, e.g. --set cpu_threaded=true "
                         "(repeatable)")
-    p.add_argument("--timeout", type=float, default=600.0, metavar="S",
-                   help="per disk launch (default 600: the slowest launch, the core disk of a cycle-exact A500 at "
-                        "floppy_speed=100, took 243 s; the CDTV core disk 225 s)")
+    p.add_argument("--timeout", type=float, default=900.0, metavar="S",
+                   help="per disk launch (default 900: the slowest launch, the core disk of a cycle-exact A500 at "
+                        "floppy_speed=100, took 441 s)")
     p.add_argument("--resets", type=int, default=0, metavar="N",
                    help="after the guest's done record, reset the emulator over IPC (RESET, a keyboard reset) and "
                         "run the disk again, N times per launch: catches state that only a reset sets up (e.g. "

@@ -26,13 +26,13 @@ class Warp(unittest.TestCase):
         return runner.Options(binary="amiberry", kickstarts=str(self.root), workdir=str(self.root), **kw)
 
     def info(self, group):
-        return {"build_id": f"rev 2026-11-05 2/7 {group}"}
+        return {"build_id": f"rev 2026-11-05 2/3 {group}"}
 
     def test_auto_allowlist_and_conservative_fallback(self):
-        for group in ("cpu", "fpu", "mmu", "core", "chip", "exp", "cpux", "unknown"):
+        for group in ("cpu", "core", "exp", "fpu", "mmu", "chip", "cpux", "unknown"):
             with self.subTest(group=group):
                 w = runner.disk_warp(self.opts(warp="auto"), self.entry, self.info(group))
-                self.assertEqual(w["effective"], group in ("cpu", "fpu", "mmu"))
+                self.assertEqual(w["effective"], group == "cpu")
                 self.assertEqual((w["requested"], w["group"]), ("auto", group))
         for info in (None, {}, {"build_id": "cpu"}, {"build_id": "rev mixed cpu"}):
             self.assertFalse(runner.disk_warp(self.opts(warp="auto"), self.entry, info)["effective"])
@@ -40,21 +40,19 @@ class Warp(unittest.TestCase):
     def test_auto_keeps_jit_entries_normally_paced(self):
         jit = matrix.find("a4000-68040nommu-fast-jit")
         self.assertNotEqual(str(jit["options"].get("cachesize", "0")), "0")
-        for group in ("cpu", "fpu", "mmu"):
-            with self.subTest(group=group):
-                w = runner.disk_warp(self.opts(warp="auto"), jit, self.info(group))
-                self.assertFalse(w["effective"])
-                self.assertIn("JIT", w["reason"])
+        w = runner.disk_warp(self.opts(warp="auto"), jit, self.info("cpu"))
+        self.assertFalse(w["effective"])
+        self.assertIn("JIT", w["reason"])
         # an explicit --warp on still forces it
         self.assertTrue(runner.disk_warp(self.opts(warp="on"), jit, self.info("cpu"))["effective"])
 
     def test_allowlisted_disk_groups_contain_only_reviewed_functional_modules(self):
         makefile = (ROOT / "disk" / "Makefile").read_text()
-        for group, module in (("cpu", "cpu_basic"), ("fpu", "fpu"), ("mmu", "mmu")):
-            found = re.search(r"^DISK_SET_" + group + r"\s*:=\s*(.*)$", makefile, re.M)
-            self.assertIsNotNone(found)
-            self.assertEqual(found[1].split(), [module],
-                             "review warp eligibility before adding modules to accelerated disks")
+        self.assertEqual(runner.WARP_GROUPS, ("cpu",))
+        found = re.search(r"^DISK_SET_cpu\s*:=\s*(.*)$", makefile, re.M)
+        self.assertIsNotNone(found)
+        self.assertEqual(sorted(found[1].split()), ["cpu_basic", "dispatch", "mmu"],
+                         "review warp eligibility before adding modules to accelerated disks")
 
     def test_capture_and_selftest_never_warp_automatically(self):
         for kw, capture in (({}, True), ({"selftest": True}, False)):

@@ -282,12 +282,16 @@ class Integrity(unittest.TestCase):
         with self.assertRaises(mkadf.Fail):
             mkadf.apply_param(p, "flags=unsafe,unknown")
 
-    def adf(self, image=4, nrel=0, sectors=1):
+    def adf(self, image=4, nrel=0):
+        """A v2 ADF: `image` code bytes in segment 0, no data, `nrel` relocs."""
         adf = bytearray(mkadf.ADF_SIZE)
         adf[:1024] = mkadf.make_bootblock(b"\x4e\x75")
-        blob = adf[mkadf.BLOB_OFF:mkadf.BLOB_OFF + image + 4 * nrel]
-        struct.pack_into(">4sIIIIIIIII", adf, mkadf.HDR_OFF, b"AMTP", 1, image, 0, nrel, 0, sectors,
-                         zlib.crc32(blob) & 0xffffffff, max(image, sectors * 512), mkadf.MEMF_ANY_CLEAR)
+        csec = (image + 511) // 512
+        dsec = (4 * nrel + 511) // 512
+        blob = bytes(adf[mkadf.BLOB_OFF:mkadf.BLOB_OFF + csec * 512 + 4 * nrel])
+        struct.pack_into(mkadf.HDR_FMT, adf, mkadf.HDR_OFF, b"AMTP", 2, image, 0, nrel, 0, csec + dsec,
+                         zlib.crc32(blob) & 0xffffffff, csec * 512, mkadf.MEMF_ANY_CLEAR, 0, dsec,
+                         max(dsec * 512, 4))
         path = self.root / "test.adf"
         path.write_bytes(adf)
         return path
@@ -295,16 +299,50 @@ class Integrity(unittest.TestCase):
     def test_adf_dump_rejects_truncated_blob_even_with_matching_crc(self):
         for image, nrel in ((2 * 1024 * 1024, 0), (4, 1 << 28)):
             with self.subTest(image=image, nrel=nrel):
-                path = self.adf(image=image, nrel=nrel, sectors=(image + 4 * nrel + 511) // 512)
+                path = self.adf(image=image, nrel=nrel)
                 errors = io.StringIO()
                 with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(errors):
                     self.assertEqual(mkadf.dump(path), 1)
                 self.assertIn("beyond the ADF", errors.getvalue())
 
+    def test_two_segment_layout_and_relocs(self):
+        # CODE (16 bytes: a pointer to data+4 at 4), DATA (8 bytes: a pointer
+        # to code+8 at 0), BSS (32 bytes)
+        H = struct.pack
+        exe = H(">IIIII", mkadf.HUNK_HEADER, 0, 3, 0, 2) + H(">III", 4, 2, 8)
+        exe += H(">II", mkadf.HUNK_CODE, 4) + H(">IIII", 0, 4, 0, 0)
+        exe += H(">IIIII", mkadf.HUNK_RELOC32, 1, 1, 4, 0) + H(">I", mkadf.HUNK_END)
+        exe += H(">II", mkadf.HUNK_DATA, 2) + H(">II", 8, 0)
+        exe += H(">IIIII", mkadf.HUNK_RELOC32, 1, 0, 0, 0) + H(">I", mkadf.HUNK_END)
+        exe += H(">II", mkadf.HUNK_BSS, 8) + H(">I", mkadf.HUNK_END)
+        code, data, bss, relocs, entry = mkadf.flatten(mkadf.parse_hunks(exe), mkadf.MEMF_ANY_CLEAR)
+        self.assertEqual((len(code), len(data), bss, entry), (16, 8, 32, 0))
+        self.assertEqual(relocs, [4 | mkadf.RELOC_TGT_SEG1, 0 | mkadf.RELOC_LOC_SEG1])
+        self.assertEqual(struct.unpack_from(">I", code, 4)[0], 4)
+        self.assertEqual(struct.unpack_from(">I", data, 0)[0], 8)
+        (self.root / "boot.bin").write_bytes(b"\x4e\x75")
+        (self.root / "p.exe").write_bytes(exe)
+        args = SimpleNamespace(boot=str(self.root / "boot.bin"), payload=str(self.root / "p.exe"),
+                               output=str(self.root / "two.adf"), alloc_flags="0x10000", param=[], build_id="t")
+        with contextlib.redirect_stdout(io.StringIO()):
+            mkadf.build(args)
+            self.assertEqual(mkadf.dump(args.output), 0)
+        adf = (self.root / "two.adf").read_bytes()
+        hdr = struct.unpack_from(mkadf.HDR_FMT, adf, mkadf.HDR_OFF)
+        self.assertEqual(hdr[1], 2)
+        self.assertEqual(hdr[8], 512)                           # alloc_size: one code sector
+        self.assertEqual(hdr[10:], (8, 1, 512))                 # data_size, data_sectors, data_alloc
+        # the CD path flattens segment 1 to offset alloc_size
+        from amitorture import cdimage
+        _, image, cbss, flat = cdimage.read_adf_payload(adf)
+        self.assertEqual((len(image), cbss, sorted(flat)), (520, 32, [4, 512]))
+        self.assertEqual(struct.unpack_from(">I", image, 4)[0], 512 + 4)
+        self.assertEqual(struct.unpack_from(">I", image, 512)[0], 8)
+
     def test_valid_adf_and_exact_boundary_remain_accepted(self):
         for image in (4, mkadf.ADF_SIZE - mkadf.BLOB_OFF):
             with self.subTest(image=image):
-                path = self.adf(image=image, sectors=(image + 511) // 512)
+                path = self.adf(image=image)
                 with contextlib.redirect_stdout(io.StringIO()):
                     self.assertEqual(mkadf.dump(path), 0)
 

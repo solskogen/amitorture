@@ -112,7 +112,7 @@ class Matrix(unittest.TestCase):
             for base_id in ("a3000-68030-882-compat", "a4000-68040nommu-fast", "a4000-68060nommu-fast"):
                 base = entries[base_id]
                 strict = entries[f"{base_id}-strict"]
-                self.assertEqual(strict["disk_groups"], ["core", "fpu"])
+                self.assertEqual(strict["disk_groups"], ["core", "exp"])
                 self.assertEqual(strict["params"]["modules"], matrix.module_mask(["exceptions", "fpu"]))
                 self.assertEqual(strict["options"]["cachesize"], "0")
                 self.assertEqual(strict["options"]["fpu_softfloat"], "false")
@@ -525,7 +525,7 @@ class SpeedTrims(unittest.TestCase):
         self.assertEqual(full | (1 << matrix.MODULE_IDS["hostspeed"]), 0xFFFFFFFFFFFFFFFF)
         zz = es["a4000-rtg-zz9000z2"]
         self.assertTrue(int(zz["params"]["modules"], 16) & (1 << 18))      # network too
-        self.assertIn("cpux", es["a4000-z2z3-rtg"]["disk_groups"])          # the memory modules
+        self.assertIn("exp", es["a4000-z2z3-rtg"]["disk_groups"])           # the memory modules
 
     def test_hostspeed_only_at_real_speed(self):
         from amitorture import matrix
@@ -537,10 +537,10 @@ class SpeedTrims(unittest.TestCase):
 
     def test_floppy_speed_per_disk(self):
         from amitorture.runner import disk_floppy_speed as f
-        self.assertEqual(f("1-core", {"options": {}}), "0")
-        self.assertIsNone(f("4-chip", {"options": {}}))       # paula: raw disk DMA
-        self.assertIsNone(f("6-cpux", {"options": {}}))       # dmacontention: disk DMA
-        self.assertIsNone(f("5-exp", {"options": {"floppy_speed": "100"}}))   # an explicit setting wins
+        self.assertIsNone(f("1-core", {"options": {}}))       # paula, dmacontention: disk DMA
+        self.assertEqual(f("2-cpu", {"options": {}}), "0")
+        self.assertEqual(f("3-exp", {"options": {}}), "0")
+        self.assertIsNone(f("3-exp", {"options": {"floppy_speed": "100"}}))   # an explicit setting wins
         self.assertIsNone(f(None, {"options": {}}))           # a single ADF: unknown modules
 
     def test_floppy_speed_single_set_disk(self):
@@ -548,9 +548,9 @@ class SpeedTrims(unittest.TestCase):
         import tempfile
         from unittest import mock
         from amitorture import runner as R
-        with mock.patch.object(R.adfmod, "header_info", return_value={"build_id": "6809d17 2026-11-04 5/7 exp"}):
+        with mock.patch.object(R.adfmod, "header_info", return_value={"build_id": "6809d17 2026-11-04 3/3 exp"}):
             self.assertEqual(R.disk_floppy_speed(None, {"options": {}}, adf="x.adf"), "0")
-        with mock.patch.object(R.adfmod, "header_info", return_value={"build_id": "6809d17 2026-11-04 4/7 chip"}):
+        with mock.patch.object(R.adfmod, "header_info", return_value={"build_id": "6809d17 2026-11-04 1/3 core"}):
             self.assertIsNone(R.disk_floppy_speed(None, {"options": {}}, adf="x.adf"))
         with mock.patch.object(R.adfmod, "header_info", return_value={"build_id": "6809d17 2026-11-04"}):
             self.assertIsNone(R.disk_floppy_speed(None, {"options": {}}, adf="x.adf"))   # all-in-one

@@ -399,19 +399,25 @@ class Catalogue(unittest.TestCase):
 
 class CdImage(unittest.TestCase):
     def adf(self):
-        """A fake baked ADF: header + image with the CLI marker + relocs."""
-        image = bytearray(64) + b"AMT-CLI-HEADER!!" + bytes(512) + bytearray(16)
-        struct.pack_into(">I", image, 8, 0x20)               # a relocated pointer
-        relocs = [8]
+        """A fake baked v2 ADF: 512 bytes of code (segment 0) with a pointer
+        into the data, data (segment 1) with the CLI marker and a pointer
+        into the code, and the relocs for both."""
+        code = bytearray(512)
+        struct.pack_into(">I", code, 8, 0x20)                # -> data + 0x20
+        data = bytearray(64) + b"AMT-CLI-HEADER!!" + bytes(512) + bytearray(16)
+        struct.pack_into(">I", data, 4, 0x10)                # -> code + 0x10
+        relocs = [8 | 1 << 30, 4 | 1 << 31]
         hdr = bytearray(512)
         hdr[:4] = b"AMTP"
-        struct.pack_into(">6I", hdr, 4, 1, len(image), 100, len(relocs), 0x1e, 3)
+        dsec = (len(data) + 4 * len(relocs) + 511) // 512
+        struct.pack_into(">12I", hdr, 4, 2, len(code), 100, len(relocs), 0x1e, 1 + dsec, 0, 512, 0x10000,
+                         len(data), dsec, max(dsec * 512, len(data) + 100))
         hdr[64:68] = b"PARM"
-        blob = bytes(image) + struct.pack(">I", 8)
+        blob = bytes(code) + bytes(data) + struct.pack(">2I", *relocs)
         adf = bytearray(901120)
         adf[1024:1536] = hdr
         adf[1536:1536 + len(blob)] = blob
-        return bytes(adf), bytes(hdr), len(image)
+        return bytes(adf), bytes(hdr), 512 + len(data)
 
     def test_hunk_exe(self):
         from amitorture import cdimage
@@ -422,11 +428,13 @@ class CdImage(unittest.TestCase):
         self.assertEqual(longs * 4, (n + 100 + 3) // 4 * 4)
         self.assertEqual(struct.unpack_from(">2I", exe, 24), (0x3E9, longs))
         code = exe[32:32 + longs * 4]
-        self.assertEqual(code[80:80 + 512], hdr)              # header copied after the marker
+        self.assertEqual(code[512 + 80:512 + 80 + 512], hdr)  # header copied after the marker
         self.assertEqual(code[n:], bytes(len(code) - n))      # BSS zeroed
+        self.assertEqual(struct.unpack_from(">I", code, 8)[0], 512 + 0x20)   # data pointer flattened
+        self.assertEqual(struct.unpack_from(">I", code, 512 + 4)[0], 0x10)   # code pointer unchanged
         rel = 32 + longs * 4
-        self.assertEqual(struct.unpack_from(">5I", exe, rel), (0x3EC, 1, 0, 8, 0))
-        self.assertEqual(struct.unpack_from(">I", exe, rel + 20)[0], 0x3F2)
+        self.assertEqual(struct.unpack_from(">6I", exe, rel), (0x3EC, 2, 0, 8, 512 + 4, 0))
+        self.assertEqual(struct.unpack_from(">I", exe, rel + 24)[0], 0x3F2)
 
     def test_iso_layout(self):
         from amitorture import cdimage

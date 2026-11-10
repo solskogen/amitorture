@@ -1,6 +1,6 @@
 # mmu (module 20): the 68030 PMMU and the 68040/68060 MMU
 
-Sources: `disk/modules/mmu.c` (tables, cases, expectations) and `disk/modules/mmu_asm.s` (run harness, recording stubs, MMU instruction helpers and the snippets; every MMU/cache/MOVEC/MOVES instruction is `dc.w`-encoded). Disk group `cpux`. Any-pool: 58 KB (16 KB tables, 2 KB user stack, 40 KB data pages).
+Sources: `disk/modules/mmu.c` (tables, cases, expectations) and `disk/modules/mmu_asm.s` (run harness, recording stubs, MMU instruction helpers and the snippets; every MMU/cache/MOVEC/MOVES instruction is `dc.w`-encoded). Disk group `cpu`. Any-pool: 58 KB (16 KB tables, 2 KB user stack, 40 KB data pages).
 
 **Which CPUs.** 68030 (with `mmu_model=68030` in Amiberry; without it Amiberry's 030 has no MMU and the probe reports 68EC030), 68040 and 68LC040, 68060 and 68LC060. EC parts, 68020 (+68851) and older: one `module` skip. If TC.E is already set when the module starts (an OS such as AROS has its own tables), the module reports one `module` skip and touches nothing: the OS tables are unknown, so its MMU state could not be put back. The JIT does not support the MMU (Amiberry turns `mmu_model` off with the JIT), so there are no JIT twins: the cases run on the interpreter cores (fast / compatible / cycle-exact MMU tables 31-35).
 
