@@ -947,6 +947,13 @@ def render_markdown(summ, env, results, items, problems, an):
     if o.get("matrix"):
         L.append(f"| Matrix | `{o.get('matrix')}`" + (f", --config {o.get('configs')}" if o.get("configs") else "")
                  + (f", --set {o.get('sets')}" if o.get("sets") else "") + " |")
+    pl = env.get("plan")
+    if pl:
+        L.append(f"| Plan | {pl.get('plan_entries')} of {pl.get('entries')} entries, {pl.get('launches_plan')} disk launches "
+                 f"(old-style {pl.get('launches_old')}), each of {pl.get('keys')} coverage keys once "
+                 f"(runner/amitorture/plan.py) |")
+    if o.get("module_warp") == "auto":
+        L.append("| Pacing | per module (runner/amitorture/pacing.py): see each disk's warp.modules |")
     iso = summ["isolation"]
     L.append(f"| Isolation | {'OK: user Amiberry dirs unchanged' if iso['ok'] else '**VIOLATED**'} |")
     L.append("")

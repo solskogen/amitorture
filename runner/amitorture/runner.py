@@ -1672,6 +1672,7 @@ class Context:
                         "configs": opts.configs, "matrix": opts.matrix, "sets": opts.sets, "jobs": opts.jobs,
                         "show": getattr(opts, "show", False), "warp": opts.warp,
                         "module_warp": getattr(opts, "module_warp", None) or "off"},
+            "plan": getattr(opts, "plan_info", None),
         }
         self.d["romset"] = romid.RomSet(self.environment["roms"])
         self._binfo = {opts.binary: self.environment["amiberry"]}
@@ -1712,7 +1713,7 @@ class Context:
             for i, e in enumerate(entries):
                 one(i, e)
         else:
-            emulator.run_parallel(lambda ie: one(*ie), list(enumerate(entries)), jobs)
+            emulator.run_parallel(lambda ie: one(*ie), [(i, entries[i]) for i in run_order(entries)], jobs)
         return results
 
     def close(self):
@@ -1731,6 +1732,15 @@ class Context:
                 log(self.opts, f"  likely cause: an Amiberry not started by amitorture ran on your own config "
                     f"(pid {u['pid']}, {u['first_seen']}-{u.get('last_seen')}): {u['cmd']}")
         return self.environment["isolation"]
+
+
+def run_order(entries):
+    """Indices of entries, longest first by the planner's estimate (plan.py),
+    so that no long entry starts last and runs on alone; ties keep matrix
+    order. Results stay in matrix order."""
+    from . import plan as planmod
+    return sorted(range(len(entries)), key=lambda i: -planmod.entry_cost(
+        entries[i], entries[i].get("plan_modules") or coverage.modules_run(entries[i])))
 
 
 def select_entries(opts):

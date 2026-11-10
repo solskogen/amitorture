@@ -86,3 +86,14 @@ class Plans(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class RunOrder(unittest.TestCase):
+    def test_longest_first_and_complete(self):
+        from amitorture import plan as planmod, runner
+        es = matrix.expand("smoke")
+        order = runner.run_order(es)
+        self.assertEqual(sorted(order), list(range(len(es))))
+        costs = [planmod.entry_cost(es[i], coverage.modules_run(es[i])) for i in order]
+        self.assertEqual(costs, sorted(costs, reverse=True))
+        self.assertTrue(planmod._slow(es[order[0]]))
