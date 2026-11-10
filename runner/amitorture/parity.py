@@ -38,7 +38,9 @@ def _pair_problem(ref_res, twin_res, kind):
             "effective", str((s.get("resolved_options") or s.get("options") or {}).get(
                 "warp", "false")).lower() in ("true", "yes", "1"))
             for s in (r.get("disks") or [r])})
-    if pacing[0] != pacing[1]:
+    # a planned reference may run disks its twin does not: compare the disks both ran
+    both = set(pacing[0]) & set(pacing[1])
+    if {d: pacing[0][d] for d in both} != {d: pacing[1][d] for d in both}:
         return "entries have different per-disk warp modes"
     opts = [amiberry_cfg.COMMON | (r.get("options") or {}) | (r.get("resolved_options") or {})
             for r in (ref_res, twin_res)]
@@ -95,6 +97,12 @@ def compare(ref_res, twin_res, ref_fp=None, twin_fp=None):
     items = []
     rc = {k: v for k, v in ref_fp["cases"].items() if not v.get("engine_dependent")}
     tc = {k: v for k, v in twin_fp["cases"].items() if not v.get("engine_dependent")}
+    # planned runs (plan.py): compare the modules both were given
+    planned = [set(r["plan_modules"]) for r in (ref_res, twin_res) if r.get("plan_modules")]
+    if planned:
+        common = set.intersection(*planned)
+        rc = {k: v for k, v in rc.items() if v.get("mod") in common or v.get("mod") == "host"}
+        tc = {k: v for k, v in tc.items() if v.get("mod") in common or v.get("mod") == "host"}
     not_comparable, observations = [], []
     compared = 0
     for key in sorted(set(rc) | set(tc)):

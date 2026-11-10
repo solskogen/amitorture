@@ -27,6 +27,8 @@ class Options:
         self.timeout = kw.get("timeout", 300.0)
         self.hang = kw.get("hang", 30.0)
         self.resets = int(kw.get("resets", 0) or 0)    # IPC resets after done, each followed by another boot
+        self.plan = kw.get("plan", False)               # matrix runs: each coverage key once (plan.py)
+        self.plan_info = None
         self.adf = kw.get("adf")
         self.disk_set = kw.get("disk_set")
         self.no_disk = kw.get("no_disk", False)
@@ -569,7 +571,8 @@ def base_result(entry):
             "twin_kind": entry.get("twin_kind"), "twin_options": entry.get("twin_options", []),
             "machine": {k: entry.get(k) for k in ("cpu", "fpu", "chipset", "video", "model", "core")},
             "options": entry["options"], "overrides": entry.get("overrides", {}), "params": entry.get("params", {}),
-            "narrow": entry.get("narrow"), "status": None, "reason": None}
+            "narrow": entry.get("narrow"), "plan_modules": entry.get("plan_modules"), "status": None,
+            "reason": None}
 
 
 # Disks whose modules test the floppy hardware itself and need real drive
@@ -1650,7 +1653,14 @@ def select_entries(opts):
         entries = matrix.select(list(pool.values()), opts.configs)
         if not entries:
             raise RunnerError(f"--config {opts.configs}: no matrix entry matches; see `amitorture matrix --matrix full`")
-    return matrix.apply_overrides(entries, opts.sets)
+    entries = matrix.apply_overrides(entries, opts.sets)
+    # A matrix run runs each coverage key once (plan.py); entries named with
+    # --config run every module, as asked.
+    if getattr(opts, "plan", False) and not opts.configs:
+        from . import plan
+        allowed = (opts.params or {}).get("modules")
+        entries, opts.plan_info = plan.build(entries, allowed=None if allowed is None else int(str(allowed), 0))
+    return entries
 
 
 def run(opts):

@@ -136,6 +136,21 @@ def cmd_matrix(a):
         entries = matrix.select(list(pool.values()), a.config)
     if a.validate:
         return validate(a, entries)
+    if getattr(a, "plan", False):
+        from . import plan
+        planned, info = plan.build(entries)
+        if a.json:
+            print(json.dumps({"info": info, "entries": [{"id": p["id"], "modules": p["plan_modules"],
+                                                         "disk_groups": p["disk_groups"]} for p in planned]},
+                             indent=1))
+            return EXIT_OK
+        for p in planned:
+            print(f"{p['id']:<40} {' '.join(p['plan_modules'])}")
+        print(f"plan of matrix {a.matrix}: {info['plan_entries']} of {info['entries']} entries, "
+              f"{info['launches_plan']} disk launches (was {info['launches_old']}), {info['module_runs_plan']} module "
+              f"runs (was {info['module_runs_old']}) for {info['keys']} coverage keys; estimated host time "
+              f"{info['cost_plan_s'] / 3600:.1f} h (was {info['cost_old_s'] / 3600:.1f} h)", file=sys.stderr)
+        return EXIT_OK
     if a.json:
         print(json.dumps(entries, indent=1, default=lambda o: sorted(o) if isinstance(o, set) else str(o)))
         return EXIT_OK
@@ -228,7 +243,7 @@ def make_options(a, binary):
         raise RunnerError(f"--kickstarts {a.kickstarts}: not a directory")
     return runner.Options(
         binary=binary, kickstarts=a.kickstarts, workdir=a.workdir, configs=a.config, matrix=a.matrix,
-        sets=parse_sets(a), timeout=a.timeout, hang=a.hang, resets=max(0, getattr(a, "resets", 0) or 0), adf=a.adf, disk_set=getattr(a, "disk_set", None),
+        sets=parse_sets(a), timeout=a.timeout, hang=a.hang, resets=max(0, getattr(a, "resets", 0) or 0), plan=getattr(a, "plan", "off") == "on", adf=a.adf, disk_set=getattr(a, "disk_set", None),
         no_disk=getattr(a, "no_disk", False) or getattr(a, "selftest", False), selftest=getattr(a, "selftest", False),
         params=parse_params(a), verbose=not a.quiet, keep=a.keep, jobs=a.jobs,
         narrow=not getattr(a, "no_narrow", False), narrow_budget=getattr(a, "narrow_budget", 0.0),
@@ -462,6 +477,9 @@ def build_parser():
     p.add_argument("--keep", action="store_true", help="keep the generated configs under WORKDIR/tmp")
     p.add_argument("--json", action="store_true", help="machine-readable output")
     p.add_argument("-v", "--verbose", action="store_true", help="every entry's options, or every validation result")
+    p.add_argument("--plan", action="store_true",
+                   help="print the plan a run of this matrix makes: the entries, their modules, the coverage keys "
+                        "and the estimated host time")
     p.set_defaults(fn=cmd_matrix)
 
     p = sub.add_parser("run", help="run the test disk on every entry, then parity, narrowing, report")
@@ -473,6 +491,10 @@ def build_parser():
     p.add_argument("--selftest", action="store_true",
                    help="--no-disk plus a synthetic mailbox written over IPC, to check the runner reads the "
                         "guest's results correctly (about 30 s)")
+    p.add_argument("--plan", choices=["on", "off"], default="off",
+                   help="on: a matrix run runs each coverage key once, on as few machines as cover them all "
+                        "(every check the matrix makes, each once: runner/amitorture/plan.py); off (default): every "
+                        "entry runs every disk. Entries named with --config always run every disk")
     p.add_argument("--no-narrow", action="store_true",
                    help="skip narrowing. Narrowing reruns each failing module on neighbouring configs (JIT on/off, "
                         "each comp_* option, core mode, FPU mode, ...) to find the setting that flips the result")
