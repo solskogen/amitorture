@@ -12,7 +12,7 @@ Inspect a disk (checks the bootblock checksum, the blob CRC and the relocs):
     mkadf.py --dump build/amitorture.adf
 
 Parameters (section 4): mode=full|quick|<n> (soak = 2 is reserved, runs like full), seed=<n>, end_action=halt|reboot|return|<n>,
-flags=<n>|unsafe,noserial,nombox,net,noscreen,intcompat,fpucompat (comma or '+' separated), baud=<n>, modules=all|<64-bit mask>.
+flags=<n>|unsafe,noserial,nombox,net,noscreen,intcompat,fpucompat,modpace (comma or '+' separated), baud=<n>, modules=all|<64-bit mask>.
 intcompat (32) and fpucompat (64) declare compatibility instruction policies; flags=0 is hardware-strict.
 Numbers accept 0x prefixes. Any error exits with status 1 and a message on stderr.
 """
@@ -42,7 +42,7 @@ HUNK_NAMES = {v: k for k, v in globals().items() if k.startswith("HUNK_")}
 MODES = {"full": 0, "quick": 1, "soak": 2}
 END_ACTIONS = {"halt": 0, "reboot": 1, "coldreboot": 1, "return": 2}
 FLAG_BITS = {"unsafe": 1, "noserial": 2, "nombox": 4, "net": 8, "noscreen": 16,
-             "intcompat": 32, "fpucompat": 64}
+             "intcompat": 32, "fpucompat": 64, "modpace": 128}
 ENTRY_SYMBOLS = ("_amt_entry", "amt_entry")
 
 

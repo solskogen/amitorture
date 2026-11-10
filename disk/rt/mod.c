@@ -684,6 +684,10 @@ static void run_module(const struct amt_module *m)
     case_no = 0;
     amt_srand(amt_par.seed * 0x9e3779b9UL + m->id);
     mbox_set_pos(m->id, 0);
+    /* the runner chooses this module's pacing (warp or real time) and acks
+     * once the emulator runs that way; no ack: carry on as paced */
+    if (amt_par.flags & AMT_F_MODPACE)
+        amt_request("pacing", m->name, 0, 30000);
     emit_mod(m, 1);
     screen_module(m, 1, 0, 0, 0, 0, 0);
     if (oom_why) {

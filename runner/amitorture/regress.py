@@ -99,6 +99,7 @@ def cmd_baseline(opts, name, repeat):
         env = envs[0]
         meta = {"name": name, "created": B.now_iso(), "repeat": repeat, "matrix": opts.matrix, "configs": opts.configs,
                 "sets": opts.sets, "params": opts.params, "warp": getattr(opts, "warp", None),
+                "plan": bool(getattr(opts, "plan", False)), "module_warp": getattr(opts, "module_warp", None) or "off",
                 "binary": {k: env["amiberry"].get(k) for k in ("path", "sha256", "version", "size", "mtime")},
                 "disk": {k: (env.get("disk_source") or {}).get(k) for k in ("path", "build_id", "sha256", "set")},
                 "kickstarts": env.get("kickstarts_dir"), "amitorture": env.get("amitorture"), "host": env.get("host"),
@@ -175,6 +176,10 @@ def cmd_check(opts, name, binaries, repeat):
     if getattr(opts, "warp", None) is None and "warp" not in opts.sets:
         opts = copy.copy(opts)
         opts.warp = base["meta"].get("warp")
+    if getattr(opts, "module_warp", None) is None:
+        # the baseline's per-module pacing (its entries carry the policy, module_warp)
+        opts = copy.copy(opts)
+        opts.module_warp = base["meta"].get("module_warp") or "off"
     entries = []
     for eid, be in base["entries"].items():
         e = dict(be["entry"])

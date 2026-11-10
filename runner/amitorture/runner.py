@@ -10,7 +10,7 @@ import threading
 import time
 
 from . import adf as adfmod
-from . import amiberry_cfg, emulator, envinfo, hostreq, isolation, mailbox, matrix, records, romid
+from . import amiberry_cfg, coverage, emulator, envinfo, hostreq, isolation, mailbox, matrix, pacing, records, romid
 from . import audio as audiomod
 from . import cdimage
 from .emulator import RunnerError
@@ -50,6 +50,9 @@ class Options:
         self.audio = kw.get("audio", "auto")          # auto | on | off (SDL disk audio capture)
         self.warp = kw.get("warp")
         self.boot_warp = kw.get("boot_warp", True)    # warp Kickstart and the loader until the guest's pacing request
+        self.module_warp = kw.get("module_warp")  # auto: pacing per module (pacing.py) | off | None: off (check: the baseline's)
+        if self.module_warp not in (None, "auto", "off"):
+            raise RunnerError(f"unknown module warp policy {self.module_warp!r}")
         if self.warp not in (None, "off", "auto", "on"):
             raise RunnerError(f"unknown warp policy {self.warp!r}")
         if self.warp is not None and "warp" in self.sets:
@@ -410,7 +413,8 @@ def _launch_once(opts, entry, run, argv, env, home, rawdir, port, res, extra_opt
                 ipc, rawdir, run.rel, options=entry["options"], audio=run.audio,
                 frame_hz=60 if entry["options"].get("ntsc") == "true" else 50, t0=run.t0,
                 log=(lambda m: log(opts, f"{entry['id']}: {m}")) if opts.verbose else None,
-                pacing=res["warp"]["effective"], floppy_after=floppy_after)
+                pacing=res["warp"]["effective"], floppy_after=floppy_after,
+                module_warp=res["warp"].get("modules"))
             ended = observe(opts, entry, run, proc, serial, ipc, res)
     except (OSError, RunnerError) as e:
         emulator.check_interrupt()          # the IPC broke because Ctrl+C stopped the emulator
@@ -521,7 +525,7 @@ _EMU_NET_KEYS = ("a2065", "zz9000_net", "ne2000_pci", "ne2000_pcmcia")
 
 
 FLAG_BITS = {"unsafe": 1, "noserial": 2, "nombox": 4, "net": 8, "noscreen": 16,
-             "intcompat": 32, "fpucompat": 64}   # tools/mkadf.py
+             "intcompat": 32, "fpucompat": 64, "modpace": 128}   # tools/mkadf.py
 
 
 def _add_flag(params, name):
@@ -670,6 +674,26 @@ def boot_warp(opts, policy, params, has_disk=True):
     return policy
 
 
+def module_warp(opts, entry, dname, src_disk, params, capture=False):
+    """The modules of this disk to run warped (pacing.py, entry["module_warp"]),
+    [] for none: --module-warp off, no mailbox (the requests cannot be
+    acked), a selftest or no disk. An audio capture does not stop it: marks
+    are offsets in the capture file taken when served, and the modules that
+    make sounds (paula, expsound) are never warped, so their segments are
+    recorded at real speed."""
+    want = entry.get("module_warp") or []
+    if getattr(opts, "module_warp", "off") != "auto" or not want or opts.selftest \
+            or src_disk is None or _flag_on(params, "nombox") or getattr(opts, "warp", None) is not None:
+        return []
+    if dname:
+        group = dname.split("-", 1)[1] if "-" in dname else dname
+    else:
+        group = adf_set_group(src_disk)
+    mask = _mask(params.get("modules", "all"))
+    return [m for m in want if (group is None or coverage.MODULE_GROUP.get(m) == group)
+            and mask >> matrix.MODULE_IDS[m] & 1]
+
+
 def verify_warp(ipc, policy):
     want = int(policy["effective"] or policy.get("boot", False))
     reply = ipc.request("GET_WARP")
@@ -786,6 +810,11 @@ def _run_disk(opts, ctx, entry, binary=None, extra_options=None, disk=None):
         with open(os.path.join(media_dir, mf["name"]), "wb") as fh:
             fh.truncate(int(mf["size"]))
     params = _with_entry_flags(merge_params(opts.params, entry.get("params", {})), entry, extra_options)
+    src_disk = disk[1] if disk else (None if opts.no_disk else ctx.get("adf_src"))
+    capture = audio_wanted(opts, entry, src_disk)
+    mwarp = module_warp(opts, entry, dname, src_disk, params, capture)
+    if mwarp:
+        _set_flag(params, "modpace", True)
     # Disk
     if opts.no_disk:
         floppy = ""
@@ -826,10 +855,11 @@ def _run_disk(opts, ctx, entry, binary=None, extra_options=None, disk=None):
         res["floppy_speed"] = fs
     if extra_options:
         extra.update(extra_options)
-    src_disk = disk[1] if disk else (None if opts.no_disk else ctx.get("adf_src"))
-    capture = audio_wanted(opts, entry, src_disk)
     res["warp"] = boot_warp(opts, disk_warp(opts, entry, res.get("disk"), capture, extra), params,
                             has_disk=res.get("disk") is not None)
+    if mwarp and res["warp"]["effective"]:
+        mwarp = []     # the whole disk runs warped anyway; the requests just ack
+    res["warp"]["modules"] = mwarp
     extra["warp"] = "true" if res["warp"]["effective"] or res["warp"]["boot"] else "false"
     port = emulator.pick_port(*(opts.ports or emulator.PORT_RANGE))
     cfg_entry = dict(entry, options={k: (v.replace("{media}", media_dir) if isinstance(v, str) else v)
@@ -975,6 +1005,8 @@ def _run_disk(opts, ctx, entry, binary=None, extra_options=None, disk=None):
     host_recs = run.requests.host if run.requests else []
     if run.requests is not None:
         res["host_requests"] = dict(run.requests.summary(), raw=f"{rel}host.jsonl")
+        if run.requests.module_pacing:
+            res["warp"]["module_pacing"] = dict(run.requests.module_pacing)
     if run.audio is not None:
         res["audio"] = run.audio.info()
         res["audio"]["file"] = "work/tmp (removed after the run unless --keep)" if not opts.keep else audio_path
@@ -1638,7 +1670,8 @@ class Context:
             "tmpdir": self.tmp,
             "options": {"timeout": opts.timeout, "hang": opts.hang, "no_disk": opts.no_disk, "selftest": opts.selftest,
                         "configs": opts.configs, "matrix": opts.matrix, "sets": opts.sets, "jobs": opts.jobs,
-                        "show": getattr(opts, "show", False), "warp": opts.warp},
+                        "show": getattr(opts, "show", False), "warp": opts.warp,
+                        "module_warp": getattr(opts, "module_warp", None) or "off"},
         }
         self.d["romset"] = romid.RomSet(self.environment["roms"])
         self._binfo = {opts.binary: self.environment["amiberry"]}
@@ -1714,6 +1747,8 @@ def select_entries(opts):
         if not entries:
             raise RunnerError(f"--config {opts.configs}: no matrix entry matches; see `amitorture matrix --matrix full`")
     entries = matrix.apply_overrides(entries, opts.sets)
+    # before planning: the policy looks at whole families (reference + twins)
+    pacing.assign(entries)
     # A matrix run runs each coverage key once (plan.py); entries named with
     # --config run every module, as asked.
     if getattr(opts, "plan", False) and not opts.configs:

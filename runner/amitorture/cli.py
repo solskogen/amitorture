@@ -251,6 +251,7 @@ def make_options(a, binary):
         baseline=getattr(a, "baseline", None), amiberry_src=a.amiberry_src, repro=not getattr(a, "no_repro", False),
         xfail_path=a.xfail, audio=getattr(a, "audio", "auto"), warp=getattr(a, "warp", None),
         boot_warp=getattr(a, "boot_warp", "on") != "off",
+        module_warp=getattr(a, "module_warp", None),
         ports=parse_ports(getattr(a, "ports", None)),
         show=_check_show(a))
 
@@ -448,6 +449,12 @@ def _common(p, kick_required=True, param_defaults=True):
                    help="on (default): warp Kickstart, the loader and the probe of every normally paced disk; "
                         "the runner restores the disk's pacing when the guest asks for it, before the first "
                         "module. off: boot at the disk's own pacing")
+    p.add_argument("--module-warp", choices=["auto", "off"], default=None,
+                   help="auto: pacing per module (runner/amitorture/pacing.py): the guest asks before each module "
+                        "and modules that measure only emulated time run warped on 68000/68010/cycle-exact machines "
+                        "(display on every machine); families with a threaded CPU and modules with host time stay "
+                        "paced. off (default; check: the baseline's): the disk's own pacing for every module. Ignored with "
+                        "--warp")
     p.add_argument("--ports", metavar="LO-HI",
                    help="serial port range for the emulators (default $AMT_PORTS or 23540-23599)")
     p.add_argument("-q", "--quiet", action="store_true", help="no progress lines, only the final verdict")
@@ -521,6 +528,9 @@ def build_parser():
     p.add_argument("--repeat", type=int, default=3, metavar="N",
                    help="runs per entry (default 3): cases that differ between identical runs are marked "
                         "unstable and not compared by check")
+    p.add_argument("--plan", choices=["on", "off"], default="off",
+                   help="on: record the plan of the matrix (each coverage key once, see run --plan); check reruns "
+                        "the baseline's entries, so it inherits the plan")
     p.set_defaults(fn=cmd_baseline)
 
     p = sub.add_parser("check", help="rerun a baseline's entries on one or more binaries and diff fingerprints")

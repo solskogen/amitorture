@@ -38,10 +38,13 @@ def _pair_problem(ref_res, twin_res, kind):
             "effective", str((s.get("resolved_options") or s.get("options") or {}).get(
                 "warp", "false")).lower() in ("true", "yes", "1"))
             for s in (r.get("disks") or [r])})
+        # pacing per module (pacing.py): twins get the same policy
+        pacing[-1].update({(s.get("disk_name"), "modules"): tuple((s.get("warp") or {}).get("modules") or ())
+                           for s in (r.get("disks") or [r])})
     # a planned reference may run disks its twin does not: compare the disks both ran
     both = set(pacing[0]) & set(pacing[1])
     if {d: pacing[0][d] for d in both} != {d: pacing[1][d] for d in both}:
-        return "entries have different per-disk warp modes"
+        return "entries have different per-disk or per-module warp modes"
     opts = [amiberry_cfg.COMMON | (r.get("options") or {}) | (r.get("resolved_options") or {})
             for r in (ref_res, twin_res)]
     ref, twin = opts

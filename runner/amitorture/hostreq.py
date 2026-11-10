@@ -87,9 +87,13 @@ class Requests:
     """
 
     def __init__(self, ipc, rawdir, rel="", options=None, audio=None, frame_hz=50, clock=time.monotonic,
-                 sleep=time.sleep, t0=None, log=None, pacing=0, floppy_after=None):
+                 sleep=time.sleep, t0=None, log=None, pacing=0, floppy_after=None, module_warp=None):
         self.ipc, self.rawdir, self.rel = ipc, rawdir, rel
         self.pacing = 1 if pacing else 0
+        # pacing.py: the modules that run warped when the guest asks per module
+        # (flag modpace); every other module gets the disk's pacing
+        self.module_warp = frozenset(module_warp or ())
+        self.module_pacing = {}    # module -> warp state it was acked with
         self.floppy_after = floppy_after   # floppy_speed to set at the pacing request (runner.turbo_load)
         self.pacing_done = False
         self.options = options or {}
@@ -202,9 +206,11 @@ class Requests:
         return True, {}
 
     def _do_pacing(self, obj, args, rid, tag):
-        """End of the (possibly warped) boot: set the disk's own warp state
-        and verify it before the ack lets the first module start."""
-        warp = self.pacing
+        """End of the (possibly warped) boot (tag "boot"), or the start of a
+        module (tag = its name, flag modpace): set the warp state it runs
+        with and verify it before the ack lets it start."""
+        module = tag if tag and tag != "boot" else None
+        warp = (1 if module in self.module_warp else self.pacing) if module else self.pacing
         want = f"OK\t{warp}"
         before = self.ipc.request("GET_WARP")
         switched = before != want
@@ -216,6 +222,9 @@ class Requests:
         if after != want:
             return False, {"error": f"warp state after SET_WARP: expected {want!r}, got {after!r}"}
         result = {"warp": warp, "was": before.split("\t")[-1], "switched": switched}
+        if module:
+            self.module_pacing[module] = warp
+            result["module"] = module
         if self.floppy_after is not None:
             # the payload loaded at turbo speed; the modules get real drive speed
             reply = self.ipc.request(f"SET_FLOPPY_SPEED\t{self.floppy_after}")
