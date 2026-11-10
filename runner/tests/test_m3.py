@@ -143,6 +143,44 @@ class HostRequests(unittest.TestCase):
         self.assertFalse(rq.pacing_done)
         self.assertEqual(ipc.mem[self.MBOX + 44], 7 | 0x80000000)
 
+    def test_pacing_restores_real_floppy_speed_before_the_ack(self):
+        # the payload loaded at turbo speed (runner.turbo_load); the modules
+        # must find the drive at real speed once the pacing request is acked
+        class FloppyIPC(FakeIPC):
+            def __init__(self, lag=2):
+                super().__init__()
+                self.speed, self.pending, self.lag = 0, None, lag
+
+            def request(self, line, timeout=15):
+                self.lines.append(line) if line.startswith(("GET_", "SET_")) else None
+                if line == "GET_WARP":
+                    return "OK\t0"
+                if line.startswith("SET_FLOPPY_SPEED"):
+                    self.pending = int(line.split("\t")[1])
+                    return "OK"
+                if line == "GET_FLOPPY_SPEED":
+                    if self.pending is not None:
+                        self.lag -= 1
+                        if self.lag <= 0:       # applied at the next config check
+                            self.speed, self.pending = self.pending, None
+                    return f"OK\t{self.speed}\t{'1x' if self.speed == 100 else 'turbo'}"
+                return super().request(line, timeout)
+
+        ipc = FloppyIPC()
+        rq = hostreq.Requests(ipc, self.d, pacing=0, floppy_after=100, sleep=lambda s: None)
+        rq.offer(req(1, 1, "pacing", "boot"), "serial")
+        h = rq.service(self.MBOX)[0]
+        self.assertTrue(h["acked"])
+        self.assertEqual(h["result"]["floppy_speed"], 100)
+        self.assertEqual(ipc.speed, 100)
+        set_at = ipc.lines.index("SET_FLOPPY_SPEED\t100")
+        ack_at = max(i for i, ln in enumerate(ipc.lines) if ln.startswith("WRITE_MEM"))
+        self.assertLess(set_at, ack_at)
+        self.assertGreaterEqual(ipc.lines.count("GET_FLOPPY_SPEED"), 2)   # waited until it applied
+        # once only: a second pacing request leaves the speed alone
+        rq.offer(req(2, 2, "pacing", "boot"), "serial")
+        self.assertNotIn("floppy_speed", rq.service(self.MBOX)[0]["result"])
+
     def test_unknown_and_joystick_are_refused_not_acked(self):
         self.rq.offer(req(1, 1, "teleport"), "serial")
         self.rq.offer(req(2, 2, "joy", args={"port": 1, "dirs": "u", "fire": 1}), "serial")

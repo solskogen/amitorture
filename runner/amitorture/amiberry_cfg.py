@@ -245,6 +245,23 @@ def _norm(v):
     return {"yes": "true", "no": "false", "1": "1"}.get(v, v)
 
 
+# Per-launch lines of a generated config: the same machine's disks differ
+# only in these (and in the launch's temp dir in paths).
+VOLATILE = ("floppy0", "floppy1", "floppy2", "floppy3", "serial_port", "warp", "floppy_speed")
+
+
+def verify_key(binary, text, launch_dir):
+    """What decides a --dump-config result: the binary and the config without
+    its per-launch lines and with the launch's temp dir taken out."""
+    lines = []
+    for ln in text.splitlines():
+        k = ln.split("=", 1)[0].strip()
+        if k in VOLATILE:
+            continue
+        lines.append(ln.replace(launch_dir, "{launch}") if launch_dir else ln)
+    return (os.path.realpath(binary), "\n".join(lines))
+
+
 def verify(binary, config_path, env, timeout=60):
     """Runs ``amiberry --config FILE --dump-config`` in the isolated env.
 

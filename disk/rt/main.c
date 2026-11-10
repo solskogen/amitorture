@@ -46,6 +46,8 @@ static void emit_hello(void)
 
     json_begin("hello");
     json_str("build", build);
+    if (amt_mbox)
+        json_hex("mbox", (ULONG)amt_mbox);   /* the host follows it without scanning chip RAM */
     json_int("mode", (long)amt_par.mode);
     json_int("seed", (long)amt_par.seed);
     json_obj("policy");

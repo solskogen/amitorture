@@ -124,6 +124,10 @@ New disks also emit `hello.modules`, an object mapping every selected compiled m
 (0-63). This is additive to v1: readers accept older captures without it. It records the intersection of the
 compiled module table and the run mask, not all modules available in the source tree. Every declared module
 must have matching begin/end records before `done`; an empty selection is skipped rather than passed.
+They also emit `hello.mbox`, the mailbox address as 8 hex digits, when the mailbox exists (§7): a host can
+follow the ring from there without scanning chip RAM for the header. A host must still check the header at that
+address (magic, version) before using it.
+
 They also emit `hello.policy`, `{"integer":"strict"|"compat","fpu":"strict"|"compat"}`,
 derived from the two run-parameter compatibility bits. This is additive to v1;
 older captures without it do not explicitly declare an instruction policy.
@@ -411,7 +415,7 @@ Used for things the guest can't do or observe itself: screenshots, audio capture
 | `joy` | `{"port":p,"dirs":"<subset of udlr>","fire":b}`: absolute state, "" = centred; b bit0 = fire 1 (pin 6), bit1 = fire 2 (pin 9) | IPC joystick injection, if the emulator has one. Amiberry's IPC has none (only SEND_KEY, SEND_MOUSE, SET_JOYPORT_MODE; SEND_KEY codes > $7F are AKS_* input events, not joystick events): not acked. |
 | `cd32pad` | `{"port":p,"buttons":mask}`: absolute; mask bit0 blue, 1 red, 2 yellow, 3 green, 4 forward, 5 reverse, 6 play (the pad's shift order) | as above (not acked on Amiberry). A host that has a CD32 pad attached on that port (Amiberry: `joyportN=<device>`, `joyportNmode=cd32joy`, e.g. joyport1=kbd1) but cannot press its buttons may ack `buttons:0` only: the guest then checks the pad id/released state. |
 | `wait` | `{}` | host acks immediately (round-trip/latency test) |
-| `pacing` | `{}` (tag `boot`) | sent once by the runtime right after `hello`, before the first module. A host that warped the boot (Kickstart, loader, probe) switches the emulator to the disk's own pacing (Amiberry: IPC `SET_WARP`, checked with `GET_WARP`) and acks only after that; result: `warp`, `was`, `switched`. A host that cannot switch refuses it (N \| $80000000). Either way the guest just continues: this request has no case. |
+| `pacing` | `{}` (tag `boot`) | sent once by the runtime right after `hello`, before the first module. A host that warped the boot (Kickstart, loader, probe) switches the emulator to the disk's own pacing (Amiberry: IPC `SET_WARP`, checked with `GET_WARP`) and acks only after that; result: `warp`, `was`, `switched`. A host that loaded a disk testing the floppy hardware at turbo drive speed sets real drive speed here too (Amiberry: IPC `SET_FLOPPY_SPEED 100`, checked with `GET_FLOPPY_SPEED`), before the ack; result `floppy_speed`. A host that cannot switch refuses it (N \| $80000000). Either way the guest just continues: this request has no case. |
 
 Unknown `what` values are never acknowledged.
 

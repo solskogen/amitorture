@@ -1,7 +1,11 @@
 """The test disk: locating it, baking the run parameters, reading its header."""
 from __future__ import annotations
 
+import contextlib
+import hashlib
+import json
 import os
+import shutil
 import struct
 import subprocess
 import sys
@@ -45,8 +49,28 @@ def header_info(path):
     return info
 
 
-def bake(src, dst, params: dict):
-    """Copies src to dst with the run parameters baked in by tools/mkadf.py."""
+def bake(src, dst, params: dict, cache_dir=None, lock=None):
+    """Copies src to dst with the run parameters baked in by tools/mkadf.py.
+    cache_dir: keep each (disk, params) baked once there and copy it (the
+    test floppy is write-protected, so a copy is as good as a bake)."""
+    if cache_dir and os.path.isfile(src):
+        st = os.stat(src)
+        key = hashlib.sha256(json.dumps([os.path.realpath(src), st.st_size, st.st_mtime_ns,
+                                         sorted((str(k), str(v)) for k, v in (params or {}).items())])
+                             .encode()).hexdigest()[:20]
+        cached = os.path.join(cache_dir, key + ".adf")
+        with (lock or contextlib.nullcontext()):
+            hit = os.path.isfile(cached)
+            if not hit:
+                os.makedirs(cache_dir, exist_ok=True)
+                bake(src, cached + ".tmp", params)
+                os.replace(cached + ".tmp", cached)
+        shutil.copyfile(cached, dst)
+        info = header_info(dst)
+        info["mkadf_argv"] = [sys.executable, MKADF, "--in", src, "-o", dst] + (
+            ["--param", *[f"{k}={v}" for k, v in params.items()]] if params else [])
+        info["baked_from_cache"] = hit
+        return info
     if not os.path.isfile(src):
         raise RunnerError(f"test disk {src} not found (build the disk set with `make -C disk` and use --disk-set disk/build/set, or build one ADF with `make -C disk MODS=\"rt <modules>\"` and pass --adf PATH)")
     if not os.path.isfile(MKADF):

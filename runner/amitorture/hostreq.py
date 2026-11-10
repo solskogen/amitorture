@@ -87,9 +87,10 @@ class Requests:
     """
 
     def __init__(self, ipc, rawdir, rel="", options=None, audio=None, frame_hz=50, clock=time.monotonic,
-                 sleep=time.sleep, t0=None, log=None, pacing=0):
+                 sleep=time.sleep, t0=None, log=None, pacing=0, floppy_after=None):
         self.ipc, self.rawdir, self.rel = ipc, rawdir, rel
         self.pacing = 1 if pacing else 0
+        self.floppy_after = floppy_after   # floppy_speed to set at the pacing request (runner.turbo_load)
         self.pacing_done = False
         self.options = options or {}
         self.audio = audio
@@ -203,18 +204,35 @@ class Requests:
     def _do_pacing(self, obj, args, rid, tag):
         """End of the (possibly warped) boot: set the disk's own warp state
         and verify it before the ack lets the first module start."""
-        want = f"OK\t{self.pacing}"
+        warp = self.pacing
+        want = f"OK\t{warp}"
         before = self.ipc.request("GET_WARP")
         switched = before != want
         if switched:
-            reply = self.ipc.request(f"SET_WARP\t{self.pacing}")
+            reply = self.ipc.request(f"SET_WARP\t{warp}")
             if not reply.startswith("OK"):
-                return False, {"error": f"IPC SET_WARP {self.pacing}: {reply}"}
+                return False, {"error": f"IPC SET_WARP {warp}: {reply}"}
         after = self.ipc.request("GET_WARP")
         if after != want:
             return False, {"error": f"warp state after SET_WARP: expected {want!r}, got {after!r}"}
+        result = {"warp": warp, "was": before.split("\t")[-1], "switched": switched}
+        if self.floppy_after is not None:
+            # the payload loaded at turbo speed; the modules get real drive speed
+            reply = self.ipc.request(f"SET_FLOPPY_SPEED\t{self.floppy_after}")
+            if not reply.startswith("OK"):
+                return False, {"error": f"IPC SET_FLOPPY_SPEED {self.floppy_after}: {reply}"}
+            deadline = self.clock() + 5.0
+            while True:
+                got = self.ipc.request("GET_FLOPPY_SPEED")
+                if got.startswith(f"OK\t{self.floppy_after}\t") or got == f"OK\t{self.floppy_after}":
+                    break
+                if self.clock() > deadline:
+                    return False, {"error": f"floppy speed after SET_FLOPPY_SPEED {self.floppy_after}: {got!r}"}
+                self.sleep(0.02)
+            result["floppy_speed"] = self.floppy_after
+            self.floppy_after = None
         self.pacing_done = True
-        return True, {"warp": self.pacing, "was": before.split("\t")[-1], "switched": switched}
+        return True, result
 
     def _do_screenshot(self, obj, args, rid, tag):
         frames = max(0, min(_int(args.get("frames")), 50 * 60))

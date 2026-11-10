@@ -97,6 +97,7 @@ class EntryRun:
         self._serial_bytes = 0
         self._serial_boot = 0
         self.lock = threading.Lock()
+        self.wake = threading.Event()   # set when serial brings a request: the watch loop serves it at once
         self.serial_parser = records.StreamParser("serial")
         self.mbox_parser = records.StreamParser("mailbox")
         self.mbox_log = open(os.path.join(rawdir, "mailbox.jsonl"), "w", encoding="utf-8")
@@ -123,9 +124,29 @@ class EntryRun:
             # logmine.py maps emulator log lines to the module that ran then
             self._serial_bytes += len(data)
             self.serial_times.append([round(self.last_progress - self.t0, 3), self._serial_bytes])
+        if b'"t":"request"' in data:      # after the feed: the woken loop finds it parsed
+            self.wake.set()
 
     # -- mailbox ---------------------------------------------------------
     QUICK_TOP = 0x40000   # where exec's AllocMem usually puts the mailbox (CONTRACT §7 note)
+
+    def mbox_from_hello(self, ipc):
+        """The mailbox address the latest boot's hello names (CONTRACT §5),
+        if its header is there: no scan of chip RAM needed. None otherwise
+        (an older disk, no mailbox, or not yet)."""
+        with self.lock:
+            hellos = [r for r in self.serial_parser.records if r.type == "hello" and r.crc_ok and r.obj]
+        if not hellos or "mbox" not in hellos[-1].obj:
+            return None
+        h = hellos[-1]
+        if (h.boot, h.seq) == getattr(self, "_hello_tried", None):
+            return None
+        self._hello_tried = (h.boot, h.seq)
+        try:
+            a = int(str(h.obj["mbox"]), 16)
+        except ValueError:
+            return None
+        return a if mailbox.read_header(ipc, a) else None
 
     def scan(self, ipc, full=True):
         stats = {}
@@ -367,7 +388,7 @@ def selftest_records():
 LAUNCH_ATTEMPTS = 3
 
 
-def _launch_once(opts, entry, run, argv, env, home, rawdir, port, res):
+def _launch_once(opts, entry, run, argv, env, home, rawdir, port, res, extra_options=None):
     proc = emulator.Process(opts.binary, argv, env, os.path.join(rawdir, "amiberry.log"), cwd=home)
     run.pid = proc.proc.pid
     serial = emulator.SerialClient(port, os.path.join(rawdir, "serial.bin"), on_data=run.on_serial)
@@ -384,11 +405,12 @@ def _launch_once(opts, entry, run, argv, env, home, rawdir, port, res):
             ipc = emulator.IPC(endpoint)
             res["ipc"]["version"] = ipc.request("GET_VERSION")
             verify_warp(ipc, res["warp"])
+            floppy_after = turbo_load(ipc, res, entry, extra_options)
             run.requests = hostreq.Requests(
                 ipc, rawdir, run.rel, options=entry["options"], audio=run.audio,
                 frame_hz=60 if entry["options"].get("ntsc") == "true" else 50, t0=run.t0,
                 log=(lambda m: log(opts, f"{entry['id']}: {m}")) if opts.verbose else None,
-                pacing=res["warp"]["effective"])
+                pacing=res["warp"]["effective"], floppy_after=floppy_after)
             ended = observe(opts, entry, run, proc, serial, ipc, res)
     except (OSError, RunnerError) as e:
         emulator.check_interrupt()          # the IPC broke because Ctrl+C stopped the emulator
@@ -687,6 +709,21 @@ def disk_floppy_speed(dname, entry, adf=None):
     return None if group in REAL_SPEED_GROUPS else "0"
 
 
+def turbo_load(ipc, res, entry, extra_options=None):
+    """A disk that tests the floppy hardware runs at real drive speed, but
+    only its modules need it: load the payload at turbo speed and switch to
+    real speed when the guest asks for its pacing (before the first module).
+    Only for a boot that is warped up to that request, so the request comes;
+    the configured speed stays real, so an Amiberry without SET_FLOPPY_SPEED
+    simply loads at real speed. Returns the speed to restore, or None."""
+    if res.get("floppy_speed") is not None or "floppy_speed" in (entry.get("options") or {}) \
+            or "floppy_speed" in (extra_options or {}) or not (res.get("warp") or {}).get("boot"):
+        return None
+    reply = ipc.request("SET_FLOPPY_SPEED\t0")
+    res["floppy_load"] = {"turbo": reply.startswith("OK"), "reply": reply}
+    return 100 if reply.startswith("OK") else None
+
+
 def safe_id(rid):
     return rid.replace("~", "_").replace("=", "-").replace("/", "_")
 
@@ -755,7 +792,8 @@ def _run_disk(opts, ctx, entry, binary=None, extra_options=None, disk=None):
         res["disk"] = None
     else:
         floppy = os.path.join(media_dir, f"{safe}{dsuf}.adf")
-        res["disk"] = adfmod.bake(disk[1] if disk else ctx["adf_src"], floppy, params)
+        res["disk"] = adfmod.bake(disk[1] if disk else ctx["adf_src"], floppy, params,
+                                  cache_dir=os.path.join(ctx["tmp"], "baked"), lock=ctx.get("bake_lock"))
     cd_opts = {}
     if entry.get("boot") == "cd" and not opts.no_disk:
         # CD32/CDTV: boot from a CD made from the baked disk (cdimage.py,
@@ -811,7 +849,18 @@ def _run_disk(opts, ctx, entry, binary=None, extra_options=None, disk=None):
     if capture:
         audio_path = os.path.join(etmp, "audio.raw")
         env.update(audiomod.env_for(audio_path))
-    ver = amiberry_cfg.verify(binary, conf, env)
+    # The disks of one machine have the same config but for the floppy, the
+    # serial port and the pacing: check it with --dump-config once per run.
+    vkey = amiberry_cfg.verify_key(binary, text, etmp)
+    with ctx["lock"]:
+        ver = ctx.setdefault("verified", {}).get(vkey)
+    if ver is None:
+        ver = amiberry_cfg.verify(binary, conf, env)
+        if ver.get("ok"):
+            with ctx["lock"]:
+                ctx["verified"][vkey] = ver
+    else:
+        ver = dict(ver, cached=True)
     with open(os.path.join(cfgdir, f"{safe}{dsuf}.resolved.uae"), "w", encoding="utf-8") as fh:
         fh.write(ver.get("resolved_text", ""))
     res["config"] = {"file": f"configs/{safe}{dsuf}.uae", "resolved": f"configs/{safe}{dsuf}.resolved.uae",
@@ -866,7 +915,7 @@ def _run_disk(opts, ctx, entry, binary=None, extra_options=None, disk=None):
                 + f", warp {'on' if res['warp']['effective'] else 'off'} ({res['warp']['reason']})"
                 + (", warped boot" if res["warp"]["boot"] else ""))
             proc, serial, ipc, ended, exit_before_stop, stop = _launch_once(eopts, entry, run, argv, env, home,
-                                                                            rawdir, port, res)
+                                                                            rawdir, port, res, extra_options)
             emulator.check_interrupt()      # stopped by Ctrl+C: not a result
             sdl_fail, _ = proc.find(r"SDL could not initialize")
             if ended == "crash" and sdl_fail and not run.any_records() and attempt < LAUNCH_ATTEMPTS:
@@ -1264,6 +1313,14 @@ def observe(opts, entry, run, proc, serial, ipc, res):
             return "crash"
         run.harvest()
         urgent = run.requests is not None and run.requests.waiting() and now - last_scan >= run.URGENT_SCAN
+        if run.follower is None and not opts.selftest:
+            a = run.mbox_from_hello(ipc)
+            if a is not None:
+                run.follower = mailbox.RingFollower(ipc, a)
+                run.mb["found_at"] = f"{a:08x}"
+                run.mb["found_by"] = "hello"
+                run.mb.setdefault("found_after_s", round(now - run.t0, 3))
+                log(opts, f"{entry['id']}: mailbox at {a:08x} (from hello)")
         if run.follower is None and not opts.selftest and (urgent or now - last_scan >= run.SCAN_INTERVAL):
             last_scan = now
             n_scans += 1
@@ -1343,7 +1400,10 @@ def observe(opts, entry, run, proc, serial, ipc, res):
             n = run.requests.stats.get("requests", 0)
             if n != last_req_n:
                 last_req_n, last_req_t = n, now
-        time.sleep(run.POLL_BUSY if run.boot_warp or now - last_req_t < run.BUSY_WINDOW else run.POLL)
+        # a request arriving on serial ends the wait early (EntryRun.wake);
+        # mailbox-only requests are seen at the next poll
+        run.wake.wait(run.POLL_BUSY if run.boot_warp or now - last_req_t < run.BUSY_WINDOW else run.POLL)
+        run.wake.clear()
 
 
 def end_boot_warp(run, ipc, res):
@@ -1535,7 +1595,7 @@ class Context:
         import tempfile
         self.tmp = tempfile.mkdtemp(prefix=f"{label[:3]}{os.getpid()}-", dir=self.tmp_parent)
         self.d = {"results": self.results, "tmp": self.tmp, "media": os.path.join(self.tmp, "shared"),
-                  "lock": threading.Lock(), "seq": [0]}
+                  "lock": threading.Lock(), "bake_lock": threading.Lock(), "seq": [0]}
         self.d["disks"] = None
         if not opts.no_disk:
             set_dir = resolve_disk_set(opts)
