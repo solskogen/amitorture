@@ -83,7 +83,8 @@ long amt_entry(struct ExecBase *SysBase /* A6 */, const struct amt_header *hdr /
 | 16 | u32 | flags: bit0 = unsafe tests allowed, bit1 = serial output off, bit2 = mailbox off, bit3 = net: the network cards are on an emulator-only backend (user-mode NAT), so the network module may transmit (the runner sets it for entries with a `slirp` network option), bit4 = noscreen: no status screen (`rt/screen.c`, §10), so every bare module starts with all DMA off, bit5 = intcompat (32): integer compatibility instruction policy, bit6 = fpucompat (64): FPU compatibility instruction policy, bit7 = modpace (128): a `pacing` request before every module (§13). mkadf names: `unsafe`, `noserial`, `nombox`, `net`, `noscreen`, `intcompat`, `fpucompat`, `modpace`. |
 | 20 | u32 | serial baud (default 115200) |
 | 24 | u32[2] | module enable mask (bit n means module id n; all ones means all) |
-| 32-63 | | reserved, zero |
+| 32 | u32 | floppy: the drive speed the modules run at, in percent of a real drive (mkadf `floppy=<percent>`); 0 = not stated (100); $FFFF (`floppy=turbo`) = the host copies a disk DMA at once (Amiberry `floppy_speed=0`). Timing assertions on disk DMA scale by 100/speed; with turbo they are not applied (paula `df1_write_dskblk`). Everything else a program can see of the drive is checked at every speed. |
+| 36-63 | | reserved, zero |
 
 `AMT_F_INTCOMPAT` (32) and `AMT_F_FPUCOMPAT` (64) are independent policy
 declarations, not requests to change the CPU/FPU. An unset bit means

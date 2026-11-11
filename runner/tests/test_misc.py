@@ -126,7 +126,7 @@ class Matrix(unittest.TestCase):
     def test_sizes(self):
         # smoke: 15, plus threaded twins of the A600 68000 and the A1200 (JIT and not)
         self.assertTrue(8 <= len(matrix.expand("smoke")) <= 18)
-        self.assertTrue(100 <= len(matrix.expand("standard")) <= 150)
+        self.assertTrue(100 <= len(matrix.expand("standard")) <= 160)
         self.assertGreater(len(matrix.expand("full")), 300)
 
     def test_twins_differ_only_by_their_options(self):
@@ -552,8 +552,8 @@ class SpeedTrims(unittest.TestCase):
                 self.assertFalse(mask & bit, e["id"])
 
     def test_floppy_speed_per_disk(self):
-        from amitorture.runner import disk_floppy_speed as f
-        self.assertIsNone(f("1-core", {"options": {}}))       # paula, dmacontention: disk DMA
+        from amitorture.runner import disk_floppy_speed as f, FLOPPY_TEST_SPEED as R_TEST
+        self.assertEqual(f("1-core", {"options": {}}), R_TEST)  # paula, dmacontention: disk DMA
         self.assertEqual(f("2-cpu", {"options": {}}), "0")
         self.assertEqual(f("3-exp", {"options": {}}), "0")
         self.assertIsNone(f("3-exp", {"options": {"floppy_speed": "100"}}))   # an explicit setting wins
@@ -567,7 +567,7 @@ class SpeedTrims(unittest.TestCase):
         with mock.patch.object(R.adfmod, "header_info", return_value={"build_id": "6809d17 2026-11-04 3/3 exp"}):
             self.assertEqual(R.disk_floppy_speed(None, {"options": {}}, adf="x.adf"), "0")
         with mock.patch.object(R.adfmod, "header_info", return_value={"build_id": "6809d17 2026-11-04 1/3 core"}):
-            self.assertIsNone(R.disk_floppy_speed(None, {"options": {}}, adf="x.adf"))
+            self.assertEqual(R.disk_floppy_speed(None, {"options": {}}, adf="x.adf"), R.FLOPPY_TEST_SPEED)
         with mock.patch.object(R.adfmod, "header_info", return_value={"build_id": "6809d17 2026-11-04"}):
             self.assertIsNone(R.disk_floppy_speed(None, {"options": {}}, adf="x.adf"))   # all-in-one
         with tempfile.NamedTemporaryFile(suffix=".adf") as fh:                          # not a disk

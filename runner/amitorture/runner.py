@@ -601,12 +601,18 @@ def base_result(entry):
             "reason": None}
 
 
-# Disks whose modules test the floppy hardware itself and need real drive
-# speed: core (paula: raw disk DMA, DSKSYNC, motor/ready timing;
-# dmacontention: disk DMA under load). Turbo (floppy_speed=0, disk.cpp's
-# turbo DMA path) breaks raw disk-DMA timing, but loads the payload through
-# trackdisk in a fraction of the time.
+# Disks whose modules test the floppy hardware itself: core (paula: raw disk
+# DMA, DSKSYNC, DSKBYTR, motor/ready; dmacontention: disk DMA under load).
+# They run at FLOPPY_TEST_SPEED: above 100 % disk.cpp runs the same DMA
+# path faster, so everything a program sees stays as on hardware (paula's
+# DMA times scale with the speed the guest is told: run parameter floppy).
+# Measured on the A500 CE (paula + dmacontention): 72 s at 100, 61 s at
+# 400, 58 s at 800, 55 s at 0. floppy_speed=0 (turbo) copies a whole DMA
+# at once, so DSKBYTR never shows a DMA running and a read crossing many
+# sync words raises one DSKSYN: the floppy-turbo entries (matrix.py) test
+# that path. Every other disk runs at turbo.
 REAL_SPEED_GROUPS = ("core",)
+FLOPPY_TEST_SPEED = "800"
 WARP_GROUPS = ("cpu",)
 
 
@@ -716,10 +722,10 @@ def adf_set_group(path):
 
 def disk_floppy_speed(dname, entry, adf=None):
     """floppy_speed for one disk launch: "0" (turbo) for a set disk that does
-    not test the floppy hardware, None (the entry's own setting, real speed)
-    otherwise. A set disk run on its own (--adf, no dname) is recognised by
-    its header, so it gets the same speed as in the set; the all-in-one ADF
-    holds the floppy tests too and stays at real speed. An explicit
+    not test the floppy hardware, FLOPPY_TEST_SPEED for one that does, None
+    (the entry's own setting, real speed) otherwise. A set disk run on its
+    own (--adf, no dname) is recognised by its header, so it gets the same
+    speed as in the set; the all-in-one ADF stays at real speed. An explicit
     floppy_speed (matrix entry or --set) always wins; narrowing's paula
     variant still forces 100 through extra_options."""
     if "floppy_speed" in (entry.get("options") or {}):
@@ -730,22 +736,35 @@ def disk_floppy_speed(dname, entry, adf=None):
         group = adf_set_group(adf) if adf else None
         if group is None:
             return None
-    return None if group in REAL_SPEED_GROUPS else "0"
+    return FLOPPY_TEST_SPEED if group in REAL_SPEED_GROUPS else "0"
+
+
+def module_floppy_speed(entry, fs, extra_options=None):
+    """The drive speed the modules run at (run parameter floppy, CONTRACT
+    §4): "turbo" for 0, else the percentage."""
+    v = str((extra_options or {}).get("floppy_speed") or (entry.get("options") or {}).get("floppy_speed")
+            or fs or "100").strip()
+    return "turbo" if v == "0" else v
 
 
 def turbo_load(ipc, res, entry, extra_options=None):
-    """A disk that tests the floppy hardware runs at real drive speed, but
-    only its modules need it: load the payload at turbo speed and switch to
-    real speed when the guest asks for its pacing (before the first module).
-    Only for a boot that is warped up to that request, so the request comes;
-    the configured speed stays real, so an Amiberry without SET_FLOPPY_SPEED
-    simply loads at real speed. Returns the speed to restore, or None."""
-    if res.get("floppy_speed") is not None or "floppy_speed" in (entry.get("options") or {}) \
-            or "floppy_speed" in (extra_options or {}) or not (res.get("warp") or {}).get("boot"):
+    """A disk that tests the floppy hardware runs its modules at a set drive
+    speed, but only its modules need it: load the payload at turbo speed and
+    switch to the disk's speed when the guest asks for its pacing (before
+    the first module). Only for a boot that is warped up to that request, so
+    the request comes; the configured speed is the modules' one, so an
+    Amiberry without SET_FLOPPY_SPEED simply loads at it. An explicit
+    floppy_speed (entry, narrowing) is left alone. Returns the speed to
+    restore, or None."""
+    if "floppy_speed" in (entry.get("options") or {}) or "floppy_speed" in (extra_options or {}) \
+            or not (res.get("warp") or {}).get("boot"):
         return None
+    after = int(res.get("floppy_speed") or 100)
+    if after == 0:
+        return None         # the whole disk runs at turbo
     reply = ipc.request("SET_FLOPPY_SPEED\t0")
     res["floppy_load"] = {"turbo": reply.startswith("OK"), "reply": reply}
-    return 100 if reply.startswith("OK") else None
+    return after if reply.startswith("OK") else None
 
 
 def safe_id(rid):
@@ -815,6 +834,9 @@ def _run_disk(opts, ctx, entry, binary=None, extra_options=None, disk=None):
     mwarp = module_warp(opts, entry, dname, src_disk, params, capture)
     if mwarp:
         _set_flag(params, "modpace", True)
+    fs = disk_floppy_speed(dname, entry, adf=None if disk or opts.no_disk else ctx.get("adf_src"))
+    if not opts.no_disk:
+        params.setdefault("floppy", module_floppy_speed(entry, fs, extra_options))
     # Disk
     if opts.no_disk:
         floppy = ""
@@ -849,7 +871,6 @@ def _run_disk(opts, ctx, entry, binary=None, extra_options=None, disk=None):
     extra = dict(media_opts)
     extra.update(cd_opts)
     extra.update(board_opts)
-    fs = disk_floppy_speed(dname, entry, adf=None if disk or opts.no_disk else ctx.get("adf_src"))
     if fs is not None:
         extra["floppy_speed"] = fs
         res["floppy_speed"] = fs

@@ -15,8 +15,12 @@ struct amt_params {
     ULONG flags;
     ULONG baud;
     ULONG modmask[2];        /* [0] = bits 63..32, [1] = bits 31..0 */
-    ULONG reserved[8];
+    ULONG floppy;            /* drive speed the modules run at, percent; 0 = not stated
+                                (100); AMT_FLOPPY_TURBO = a DMA is copied at once */
+    ULONG reserved[7];
 };
+
+#define AMT_FLOPPY_TURBO 0xFFFFUL
 
 #define AMT_MODE_FULL   0
 #define AMT_MODE_QUICK  1

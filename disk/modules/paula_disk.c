@@ -1163,7 +1163,7 @@ static void df1_tests(ULONG id1)
     struct sig s0, s1;
     struct tres tr;
     struct dres r;
-    ULONG trdy, first_lba = (ULONG)WR_TRACK * 11, words, nominal;
+    ULONG trdy, first_lba = (ULONG)WR_TRACK * 11, words, nominal, speed;
     int entry, i, ok, bad_sec = -1, bad_off = -1;
 
     if (id1 == 0) {
@@ -1254,13 +1254,25 @@ static void df1_tests(ULONG id1)
     }
     words = build_track(WR_TRACK);
     nominal = us_to_cc(words * 32UL);
+    /* A host drive faster than a real one (run parameter floppy, CONTRACT
+     * section 4) sends the words that much faster; turbo copies them at once,
+     * so only "DSKBLK came" is left to check. */
+    speed = amt_par.floppy ? amt_par.floppy : 100;
+    if (speed != AMT_FLOPPY_TURBO)
+        nominal = (ULONG)(((unsigned long long)nominal * 100) / speed);
     dsk_dma(wbuf, (UWORD)words, 1, ADK_WRITE, SYNC, 1, PA_MS(800), &r);
-    ok = r.blk == 1 && r.t_blk >= nominal - nominal / 10 && r.t_blk <= nominal + nominal / 10;
+    ok = r.blk == 1 && (speed == AMT_FLOPPY_TURBO ||
+                        (r.t_blk >= nominal - nominal / 10 && r.t_blk <= nominal + nominal / 10));
     amt_case_open("df1_write_dskblk", ok ? AMT_ST_PASS : AMT_ST_FAIL);
     json_obj("in");
     json_int("words", (long)words);
     json_hexn("adkcon", ADK_WRITE, 4);
-    json_str("bounds", "nominal (words*16 cells*2 us) +-10%");
+    if (speed == AMT_FLOPPY_TURBO)
+        json_str("drive_speed", "turbo");
+    else
+        json_int("drive_speed_pct", (long)speed);
+    json_str("bounds", speed == AMT_FLOPPY_TURBO ? "turbo drive: DSKBLK only, no time bound"
+                                                : "nominal (words*16 cells*2 us *100/drive speed) +-10%");
     json_obj_end();
     json_obj("timing");
     j_dres(&r);

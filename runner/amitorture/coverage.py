@@ -41,6 +41,8 @@ OPTION_GROUPS = {
     "boards": ("*_rom_file", "gfxcard_*", "a2065", "ne2000_*", "zz9000_net", "rtc", "cpuboard_type", "ppc_*"),
     "input": ("joyport*",),
     "model": ("flash_file",),
+    # the drive speed the floppy modules run at (the floppy-turbo entries)
+    "floppy": ("floppy_speed",),
 }
 # Entry fields (not options) that are factors, by group.
 FIELD_GROUPS = {
@@ -68,10 +70,10 @@ AXES = {
     "blitter": ("chipset", "cpu", "core", "engine_class"),
     "fpu": ("cpu", "fpu", "core", "engine"),
     "timing": ("video", "chipset", "cpu", "fpu", "core", "engine_class"),
-    "devio": ("model", "boot", "memory", "boards", "cpu", "flags"),
+    "devio": ("model", "boot", "memory", "boards", "cpu", "flags", "floppy"),
     "display": ("chipset", "video", "model", "cpu", "core", "engine_class"),
     "copper": ("chipset", "video", "cpu", "core", "engine_class"),
-    "paula": ("chipset", "video", "model", "boot", "cpu", "core", "engine_class", "boards"),
+    "paula": ("chipset", "video", "model", "boot", "cpu", "core", "engine_class", "boards", "floppy"),
     "input": ("input", "model", "video", "cpu", "core", "engine_class"),
     "rtg": ("boards", "model", "cpu", "memory"),
     "expsound": ("boards", "model", "cpu", "core", "video", "engine_class", "flags"),
@@ -80,7 +82,7 @@ AXES = {
     "mmu": ("cpu", "cpu_variant", "core", "model", "memory"),
     "memory": ("memory", "model", "cpu", "engine", "boards"),
     "dispatch": ("cpu", "cpu_variant", "core", "engine"),
-    "dmacontention": ("chipset", "video", "cpu", "core", "boot", "engine_class"),
+    "dmacontention": ("chipset", "video", "cpu", "core", "boot", "engine_class", "floppy"),
     "misc_hw_os": ("model", "boards", "memory"),
     "memory_os": ("memory", "model", "boards"),
     "hostspeed": ("cpu", "fpu", "core", "engine", "chipset", "video"),

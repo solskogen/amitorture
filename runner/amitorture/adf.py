@@ -41,9 +41,9 @@ def header_info(path):
                  "build_id": hdr[128:192].split(b"\0")[0].decode("ascii", "replace")})
     p = hdr[64:128]
     if p[:4] == b"PARM":
-        mode, seed, end, fl, baud, mhi, mlo = struct.unpack_from(">7I", p, 4)
+        mode, seed, end, fl, baud, mhi, mlo, floppy = struct.unpack_from(">8I", p, 4)
         info["params"] = {"mode": mode, "seed": seed, "end_action": end, "flags": fl, "baud": baud,
-                          "modules": f"{(mhi << 32) | mlo:016x}"}
+                          "modules": f"{(mhi << 32) | mlo:016x}", "floppy": floppy}
     else:
         info["params"] = None
     return info

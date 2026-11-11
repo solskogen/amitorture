@@ -12,7 +12,8 @@ Inspect a disk (checks the bootblock checksum, the blob CRC and the relocs):
     mkadf.py --dump build/amitorture.adf
 
 Parameters (section 4): mode=full|quick|<n> (soak = 2 is reserved, runs like full), seed=<n>, end_action=halt|reboot|return|<n>,
-flags=<n>|unsafe,noserial,nombox,net,noscreen,intcompat,fpucompat,modpace (comma or '+' separated), baud=<n>, modules=all|<64-bit mask>.
+flags=<n>|unsafe,noserial,nombox,net,noscreen,intcompat,fpucompat,modpace (comma or '+' separated), baud=<n>, modules=all|<64-bit mask>, floppy=<percent>|turbo
+(the drive speed the modules run at; 0 = not stated).
 intcompat (32) and fpucompat (64) declare compatibility instruction policies; flags=0 is hardware-strict.
 Numbers accept 0x prefixes. Any error exits with status 1 and a message on stderr.
 """
@@ -298,7 +299,10 @@ def parse_num(s):
 
 def default_params():
     return {"mode": 0, "seed": 1, "end_action": 0, "flags": 0, "baud": 115200,
-            "modules": 0xFFFFFFFFFFFFFFFF}
+            "modules": 0xFFFFFFFFFFFFFFFF, "floppy": 0}
+
+
+FLOPPY_TURBO = 0xFFFF     # floppy=turbo: the host's drive copies a DMA at once (Amiberry floppy_speed=0)
 
 
 def apply_param(params, item):
@@ -324,6 +328,10 @@ def apply_param(params, item):
         params["baud"] = parse_num(val)
     elif key in ("modules", "module_mask"):
         params["modules"] = 0xFFFFFFFFFFFFFFFF if val.lower() == "all" else parse_num(val)
+    elif key == "floppy":
+        params["floppy"] = FLOPPY_TURBO if val.lower() == "turbo" else parse_num(val)
+        if not 0 <= params["floppy"] <= FLOPPY_TURBO:
+            raise Fail("floppy must be a percentage (0 = not stated, 100 = real speed) or turbo")
     else:
         raise Fail(f"unknown parameter {key!r}")
     for k in ("mode", "seed", "end_action", "flags", "baud"):
@@ -340,17 +348,17 @@ def apply_param(params, item):
 
 
 def pack_params(p):
-    blk = struct.pack(">4sIIIIIII", b"PARM", p["mode"], p["seed"], p["end_action"], p["flags"],
-                      p["baud"], p["modules"] >> 32, p["modules"] & 0xFFFFFFFF)
+    blk = struct.pack(">4sIIIIIIII", b"PARM", p["mode"], p["seed"], p["end_action"], p["flags"],
+                      p["baud"], p["modules"] >> 32, p["modules"] & 0xFFFFFFFF, p.get("floppy", 0))
     return blk.ljust(64, b"\0")
 
 
 def unpack_params(blk):
     if blk[:4] != b"PARM":
         return None
-    mode, seed, end, flags, baud, mhi, mlo = struct.unpack_from(">IIIIIII", blk, 4)
+    mode, seed, end, flags, baud, mhi, mlo, floppy = struct.unpack_from(">IIIIIIII", blk, 4)
     return {"mode": mode, "seed": seed, "end_action": end, "flags": flags, "baud": baud,
-            "modules": (mhi << 32) | mlo}
+            "modules": (mhi << 32) | mlo, "floppy": floppy}
 
 
 # ---------------------------------------------------------------------------

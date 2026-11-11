@@ -83,7 +83,7 @@ Failing records keep measured values (interrupt times, DSKSYN counts, DSKBYTR sa
 | `df0_blob_crc` | CRC-32 of the decoded blob = blob_crc32 (checked by the bootblock on trackdisk data) | CONTRACT section 1 | as above, over every blob track |
 | `df0_head_restored` | after stepping back by the counted steps, a read of the entry cylinder gives that track number | HRM ch.8 | lost steps (head not where trackdisk thinks) |
 | `df1_signature` | DF1 blocks 0 and 1759 raw-read and decoded carry matching AMTOWN01 signatures (skip otherwise: DF1 is then never written). DF1 is only touched when its drive ID is $FFFFFFFF (3.5" DD) or $AAAAAAAA (3.5" HD): a 5.25" drive ($55555555, 40 tracks) has no track 159 | CONTRACT section 11; HRM ch.8 drive ID | (skip: no test-owned disk in DF1) |
-| `df1_write_dskblk` | 6032-word write DMA of track 81 (PRECOMP 140 ns, MFMPREC, FAST): one DSKBLK, words*32 us +-10% after the start | HRM ch.8 (2 us cells in FAST mode) | write DMA rate wrong (e.g. a turbo floppy setting) |
+| `df1_write_dskblk` | 6032-word write DMA of track 81 (PRECOMP 140 ns, MFMPREC, FAST): one DSKBLK, words*32 us × 100/drive speed +-10% after the start (run parameter `floppy`, CONTRACT §4; a turbo drive: DSKBLK only) | HRM ch.8 (2 us cells in FAST mode) | write DMA rate wrong for the drive speed the host states |
 | `dskbytr_write` | DSKBYTR DISKWRITE (bit 13) seen during the write | HRM ch.8 | DISKWRITE not reported |
 | `df1_write_readback` | the 11 sectors read back with good checksums and the section 11 test pattern (test id 14) | HRM ch.8 + MFM format | write DMA/MFM encoding, ADF write-back |
 | `df1_head_restored` | as `df0_head_restored`, DF1 | HRM ch.8 | lost steps |

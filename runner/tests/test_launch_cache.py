@@ -57,3 +57,34 @@ class BakeCache(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class FloppySpeed(unittest.TestCase):
+    def test_modules_are_told_the_drive_speed(self):
+        from amitorture import runner as R
+        self.assertEqual(R.module_floppy_speed({"options": {}}, R.FLOPPY_TEST_SPEED), "800")
+        self.assertEqual(R.module_floppy_speed({"options": {}}, "0"), "turbo")
+        self.assertEqual(R.module_floppy_speed({"options": {"floppy_speed": "0"}}, None), "turbo")
+        self.assertEqual(R.module_floppy_speed({"options": {}}, None), "100")
+        self.assertEqual(R.module_floppy_speed({"options": {}}, "800", {"floppy_speed": "100"}), "100")  # narrowing
+
+    def test_turbo_load_restores_the_disk_speed(self):
+        from amitorture import runner as R
+
+        class IPC:
+            def request(self, line, timeout=15):
+                self.line = line
+                return "OK"
+        res = {"floppy_speed": "800", "warp": {"boot": True}}
+        self.assertEqual(R.turbo_load(IPC(), res, {"options": {}}), 800)
+        self.assertIsNone(R.turbo_load(IPC(), dict(res, floppy_speed="0"), {"options": {}}))
+        self.assertIsNone(R.turbo_load(IPC(), res, {"options": {"floppy_speed": "0"}}))
+        self.assertIsNone(R.turbo_load(IPC(), dict(res, warp={"boot": False}), {"options": {}}))
+
+    @unittest.skipUnless(os.path.isfile(CORE), "build the disk set first (make -C disk set)")
+    def test_floppy_param_is_baked(self):
+        d = tempfile.mkdtemp()
+        self.addCleanup(__import__("shutil").rmtree, d)
+        for v, want in (("800", 800), ("turbo", 0xFFFF), ("100", 100)):
+            info = adf.bake(CORE, os.path.join(d, f"{v}.adf"), {"floppy": v})
+            self.assertEqual(info["params"]["floppy"], want)

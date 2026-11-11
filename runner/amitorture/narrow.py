@@ -228,7 +228,8 @@ def module_variants(entry, mod, whys=()):
         for k in ("fpu_no_unimplemented", "fpu_strict"):
             v = "false" if o.get(k) == "true" else "true"
             var(k, v, {k: v})
-    if mod == "paula" and str(o.get("floppy_speed", "100")) != "100":
+    from .runner import FLOPPY_TEST_SPEED     # runner imports this module's users
+    if mod == "paula" and str(o.get("floppy_speed", FLOPPY_TEST_SPEED)) != "100":
         var("floppy_speed", "100", {"floppy_speed": "100"})
     for w in whys or ():
         for name, val, precond in diagnose._named_conditions(w):

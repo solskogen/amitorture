@@ -73,14 +73,19 @@ How the runner uses it:
   first disk.
 - **Narrowing and repro packs.** Narrowing reruns only the disk that holds the failing module (`disk_only`). A repro
   pack carries just that disk, with the module mask baked in.
-- **Floppy speed.** Set disks that don't test the floppy hardware load at turbo (`floppy_speed=0`); the core disk
-  (paula: raw disk DMA, DSKSYNC, motor timing; dmacontention: disk DMA under load) runs at
-  `floppy_speed=100`, the real drive speed (runner.py `REAL_SPEED_GROUPS`). A set disk passed alone with `--adf` is
-  recognised by its header (build id `... <n>/<m> <group>`) and gets the same speed; the all-in-one ADF and unknown
-  disks run at real speed. An explicit `floppy_speed` (`--set` or an entry's options) always wins. Turbo breaks raw
-  disk-controller DMA: in disk.cpp's doreaddma turbo path DSKBLK comes early and raw MFM reads get bad checksums,
-  which the paula module reports as failures. `--timeout` is per disk launch (default 600 s). Measured at floppy_speed=100 with boot warp: the core disk, the
-  slowest launch, takes about 275 s on a cycle-exact A500 (the cpu and exp disks about 90 s and 110 s).
+- **Floppy speed.** Set disks that don't test the floppy hardware run at turbo (`floppy_speed=0`). The core disk
+  (paula: raw disk DMA, DSKSYNC, DSKBYTR, motor; dmacontention: disk DMA under load) loads its payload at turbo
+  and runs its modules at `floppy_speed=800` (runner.py `FLOPPY_TEST_SPEED`): above 100 % disk.cpp runs the
+  same DMA path faster, so everything a program sees stays as on hardware, and the guest is told the speed (run
+  parameter `floppy`, CONTRACT §4) so paula's DMA times scale with it. Measured on the A500 CE (paula and
+  dmacontention): 72 s at 100, 61 s at 400, 59 s at 800, 55 s at 0, every case passing at 400 and 800. Turbo
+  (`floppy_speed=0`) copies a whole DMA at once: DSKBYTR never shows a DMA running (`dskbytr_read`,
+  `dskbytr_write`) and a read crossing many sync words raises one DSKSYN (`dsksyn_irq`). The entries
+  `a500-floppy-turbo`, `a1200-floppy-turbo` and `a4000-floppy-turbo` (standard, full) run paula and
+  dmacontention at turbo to test that path. A set disk passed alone with `--adf` is recognised by its header
+  (build id `... <n>/<m> <group>`) and gets the same speed; the all-in-one ADF and unknown disks run at real speed.
+  An explicit `floppy_speed` (`--set` or an entry's options) always wins. `--timeout` is per disk launch (default
+  600 s).
 
 ### Automatic warp
 

@@ -609,6 +609,14 @@ def hardware_entries(full=False):
             out.append(_hw_entry(model, f"{model.lower()}-cpu-{_slug(cb)}", f"accelerator {cb}", o,
                                  board_roms=[rom], cpu_key="68060nommu", fpu="internal",
                                  disk_groups=["core", "cpu", "exp"]))
+    # floppy_speed=0 (turbo: disk.cpp copies a whole DMA at once): the floppy
+    # modules on one machine per chipset family. Everything else runs the
+    # floppy tests at runner.FLOPPY_TEST_SPEED, and every other disk at turbo.
+    for model in ("A500", "A1200", "A4000"):
+        e = _hw_entry(model, f"{model.lower()}-floppy-turbo", "floppy_speed=0 (turbo drive)", {"floppy_speed": "0"},
+                      disk_groups=["core"])
+        e.setdefault("params", {})["modules"] = module_mask(["paula", "dmacontention"])
+        out.append(e)
     for e in out:
         e["matrices"] = set()
     return out
