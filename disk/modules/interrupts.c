@@ -1214,6 +1214,12 @@ static void latency_cia(void)
     (void)cia_icr(CIAA_BASE);
     cia_wr(CIAA_BASE, C_ICR, 0x81);
     CREG(R_INTENA) = 0x8000 | PORTS;
+    /* Start at a fixed beam position: the samples' random spacing is
+     * seeded, so whether one of them meets a VERTB then depends only on
+     * the emulator, not on where in the frame the case happened to start
+     * (which modules ran before it, a pacing request). */
+    ser_idle();
+    wait_window();
     for (i = 0; i < n; i++) {
         ULONG t0;
         ULONG independent;
