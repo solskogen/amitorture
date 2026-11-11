@@ -27,10 +27,14 @@ MODULE_COST = {
     "hostspeed": (20, 20),
 }
 # Host seconds to the first record per disk (emulator start, Kickstart,
-# loader, probe; boot warp on), and outside the guest per launch (config
-# check, baking, media, stop).
-BOOT_COST = {"core": (28, 17), "cpu": (14, 5), "exp": (17, 5)}
-LAUNCH_COST = 13
+# loader, probe; boot warp on, payload loaded at turbo speed), and outside
+# the guest per launch (baking from the cache, media, stop; the config is
+# checked once per machine). Measured 2026-11-10 (smoke, 20261110-224112Z).
+BOOT_COST = {"core": (18, 5), "cpu": (14, 5), "exp": (15, 5)}
+LAUNCH_COST = 3
+# Host time of a module warped by pacing.py, relative to paced (same runs):
+# a 68000 machine (blitter 0.35 .. exceptions 0.42), display on a fast core.
+WARP_FACTOR = (0.38, 0.71)
 
 
 def _slow(entry):
@@ -39,11 +43,14 @@ def _slow(entry):
             or str(o.get("cpu_cycle_exact")) == "true")
 
 
-def entry_cost(entry, modules):
-    """Estimated host seconds of one entry's launches running these modules."""
+def entry_cost(entry, modules, module_warp=None):
+    """Estimated host seconds of one entry's launches running these modules.
+    module_warp: the modules that run warped (pacing.py; default: the
+    entry's module_warp if pacing per module is on, else none)."""
     i = 0 if _slow(entry) else 1
+    warped = set(module_warp or ())
     groups = {coverage.MODULE_GROUP[m] for m in modules}
-    return (sum(MODULE_COST.get(m, (5, 5))[i] for m in modules)
+    return (sum(MODULE_COST.get(m, (5, 5))[i] * (WARP_FACTOR[i] if m in warped else 1) for m in modules)
             + sum(BOOT_COST[g][i] + LAUNCH_COST for g in groups))
 
 
@@ -132,6 +139,8 @@ def build(entries, allowed=None):
         "launches_plan": sum(len(p["disk_groups"]) for p in plan),
         "cost_old_s": round(sum(entry_cost(e, runs(e)) for e in entries if runs(e))),
         "cost_plan_s": round(sum(entry_cost(p, p["plan_modules"]) for p in plan)),
+        # with pacing per module (--module-warp auto)
+        "cost_plan_module_warp_s": round(sum(entry_cost(p, p["plan_modules"], p.get("module_warp")) for p in plan)),
     }
     return plan, info
 

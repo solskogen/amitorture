@@ -47,11 +47,15 @@ runs; automatic warp has not yet demonstrated identical outcomes for every case.
 Do not dismiss such differences merely because the warp policy changed.
 
 ### Thorough runs
-| Matrix | Entries | Time | What it adds |
+| Matrix | Entries | Time (Pi 5, `--jobs 3`, without narrowing) | What it adds |
 |---|---|---|---|
-| `smoke` | 10 | ~25 min + narrowing | one machine per CPU class and chipset |
-| `standard` | 142 | ~6 h, including a 2 h narrowing budget | every CPU/FPU variant, every RTG, sound and network board, Gayle/PCMCIA, RTC boards, SCSI controllers, MMU configs, CD32, CDTV |
-| `full` | 540 | not measured yet (about 4× `standard`) | every JIT sub-option, threaded and softfloat twins |
+| `smoke` | 18 | 22 min | one machine per CPU class and chipset |
+| `standard` | 149 (148 planned) | 78 min (old-style, `--plan off --module-warp off`: 2 h 22 min) | every CPU/FPU variant, every RTG, sound and network board, Gayle/PCMCIA, RTC boards, SCSI controllers, MMU configs, CD32, CDTV |
+| `full` | 587 (524 planned) | about 4 h estimated (old-style about 13 h) | every JIT sub-option, threaded and softfloat twins |
+
+The time is emulator time divided by the emulator slots: `amitorture matrix --matrix full --plan` prints the
+estimate (12.4 h of emulator time for `full`), so a host with 12 slots (`nproc` 13 or more) runs `full` in about an
+hour. Narrowing adds up to its budget (`--narrow-budget`, 2 h by default) when something fails.
 
 `python3 -m amitorture matrix --matrix standard` lists the entries.
 
@@ -121,6 +125,11 @@ Baselines live in `work/baselines/<name>/` and are not part of the repository: r
 --disk-set DIR                         # another disk set (e.g. one built from a branch)
 --boot-warp off                        # boot at the disk's own pacing (default: warp until the
                                        #   first module, see RUNNER.md "Automatic warp")
+--plan off                             # old-style: every entry runs every disk (default: each coverage
+                                       #   key once, on as few machines as cover them, RUNNER.md "Plans")
+--module-warp off                      # every module at the disk's pacing (default for run: modules
+                                       #   that measure emulated time only run warped on slow machines,
+                                       #   RUNNER.md "Pacing per module")
 --timeout S --hang S                   # see section 6
 ```
 

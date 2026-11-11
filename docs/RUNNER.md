@@ -136,6 +136,87 @@ pass/skip/untestable outcomes for the entire suite. These observation failures a
 their engine-parity differences remain visible; they are not converted to passes,
 excluded from comparisons, or added to the xfail registry.
 
+### Plans: every check once (`--plan on`, the default)
+
+An old-style run boots every matrix entry with every disk and runs every module on it. Most modules depend on a
+few factors only: cpu_basic on the CPU, the core and the JIT; display on the chipset, the video standard, the
+model, the CPU class and the engine. `coverage.py` declares each module's **axes** (option groups and entry
+fields its results may depend on). A **coverage key** is (module, the entry projected on those axes). The keys
+of a matrix are those of every (entry, module) an old-style run runs.
+
+`plan.py` turns a matrix into the launches that run every key once: a greedy set cover that prefers machines
+already booting, so few machines boot. The planned entries are ordinary matrix entries (same ids, options and
+media, so xfail globs, the catalogue and the reports work unchanged) with a narrower module mask
+(`params.modules`), only the disk groups those modules are on, and `plan_modules`. A twin that runs a module
+makes its reference run it too, so engine parity still compares the pair (on the modules both ran);
+companions (`memory` needs `memory_os`) run together. A unit test checks, for every matrix, that the plan covers
+exactly the matrix's keys. `amitorture matrix --matrix full --plan` prints a plan and its estimated host time.
+
+Axes err wide: a factor that may matter is an axis, and so is every factor an xfail rule names. Whether they are
+wide enough is checked against old-style results (`amitorture axes RESULTS_DIR ...`): two entries with the same
+key must give the module the same case results; a pair that differs names the missing axis. `--drops` shows,
+for each axis, what dropping it would merge and whether the merged entries agree (evidence for a narrower axis,
+never proof). Entries named with `--config` always run every module, as asked.
+
+Validated 2026-11-10 against an old-style `standard` run (149 entries), `smoke` and five `full`-only entries
+(PPC accelerator boards, a CE multiplier, 68EC060, ECS A500): no two entries with the same key gave a module
+different verdicts, after two fixes the check found (a disk controller, `media.controller`, is an expansion board;
+the 68040/68060 variants LC/EC are an axis of the CPU modules, `cpu_variant`). Same verdicts with other details
+remain where a record holds an address or names the CPU variant (exceptions `hot_frames`, fpu `exc_bsun`,
+memory_os `chip_alloc`). `--drops` shows several axes this Amiberry build would not need (display, interrupts,
+input without the CPU model or the engine class); they stay, since a future build's bug may sit exactly there
+(the threaded CPU's CLXDAT bug was one of the engine class).
+
+Sizes and times (Pi 5, `--jobs 3`, amiberry-v3budget, 2026-11-10; the cost model in `plan.py` is fitted to
+these runs and predicted the planned standard run to the minute):
+
+| | old-style | planned (+ `--module-warp auto`) |
+|---|---|---|
+| `standard` | 149 entries, 316 disk launches, 2 h 22 min | 148 entries, 295 launches, 78 min |
+| `full` | 587 entries, 1,614 launches, ~38.5 h emulator time (~13 h) | 524 entries, 1,172 launches, 3,876 keys, ~12.4 h emulator time (~4.1 h) |
+
+**Outcome equivalence** (old-style standard run against the planned one, same binary): 66,602 cases in both,
+10 verdicts differ, all intermittent in old-style reruns too: paula DMA interval/start and input
+`kbd_hold_until_handshake` (host timing, both directions), fpu `conv_in_b`/`conv_in_w` on the cycle-exact
+68030 (FPSR flags on a hot iteration; 1-2 of 3 old-style reruns fail), smc `loop_selfmod_icoff` on the
+threaded 68010 (neither old nor new instruction ran; 2 of 3 fail). One case depends on where in the frame its
+module starts, and the planned layout (fewer modules before it, a pacing request just before it) samples
+starts the old layout did not: interrupts `latency_cia_ta_to_handler` reached 460 cck (limit 454) on
+a500-68000-ce-ntsc and a2000-68010-compat-thr, 2 of 3 times in the planned launch, never in ~160 old-style
+runs.
+
+### Pacing per module (`--module-warp auto`, the default of `run`)
+
+With run-parameter flag `modpace` the runtime sends a `pacing` request before every module (tag = the module
+name, CONTRACT §13); the runner sets the warp state that module runs with, checks it with `GET_WARP` and only
+then acks. `pacing.py` holds the policy:
+- only modules that measure emulated time alone (`WARP_SAFE`) are ever warped: never misc_hw (RTC against the
+  host clock), input (IPC key events), hostspeed, paula/dmacontention (real floppy speed, audio), expsound,
+  network, timing, interrupts, cia;
+- 68000/68010 and cycle-exact machines warp every safe module (measured: about half the host time), other
+  machines only display (96 -> 75 s, JIT 97 -> 52 s; the cpu modules get slower under the JIT);
+- a family (reference and twins) with a threaded CPU stays paced: warp changed interrupts, cia, timing and paula
+  results on the threaded CPU (results 20261110-172107Z), a finding of its own. The policy depends only on the
+  CPU model and core otherwise, so twins share it and parity compares like with like (`warp.modules` per disk
+  must match).
+The disk's own policy (`--warp`, boot warp) is unchanged; `--warp` given explicitly turns per-module pacing off.
+Each disk result records `warp.modules` (the policy) and `warp.module_pacing` (what was acked). An audio
+capture does not stop it: marks are offsets in the capture file taken when served, and the modules that make
+sounds are never warped. Measured on smoke (paced vs per module, same code): verdicts identical but for a known
+flake; a500-68000-ce's module time 460 -> 261 s; most smoke machines have a threaded twin and stay paced.
+`baseline` keeps the disk's pacing unless given `--module-warp auto`; `check` inherits the baseline's.
+
+### Launch overhead
+
+Measured: the core disk reaches its pacing ack after 6.6-7.1 s on fast machines (was 14-29 s); smoke
+1,460 -> 1,397 s. The disks of one machine have the same config apart from the floppy, the serial port and the pacing, so
+`--dump-config` runs once per machine and run (`amiberry_cfg.verify_key`); a disk is baked once per (disk,
+parameters) and copied (`adf.bake` with a cache under the run's temp dir). A boot-warped launch loads the payload
+at turbo drive speed (`SET_FLOPPY_SPEED 0`) and the `pacing` request restores real speed before the first module
+when the disk tests the floppy hardware. The runtime names its mailbox in `hello.mbox`, so the runner reads it
+without scanning chip RAM (the scan stays as the fallback). With several jobs the longest entries (by the
+planner's estimate) start first.
+
 ## Commands
 
 ### roms
@@ -220,7 +301,8 @@ amitorture run --amiberry BIN --kickstarts DIR [--matrix smoke] [--config GLOB .
                [--disk-set DIR] [--jobs N] [--keep] [--timeout S per disk (600)] [--hang S (120)]
                [--narrow-budget S (7200)] [--narrow-reruns N (3)] [--narrow-binary BIN ...] [--no-narrow]
                [--baseline NAME] [--no-repro] [--amiberry-src DIR] [--xfail FILE]
-               [--audio auto|on|off] [--warp off|auto|on] [--ports LO-HI] [--end-action halt|reboot|return] [-q] [--show]
+               [--audio auto|on|off] [--warp off|auto|on] [--plan on|off] [--module-warp auto|off]
+               [--boot-warp on|off] [--ports LO-HI] [--end-action halt|reboot|return] [-q] [--show]
                [--no-disk] [--selftest]
 ```
 - `--end-action`: what the disk does after its last module (default `halt`; the runner stops the emulator itself).
@@ -490,6 +572,31 @@ the entries that must report them), or `not_covered` with the reason. `report.py
 
 REPORT.md shows the table at the top of the coverage section; `summary.json` has it as `catalogue`.
 
+### times
+```
+amitorture times RESULTS_DIR [--entry GLOB ...] [--json]
+```
+Host seconds per disk and module of a results dir, from the serial arrival times (`serial-times.json`): the time
+to the first record (emulator start, Kickstart, loader, probe) and each module's begin-to-end time. Where a run
+spends its time.
+
+### axes
+```
+amitorture axes RESULTS_DIR ... [--module NAME ...] [--drops] [--json]
+```
+Checks the coverage axes (`coverage.py`) against old-style results (`--plan off`): entries with the same
+coverage key must give the module the same case results (status and timing-stripped fingerprint); every
+differing pair is listed with the options the entries differ in. Exit 1 when a pair differs. `--drops`: for every
+axis of every module, how many keys dropping it would merge and how many merged pairs disagree.
+
+### outcomes
+```
+amitorture outcomes RESULTS_A RESULTS_B [--top N] [--json]
+```
+Case verdicts of two runs, per (entry, module) both ran: a plan run against an old-style run of the same
+binary, per-module warp against paced. Lists verdicts that differ and cases only one run has within a module
+both ran; exit 1 if there are any.
+
 ### compare
 ```
 amitorture compare --amiberry OLD --amiberry NEW [--label old --label new] [--config 'bench-68020*'] \
@@ -611,5 +718,9 @@ Machine-readable files next to it: `summary.json`, `failures.jsonl`, `narrowing.
 | `audio.py` | SDL disk-driver capture, marks, segment analysis (RMS, zero-crossing and FFT frequency) |
 | `cdimage.py` | CD boot: ADF -> hunk executable, trademark data from the extended ROM, ISO 9660 writer |
 | `catalogue.py` | docs/catalogue.yaml parser and per-run coverage status |
+| `coverage.py` | module axes, coverage keys, axis validation against old-style results (`axes`) |
+| `plan.py` | plans: the launches that run every coverage key once, cost estimates |
+| `pacing.py` | pacing per module: which modules of an entry run warped |
+| `times.py` | host time per disk and module of a results dir (`times`) |
 
 Unit tests: `cd runner && python3 -m unittest discover -s tests` (no emulator needed).

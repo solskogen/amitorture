@@ -137,19 +137,22 @@ def cmd_matrix(a):
     if a.validate:
         return validate(a, entries)
     if getattr(a, "plan", False):
-        from . import plan
-        planned, info = plan.build(entries)
+        from . import pacing, plan
+        planned, info = plan.build(pacing.assign(entries))
         if a.json:
             print(json.dumps({"info": info, "entries": [{"id": p["id"], "modules": p["plan_modules"],
-                                                         "disk_groups": p["disk_groups"]} for p in planned]},
+                                                         "disk_groups": p["disk_groups"],
+                                                         "module_warp": p.get("module_warp")} for p in planned]},
                              indent=1))
             return EXIT_OK
         for p in planned:
             print(f"{p['id']:<40} {' '.join(p['plan_modules'])}")
         print(f"plan of matrix {a.matrix}: {info['plan_entries']} of {info['entries']} entries, "
               f"{info['launches_plan']} disk launches (was {info['launches_old']}), {info['module_runs_plan']} module "
-              f"runs (was {info['module_runs_old']}) for {info['keys']} coverage keys; estimated host time "
-              f"{info['cost_plan_s'] / 3600:.1f} h (was {info['cost_old_s'] / 3600:.1f} h)", file=sys.stderr)
+              f"runs (was {info['module_runs_old']}) for {info['keys']} coverage keys; estimated emulator time "
+              f"{info['cost_plan_s'] / 3600:.1f} h, {info['cost_plan_module_warp_s'] / 3600:.1f} h with "
+              f"--module-warp auto (old-style {info['cost_old_s'] / 3600:.1f} h); divide by the emulator slots "
+              f"(--jobs) for the wall time", file=sys.stderr)
         return EXIT_OK
     if a.json:
         print(json.dumps(entries, indent=1, default=lambda o: sorted(o) if isinstance(o, set) else str(o)))
@@ -282,6 +285,8 @@ def parse_ports(spec):
 def cmd_run(a):
     from . import emulator, runner
     opts = make_options(a, emulator.find_binary(a.amiberry))
+    if opts.module_warp is None:
+        opts.module_warp = "auto"       # run's default: pacing per module (pacing.py)
     outdir, summ = runner.run(opts)
     print(f"{summ['verdict']}: {os.path.join(outdir, 'REPORT.md')}")
     if summ.get("interrupted"):
@@ -489,11 +494,11 @@ def _common(p, kick_required=True, param_defaults=True):
                         "the runner restores the disk's pacing when the guest asks for it, before the first "
                         "module. off: boot at the disk's own pacing")
     p.add_argument("--module-warp", choices=["auto", "off"], default=None,
-                   help="auto: pacing per module (runner/amitorture/pacing.py): the guest asks before each module "
+                   help="auto (run's default): pacing per module (runner/amitorture/pacing.py): the guest asks before each module "
                         "and modules that measure only emulated time run warped on 68000/68010/cycle-exact machines "
                         "(display on every machine); families with a threaded CPU and modules with host time stay "
-                        "paced. off (default; check: the baseline's): the disk's own pacing for every module. Ignored with "
-                        "--warp")
+                        "paced. off (baseline's default; check: the baseline's): the disk's own pacing for every module. "
+                        "Ignored with --warp")
     p.add_argument("--ports", metavar="LO-HI",
                    help="serial port range for the emulators (default $AMT_PORTS or 23540-23599)")
     p.add_argument("-q", "--quiet", action="store_true", help="no progress lines, only the final verdict")
@@ -537,10 +542,10 @@ def build_parser():
     p.add_argument("--selftest", action="store_true",
                    help="--no-disk plus a synthetic mailbox written over IPC, to check the runner reads the "
                         "guest's results correctly (about 30 s)")
-    p.add_argument("--plan", choices=["on", "off"], default="off",
-                   help="on: a matrix run runs each coverage key once, on as few machines as cover them all "
-                        "(every check the matrix makes, each once: runner/amitorture/plan.py); off (default): every "
-                        "entry runs every disk. Entries named with --config always run every disk")
+    p.add_argument("--plan", choices=["on", "off"], default="on",
+                   help="on (default): a matrix run runs each coverage key once, on as few machines as cover them "
+                        "all (every check the matrix makes, each once: runner/amitorture/plan.py); off: every "
+                        "entry runs every disk (old-style). Entries named with --config always run every disk")
     p.add_argument("--no-narrow", action="store_true",
                    help="skip narrowing. Narrowing reruns each failing module on neighbouring configs (JIT on/off, "
                         "each comp_* option, core mode, FPU mode, ...) to find the setting that flips the result")
