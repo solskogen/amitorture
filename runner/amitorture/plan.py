@@ -35,6 +35,18 @@ LAUNCH_COST = 3
 # Host time of a module warped by pacing.py, relative to paced (same runs):
 # a 68000 machine (blitter 0.35 .. exceptions 0.42), display on a fast core.
 WARP_FACTOR = (0.38, 0.71)
+# Measured over the planned full run (20261111-003615Z, 524 machines):
+# host time against the estimate above, per machine class.
+CLASS_FACTOR = {"threaded": 1.44, "jit": 1.07, "slow": 0.88, "fast": 1.0}
+
+
+def machine_class(entry):
+    o = entry["options"]
+    if str(o.get("cpu_threaded")).lower() == "true":
+        return "threaded"
+    if str(o.get("cachesize", "0")).strip() not in ("", "0"):
+        return "jit"
+    return "slow" if _slow(entry) else "fast"
 
 
 def _slow(entry):
@@ -50,8 +62,9 @@ def entry_cost(entry, modules, module_warp=None):
     i = 0 if _slow(entry) else 1
     warped = set(module_warp or ())
     groups = {coverage.MODULE_GROUP[m] for m in modules}
-    return (sum(MODULE_COST.get(m, (5, 5))[i] * (WARP_FACTOR[i] if m in warped else 1) for m in modules)
-            + sum(BOOT_COST[g][i] + LAUNCH_COST for g in groups))
+    return CLASS_FACTOR[machine_class(entry)] * (
+        sum(MODULE_COST.get(m, (5, 5))[i] * (WARP_FACTOR[i] if m in warped else 1) for m in modules)
+        + sum(BOOT_COST[g][i] + LAUNCH_COST for g in groups))
 
 
 def build(entries, allowed=None):

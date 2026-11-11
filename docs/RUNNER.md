@@ -173,7 +173,7 @@ these runs and predicted the planned standard run to the minute):
 | | old-style | planned (+ `--module-warp auto`) |
 |---|---|---|
 | `standard` | 149 entries, 316 disk launches, 2 h 22 min | 148 entries, 295 launches, 78 min |
-| `full` | 587 entries, 1,614 launches, ~38.5 h emulator time (~13 h) | 524 entries, 1,172 launches, 3,876 keys, ~12.4 h emulator time (~4.1 h) |
+| `full` | 587 entries, 1,614 launches, ~41 h emulator time (~13.6 h, estimated) | 524 entries, 1,172 launches, 3,876 keys, 4 h 38 min (estimate 4.5 h) |
 
 **Outcome equivalence** (old-style standard run against the planned one, same binary): 66,602 cases in both,
 10 verdicts differ, all intermittent in old-style reruns too: paula DMA interval/start and input
@@ -181,9 +181,15 @@ these runs and predicted the planned standard run to the minute):
 68030 (FPSR flags on a hot iteration; 1-2 of 3 old-style reruns fail), smc `loop_selfmod_icoff` on the
 threaded 68010 (neither old nor new instruction ran; 2 of 3 fail). One case depends on where in the frame its
 module starts, and the planned layout (fewer modules before it, a pacing request just before it) samples
-starts the old layout did not: interrupts `latency_cia_ta_to_handler` reached 460 cck (limit 454) on
-a500-68000-ce-ntsc and a2000-68010-compat-thr, 2 of 3 times in the planned launch, never in ~160 old-style
-runs.
+starts the old layout did not: interrupts `latency_cia_ta_to_handler` reached 460-590 cck (limit 454) when one
+of its 32 samples met the runtime's VERTB handler, on five 68000/68010 machines in the planned `full` run, never in
+~160 old-style runs. The case now starts its samples at a fixed beam position (after a VBL, line 20), so its
+verdict no longer depends on what ran before it; those machines, a500-68000-ce-ntsc and a600-68000-compat pass in
+their planned layouts.
+
+The planned `full` run (4 h 38 min) against the old-style runs of the same binary (standard, smoke, five full-only
+entries): 74,937 case comparisons, 9 verdicts differ: the latency case above (6, a500-68000-ce in two samples) and the paula
+DMA flakes (3).
 
 ### Pacing per module (`--module-warp auto`, the default of `run`)
 

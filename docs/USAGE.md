@@ -51,11 +51,11 @@ Do not dismiss such differences merely because the warp policy changed.
 |---|---|---|---|
 | `smoke` | 18 | 22 min | one machine per CPU class and chipset |
 | `standard` | 149 (148 planned) | 78 min (old-style, `--plan off --module-warp off`: 2 h 22 min) | every CPU/FPU variant, every RTG, sound and network board, Gayle/PCMCIA, RTC boards, SCSI controllers, MMU configs, CD32, CDTV |
-| `full` | 587 (524 planned) | about 4 h estimated (old-style about 13 h) | every JIT sub-option, threaded and softfloat twins |
+| `full` | 587 (524 planned) | 4 h 38 min (old-style about 13 h, estimated) | every JIT sub-option, threaded and softfloat twins |
 
 The time is emulator time divided by the emulator slots: `amitorture matrix --matrix full --plan` prints the
-estimate (12.4 h of emulator time for `full`), so a host with 12 slots (`nproc` 13 or more) runs `full` in about an
-hour. Narrowing adds up to its budget (`--narrow-budget`, 2 h by default) when something fails.
+estimate (13.6 h of emulator time for `full`; measured 13.9 h), so a host with 14 slots (`nproc` 15 or more) runs
+`full` in about an hour. Narrowing adds up to its budget (`--narrow-budget`, 2 h by default) when something fails.
 
 `python3 -m amitorture matrix --matrix standard` lists the entries.
 
