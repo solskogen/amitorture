@@ -1265,12 +1265,28 @@ def engine_from_log(lines):
     eng["cpu_thread_started"] = any('uae_start_thread "cpu"' in line for line in lines)
     # Newer builds log every switch: 'CPU emulation runs on the CPU thread.' /
     # '... on the main thread.' The thread can be started and still unused,
-    # so when present the last such line decides.
-    runs = [(m.group(1), line.strip()) for line in lines
-            for m in [_re.search(r"CPU emulation runs on the (CPU|main) thread", line)] if m]
-    eng["cpu_thread_runs_on"] = runs[-1][0] if runs else None
-    eng["cpu_thread_runs_line"] = runs[-1][1] if runs else None
+    # so when present the last such line decides, except for a switch to the
+    # main thread that a request flood caused (the line before it: 'CPU
+    # thread: <n> requests per frame, ... the CPU runs on the main thread for
+    # <s> s.'): that is the threaded CPU's own fallback, which hostspeed's
+    # thread_speed check judges, not a configuration the emulator refused.
+    runs, flood_holds, flood_pending = [], 0, False
+    for line in lines:
+        if _re.search(r"CPU thread: \d+ requests per frame.*main thread for", line):
+            flood_holds += 1
+            flood_pending = True
+            continue
+        m = _re.search(r"CPU emulation runs on the (CPU|main) thread", line)
+        if m:
+            runs.append((m.group(1), line.strip(), m.group(1) == "main" and flood_pending))
+            flood_pending = False
+    last = runs[-1] if runs else None
+    if last is not None and last[2] and any(r[0] == "CPU" for r in runs):
+        last = next(r for r in reversed(runs) if r[0] == "CPU")
+    eng["cpu_thread_runs_on"] = last[0] if last else None
+    eng["cpu_thread_runs_line"] = last[1] if last else None
     eng["cpu_thread_switches"] = len(runs)
+    eng["cpu_thread_flood_holds"] = flood_holds
     eng["cpu_thread_refused"] = [line.strip() for line in lines if "running the CPU on the main thread" in line
                                  or "Threaded CPU mode is not compatible" in line][:3]
     eng["jit_refused"] = [line.strip() for line in lines if "JIT and cycle-exact can't" in line

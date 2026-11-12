@@ -245,6 +245,54 @@ class ThreadSpeedVerdict(unittest.TestCase):
         self.assertEqual(analysis.thread_speed_items(results), [])
 
 
+class FloodRecovery(unittest.TestCase):
+    """flood_recovery: the threaded CPU must come back to its thread after a flood."""
+
+    def entry(self, eid, threaded, quiet_share, flood_share):
+        bl = [block_recs("stop", 1000, 50, 3537240, units=50),
+              block_recs("flood_recovery", 1001, 1, 3537240 * 21, units=1)]
+        for block in bl:
+            for rec in block:
+                rec["benchmark"] = 1
+        smp = samples(1000, 10.0, 1.0, k=6, cpu_per_s=0.2, f0=100)
+        t, f = 20.0, 400
+        for cycle in range(3):   # flood phase samples at the block's case, quiet ones at 1999
+            smp += samples(1001, t, 1.0, k=3, cpu_per_s=flood_share, f0=f)
+            t, f = t + 1.0, f + 50
+            smp += samples(cases.SPEED_QUIET_POS, t, 1.0, k=8, cpu_per_s=quiet_share, f0=f)
+            t, f = t + 3.0, f + 150
+        sub = sub_with(bl, smp, options={"cpu_threaded": threaded, "cpu_speed": "max", "cachesize": "0"})
+        return dict(sub, id=eid, jit=False)
+
+    def items(self, quiet_share, flood_share):
+        results = [self.entry("bench", "false", 0.1, 0.1), self.entry("bench-thr", "true", quiet_share, flood_share)]
+        return analysis.thread_speed_items(results)
+
+    def test_shares_are_measured_per_phase(self):
+        sub = self.entry("bench-thr", "true", 0.9, 0.1)
+        b = {x["insn"]: x for x in cases.speed_blocks(sub, sub["_merged"])}["flood_recovery"]
+        self.assertAlmostEqual(b["quiet_thread_share"], 0.9, places=2)
+        self.assertAlmostEqual(b["flood_thread_share"], 0.1, places=2)
+        self.assertEqual(b["quiet_samples"], 24)
+
+    def test_cpu_held_on_the_main_thread_after_the_flood_fails(self):
+        items = self.items(quiet_share=0.1, flood_share=0.1)
+        self.assertEqual([(i["entry"], i["case"]) for i in items], [("bench-thr", "speed_flood_recovery")])
+        self.assertIn("stays off its thread", items[0]["why"])
+
+    def test_cpu_back_on_its_thread_passes(self):
+        self.assertEqual(self.items(quiet_share=0.85, flood_share=0.1), [])
+
+    def test_floods_the_thread_kept_up_with_are_not_judged(self):
+        self.assertEqual(self.items(quiet_share=0.3, flood_share=0.9), [])
+
+    def test_a_thread_ending_between_samples_is_left_out(self):
+        pts = [{"t": 0.0, "heartbeat": 0, "cpu_main_ns": 0, "cpu_total_ns": 5 * 10 ** 9},
+               {"t": 1.0, "heartbeat": 10, "cpu_main_ns": 10 ** 9, "cpu_total_ns": 10 ** 9},   # CPU thread gone
+               {"t": 2.0, "heartbeat": 20, "cpu_main_ns": 2 * 10 ** 9, "cpu_total_ns": 22 * 10 ** 8}]
+        self.assertAlmostEqual(cases.thread_share(pts), 0.2, places=3)
+
+
 class GuestBenchmarkGates(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -322,7 +370,7 @@ int main(void) {
 
     def test_generation_specific_and_universal_workloads_across_every_variant(self):
         universal = {"stop", "empty", "add_l", "ram_read", "custom_read", "cia_read", "empty_final",
-                     "vbl_poll", "chipset_load", "cia_write", "stop_timer"}
+                     "vbl_poll", "chipset_load", "cia_write", "stop_timer", "flood_recovery"}
         checks = 0
         for cpu, fpu, mmu, chip, name, why in self.rows:
             allowed = (True if name in universal else cpu >= 1 if name == "movec_vbr" else
@@ -334,7 +382,7 @@ int main(void) {
             self.assertEqual(not why, allowed, (cpu, fpu, mmu, chip, name, why))
             if not allowed:
                 self.assertIn("requires", why)
-        self.assertEqual(checks, 12 * 5 * 2 * 2 * 15)
+        self.assertEqual(checks, 12 * 5 * 2 * 2 * 16)
 
     def test_existing_fpu_integer_and_memory_restrictions_remain_intact(self):
         for cpu, fpu, mmu, chip, name, why in self.rows:

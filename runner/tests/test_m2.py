@@ -211,6 +211,22 @@ class EngineFromLog(unittest.TestCase):
         self.assertEqual(runner.engine_adjustments(base, e), [])
         adj = runner.engine_adjustments(dict(base, cpu_threaded="false"), e)
         self.assertEqual([a["resolved"] for a in adj], ["true (the CPU ran on the CPU thread)"])
+        # a switch to the main thread that a request flood caused is the
+        # threaded CPU's own fallback: the thread still counts as active
+        flood = ("CPU thread: 41000 requests per frame, 10 of 10 frames long (20% on average): "
+                 "the CPU runs on the main thread for 8 s.")
+        e = runner.engine_from_log(['uae_start_thread "cpu" function at 0x1 arg (nil)',
+                                    "CPU emulation runs on the CPU thread.", cpu, flood,
+                                    "CPU emulation runs on the main thread."])
+        self.assertEqual((e["cpu_thread_runs_on"], e["cpu_thread_flood_holds"]), ("CPU", 1))
+        self.assertEqual(runner.engine_adjustments(base, e), [])
+        # but a later switch without a flood still means the thread was lost
+        e = runner.engine_from_log(['uae_start_thread "cpu" function at 0x1 arg (nil)',
+                                    "CPU emulation runs on the CPU thread.", cpu, flood,
+                                    "CPU emulation runs on the main thread.",
+                                    "CPU emulation runs on the CPU thread.",
+                                    "CPU emulation runs on the main thread."])
+        self.assertEqual(e["cpu_thread_runs_on"], "main")
         # older builds without the line: thread start decides, as before
         e = runner.engine_from_log([cpu])
         self.assertIsNone(e["cpu_thread_runs_on"])

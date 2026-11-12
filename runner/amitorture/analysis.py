@@ -69,6 +69,8 @@ THREAD_RTF_MARGIN = 0.03         # threaded rtf over real time and the twin's, b
 THREAD_IDLE_BLOCKS = ("stop", "stop_timer")
 THREAD_IDLE_COST_MAX = 1.25      # total CPU/s over the twin's, x
 THREAD_IDLE_COST_SLACK = 0.05    # + host CPU s per emulated s
+THREAD_RECOVERY_SHARE = 0.6      # flood_recovery: the CPU thread's share of the quiet work
+                                 # (held on the main thread: ~0.2, the other threads; back: ~1)
 
 
 def thread_speed_items(results):
@@ -90,6 +92,26 @@ def thread_speed_items(results):
         refs = {b["insn"]: b for b in off["blocks"]}
         r = by_id.get(on["entry"]) or {}
         for b in on["blocks"]:
+            if b["insn"] == "flood_recovery":
+                qs, fs = b.get("quiet_thread_share"), b.get("flood_thread_share")
+                # floods the thread kept up with (flood share high) did not
+                # move the CPU: nothing to recover from, nothing to judge
+                if qs is not None and qs < THREAD_RECOVERY_SHARE and (fs is None or fs < THREAD_RECOVERY_SHARE):
+                    keys = ("quiet_thread_share", "flood_thread_share", "quiet_samples")
+                    out.append({"kind": "thread_speed", "entry": on["entry"], "ref_entry": off["entry"], "mod": "host",
+                                "case": casemod.speed_name(b["insn"]), "case_key": SPEED_KEY + str(b["insn"]),
+                                "disk": on.get("disk"),
+                                "why": (f"flood_recovery: after each flood of CIA writes moved the CPU to the main "
+                                        f"thread, the CPU thread ran only {qs:.0%} of the quiet work that followed "
+                                        f"(at least {THREAD_RECOVERY_SHARE:.0%} expected): the CPU stays off its thread "
+                                        f"long after the flood (Amiberry newcpu.cpp cpu_thread_check_flood)"),
+                                "ref": {k: refs.get(b["insn"], {}).get(k) for k in keys
+                                        if refs.get(b["insn"], {}).get(k) is not None},
+                                "twin": {k: b.get(k) for k in keys if b.get(k) is not None},
+                                "differing_options": [{"option": "cpu_threaded", "ref": "false", "twin": "true"}],
+                                "host": casemod.host_desc(on.get("host")), "jit": r.get("jit"),
+                                "machine": r.get("machine"), "config": (r.get("config") or {}).get("file")})
+                continue
             a = refs.get(b["insn"])
             if a is None or a.get("st") not in timed or b.get("st") not in timed:
                 continue

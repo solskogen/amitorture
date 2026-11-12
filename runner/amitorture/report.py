@@ -498,7 +498,7 @@ def host_summary(results):
 
 SPEED_KEYS = ("insn", "cls", "st", "benchmark", "rtf", "sigma", "fps", "frame_hz", "samples", "cpu_per_emu_s",
               "cpu_total_per_emu_s", "over_idle_per_emu_s", "ops_per_emu_s", "ops_per_host_s", "ns_per_op",
-              "ns_per_iter", "ratio_ref", "ref", "why")
+              "ns_per_iter", "ratio_ref", "ref", "why", "quiet_thread_share", "flood_thread_share", "quiet_samples")
 
 
 def speed_summary(results):

@@ -694,7 +694,14 @@ the same binary, parameters and options except `cpu_threaded`, so the same run a
 - the block is idle (`stop`, `stop_timer`) and the threaded entry's total CPU/s exceeds 1.25 x the twin's + 0.05
   (`THREAD_IDLE_COST_MAX`, `THREAD_IDLE_COST_SLACK`).
 
-Only entries where the CPU thread really ran are compared (the emulator log, see `cpu_threaded` adjustments). The
+A third rule is the block's own: on `flood_recovery`, a threaded entry whose CPU thread ran less than 0.6 of a core in the
+quiet phases (`quiet_thread_share`), after floods that moved it off its thread (`flood_thread_share` below 0.6), is a
+`thread_speed` item too (`THREAD_RECOVERY_SHARE`).
+
+Only entries where the CPU thread really ran are compared (the emulator log, see `cpu_threaded` adjustments). A switch
+to the main thread right after a request flood line ("CPU thread: <n> requests per frame ... main thread for <s> s.")
+is the threaded CPU's own fallback, not a refused configuration: the thread still counts as active
+(`runner.engine_from_log`, `cpu_thread_flood_holds`). The
 items form one normal-severity problem ("threaded CPU behind its unthreaded twin (<blocks>) on N entries"), which is
 in the verdict. docs/cases/hostspeed.md "Threaded CPU verdict".
 

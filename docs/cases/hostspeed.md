@@ -60,6 +60,13 @@ depend on the host, and it's what the two last blocks are for:
   real time, the threaded entry must not be more than 0.03 rtf behind real time or the twin, whichever is later
   (beyond both 3 sigma): an unthreaded JIT that runs ahead of real time (rtf < 1) is no bar. `cia_write`
   reproduces the Alert pattern.
+- **Recovery.** Where the thread loses a flood to the host, the emulator moves the CPU to the main thread. When the flood
+  ends, it must come back. `flood_recovery` alternates floods with quiet integer work, and the runner measures the CPU
+  thread in the quiet phases from the per-thread CPU time it samples: the host CPU of every thread but the main one per
+  host second (`cases.thread_share`; a thread that ends between two samples leaves that pair out). It must be at least
+  0.6. If the floods never moved the CPU (their own share is at least 0.6, the host keeps up), there is nothing to judge.
+  Amiberry's timed retries (a hold doubling up to 32 s) gave 0.29 (interpreter) and 0.48 (JIT) on a Pi 500; retrying
+  once the would-be requests fall below the flood rate gives about 1.
 - **Idle cost.** An idle AmigaOS waits in STOP and is woken more than a thousand times a second. A CPU thread
   that spins before it sleeps keeps a host core busy: an idle Workbench cost 0.73 host cores threaded against
   0.48 unthreaded. On `stop` and `stop_timer` the threaded entry's total CPU/s must stay within 1.25 x the twin's
@@ -185,7 +192,7 @@ process), not from the instruction. Seen once on a cycle-exact-speed A500 with t
 ABCD/SBCD at rtf 1.026 with the thread 38 % busy.
 
 Cost: 1 s of emulated time per supported block, plus sizing; a block that falls behind takes rtf x 1 s
-of host time. There are 68 block slots, including reference loops; CPU/FPU/MMU and memory capabilities
+of host time. There are 69 block slots, including reference loops; CPU/FPU/MMU and memory capabilities
 determine how many are executed. Skipped blocks are not timed.
 
 Not done yet: per-block host profiling. A non-stripped Amiberry build would allow `perf record -p <pid>`
@@ -208,7 +215,8 @@ named code path first, then at the cycle charge (newcpu.cpp, the `cpu_cycles` of
 | `speed_vbl_poll` | benchmark disk only, after `empty_final`: per frame, poll VPOSR.L until line $2C, then until it moves on | all | one unit = one frame; the game/demo beam-wait idiom | each custom-register read is expensive: with the threaded CPU every read is a hand-off to the main thread, so a polling loop can keep two host cores busy |
 | `speed_chipset_load` | benchmark disk only: STOP per frame with 6 lowres bitplanes, 8 sprites, a copper list writing 8 colours on every line $2C-$FF and sprite collision detection on | all | one unit = one frame; DMA is switched off and the status screen restored afterwards | chipset emulation cost (custom.cpp bitplane/sprite/copper, drawing.cpp), the cost a busy game adds over `stop` |
 | `speed_cia_write` | benchmark disk only, after `chipset_load`: BSET/BCLR #1,$BFE001, 32 pairs per inner loop | all | the power LED bit; put back afterwards. Kickstart 1.3's Alert blink | each CIA write is a hand-off to the main thread with the threaded CPU (newcpu.cpp process_cpu_indirect_memory_write, service_cpu_indirect_request); a threaded entry behind real time here is a `thread_speed` problem |
-| `speed_stop_timer` | benchmark disk only, last: STOP, woken by the VBL and by CIA-B timer A 1500 times a second | all | one unit = one frame; timer and INT6 off again after the block | the cost of waking an idle CPU; with the threaded CPU, how long its idle wait spins (newcpu.cpp cpu_thread_idle_wait). Much more than the unthreaded twin is a `thread_speed` problem |
+| `speed_stop_timer` | benchmark disk only: STOP, woken by the VBL and by CIA-B timer A 1500 times a second | all | one unit = one frame; timer and INT6 off again after the block | the cost of waking an idle CPU; with the threaded CPU, how long its idle wait spins (newcpu.cpp cpu_thread_idle_wait). Much more than the unthreaded twin is a `thread_speed` problem |
+| `speed_flood_recovery` | benchmark disk only, last: 6 times 1 s of cia_write's BSET/BCLR flood, then 3 s of ADD.L; a fixed schedule (B_FIXED: not sized), about 24 s | all | the quiet phases set mailbox case 1999 (HS_POS_QUIET), the floods the block's own | a threaded CPU that a flood moved to the main thread must come back for the quiet work: its CPU thread's share of a core in the quiet phases must be at least 0.6 (held: about 0.2, the other threads; back: about 1). Below that is a `thread_speed` problem (newcpu.cpp cpu_thread_check_flood) |
 | `speed_add_l` | ADD.L Dn,Dn | all | integer reference | basic instruction dispatch too slow for the cycle charge (interpreter cpuemu_*, JIT compemu) |
 | `speed_div_w` | DIVU.W / DIVS.W | all | $03E80BB8 / 21846 = 3000 r 1000: a fixed point | cpuemu DIVU/DIVS (getDivu68kCycles/getDivs68kCycles on CE) |
 | `speed_abcd_sbcd` | ABCD / SBCD Dn | all | $45 + $27 and back, X clear | BCD helpers in cpuemu |

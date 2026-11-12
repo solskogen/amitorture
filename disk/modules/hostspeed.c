@@ -45,6 +45,7 @@ AMT_MODULE(hostspeed, 26, AMT_PH_BARE, 0, HS_CHIP_BYTES, 4096);
 
 #define HS_BLOCK_MS   1000     /* emulated time per timed block */
 #define HS_POS0       1000     /* mailbox case number of block 0 */
+#define HS_POS_QUIET  1999     /* flood_recovery: its quiet phases */
 
 typedef ULONG (*hs_fn)(ULONG units, void *mem);
 
@@ -131,6 +132,7 @@ ULONG hs_fsave_frestore(ULONG, void *);
 #define B_040     0x0200   /* 68040/68060 instruction set */
 #define B_060     0x0400   /* 68060 only */
 #define B_FRAME   0x0800   /* one unit = one frame: host cost per emulated second, not per op */
+#define B_FIXED   0x1000   /* a fixed schedule of its own: not sized, run once (units = 1) */
 
 struct hs_blk {
     const char *insn;      /* host.speed_<insn> */
@@ -305,6 +307,42 @@ static ULONG hs_stop_timer(ULONG units, void *mem)
 }
 #endif
 
+#ifdef AMT_BENCHMARK_ONLY
+/* flood_recovery: FR_CYCLES times a flood of CIA writes for FR_FLOOD_FRAMES
+ * (cia_write's: BSET/BCLR on the power LED bit, the costliest CIA write for
+ * the thread that serves it), then FR_QUIET_FRAMES of plain integer work
+ * (add_l). A
+ * threaded CPU that loses the flood to the host is moved to the main thread
+ * by the emulator; it must come back for the quiet work, not sit out a long
+ * hold (docs/cases/hostspeed.md, thread_speed). The mailbox position says
+ * which phase runs: the block's own during floods, HS_POS_QUIET during the
+ * quiet work, so the runner can measure the CPU thread in each. */
+#define FR_CYCLES       6
+#define FR_FLOOD_FRAMES 50
+#define FR_QUIET_FRAMES 150
+static ULONG hs_cur_pos;
+
+static ULONG hs_flood_recovery(ULONG units, void *mem)
+{
+    int c;
+    ULONG end;
+    (void)units;
+    for (c = 0; c < FR_CYCLES; c++) {
+        amt_watchdog_kick();
+        mbox_set_pos(26, hs_cur_pos);
+        end = amt_frames_now() + FR_FLOOD_FRAMES;
+        while ((LONG)(amt_frames_now() - end) < 0)
+            hs_cia_write_led(16, mem);
+        mbox_set_pos(26, HS_POS_QUIET);
+        end = amt_frames_now() + FR_QUIET_FRAMES;
+        while ((LONG)(amt_frames_now() - end) < 0)
+            hs_add_l(64, mem);
+    }
+    mbox_set_pos(26, hs_cur_pos);
+    return 0;
+}
+#endif
+
 /* The order is the report's. "stop" first: the CPU idle in STOP, woken by
  * the VBL once per frame, so what the host spends per emulated second there
  * is the emulator's own cost (chipset, display, frame pacing), which the
@@ -388,6 +426,8 @@ static const struct hs_blk blocks[] = {
      * frames still on time) and an idle CPU woken often (at little cost) */
     { "cia_write",      hs_cia_write_led,  0 },
     { "stop_timer",     hs_stop_timer,     B_FRAME },
+    /* and must come back to its thread when the flood is over */
+    { "flood_recovery", hs_flood_recovery, B_FIXED },
 #endif
 };
 #define N_BLOCKS (sizeof(blocks) / sizeof(blocks[0]))
@@ -424,7 +464,7 @@ static const char *skip_why(const struct hs_blk *b)
 /* instructions per unit ("stop": STOPs = frames, "empty": DBF iterations) */
 static ULONG per_unit(const struct hs_blk *b)
 {
-    if (b->fn == hs_stop || (b->flags & B_FRAME))
+    if (b->fn == hs_stop || (b->flags & (B_FRAME | B_FIXED)))
         return 1;
     if (b->fn == hs_empty)
         return 16;
@@ -485,10 +525,13 @@ static void run_block(const struct hs_blk *b, ULONG idx, ULONG target, ULONG *n_
 {
     ULONG units, empty, f0, f1, t0, t1;
     amt_watchdog_kick();
-    units = size_units(b, target);
-    empty = time_units(hs_empty, units);
+    units = (b->flags & B_FIXED) ? 1 : size_units(b, target);
+    empty = (b->flags & B_FIXED) ? 0 : time_units(hs_empty, units);
     emit(b, idx, "begin");
     json_end();
+#ifdef AMT_BENCHMARK_ONLY
+    hs_cur_pos = HS_POS0 + idx;
+#endif
     mbox_set_pos(26, HS_POS0 + idx);
     f0 = amt_frames_now();
     t0 = amt_ticks();

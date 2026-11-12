@@ -367,6 +367,31 @@ SPEED_REFS = {"int": "add_l", "fpu": "fadd"}
 # by a CIA timer, as an idle AmigaOS is) report their cost over it
 # (over_idle_per_emu_s).
 FRAME_BLOCKS = ("stop", "vbl_poll", "chipset_load", "stop_timer")
+# flood_recovery (hostspeed B_FIXED): floods of CIA writes, each followed by
+# quiet integer work during which the guest sets this mailbox case instead of
+# the block's own (hostspeed.c HS_POS_QUIET).
+SPEED_QUIET_POS = 1999
+SPEED_PHASE_GAP = 30      # frames: samples further apart belong to different phases
+
+
+def thread_share(pts):
+    """Host CPU of the emulator's threads other than the main one, per host
+    second, over consecutive samples of one phase: about 1 while a threaded
+    CPU runs its work on its thread, near 0 while it runs on the main
+    thread. A thread that ends between two samples (the CPU thread moved to
+    the main thread) takes its time out of the total: that pair is left out."""
+    busy = span = 0.0
+    for a, b in zip(pts, pts[1:]):
+        if b["heartbeat"] - a["heartbeat"] > SPEED_PHASE_GAP or None in (
+                a.get("cpu_total_ns"), a.get("cpu_main_ns"), b.get("cpu_total_ns"), b.get("cpu_main_ns")):
+            continue
+        dt = b["t"] - a["t"]
+        other = (b["cpu_total_ns"] - b["cpu_main_ns"]) - (a["cpu_total_ns"] - a["cpu_main_ns"])
+        if dt <= 0 or other < 0:
+            continue
+        busy += other / 1e9
+        span += dt
+    return round(busy / span, 3) if span > 0 else None
 
 
 def _fit(pts):
@@ -462,6 +487,11 @@ def speed_blocks(sub, merged):
         if b["st"] == "skip":
             continue
         pts = [d for d in samples.get(b["pos"], []) if isinstance(d.get("t"), (int, float))]
+        if b["insn"] == "flood_recovery":
+            quiet = [d for d in samples.get(SPEED_QUIET_POS, []) if isinstance(d.get("t"), (int, float))]
+            b["quiet_thread_share"] = thread_share(quiet)
+            b["flood_thread_share"] = thread_share(pts)
+            b["quiet_samples"] = len(quiet)
         b["samples"] = len(pts)
         b["_pts"] = pts
         if len(pts) >= 2:
