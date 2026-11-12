@@ -538,8 +538,8 @@ def _speed_lines(speeds):
          "block) and of the loop (the empty block); **x ref**: that cost relative to ADD.L / FADD. The verdict "
          "depends on the host: compare it only with runs on the same host. Benchmark-only disks report "
          "**measured** instead of pass/fail; unsupported workloads are **skip** with a reason. The frame "
-         "blocks (stop, vbl_poll, chipset_load) idle for a number of frames: their measure is CPU/s, and "
-         "**x ref** shows vbl_poll's and chipset_load's CPU/s over stop's.", ""]
+         "blocks (stop, vbl_poll, chipset_load, stop_timer) idle for a number of frames: their measure is CPU/s, "
+         "and **x ref** shows their CPU/s over stop's.", ""]
     for e in speeds:
         h = e.get("host") or {}
         from . import cases as casemod
@@ -591,7 +591,9 @@ def _threaded_speed_lines(speeds):
                       "Each pair differs only in `cpu_threaded`, including the same JIT setting. Values are "
                       "**off / on**. Throughput on/off > 1 is faster; lower ns/op and total CPU/s are cheaper. "
                       "Host ops/s includes frame pacing; empty counts loop iterations. The frame blocks (stop, vbl_poll, "
-                      "chipset_load) count frames, so only their total CPU/s means anything. "
+                      "chipset_load, stop_timer) count frames, so only their total CPU/s means anything. A threaded "
+                      "entry behind real time where its twin keeps up, or an idle (stop, stop_timer) one costing "
+                      "much more, is a `thread_speed` problem (docs/cases/hostspeed.md). "
                       "Treat a single run as a sample, not proof of a speedup.", ""])
         L.extend([f"`{off['entry']}` / `{on['entry']}`" + (f" [{on['disk']}]" if on.get("disk") else ""), "",
                   "| workload | host ops/s off / on | throughput on/off | ns/op off / on | total CPU/s off / on |",
@@ -1318,6 +1320,13 @@ def _render_item(it):
             for line in it["log_tail"][-25:]:
                 L.append("  " + line[:300])
             L.append("  ```")
+    elif it["kind"] == "thread_speed":
+        L.append(f"- block: `{it.get('case_key')}`" + (f" [{it['disk']}]" if it.get("disk") else ""))
+        L.append(f"- {it.get('ref_entry')} (reference, unthreaded): `{_j(it.get('ref'))}`")
+        L.append(f"- {it.get('entry')} (threaded twin): `{_j(it.get('twin'))}`")
+        L.append("- the two entries differ only in: `cpu_threaded` false vs true; same binary, run and host")
+        if it.get("host"):
+            L.append(f"- host: {it['host']}")
     else:
         rest = {k: v for k, v in it.items() if k not in ("id", "kind", "entry", "why", "jit", "twin_of", "machine",
                                                           "rom", "config")}

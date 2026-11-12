@@ -43,9 +43,31 @@ ran on the main thread is listed under "requested but not active". The host line
 frequency governor and driver (e.g. `powersave (amd-pstate-epp)`): a power-saving governor adds wake-up
 latency that mostly hurts the threaded CPU's hand-offs.
 
-**Frame blocks** (`stop`, `vbl_poll`, `chipset_load`) count frames, not operations: their figure is the
-total process CPU seconds per emulated second, lower is better, and `over_idle_per_emu_s` is that minus
+**Frame blocks** (`stop`, `vbl_poll`, `chipset_load`, `stop_timer`) count frames, not operations: their figure
+is the total process CPU seconds per emulated second, lower is better, and `over_idle_per_emu_s` is that minus
 the `stop` block's (the extra host cost over an idle CPU). No ns/op is given for them.
+
+### Threaded CPU verdict
+
+The measurements above are informational, with one exception. A threaded entry is compared with its unthreaded
+twin in the same run (`thread_speed`, docs/schema.md 5.6a). That makes it a pass/fail check that doesn't
+depend on the host, and it's what the two last blocks are for:
+- **Real time.** At `cpu_speed=max` Amiberry gives the CPU the host time a frame leaves, so frames stay on time
+  and a single block's rtf says little. A threaded CPU can break that: each hardware access it makes that the
+  register snapshot doesn't cover is a hand-off to the main thread, and a flood of them held the chipset below
+  real time. Kickstart 1.3's Alert routine blinks the LED with back-to-back CIA writes; Amiberry's threaded CPU
+  ran it at 30 FPS with the JIT on a Pi 500, where the unthreaded CPU kept 50. On any block where the twin keeps
+  real time, the threaded entry must not be more than 0.03 rtf behind real time or the twin, whichever is later
+  (beyond both 3 sigma): an unthreaded JIT that runs ahead of real time (rtf < 1) is no bar. `cia_write`
+  reproduces the Alert pattern.
+- **Idle cost.** An idle AmigaOS waits in STOP and is woken more than a thousand times a second. A CPU thread
+  that spins before it sleeps keeps a host core busy: an idle Workbench cost 0.73 host cores threaded against
+  0.48 unthreaded. On `stop` and `stop_timer` the threaded entry's total CPU/s must stay within 1.25 x the twin's
+  + 0.05. `vbl_poll` is not compared: a polling CPU keeps two threads busy by design.
+
+Why these were added: amitorture didn't notice either regression. Its hardware blocks only read registers that
+the snapshot serves without a round trip, `stop` is woken only 50 times a second, and benchmark verdicts were all
+informational.
 
 Benchmark-only `speed` records carry `benchmark:1`. Supported, adequately sampled blocks are
 **measured**, not pass/fail. Missing or incomplete samples, or 3-sigma timing uncertainty exceeding
@@ -69,8 +91,10 @@ round to zero when below loop/idle subtraction resolution. The total CPU/s compa
 process threads, so less spinning is visible even if throughput stays the same.
 
 The new RAM, custom-chip and CIA read loops exercise both ordinary memory access and the
-CPU-to-chipset handoffs that Amiberry's multi-threaded CPU changes affect. Hardware loops only read
-VHPOSR and CIA-A PRA, neither of which acknowledges interrupts or changes hardware state.
+CPU-to-chipset handoffs that Amiberry's multi-threaded CPU changes affect. The read loops only read
+VHPOSR and CIA-A PRA, neither of which acknowledges interrupts or changes hardware state. `cia_write`
+writes only the power LED bit of CIA-A PRA (harmless on a real Amiga: the LED and the audio filter) and
+puts it back as it was. `stop_timer` runs CIA-B timer A and its INT6 interrupt only while the block runs.
 The generation-specific blocks read control state or copy owned, aligned memory: they never enable
 MMU translation, change vector bases, alter cache controls or change PCR settings.
 
@@ -161,7 +185,7 @@ process), not from the instruction. Seen once on a cycle-exact-speed A500 with t
 ABCD/SBCD at rtf 1.026 with the thread 38 % busy.
 
 Cost: 1 s of emulated time per supported block, plus sizing; a block that falls behind takes rtf x 1 s
-of host time. There are 63 block slots, including reference loops; CPU/FPU/MMU and memory capabilities
+of host time. There are 68 block slots, including reference loops; CPU/FPU/MMU and memory capabilities
 determine how many are executed. Skipped blocks are not timed.
 
 Not done yet: per-block host profiling. A non-stripped Amiberry build would allow `perf record -p <pid>`
@@ -183,6 +207,8 @@ named code path first, then at the cycle charge (newcpu.cpp, the `cpu_cycles` of
 | `speed_empty` / `speed_empty_end` / `speed_empty_final` | the DBF loop alone | all | drift references; empty_end keeps its original mailbox position, empty_final follows the new blocks | as `stop`, plus the interpreter's/JIT's basic dispatch (newcpu.cpp m68k_run_*, the JIT's compiled loop) |
 | `speed_vbl_poll` | benchmark disk only, after `empty_final`: per frame, poll VPOSR.L until line $2C, then until it moves on | all | one unit = one frame; the game/demo beam-wait idiom | each custom-register read is expensive: with the threaded CPU every read is a hand-off to the main thread, so a polling loop can keep two host cores busy |
 | `speed_chipset_load` | benchmark disk only: STOP per frame with 6 lowres bitplanes, 8 sprites, a copper list writing 8 colours on every line $2C-$FF and sprite collision detection on | all | one unit = one frame; DMA is switched off and the status screen restored afterwards | chipset emulation cost (custom.cpp bitplane/sprite/copper, drawing.cpp), the cost a busy game adds over `stop` |
+| `speed_cia_write` | benchmark disk only, after `chipset_load`: BSET/BCLR #1,$BFE001, 32 pairs per inner loop | all | the power LED bit; put back afterwards. Kickstart 1.3's Alert blink | each CIA write is a hand-off to the main thread with the threaded CPU (newcpu.cpp process_cpu_indirect_memory_write, service_cpu_indirect_request); a threaded entry behind real time here is a `thread_speed` problem |
+| `speed_stop_timer` | benchmark disk only, last: STOP, woken by the VBL and by CIA-B timer A 1500 times a second | all | one unit = one frame; timer and INT6 off again after the block | the cost of waking an idle CPU; with the threaded CPU, how long its idle wait spins (newcpu.cpp cpu_thread_idle_wait). Much more than the unthreaded twin is a `thread_speed` problem |
 | `speed_add_l` | ADD.L Dn,Dn | all | integer reference | basic instruction dispatch too slow for the cycle charge (interpreter cpuemu_*, JIT compemu) |
 | `speed_div_w` | DIVU.W / DIVS.W | all | $03E80BB8 / 21846 = 3000 r 1000: a fixed point | cpuemu DIVU/DIVS (getDivu68kCycles/getDivs68kCycles on CE) |
 | `speed_abcd_sbcd` | ABCD / SBCD Dn | all | $45 + $27 and back, X clear | BCD helpers in cpuemu |

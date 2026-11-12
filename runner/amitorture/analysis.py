@@ -48,7 +48,85 @@ def failure_items(results, fps, registry):
     for i, it in enumerate(hrm):
         it["id"] = f"F{n + i + 1:03d}"
     items.extend(hrm)
+    thr = thread_speed_items(results)
+    n = len(items)
+    for i, it in enumerate(thr):
+        it["id"] = f"F{n + i + 1:03d}"
+    items.extend(thr)
     return items, infos
+
+
+# Threaded CPU twins (report.speed_summary pairs: entries that differ only in
+# cpu_threaded, same binary, parameters and run, so the same host). At
+# cpu_speed=max a single block's rtf says little (Amiberry gives the CPU the
+# host time a frame leaves, so the frames stay on time), but the threaded CPU
+# can break exactly that: its hardware accesses are hand-offs to the main
+# thread, and a flood of them held the chipset below real time (Kickstart
+# 1.3's Alert loop, hostspeed cia_write). Its idle CPU can also spin a host
+# core where the unthreaded one sleeps (hostspeed stop_timer). Both are
+# compared with the unthreaded twin, not with a fixed host figure.
+THREAD_RTF_MARGIN = 0.03         # threaded rtf over real time and the twin's, beyond both 3 sigma
+THREAD_IDLE_BLOCKS = ("stop", "stop_timer")
+THREAD_IDLE_COST_MAX = 1.25      # total CPU/s over the twin's, x
+THREAD_IDLE_COST_SLACK = 0.05    # + host CPU s per emulated s
+
+
+def thread_speed_items(results):
+    """`thread_speed` failure items: a threaded entry that falls behind real
+    time on a hostspeed block where its unthreaded twin keeps up, or whose
+    idle CPU (THREAD_IDLE_BLOCKS) costs much more host CPU than the twin's."""
+    from . import report
+    out = []
+    by_id = {r["id"]: r for r in results}
+    speeds = report.speed_summary(results)
+    by_entry = {(e["entry"], e.get("disk")): e for e in speeds}
+    # noisy blocks too ("untestable" for the benchmark's 5 % limit): the
+    # comparison widens its margin by both 3 sigma instead
+    timed = ("measured", "pass", "fail", "untestable")
+    for on in speeds:
+        off = by_entry.get((on.get("thread_reference"), on.get("disk")))
+        if not on.get("cpu_threaded") or off is None:
+            continue
+        refs = {b["insn"]: b for b in off["blocks"]}
+        r = by_id.get(on["entry"]) or {}
+        for b in on["blocks"]:
+            a = refs.get(b["insn"])
+            if a is None or a.get("st") not in timed or b.get("st") not in timed:
+                continue
+            why = None
+            if a.get("rtf") is not None and b.get("rtf") is not None:
+                sa, sb = 3 * (a.get("sigma") or 0), 3 * (b.get("sigma") or 0)
+                keeps_up = a["rtf"] <= casemod.SPEED_RTF_LIMIT + sa
+                # behind real time itself: an unthreaded twin that runs ahead
+                # of real time (rtf < 1, the JIT at cpu_speed=max) is no bar
+                if keeps_up and b["rtf"] > max(a["rtf"], 1.0) + THREAD_RTF_MARGIN + sa + sb:
+                    why = (f"{b['insn']}: with the threaded CPU the emulator ran at {1 / b['rtf']:.2f}x real time "
+                           f"(rtf {b['rtf']:.3f} +- {sb:.3f}), where the unthreaded twin {off['entry']} kept up "
+                           f"(rtf {a['rtf']:.3f} +- {sa:.3f}): the chipset fell behind serving the CPU thread "
+                           f"(Amiberry newcpu.cpp run_cpu_thread, service_cpu_indirect_request)")
+            ca, cb = a.get("cpu_total_per_emu_s"), b.get("cpu_total_per_emu_s")
+            if why is None and b["insn"] in THREAD_IDLE_BLOCKS and ca is not None and cb is not None:
+                limit = ca * THREAD_IDLE_COST_MAX + THREAD_IDLE_COST_SLACK
+                if cb > limit:
+                    why = (f"{b['insn']}: with the CPU idle in STOP the threaded CPU cost {cb:.3f} host CPU s per "
+                           f"emulated s, the unthreaded twin {off['entry']} {ca:.3f} (limit {limit:.3f}): the idle "
+                           f"CPU thread spins instead of sleeping (Amiberry newcpu.cpp cpu_thread_idle_wait, "
+                           f"cpu_thread_main_wait_wake)")
+            if why is None:
+                continue
+            keys = ("rtf", "sigma", "cpu_total_per_emu_s")
+            out.append({"kind": "thread_speed", "entry": on["entry"], "ref_entry": off["entry"], "mod": "host",
+                        "case": casemod.speed_name(b["insn"]), "case_key": SPEED_KEY + str(b["insn"]),
+                        "disk": on.get("disk"), "why": why,
+                        "ref": {k: a.get(k) for k in keys if a.get(k) is not None},
+                        "twin": {k: b.get(k) for k in keys if b.get(k) is not None},
+                        "differing_options": [{"option": "cpu_threaded", "ref": "false", "twin": "true"}],
+                        "host": casemod.host_desc(on.get("host")), "jit": r.get("jit"), "machine": r.get("machine"),
+                        "config": (r.get("config") or {}).get("file")})
+    return out
+
+
+SPEED_KEY = "host.speed_"
 
 
 def _num(v):

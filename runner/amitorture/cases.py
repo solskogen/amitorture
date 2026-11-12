@@ -362,9 +362,11 @@ FRAME_HZ = {"PAL": 3546895 / (313 * 227), "NTSC": 3579545 / (263 * 227.5)}
 SPEED_REFS = {"int": "add_l", "fpu": "fadd"}
 # One unit = one frame (hostspeed B_FRAME): the CPU idles, so the measure is
 # the host cost per emulated second (CPU/s), not ops/s or ns/op. "stop" is
-# the emulator's own cost; vbl_poll (CPU polling the beam) and chipset_load
-# (STOP with a busy display) report their cost over it (over_idle_per_emu_s).
-FRAME_BLOCKS = ("stop", "vbl_poll", "chipset_load")
+# the emulator's own cost; vbl_poll (CPU polling the beam), chipset_load
+# (STOP with a busy display) and stop_timer (STOP woken ~1500 times a second
+# by a CIA timer, as an idle AmigaOS is) report their cost over it
+# (over_idle_per_emu_s).
+FRAME_BLOCKS = ("stop", "vbl_poll", "chipset_load", "stop_timer")
 
 
 def _fit(pts):
@@ -524,7 +526,9 @@ def speed_blocks(sub, merged):
         if c0 is not None and c1 is not None and df > 0:
             emu_s = df / fhz
             b["cpu_per_emu_s"] = round((c1 - c0) / 1e9 / emu_s, 4)
-            if pts[0].get("cpu_total_ns") is not None:
+            # a thread that ends inside the block (the CPU thread stopping)
+            # takes its CPU time out of the process total: no figure then
+            if pts[0].get("cpu_total_ns") is not None and pts[-1]["cpu_total_ns"] >= pts[0]["cpu_total_ns"]:
                 b["cpu_total_per_emu_s"] = round((pts[-1]["cpu_total_ns"] - pts[0]["cpu_total_ns"]) / 1e9 / emu_s, 4)
             b["busy"] = round(b["cpu_per_emu_s"] / rtf, 4) if rtf else None
             if b["st"] == "fail" and b["busy"] is not None and b["busy"] < SPEED_CPU_BOUND:

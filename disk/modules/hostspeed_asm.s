@@ -54,6 +54,7 @@ HS_OUT	macro
 	xdef	_hs_ram_read
 	xdef	_hs_custom_read
 	xdef	_hs_cia_read
+	xdef	_hs_cia_write
 	xdef	_hs_movec_vbr
 	xdef	_hs_pmove_tc
 	xdef	_hs_move16
@@ -278,6 +279,20 @@ _hs_cia_read:
 .i:
 	rept	64
 	move.b	(a0),d0
+	endr
+	dbf	d7,.i
+	subq.l	#1,d6
+	bne	.o
+	HS_OUT
+
+_hs_cia_write:				; BSET/BCLR the power LED bit (CIA-A PRA
+	HS_IN				; bit 1), as Kickstart's Alert blinks the LED:
+	lea	$bfe001,a0		; back-to-back CIA writes. The caller puts
+.o:	moveq	#15,d7			; the bit back afterwards.
+.i:
+	rept	32
+	bset	#1,(a0)
+	bclr	#1,(a0)
 	endr
 	dbf	d7,.i
 	subq.l	#1,d6

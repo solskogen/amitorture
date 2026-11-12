@@ -73,6 +73,7 @@ ULONG hs_pack_unpk(ULONG, void *);
 ULONG hs_ram_read(ULONG, void *);
 ULONG hs_custom_read(ULONG, void *);
 ULONG hs_cia_read(ULONG, void *);
+ULONG hs_cia_write(ULONG, void *);
 ULONG hs_movec_vbr(ULONG, void *);
 ULONG hs_pmove_tc(ULONG, void *);
 ULONG hs_move16(ULONG, void *);
@@ -238,6 +239,72 @@ static ULONG hs_chipset_load(ULONG units, void *mem)
 }
 #endif
 
+#ifdef AMT_BENCHMARK_ONLY
+/* cia_write: BSET/BCLR on the power LED bit of CIA-A PRA (hostspeed_asm.s),
+ * Kickstart 1.3's Alert pattern: back-to-back CIA writes. With a threaded
+ * CPU each one is a hand-off to the thread that runs the chipset, which
+ * must still keep real time. The LED bit is put back as it was. */
+static ULONG hs_cia_write_led(ULONG units, void *mem)
+{
+    volatile UBYTE *pra = (volatile UBYTE *)0xbfe001;
+    UBYTE led = (UBYTE)(*pra & 2);
+    ULONG r = hs_cia_write(units, mem);
+    if (led)
+        *pra |= 2;
+    else
+        *pra &= (UBYTE)~2;
+    return r;
+}
+
+/* stop_timer: as "stop" (one unit = one frame, the CPU idle in STOP), but
+ * CIA-B timer A also wakes the CPU, ST_TIMER_HZ times a second, as an idle
+ * AmigaOS is woken by its timers (more than a thousand times a second on
+ * Workbench 3.2). What the host spends per emulated second here, over
+ * "stop", is the cost of waking an idle CPU: with a threaded CPU, how long
+ * it spins before it sleeps. The timer and its interrupt are switched off
+ * again after every call. */
+#define ST_TIMER_HZ 1500
+#define CIAB_TALO (*(volatile UBYTE *)0xbfd400)
+#define CIAB_TAHI (*(volatile UBYTE *)0xbfd500)
+#define CIAB_ICR  (*(volatile UBYTE *)0xbfdd00)
+#define CIAB_CRA  (*(volatile UBYTE *)0xbfde00)
+#define ST_INT_EXTER 0x2000
+
+static void st_hook(ULONG pending)
+{
+    (void)pending;
+    (void)CIAB_ICR;                         /* read: acknowledges timer A */
+    CREG(R_INTREQ) = ST_INT_EXTER;
+}
+
+static ULONG hs_stop_timer(ULONG units, void *mem)
+{
+    UWORD latch = (UWORD)(amt_eclk_hz() / ST_TIMER_HZ);
+    ULONG end;
+    (void)mem;
+    CIAB_CRA = 0x00;                        /* timer A stopped */
+    CIAB_ICR = 0x7f;                        /* every CIA-B source off */
+    (void)CIAB_ICR;
+    CIAB_TALO = (UBYTE)latch;
+    CIAB_TAHI = (UBYTE)(latch >> 8);
+    CREG(R_INTREQ) = ST_INT_EXTER;
+    amt_irq_hook[6] = st_hook;
+    CIAB_ICR = 0x81;                        /* SET | TA */
+    CREG(R_INTENA) = 0x8000 | ST_INT_EXTER;
+    CIAB_CRA = 0x11;                        /* LOAD | START, continuous */
+    end = amt_frames_now() + units;
+    while ((LONG)(amt_frames_now() - end) < 0)
+        __asm__ volatile("stop #0x2000" ::: "memory");
+    CIAB_CRA = 0x00;
+    CIAB_ICR = 0x7f;
+    (void)CIAB_ICR;
+    CREG(R_INTENA) = ST_INT_EXTER;
+    CREG(R_INTREQ) = ST_INT_EXTER;
+    amt_irq_hook[6] = 0;
+    return 0;
+}
+#endif
+
 /* The order is the report's. "stop" first: the CPU idle in STOP, woken by
  * the VBL once per frame, so what the host spends per emulated second there
  * is the emulator's own cost (chipset, display, frame pacing), which the
@@ -317,6 +384,10 @@ static const struct hs_blk blocks[] = {
      * on both disks) */
     { "vbl_poll",       hs_vbl_poll,       B_FRAME },
     { "chipset_load",   hs_chipset_load,   B_FRAME },
+    /* what the threaded CPU must survive: a flood of hand-offs (with the
+     * frames still on time) and an idle CPU woken often (at little cost) */
+    { "cia_write",      hs_cia_write_led,  0 },
+    { "stop_timer",     hs_stop_timer,     B_FRAME },
 #endif
 };
 #define N_BLOCKS (sizeof(blocks) / sizeof(blocks[0]))

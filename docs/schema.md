@@ -685,6 +685,19 @@ not in `REGRESSION_KINDS`, so it never makes the check exit with status 1.
 This item is made only for cycle-exact entries, when a case's `timing.hrm_<x>` differs from its `timing.<x>`. It is
 grouped into a low-severity problem (REPORT.md Notes) and never affects the verdict or a baseline check.
 
+### 5.6a failures.jsonl: kind `thread_speed`
+`{"id","kind":"thread_speed","entry","ref_entry","mod":"host","case":"speed_<insn>","case_key":"host.speed_<insn>","disk","why","ref":{"rtf","sigma","cpu_total_per_emu_s"},"twin":{...},"differing_options":[{"option":"cpu_threaded","ref":"false","twin":"true"}],"host","jit","machine","config"}`.
+Made by `analysis.thread_speed_items` for a threaded entry and its unthreaded twin (`report.speed_summary` pairs:
+the same binary, parameters and options except `cpu_threaded`, so the same run and host), when on a hostspeed block
+- the twin keeps real time (rtf <= 1.01 + 3 sigma) and the threaded entry's rtf is more than 0.03 above
+  max(1, the twin's rtf), beyond both 3 sigma (`THREAD_RTF_MARGIN`); or
+- the block is idle (`stop`, `stop_timer`) and the threaded entry's total CPU/s exceeds 1.25 x the twin's + 0.05
+  (`THREAD_IDLE_COST_MAX`, `THREAD_IDLE_COST_SLACK`).
+
+Only entries where the CPU thread really ran are compared (the emulator log, see `cpu_threaded` adjustments). The
+items form one normal-severity problem ("threaded CPU behind its unthreaded twin (<blocks>) on N entries"), which is
+in the verdict. docs/cases/hostspeed.md "Threaded CPU verdict".
+
 ### 5.7 Diagnosis fields (problems in summary.json; result.json)
 Problems of kind case_fail/engine_mismatch carry these fields:
 - `fields`: the expect/got field names the problem is about.

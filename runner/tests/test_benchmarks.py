@@ -7,7 +7,7 @@ import subprocess
 import tempfile
 import unittest
 
-from amitorture import cases, matrix, report, runner
+from amitorture import analysis, cases, matrix, problems, report, runner
 from tests.test_guest_display_timing import function
 from tests.test_hostspeed import block_recs, samples, sub_with
 
@@ -158,6 +158,93 @@ class BenchmarkRecords(unittest.TestCase):
         self.assertIsNone(report.speed_summary(results)[1]["thread_reference"])
 
 
+class ThreadSpeedVerdict(unittest.TestCase):
+    """analysis.thread_speed_items: the threaded twin against the unthreaded one."""
+
+    def entry(self, eid, threaded, rtfs, cpu=None):
+        cpu = cpu or {}
+        names = ["stop", "cia_write", "stop_timer"]
+        bl = [block_recs("stop", 1000, 50, 3537240, units=50),
+              block_recs("cia_write", 1001, 102400, 3537240),
+              block_recs("stop_timer", 1002, 50, 3537240, units=50)]
+        for block in bl:
+            for rec in block:
+                rec["benchmark"] = 1
+        smp = [s for i, name in enumerate(names)
+               for s in samples(1000 + i, 10.0 + 3 * i, rtfs.get(name, 1.0), k=6,
+                                cpu_per_s=cpu.get(name, 0.2), f0=100 + 90 * i)]
+        sub = sub_with(bl, smp, options={"cpu_threaded": threaded, "cpu_speed": "max", "cachesize": "8192"})
+        return dict(sub, id=eid, jit=True)
+
+    def items(self, on_rtfs=None, on_cpu=None, off_rtfs=None, off_cpu=None):
+        results = [self.entry("bench-jit", "false", off_rtfs or {}, off_cpu),
+                   self.entry("bench-jit-thr", "true", on_rtfs or {}, on_cpu)]
+        return results, analysis.thread_speed_items(results)
+
+    def test_threaded_twin_behind_real_time_where_the_reference_keeps_up(self):
+        _, items = self.items(on_rtfs={"cia_write": 1.35})
+        self.assertEqual([(i["entry"], i["ref_entry"], i["case"]) for i in items],
+                         [("bench-jit-thr", "bench-jit", "speed_cia_write")])
+        self.assertIn("kept up", items[0]["why"])
+        self.assertAlmostEqual(items[0]["twin"]["rtf"], 1.35, places=3)
+        # within the margin: no item
+        self.assertEqual(self.items(on_rtfs={"cia_write": 1.02})[1], [])
+        # the unthreaded JIT ahead of real time (rtf < 1), the threaded one on time: no item
+        self.assertEqual(self.items(on_rtfs={"cia_write": 0.998}, off_rtfs={"cia_write": 0.919})[1], [])
+        # the unthreaded twin falls behind as well: the host, not the thread
+        self.assertEqual(self.items(on_rtfs={"cia_write": 1.35}, off_rtfs={"cia_write": 1.3})[1], [])
+
+    def test_noisy_blocks_are_compared_with_their_sigma(self):
+        results = [self.entry("bench-jit", "false", {}), self.entry("bench-jit-thr", "true", {"cia_write": 1.35})]
+        summary = report.speed_summary(results)
+        for e in summary:
+            for b in e["blocks"]:
+                if b["insn"] == "cia_write":
+                    b.update(st="untestable", sigma=0.02)
+        from unittest import mock
+        with mock.patch.object(report, "speed_summary", return_value=summary):
+            self.assertEqual([i["case"] for i in analysis.thread_speed_items(results)], ["speed_cia_write"])
+            for e in summary:
+                for b in e["blocks"]:
+                    if b["insn"] == "cia_write":
+                        b["sigma"] = 0.06        # 3 sigma each: 1.0 + 0.03 + 0.36 > 1.35
+            self.assertEqual(analysis.thread_speed_items(results), [])
+
+    def test_idle_cpu_thread_that_spins_costs_too_much(self):
+        # an idle Workbench on a Pi 500: 0.73 host cores threaded, 0.48 unthreaded
+        # (cpu_total_per_emu_s is twice cpu_per_s in these samples)
+        _, items = self.items(on_cpu={"stop_timer": 0.365}, off_cpu={"stop_timer": 0.24})
+        self.assertEqual([i["case"] for i in items], ["speed_stop_timer"])
+        self.assertIn("spins", items[0]["why"])
+        # after the fix: 0.45 cores
+        self.assertEqual(self.items(on_cpu={"stop_timer": 0.225}, off_cpu={"stop_timer": 0.24})[1], [])
+        # cia_write is not an idle block: its cost is not compared
+        self.assertEqual(self.items(on_cpu={"cia_write": 0.9}, off_cpu={"cia_write": 0.3})[1], [])
+
+    def test_items_become_a_normal_problem_with_a_readable_title(self):
+        results, items = self.items(on_rtfs={"cia_write": 1.35}, on_cpu={"stop_timer": 0.4},
+                                    off_cpu={"stop_timer": 0.2})
+        for n, it in enumerate(items):
+            it["id"] = f"F{n + 1:03d}"
+        for r in results:
+            r["status"] = "pass"
+        probs = problems.group(items, results, None)
+        self.assertEqual(len(probs), 1)
+        self.assertEqual(probs[0]["severity"], "normal")
+        self.assertIn("threaded CPU behind its unthreaded twin (cia_write, stop_timer)", probs[0]["title"])
+        text = "\n".join(report._render_item(items[0]))
+        self.assertIn("bench-jit (reference, unthreaded)", text)
+        self.assertIn("bench-jit-thr (threaded twin)", text)
+        self.assertIn("`cpu_threaded` false vs true", text)
+        self.assertIn("thread_speed", report.verdict(results, True, probs) + probs[0]["kind"])
+
+    def test_an_inactive_thread_is_not_compared(self):
+        results = [self.entry("bench-jit", "false", {}),
+                   self.entry("bench-jit-thr", "true", {"cia_write": 1.35})]
+        results[1]["adjusted"] = [{"option": "cpu_threaded", "resolved": "false (main thread)"}]
+        self.assertEqual(analysis.thread_speed_items(results), [])
+
+
 class GuestBenchmarkGates(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -235,7 +322,7 @@ int main(void) {
 
     def test_generation_specific_and_universal_workloads_across_every_variant(self):
         universal = {"stop", "empty", "add_l", "ram_read", "custom_read", "cia_read", "empty_final",
-                     "vbl_poll", "chipset_load"}
+                     "vbl_poll", "chipset_load", "cia_write", "stop_timer"}
         checks = 0
         for cpu, fpu, mmu, chip, name, why in self.rows:
             allowed = (True if name in universal else cpu >= 1 if name == "movec_vbr" else
@@ -247,7 +334,7 @@ int main(void) {
             self.assertEqual(not why, allowed, (cpu, fpu, mmu, chip, name, why))
             if not allowed:
                 self.assertIn("requires", why)
-        self.assertEqual(checks, 12 * 5 * 2 * 2 * 13)
+        self.assertEqual(checks, 12 * 5 * 2 * 2 * 15)
 
     def test_existing_fpu_integer_and_memory_restrictions_remain_intact(self):
         for cpu, fpu, mmu, chip, name, why in self.rows:

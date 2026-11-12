@@ -413,6 +413,11 @@ amitorture run --amiberry BIN --kickstarts DIR [--matrix smoke] [--config GLOB .
    `cycle_exact=true`, every pair that differs is an `hrm_timing_mismatch` item. It is low severity, so it appears
    under Notes and not in the verdict. Timing fields are never fingerprinted, so it is not a baseline regression
    either. Other core modes are legitimately not cycle-exact and are not compared.
+5a. **Threaded CPU twins.** Each entry with the CPU thread really running is compared with its unthreaded twin
+   (same binary, parameters and options except `cpu_threaded`) block by block on hostspeed: falling behind real
+   time where the twin keeps up, or an idle block (`stop`, `stop_timer`) costing much more host CPU, is a
+   `thread_speed` item (schema.md 5.6a). It is normal severity, so it is in the verdict: the comparison is within
+   one run on one host, unlike the host-relative `host.speed_*` verdicts.
 6. **Problems.** Failures become one problem only when all of these match:
    - the module;
    - the narrowing signature (the flipping settings plus the determinism);
