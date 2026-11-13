@@ -525,6 +525,8 @@ def speed_summary(results):
                         "cpu_threaded_requested": requested(r),
                         "thread_reference": refs.get(thread_key(r)),
                         "cpu_speed": (r.get("options") or {}).get("cpu_speed"), "host": sub.get("host_context"),
+                        # the threaded CPU's request-flood fallback, from the emulator log
+                        "flood_holds": (sub.get("engine") or r.get("engine") or {}).get("cpu_thread_flood_holds"),
                         "blocks": [{k: b.get(k) for k in SPEED_KEYS if b.get(k) is not None} for b in bl]})
     return out
 

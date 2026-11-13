@@ -94,9 +94,15 @@ def thread_speed_items(results):
         for b in on["blocks"]:
             if b["insn"] == "flood_recovery":
                 qs, fs = b.get("quiet_thread_share"), b.get("flood_thread_share")
-                # floods the thread kept up with (flood share high) did not
-                # move the CPU: nothing to recover from, nothing to judge
-                if qs is not None and qs < THREAD_RECOVERY_SHARE and (fs is None or fs < THREAD_RECOVERY_SHARE):
+                # Judged when the emulator's flood fallback was live in this
+                # run (its log counts the holds; cia_write is the same flood):
+                # the flood phases' own share says nothing then, as a flood
+                # that comes just after a retry is not measured and runs on
+                # the thread. Without that count (older results), floods the
+                # thread kept up with (flood share high) are not judged.
+                holds = on.get("flood_holds")
+                exercised = holds > 0 if holds is not None else (fs is None or fs < THREAD_RECOVERY_SHARE)
+                if qs is not None and qs < THREAD_RECOVERY_SHARE and exercised:
                     keys = ("quiet_thread_share", "flood_thread_share", "quiet_samples")
                     out.append({"kind": "thread_speed", "entry": on["entry"], "ref_entry": off["entry"], "mod": "host",
                                 "case": casemod.speed_name(b["insn"]), "case_key": SPEED_KEY + str(b["insn"]),

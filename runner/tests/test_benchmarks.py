@@ -286,6 +286,16 @@ class FloodRecovery(unittest.TestCase):
     def test_floods_the_thread_kept_up_with_are_not_judged(self):
         self.assertEqual(self.items(quiet_share=0.3, flood_share=0.9), [])
 
+    def test_the_emulator_log_decides_whether_the_fallback_was_live(self):
+        # a flood that came just after a retry ran on the thread (flood share
+        # high), but the log shows holds: judged
+        results = [self.entry("bench", "false", 0.1, 0.1), self.entry("bench-thr", "true", 0.59, 0.77)]
+        results[1]["engine"] = {"cpu_thread_flood_holds": 4}
+        self.assertEqual([i["case"] for i in analysis.thread_speed_items(results)], ["speed_flood_recovery"])
+        # no holds in the log: the host kept up, nothing to judge
+        results[1]["engine"] = {"cpu_thread_flood_holds": 0}
+        self.assertEqual(analysis.thread_speed_items(results), [])
+
     def test_a_thread_ending_between_samples_is_left_out(self):
         pts = [{"t": 0.0, "heartbeat": 0, "cpu_main_ns": 0, "cpu_total_ns": 5 * 10 ** 9},
                {"t": 1.0, "heartbeat": 10, "cpu_main_ns": 10 ** 9, "cpu_total_ns": 10 ** 9},   # CPU thread gone
