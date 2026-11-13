@@ -296,6 +296,15 @@ class FloodRecovery(unittest.TestCase):
         results[1]["engine"] = {"cpu_thread_flood_holds": 0}
         self.assertEqual(analysis.thread_speed_items(results), [])
 
+    def test_refloods_in_a_row_mean_the_count_misses_floods(self):
+        results = [self.entry("bench", "false", 0.1, 0.1), self.entry("bench-thr", "true", 0.9, 0.1)]
+        results[1]["engine"] = {"cpu_thread_flood_holds": 5, "cpu_thread_refloods": 1}
+        self.assertEqual(analysis.thread_speed_items(results), [])
+        results[1]["engine"]["cpu_thread_refloods"] = 3
+        items = analysis.thread_speed_items(results)
+        self.assertEqual([i["case_key"] for i in items], ["host.thread_refloods"])
+        self.assertIn("3 times in a row", items[0]["why"])
+
     def test_a_thread_ending_between_samples_is_left_out(self):
         pts = [{"t": 0.0, "heartbeat": 0, "cpu_main_ns": 0, "cpu_total_ns": 5 * 10 ** 9},
                {"t": 1.0, "heartbeat": 10, "cpu_main_ns": 10 ** 9, "cpu_total_ns": 10 ** 9},   # CPU thread gone

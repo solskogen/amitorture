@@ -698,6 +698,12 @@ A third rule is the block's own: on `flood_recovery`, a threaded entry whose CPU
 quiet phases (`quiet_thread_share`), after floods that moved it off its thread (`flood_thread_share` below 0.6), is a
 `thread_speed` item too (`THREAD_RECOVERY_SHARE`).
 
+A fourth comes from Amiberry's own log: its re-flood guard reports a flood hold that a count on the main thread ended
+while the thread flooded again at once ("the flood came back as soon as the CPU thread was tried again (<n> in a
+row)"). Two or more in a row (`THREAD_REFLOODS`, `cpu_thread_refloods` from `runner.engine_from_log`) is a
+`thread_speed` item with case key `host.thread_refloods`: the count misses requests the thread makes, and the CPU goes
+back and forth between the threads. It is reported on whatever host loses such a workload, without a dedicated block.
+
 Only entries where the CPU thread really ran are compared (the emulator log, see `cpu_threaded` adjustments). A switch
 to the main thread right after a request flood line ("CPU thread: <n> requests per frame ... main thread for <s> s.")
 is the threaded CPU's own fallback, not a refused configuration: the thread still counts as active

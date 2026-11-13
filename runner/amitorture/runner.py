@@ -1287,6 +1287,13 @@ def engine_from_log(lines):
     eng["cpu_thread_runs_line"] = last[1] if last else None
     eng["cpu_thread_switches"] = len(runs)
     eng["cpu_thread_flood_holds"] = flood_holds
+    # Amiberry's re-flood guard: a retry whose first measured window was a
+    # flood again, i.e. the count on the main thread missed a flood the
+    # thread saw ("... tried again (<n> in a row): the count on the main
+    # thread missed it ..."). The longest run of them.
+    eng["cpu_thread_refloods"] = max([int(m.group(1)) for line in lines for m in [_re.search(
+        r"CPU thread: the flood came back as soon as the CPU thread was tried again \((\d+) in a row\)", line)]
+        if m] or [0])
     eng["cpu_thread_refused"] = [line.strip() for line in lines if "running the CPU on the main thread" in line
                                  or "Threaded CPU mode is not compatible" in line][:3]
     eng["jit_refused"] = [line.strip() for line in lines if "JIT and cycle-exact can't" in line

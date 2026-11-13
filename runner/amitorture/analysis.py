@@ -69,6 +69,7 @@ THREAD_RTF_MARGIN = 0.03         # threaded rtf over real time and the twin's, b
 THREAD_IDLE_BLOCKS = ("stop", "stop_timer")
 THREAD_IDLE_COST_MAX = 1.25      # total CPU/s over the twin's, x
 THREAD_IDLE_COST_SLACK = 0.05    # + host CPU s per emulated s
+THREAD_REFLOODS = 2              # re-floods in a row that mean the main thread's count misses floods
 THREAD_RECOVERY_SHARE = 0.6      # flood_recovery: the CPU thread's share of the quiet work
                                  # (held on the main thread: ~0.2, the other threads; back: ~1)
 
@@ -91,6 +92,22 @@ def thread_speed_items(results):
             continue
         refs = {b["insn"]: b for b in off["blocks"]}
         r = by_id.get(on["entry"]) or {}
+        # Amiberry reports its own counting mismatches: a flood hold ended by
+        # a count on the main thread that saw no flood, while the thread then
+        # flooded again at once. Twice in a row and the workload makes the
+        # CPU go back and forth between the threads (each move flushing the
+        # JIT), wherever the host is slow enough to lose it.
+        if (on.get("refloods") or 0) >= THREAD_REFLOODS:
+            out.append({"kind": "thread_speed", "entry": on["entry"], "ref_entry": off["entry"], "mod": "host",
+                        "case": "thread_refloods", "case_key": "host.thread_refloods", "disk": on.get("disk"),
+                        "why": (f"the CPU went back to its thread when the count on the main thread saw no flood, "
+                                f"and flooded again at once, {on['refloods']} times in a row: the count misses "
+                                f"requests the thread makes (Amiberry newcpu.cpp cpu_thread_count_read, "
+                                f"cpu_thread_snap_read)"),
+                        "ref": {}, "twin": {"refloods": on["refloods"], "flood_holds": on.get("flood_holds")},
+                        "differing_options": [{"option": "cpu_threaded", "ref": "false", "twin": "true"}],
+                        "host": casemod.host_desc(on.get("host")), "jit": r.get("jit"),
+                        "machine": r.get("machine"), "config": (r.get("config") or {}).get("file")})
         for b in on["blocks"]:
             if b["insn"] == "flood_recovery":
                 qs, fs = b.get("quiet_thread_share"), b.get("flood_thread_share")

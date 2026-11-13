@@ -67,6 +67,11 @@ depend on the host, and it's what the two last blocks are for:
   0.6. If the floods never moved the CPU (their own share is at least 0.6, the host keeps up), there is nothing to judge.
   Amiberry's timed retries (a hold doubling up to 32 s) gave 0.29 (interpreter) and 0.48 (JIT) on a Pi 500; retrying
   once the would-be requests fall below the flood rate gives about 1.
+- **Going back and forth.** Amiberry logs a re-flood when a count on the main thread ended a hold and the thread flooded
+  again at once: the count missed requests the thread makes (the Jim Power title's beam polling did that, through
+  torn snapshot reads). Two in a row on a threaded entry is a `thread_speed` problem, `host.thread_refloods`. It
+  shows only where the host is slow enough to lose the workload on the thread; a single host core does not help
+  force it (both threads on one core run a polling workload at about 1 FPS, a separate problem).
 - **Idle cost.** An idle AmigaOS waits in STOP and is woken more than a thousand times a second. A CPU thread
   that spins before it sleeps keeps a host core busy: an idle Workbench cost 0.73 host cores threaded against
   0.48 unthreaded. On `stop` and `stop_timer` the threaded entry's total CPU/s must stay within 1.25 x the twin's

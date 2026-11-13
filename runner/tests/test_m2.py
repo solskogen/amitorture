@@ -220,6 +220,14 @@ class EngineFromLog(unittest.TestCase):
                                     "CPU emulation runs on the main thread."])
         self.assertEqual((e["cpu_thread_runs_on"], e["cpu_thread_flood_holds"]), ("CPU", 1))
         self.assertEqual(runner.engine_adjustments(base, e), [])
+        # the re-flood guard's lines: the longest run
+        e = runner.engine_from_log(['uae_start_thread "cpu" function at 0x1 arg (nil)',
+                                    "CPU emulation runs on the CPU thread.", cpu, flood,
+                                    "CPU thread: the flood came back as soon as the CPU thread was tried again (1 in a "
+                                    "row): the count on the main thread missed it; the next count waits 2 s.",
+                                    "CPU thread: the flood came back as soon as the CPU thread was tried again (3 in a "
+                                    "row): the count on the main thread missed it; the next count waits 8 s."])
+        self.assertEqual(e["cpu_thread_refloods"], 3)
         # but a later switch without a flood still means the thread was lost
         e = runner.engine_from_log(['uae_start_thread "cpu" function at 0x1 arg (nil)',
                                     "CPU emulation runs on the CPU thread.", cpu, flood,
