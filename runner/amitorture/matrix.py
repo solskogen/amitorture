@@ -681,6 +681,18 @@ def benchmark_entries():
         base["disk_groups"] = ["exp"]
         base["params"] = {"modules": module_mask(["hostspeed"])}
         entries = [base] + _twins_for(base, [""], True, False)
+        if cpu == "68020":
+            # The threaded interpreter twin on one host CPU: the emulator must
+            # not run a CPU thread that shares it with the main thread (every
+            # hand-off would wait for the scheduler; Amiberry once ran a
+            # polling game at about 1 FPS like that). analysis.thread_speed_items
+            # host.thread_one_cpu.
+            thr = next(e for e in entries if e["id"] == base["id"] + "-thr")
+            one = copy.deepcopy(thr)
+            one["id"] = base["id"] + "-thr-1cpu"
+            one["title"] = thr["title"] + ", on one host CPU"
+            one["host_cpus"] = 1
+            entries.append(one)
         for entry in entries:
             entry["matrices"] = {"benchmarks"}
         out.extend(entries)

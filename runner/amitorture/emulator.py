@@ -274,7 +274,7 @@ def release_port(port):
 class Process:
     """Amiberry child process with its console output captured (timestamped)."""
 
-    def __init__(self, binary, args, env, log_path, cwd=None):
+    def __init__(self, binary, args, env, log_path, cwd=None, host_cpus=None):
         self.t0 = time.monotonic()
         self.lines = []          # (t, text)
         self.log = open(log_path, "w", encoding="utf-8", errors="replace")
@@ -282,6 +282,18 @@ class Process:
         check_interrupt()
         self.proc = subprocess.Popen(self.argv, env=env, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                                      stdin=subprocess.DEVNULL, start_new_session=True)
+        # host_cpus: run on that many host CPUs (the last ones the runner may
+        # use). Set right after the start, not in the child before exec (a
+        # preexec_fn is unsafe in a runner with threads): Amiberry counts its
+        # usable CPUs only when its CPU loop chooses a thread, well after.
+        self.host_cpus = None
+        if host_cpus and hasattr(os, "sched_setaffinity"):
+            cpus = set(sorted(os.sched_getaffinity(0))[-int(host_cpus):])
+            try:
+                os.sched_setaffinity(self.proc.pid, cpus)
+                self.host_cpus = sorted(cpus)
+            except OSError:
+                pass
         with _live_lock:
             _live.add(self.proc)
         self.lock = threading.Lock()

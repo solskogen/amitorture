@@ -312,6 +312,47 @@ class FloodRecovery(unittest.TestCase):
         self.assertAlmostEqual(cases.thread_share(pts), 0.2, places=3)
 
 
+class OneHostCpu(unittest.TestCase):
+    """bench-68020-thr-1cpu: no CPU thread with one usable host CPU."""
+
+    def test_the_entry_is_the_threaded_twin_on_one_cpu(self):
+        entries = {e["id"]: e for e in matrix.expand("benchmarks")}
+        one, thr = entries["bench-68020-thr-1cpu"], entries["bench-68020-thr"]
+        self.assertEqual(one["host_cpus"], 1)
+        self.assertEqual(one["options"], thr["options"])
+        self.assertEqual(one["options"]["cpu_threaded"], "true")
+        self.assertNotIn("host_cpus", thr)
+
+    def result(self, runs_on):
+        return {"id": "bench-68020-thr-1cpu", "options": {"cpu_threaded": "true"},
+                "host_cpus": {"asked": 1, "pinned_to": [3]},
+                "engine": {"cpu_thread_runs_on": runs_on, "cpu_thread_runs_line": f"CPU emulation runs on the {runs_on} thread."}}
+
+    def test_a_cpu_thread_on_one_host_cpu_fails(self):
+        items = analysis.thread_speed_items([self.result("CPU")])
+        self.assertEqual([i["case_key"] for i in items], ["host.thread_one_cpu"])
+        self.assertIn("pinned to [3]", items[0]["why"])
+        self.assertEqual(analysis.thread_speed_items([self.result("main")]), [])
+        unpinned = self.result("CPU")
+        unpinned.pop("host_cpus")
+        self.assertEqual(analysis.thread_speed_items([unpinned]), [])
+
+    def test_the_runner_pins_the_emulator(self):
+        import os, shutil
+        from amitorture import emulator
+        if not hasattr(os, "sched_setaffinity") or not shutil.which("sleep"):
+            self.skipTest("no sched_setaffinity or sleep")
+        with tempfile.TemporaryDirectory(dir=ROOT / "work" / "tmp") as tmp:
+            proc = emulator.Process(shutil.which("sleep"), ["2"], dict(os.environ), str(Path(tmp) / "log"),
+                                    host_cpus=1)
+            try:
+                self.assertEqual(len(os.sched_getaffinity(proc.proc.pid)), 1)
+                self.assertEqual(proc.host_cpus, [max(os.sched_getaffinity(0))])
+            finally:
+                proc.proc.kill()
+                proc.proc.wait()
+
+
 class GuestBenchmarkGates(unittest.TestCase):
     @classmethod
     def setUpClass(cls):

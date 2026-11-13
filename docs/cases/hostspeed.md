@@ -25,7 +25,7 @@ python3 -m amitorture run --amiberry /path/to/amiberry --kickstarts ~/Amiberry/R
 ```
 
 The matrix automatically selects `disk/build/benchmarks/amitorture.adf`; for a custom build directory
-pass `--adf /path/to/benchmarks/amitorture.adf`. Its 23 entries cover every CPU family, including a real
+pass `--adf /path/to/benchmarks/amitorture.adf`. Its 24 entries cover every CPU family, including a real
 68030 MMU core with a 68882 and an EC030 without MMU, plus `bench-68000-ce`: an A500 on the cycle-exact
 core at real speed, where the chipset, not the CPU, sets the host cost (no threaded twin: the threaded CPU
 does not run cycle-exact). The fast 68020/EC030 lanes omit the external FPU
@@ -67,6 +67,11 @@ depend on the host, and it's what the two last blocks are for:
   0.6. If the floods never moved the CPU (their own share is at least 0.6, the host keeps up), there is nothing to judge.
   Amiberry's timed retries (a hold doubling up to 32 s) gave 0.29 (interpreter) and 0.48 (JIT) on a Pi 500; retrying
   once the would-be requests fall below the flood rate gives about 1.
+- **One host CPU.** `bench-68020-thr-1cpu` is the 68020 interpreter's threaded twin, run on one host CPU (the runner
+  sets the emulator's affinity right after it starts: matrix `host_cpus`). With one usable CPU the emulator must run
+  the CPU on the main thread: a CPU thread would share the CPU with it, and every hand-off would wait for the
+  scheduler (Amiberry did, and ran the Jim Power title at about 1 FPS). The emulator log saying the CPU ran on its
+  thread is a `thread_speed` problem, `host.thread_one_cpu`, on any host.
 - **Going back and forth.** Amiberry logs a re-flood when a count on the main thread ended a hold and the thread flooded
   again at once: the count missed requests the thread makes (the Jim Power title's beam polling did that, through
   torn snapshot reads). Two in a row on a threaded entry is a `thread_speed` problem, `host.thread_refloods`. It

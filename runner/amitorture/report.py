@@ -1325,9 +1325,12 @@ def _render_item(it):
             L.append("  ```")
     elif it["kind"] == "thread_speed":
         L.append(f"- block: `{it.get('case_key')}`" + (f" [{it['disk']}]" if it.get("disk") else ""))
-        L.append(f"- {it.get('ref_entry')} (reference, unthreaded): `{_j(it.get('ref'))}`")
-        L.append(f"- {it.get('entry')} (threaded twin): `{_j(it.get('twin'))}`")
-        L.append("- the two entries differ only in: `cpu_threaded` false vs true; same binary, run and host")
+        if it.get("ref_entry"):
+            L.append(f"- {it.get('ref_entry')} (reference, unthreaded): `{_j(it.get('ref'))}`")
+            L.append(f"- {it.get('entry')} (threaded twin): `{_j(it.get('twin'))}`")
+            L.append("- the two entries differ only in: `cpu_threaded` false vs true; same binary, run and host")
+        else:
+            L.append(f"- {it.get('entry')}: `{_j(it.get('twin'))}`")
         if it.get("host"):
             L.append(f"- host: {it['host']}")
     else:

@@ -392,7 +392,10 @@ LAUNCH_ATTEMPTS = 3
 
 
 def _launch_once(opts, entry, run, argv, env, home, rawdir, port, res, extra_options=None):
-    proc = emulator.Process(opts.binary, argv, env, os.path.join(rawdir, "amiberry.log"), cwd=home)
+    proc = emulator.Process(opts.binary, argv, env, os.path.join(rawdir, "amiberry.log"), cwd=home,
+                            host_cpus=entry.get("host_cpus"))
+    if entry.get("host_cpus"):
+        res["host_cpus"] = {"asked": entry["host_cpus"], "pinned_to": proc.host_cpus}
     run.pid = proc.proc.pid
     serial = emulator.SerialClient(port, os.path.join(rawdir, "serial.bin"), on_data=run.on_serial)
     ipc = None

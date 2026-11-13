@@ -698,6 +698,10 @@ A third rule is the block's own: on `flood_recovery`, a threaded entry whose CPU
 quiet phases (`quiet_thread_share`), after floods that moved it off its thread (`flood_thread_share` below 0.6), is a
 `thread_speed` item too (`THREAD_RECOVERY_SHARE`).
 
+An entry with `host_cpus: 1` (the runner pins the emulator to one host CPU; result `host_cpus: {asked, pinned_to}`)
+asked for `cpu_threaded=true` whose log says the CPU ran on its own thread is a `thread_speed` item, case key
+`host.thread_one_cpu`.
+
 A fourth comes from Amiberry's own log: its re-flood guard reports a flood hold that a count on the main thread ended
 while the thread flooded again at once ("the flood came back as soon as the CPU thread was tried again (<n> in a
 row)"). Two or more in a row (`THREAD_REFLOODS`, `cpu_thread_refloods` from `runner.engine_from_log`) is a

@@ -81,6 +81,27 @@ def thread_speed_items(results):
     from . import report
     out = []
     by_id = {r["id"]: r for r in results}
+    # One usable host CPU (matrix host_cpus): a CPU thread would share it with
+    # the main thread, and every hand-off would wait for the scheduler.
+    for r in results:
+        launches = [r] + list(r.get("disks") or [])
+        pin = next((x["host_cpus"] for x in launches if isinstance(x.get("host_cpus"), dict)), None)
+        eng = next((x["engine"] for x in launches if x.get("engine")), None) or {}
+        if not pin or pin.get("asked") != 1:
+            continue
+        if str((r.get("options") or {}).get("cpu_threaded", "false")).lower() != "true":
+            continue
+        if eng.get("cpu_thread_runs_on") == "CPU":
+            out.append({"kind": "thread_speed", "entry": r["id"], "ref_entry": None, "mod": "host",
+                        "case": "thread_one_cpu", "case_key": "host.thread_one_cpu", "disk": None,
+                        "why": (f"the emulator ran the CPU on its own thread with one usable host CPU "
+                                f"(pinned to {pin.get('pinned_to')}): the CPU thread and the main "
+                                f"thread share it, and every hand-off waits for the scheduler (Amiberry "
+                                f"newcpu.cpp cpu_thread_wanted, cpu_thread.cpp cpu_thread_usable_host_cpus)"),
+                        "ref": {}, "twin": {"runs_on": "CPU thread", "line": eng.get("cpu_thread_runs_line")},
+                        "differing_options": [], "host": casemod.host_desc(r.get("host_context")),
+                        "jit": r.get("jit"), "machine": r.get("machine"),
+                        "config": (r.get("config") or {}).get("file")})
     speeds = report.speed_summary(results)
     by_entry = {(e["entry"], e.get("disk")): e for e in speeds}
     # noisy blocks too ("untestable" for the benchmark's 5 % limit): the

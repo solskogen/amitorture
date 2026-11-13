@@ -224,8 +224,9 @@ def group(items, results, narrowing=None):
             title = "Amiberry changed or ignored config options (--dump-config)"
         elif k[0] == "thread_speed":
             insns = sorted({str(i.get("case", "")).replace("speed_", "") for i in its})
-            title = (f"threaded CPU behind its unthreaded twin ({', '.join(insns)}) on {len(entries)} "
-                     f"entr{'y' if len(entries) == 1 else 'ies'}")
+            what = ("threaded CPU on one host CPU" if insns == ["thread_one_cpu"] else
+                    f"threaded CPU behind its unthreaded twin ({', '.join(insns)})")
+            title = f"{what} on {len(entries)} entr{'y' if len(entries) == 1 else 'ies'}"
         else:
             title = f"{k[0]} on {len(entries)} entr{'y' if len(entries) == 1 else 'ies'}"
         problems.append({"kind": k[0], "mod": its[0].get("mod"), "title": title, "severity": "low" if low else "normal",
