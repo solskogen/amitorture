@@ -1677,6 +1677,7 @@ static void l3_noop(ULONG intreq) { (void)intreq; }
 void amt_run_interrupts(void)
 {
     int code, i;
+    UWORD sr;
     amt_irq_hook[3] = l3_noop;
     cia_save(&sav_a, CIAA_BASE, 0);
     cia_save(&sav_b, CIAB_BASE, 0);
@@ -1692,9 +1693,15 @@ void amt_run_interrupts(void)
                 : stuck == PORTS ? "interrupts: INT2 (PORTS) held by another device"
                                  : "interrupts: INT6 (EXTER) held by another device");
     ir_fmt = AMT_CPU() >= AMT_CPU_68010;
+    /* ir_h3 chains VERTB through ir_old27, which is only known once
+     * amt_vec_set() has returned the runtime's handler: no interrupt may be
+     * taken between the two, or the chain goes through a null pointer. */
+    sr = amt_get_sr();
+    amt_set_sr(0x2700);
     for (i = 1; i <= 6; i++)
         oldvec[i] = amt_vec_set(24 + i, myvec[i]);
     ir_old27 = (ULONG)oldvec[3];
+    amt_set_sr(sr);
     code = amt_try(body);
     if (ir_runaway)
         amt_log("interrupts: a source that would not clear was disabled by the handler guard");
