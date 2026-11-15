@@ -176,14 +176,20 @@ ULONG amt_frames_now(void);     /* VBL count since takeover */
 /* Consistent beam position (V << 8) | H, V = VPOSR bits 2-0 : VHPOSR bits
  * 15-8. Reads VPOSR, VHPOSR, VPOSR and retries until both VPOSR reads agree,
  * so a read never mixes the V8-V10 bits of one line with the V0-V7/H of
- * another (e.g. line 255 -> 256 read as line 0). */
+ * another (e.g. line 255 -> 256 read as line 0).
+ * The three reads are one asm statement because their order is the whole
+ * point: written as three volatile reads in C, gcc 6.5.0b moved the second
+ * VPOSR read in front of the VHPOSR read in an out-of-line copy, which left
+ * VHPOSR outside the guard. */
 static inline ULONG amt_beam(void)
 {
+    volatile UWORD *vposr = (volatile UWORD *)0xdff004;
+    volatile UWORD *vhposr = (volatile UWORD *)0xdff006;
     UWORD a, vh, b;
     do {
-        a = *(volatile UWORD *)0xdff004;    /* VPOSR */
-        vh = *(volatile UWORD *)0xdff006;   /* VHPOSR */
-        b = *(volatile UWORD *)0xdff004;
+        __asm__ volatile("move.w (%3),%0\n\tmove.w (%4),%1\n\tmove.w (%3),%2"
+                         : "=&d"(a), "=&d"(vh), "=&d"(b)
+                         : "a"(vposr), "a"(vhposr));
     } while ((a ^ b) & 7);
     return ((ULONG)(a & 7) << 16) | vh;
 }
