@@ -46,7 +46,7 @@ ULONG fpu_fmovem_predec(const ULONG *src, ULONG *dst_end);
 void fpu_dyn_run(void);
 extern UBYTE fpu_dyn_buf[320];
 void fpu_ctl_rw(ULONG *out);
-void fpu_const_regs(ULONG *out);
+void fpu_const_regs(ULONG *out, ULONG fscc);
 extern ULONG fpu_const_buf[];
 void fpu_after_trap(ULONG *out);
 void fpu_trap_run(void);
@@ -1045,7 +1045,9 @@ static void case_fmovem(void)
  * that read or write them. A JIT that keeps such constants in its own state
  * must store them before an FPU instruction that uses the registers in
  * memory (a helper call, the interpreter handler), and must not store the
- * constant over a value the FPU instruction wrote. Hot, so it is compiled. */
+ * constant over a value the FPU instruction wrote. Hot, so it is compiled.
+ * The FSEQ sample is left out where FScc is not implemented (a 68060 without
+ * fpucompat, as for pred_ccr): there it takes vector 11 (unimp_fscc_060). */
 static const char *const const_what[6] = {
     "FPCR after FMOVE.L D0,FPCR (D0 = $10 from MOVE.L #imm)",
     "D1 after FMOVE.L FP0,D1 (FP0 = 7; D1 = 5 from MOVEQ before)",
@@ -1054,14 +1056,14 @@ static const char *const const_what[6] = {
     "FP1 after FMOVE.S (A1)+,FP1 (2.0), as an integer",
     "D3 after FSEQ D3 (D3 = -1 from MOVEQ; the result 2.0 is not zero): low byte cleared",
 };
-static ULONG const_got[6], const_want[6], const_bad_i;
+static ULONG const_got[6], const_want[6], const_bad_i, const_n;
 
 static ULONG const_fn(ULONG iter)
 {
     ULONG i;
     (void)iter;
-    fpu_const_regs(const_got);
-    for (i = 0; i < 6; i++)
+    fpu_const_regs(const_got, const_n == 6);
+    for (i = 0; i < const_n; i++)
         if (const_got[i] != const_want[i]) {
             const_bad_i = i;
             return i + 1;
@@ -1069,10 +1071,11 @@ static ULONG const_fn(ULONG iter)
     return 0;
 }
 
-static void case_const_regs(void)
+static void case_const_regs(int fscc)
 {
     ULONG first, bad;
     long r;
+    const_n = fscc ? 6 : 5;
     const_want[0] = 0x10;
     const_want[1] = 7;
     const_want[2] = 0x12345678UL;
@@ -1129,7 +1132,7 @@ void amt_run_fpu(void)
             run_pred((int)i);
     case_pred_ccr(!is060 || (amt_par.flags & AMT_F_FPUCOMPAT));
     case_fmovem();
-    case_const_regs();
+    case_const_regs(!is060 || (amt_par.flags & AMT_F_FPUCOMPAT));
     run_traps();
     run_excs();
 

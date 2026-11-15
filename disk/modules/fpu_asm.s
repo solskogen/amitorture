@@ -246,7 +246,7 @@ _fpu_ctl_rw:
 	rts
 
 ; ---------------------------------------------------------------- constant registers
-; void fpu_const_regs(ULONG out[6]): 68k registers set from constants (moveq,
+; void fpu_const_regs(ULONG out[6], ULONG fscc): 68k registers set from constants (moveq,
 ; move.l #imm, lea) just before FPU instructions that read or write them, in
 ; one straight-line block, so a JIT translates it as one block and still has
 ; the constants in its own state when it compiles the FPU instruction.
@@ -255,7 +255,11 @@ _fpu_ctl_rw:
 ;   out[2] FPIAR after fmove.l d2,fpiar (d2 = $12345678)
 ;   out[3] a1 after fmove.s (a1)+,fp1 (a1 = fpu_const_buf before)
 ;   out[4] fp1 as an integer (2: fpu_const_buf holds 2.0)
-;   out[5] d3 after fseq d3 (d3 = -1 before; the last result, 2.0, is not zero)
+;   out[5] d3 after fseq d3 (d3 = -1 before; the last result, 2.0, is not zero).
+;          Only with fscc nonzero: a 68060 does not implement FScc (vector 11),
+;          so there the sample is left out and out[5] is not written. The branch
+;          comes before the moveq, so the constant and the FSEQ that uses it are
+;          still in one block.
 _fpu_const_regs:
 	move.l	4(sp),a0
 	movem.l	d2-d3,-(sp)
@@ -275,9 +279,12 @@ _fpu_const_regs:
 	fmove.s	(a1)+,fp1
 	move.l	a1,12(a0)
 	fmove.l	fp1,16(a0)
+	tst.l	16(sp)
+	beq.s	.nofscc
 	moveq	#-1,d3
 	fseq	d3
 	move.l	d3,20(a0)
+.nofscc:
 	movem.l	(sp)+,d2-d3
 	rts
 
