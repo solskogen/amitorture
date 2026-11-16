@@ -65,6 +65,8 @@ Beam-polled latencies go to `timing` objects only. Beam reads re-read VPOSR arou
 | skip_over_wait | true SKIP before WAIT $7001,$FFFE, then MOVE C; observe at $68 and $80 | WAIT still executes; only MOVE writes are suppressible (vAmigaTS copskip3) | WAIT incorrectly bypassed or Copper fails to resume |
 | copjmp2_by_copper | MOVE to COPJMP2 inside a list | jump at once, rest of list1 not run (HRM 2) | strobe ignored/late |
 | copjmp2_by_cpu | CPU writes COPJMP2 while the copper waits at END | restart at COP2LC (HRM 2) | strobe ignored |
+| copjmp2_cpu_read | CPU `TST.W COPJMP2` while the copper waits at END | restart at COP2LC, as for a write: COPJMP is a strobe (HRM appendix A) that Agnus decodes from the register address on the RGA bus, which a read drives too. Corroboration: Sleepwalker CD32 flips its lists this way; Copperline's `copprobe-jmpread` agrees with vAmiga | strobes decoded on writes only |
+| copjmp1_cpu_read | CPU clears marker A, then `TST.W COPJMP1` while the copper waits at END | restart at COP1LC: list1 sets A again (same rule) | strobes decoded on writes only |
 | cop1lc_write_no_jump | copper writes COP1LC | no jump until vertical blank (HRM 2) | COP1LC write jumps |
 | vbl_restart_cop1lc | the stored COP1LC list runs at line 0 (SKIP $0031 guards "early") | restart at vertical blank (HRM 2) | no/late restart |
 | skip_copjmp2_loop | SKIP/COPJMP2 loop until line $90 | HRM 2 SKIP loop example | loop exit wrong |

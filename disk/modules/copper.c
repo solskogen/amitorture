@@ -703,6 +703,71 @@ static void jump_tests(void)
     }
     amt_case_close();
 
+    /* CPU reads COPJMP2 / COPJMP1 while the copper waits: same strobe */
+    lst(OFF_L1);
+    cmark(MK_A);
+    cend();
+    mk_clear();
+    sync_line(0x40);
+    cop_start(OFF_L1);
+    wait_line(0x48);
+    g = mk_get();
+    __asm__ volatile("tst.w 0xdff08a" ::: "cc", "memory");
+    wait_line(0x50);
+    g2 = mk_get();
+    cop_idle();
+    unsync();
+    ok = g == MK_A && g2 == (MK_A | MK_B);
+    amt_case_open("copjmp2_cpu_read", ok ? AMT_ST_PASS : AMT_ST_FAIL);
+    if (!ok) {
+        json_obj("expect");
+        json_hexn("before", MK_A, 4);
+        json_hexn("after", MK_A | MK_B, 4);
+        json_obj_end();
+        json_obj("got");
+        json_hexn("before", g, 4);
+        json_hexn("after", g2, 4);
+        json_obj_end();
+        json_str("in", "list1: MOVE A; END, list2 (COP2LC): MOVE B; END; CPU TST.W COPJMP2 at line $48");
+        json_str("why", "COPJMP2 is a strobe (HRM appendix A): Agnus decodes it from the register "
+                 "address on the RGA bus, which a CPU read drives too, so a read restarts the "
+                 "copper at COP2LC like a write (Sleepwalker CD32 flips its lists this way)");
+    }
+    amt_case_close();
+
+    lst(OFF_L1);
+    cmark(MK_A);
+    cend();
+    mk_clear();
+    sync_line(0x40);
+    cop_start(OFF_L1);
+    wait_line(0x48);
+    g = mk_get();
+    CU(INTREQ) = MK_A;
+    CU(INTREQ) = MK_A;
+    __asm__ volatile("tst.w 0xdff088" ::: "cc", "memory");
+    wait_line(0x50);
+    g2 = mk_get();
+    cop_idle();
+    unsync();
+    ok = g == MK_A && g2 == MK_A;
+    amt_case_open("copjmp1_cpu_read", ok ? AMT_ST_PASS : AMT_ST_FAIL);
+    if (!ok) {
+        json_obj("expect");
+        json_hexn("before", MK_A, 4);
+        json_hexn("after", MK_A, 4);
+        json_obj_end();
+        json_obj("got");
+        json_hexn("before", g, 4);
+        json_hexn("after", g2, 4);
+        json_obj_end();
+        json_str("in", "list1 (COP1LC): MOVE A; END; at line $48 the CPU clears A, then TST.W COPJMP1");
+        json_str("why", "COPJMP1 is a strobe (HRM appendix A) decoded from the register address, "
+                 "so a CPU read restarts the copper at COP1LC like a write and list1 sets A again "
+                 "(Sleepwalker CD32 flips its lists this way)");
+    }
+    amt_case_close();
+
     /* COP1LC written by the copper: no jump; used at the next vertical blank.
      * list3 sets C, then D only if it runs before line 0 h $30 */
     lst(OFF_L3);

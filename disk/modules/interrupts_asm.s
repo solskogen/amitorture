@@ -40,6 +40,7 @@
 	xdef	_ir_st1,_ir_st2,_ir_st3,_ir_st_soft,_ir_st_cia,_ir_st_l2,_ir_st_vb
 	xdef	_ir_lat2,_ir_lat3,_ir_lat_n,_ir_lat_buf,_ir_lat_overflow
 	xdef	_ir_settle,_ir_st_other,_ir_runaway,_ir_kbd_pend
+	xdef	_ir_win,_ir_winh,_ir_win_n
 
 INTREQR	equ	$dff01e
 INTENAR	equ	$dff01c
@@ -419,6 +420,44 @@ _ir_lat3:
 .r:	tst.w	INTREQR
 	rte
 
+; ---------------------------------------------------------------- unmask window
+; level 1 handler for _ir_win: count, clear DSKBLK
+_ir_winh:
+	move.w	#$0002,INTREQ
+	move.w	#$0002,INTREQ
+	addq.w	#1,_ir_win_n
+	tst.w	INTREQR
+	rte
+
+; UWORD ir_win(int turns): one pass. DSKBLK is requested while masked in
+; INTENA (master on, SR mask 0), then INTENA bit 1 is opened for two
+; instructions (the unmask write, BRA, the next mask write) per turn.
+; Returns the turns left when the handler had run (> 0), 0 = it never ran.
+_ir_win:
+	movem.l	d2/a2,-(sp)
+	move.l	12(sp),d1
+	lea	$dff000,a0
+	lea	_ir_win_n,a2
+	move.w	#$8002,$9c(a0)		; DSKBLK pending, masked
+	bsr	_ir_settle		; well past any recognition delay
+	move.w	(a2),d2
+.loop:	move.w	#$0002,$9a(a0)		; mask
+	move.w	(a2),d0
+	cmp.w	d2,d0
+	bne.s	.got
+	subq.w	#1,d1
+	beq.s	.miss
+	move.w	#$8002,$9a(a0)		; unmask
+	bra.s	.loop
+.got:	moveq	#0,d0
+	move.w	d1,d0
+	bra.s	.x
+.miss:	move.w	#$0002,$9c(a0)		; drop the request nobody saw
+	move.w	#$0002,$9c(a0)
+	moveq	#0,d0
+.x:	movem.l	(sp)+,d2/a2
+	rts
+
 	section	.data,data
 _ir_logp:	dc.l	_ir_log
 _ir_lat_p:	dc.l	_ir_lat_buf
@@ -449,3 +488,4 @@ _ir_runaway:	ds.l	1
 _ir_kbd_pend:	ds.b	1
 _ir_icr_tmp:	ds.b	1
 _ir_lat_buf:	ds.l	64
+_ir_win_n:	ds.w	1

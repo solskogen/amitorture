@@ -39,6 +39,9 @@ void ir_settle(void);
 void ir_do_stop2000(void), ir_do_stop2100(void), ir_do_movesr(void), ir_do_andisr(void);
 void ir_do_ccr(void), ir_do_chain(void);
 void ir_do_movem(const ULONG *a, const ULONG *b);
+void ir_winh(void);
+UWORD ir_win(int turns);
+extern volatile UWORD ir_win_n;
 extern char ir_after_stop2000[], ir_after_stop2100[], ir_after_movesr[], ir_after_andisr[];
 extern char ir_after_ccr[];
 extern char ir_chain_start[], ir_chain_end[], ir_chain_t1[], ir_chain_t2[], ir_chain_t3[];
@@ -485,6 +488,65 @@ static void mask_tests(void)
             amt_case_close();
         }
     }
+}
+
+/* ------------------------------------------------------------ INTENA unmask window */
+#define WIN_PASSES 6
+#define WIN_TURNS  999
+
+static void window_test(void)
+{
+    UWORD left[WIN_PASSES];
+    amt_vec_fn old;
+    int i, got = 0;
+
+    env();
+    wait_window();
+    amt_set_sr(0x2700);
+    old = amt_vec_set(25, ir_winh);
+    ir_win_n = 0;
+    CREG(R_INTENA) = 0x0002;
+    amt_set_sr(0x2000);
+    for (i = 0; i < WIN_PASSES; i++) {
+        left[i] = ir_win(WIN_TURNS);
+        if (left[i])
+            got++;
+    }
+    amt_set_sr(0x2700);
+    CREG(R_INTENA) = 0x0002;
+    CREG(R_INTREQ) = 0x0002;
+    CREG(R_INTREQ) = 0x0002;
+    amt_vec_set(25, old);
+    amt_set_sr(0x2000);
+    env_end();
+    if (got == WIN_PASSES) {
+        amt_case("intena_unmask_window", AMT_ST_PASS, 0);
+        return;
+    }
+    amt_case_open("intena_unmask_window", AMT_ST_FAIL);
+    json_obj("expect");
+    json_int("passes_taken", WIN_PASSES);
+    json_obj_end();
+    json_obj("got");
+    json_int("passes_taken", got);
+    json_arr("turns_used");
+    for (i = 0; i < WIN_PASSES; i++)
+        json_int(NULL, left[i] ? WIN_TURNS + 1 - left[i] : 0);
+    json_arr_end();
+    json_int("handler_runs", ir_win_n);
+    json_obj_end();
+    json_obj("in");
+    json_str("loop", "MOVE.W #$0002,INTENA; MOVE.W (count),D0; CMP; BNE; SUBQ; BEQ; "
+             "MOVE.W #$8002,INTENA; BRA");
+    json_int("turns", WIN_TURNS);
+    json_str("turns_used", "per pass, 0 = never taken");
+    json_obj_end();
+    json_str("why", "DSKBLK (level 1) stays pending in INTREQ while INTENA opens it for two "
+             "instructions per turn; Paula drives IPL from INTREQ & INTENA, so the level is "
+             "asserted for at least the time between the two chip writes, longer than the "
+             "CPU needs to recognise it, and a recognised request is processed (M68000 PRM 6.3.2; "
+             "HRM 7). Real software (CD32 Lotus Trilogy) depends on it");
+    amt_case_close();
 }
 
 /* ------------------------------------------------------------ priority / nesting */
@@ -1658,6 +1720,7 @@ static void body(void)
     map_tests();
     enable_tests();
     mask_tests();
+    window_test();
     prio_tests();
     lower_tests();
     reg_tests();
