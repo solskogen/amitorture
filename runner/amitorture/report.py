@@ -120,6 +120,26 @@ def _speed_failures(items, dref, sub, merged, hello_sum):
         })
 
 
+def _cet_failures(items, dref, options, merged, hello_sum):
+    """Each failed host.cet_<name> pseudo case (cases.cet_case) as a
+    case_fail item: clocks per loop iteration against the real-hardware
+    reference."""
+    from . import cases as casemod
+    if casemod.cet_refset(options) is None:
+        return
+    for p in casemod._extract_merged(merged)["perf"].values():
+        v = casemod.cet_case(p, options)
+        if v is None or v["st"] != "fail":
+            continue
+        items.append({
+            "kind": "case_fail", **dref, "mod": "host", "case": "cet_" + p["name"],
+            "expect": v["expect"], "got": v["got"], "why": v["why"],
+            "ctx": {"perf": f"cetiming.{p['name']}", "cpu_multiplier": (options or {}).get("cpu_multiplier")},
+            "in": {"name": p["name"]}, "seq": None, "boot": None,
+            "sources": ["host"], "record": None, "preceding": [], "hello": hello_sum,
+        })
+
+
 def collect_failures(results):
     """One item per failed case or infra problem, each self-contained. With
     a disk set, cases, record integrity and crash/hang/timeout are per disk
@@ -166,6 +186,7 @@ def collect_failures(results):
                     elif m.get("host"):
                         _tone_failure(items, dref, m, hello_sum)
                 _speed_failures(items, dref, sub, merged, hello_sum)
+                _cet_failures(items, dref, r.get("options"), merged, hello_sum)
                 if hello and not probe_done:
                     probe_done = True
                     probe_src = dict(r, _merged=merged)

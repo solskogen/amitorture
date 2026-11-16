@@ -52,6 +52,7 @@ MODULE_OPTIONS = {
               "sound_stereo_separation", "ntsc"],
     "input": ["joyport0", "joyport1", "joyport1mode", "input.mouse_speed", "absolute_mouse", "chipset_compatible"],
     "dmacontention": ["chipset", "cycle_exact", "cpu_compatible", "cpu_speed", "blitter_cycle_exact"],
+    "cetiming": ["cpu_model", "cycle_exact", "cpu_compatible", "cpu_multiplier", "chipset", "ntsc"],
     "devio": ["floppy_speed", "chipset_compatible", "scsi", "ide"],
     "rtg": ["gfxcard_type", "gfxcard_size", "cpu_24bit_addressing", "z3mem_size"],
     "expsound": ["cpu_24bit_addressing", "sound_output"],

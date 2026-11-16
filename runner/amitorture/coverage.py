@@ -86,13 +86,14 @@ AXES = {
     "misc_hw_os": ("model", "boards", "memory"),
     "memory_os": ("memory", "model", "boards"),
     "hostspeed": ("cpu", "fpu", "core", "engine", "chipset", "video"),
+    "cetiming": ("chipset", "video", "cpu", "core", "engine_class"),
 }
 
 # The disk group each module is built into (disk/Makefile DISK_SET_*; a unit
 # test keeps this in step).
 MODULE_GROUP = {}
 for _g, _mods in (("core", "takeover rt flags exceptions smc interrupts cia blitter timing display copper paula "
-                           "input dmacontention"),
+                           "input dmacontention cetiming"),
                   ("cpu", "cpu_basic mmu dispatch"),
                   ("exp", "fpu rtg expsound network misc_hw misc_hw_os devio memory memory_os hostspeed")):
     for _m in _mods.split():

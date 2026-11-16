@@ -382,6 +382,10 @@ SUBSYSTEMS = {
                  ("memory.cpp", "dummy_lput", "stores to unmapped space (a wrong EA)")],
     "dmacontention": [("custom.cpp", "do_cycles_ce", "cycle-exact DMA slot allocation"),
                       ("custom.cpp", "fetch32_bpl", "bitplane fetch"), ("blitter.cpp", "blitter_handler", "blitter slots")],
+    "cetiming": [("newcpu.cpp", "m68k_run_2ce", "68020/030 cycle-exact core: per-instruction cost, cache fetches"),
+                 ("custom.cpp", "wait_cpu_cycle_read_ce020", "68020 chip-bus read: slot wait and bus cycle"),
+                 ("custom.cpp", "wait_cpu_cycle_write_ce020", "68020 chip-bus write"),
+                 ("custom.cpp", "do_cycles_ce", "cycle-exact DMA slot allocation")],
     "rt": [("custom.cpp", "custom_wput_1", "custom register writes"), ("newcpu.cpp", "Exception", "exceptions")],
 }
 def jit_backend_files():

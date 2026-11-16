@@ -144,7 +144,7 @@ clean:
 # devio needs a 128 KB I/O buffer after the pools on a 1 MB chip-only A600:
 # keep the exp disk small enough for that.
 DISK_SETS      := core cpu exp
-DISK_SET_core  := takeover rt flags exceptions smc interrupts cia blitter timing display copper paula input dmacontention
+DISK_SET_core  := takeover rt flags exceptions smc interrupts cia blitter timing display copper paula input dmacontention cetiming
 DISK_SET_cpu   := cpu_basic mmu dispatch
 DISK_SET_exp   := fpu rtg expsound network misc_hw misc_hw_os devio memory memory_os hostspeed
 SET := $(B)/set

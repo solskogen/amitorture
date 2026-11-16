@@ -430,7 +430,7 @@ MODULE_IDS = {"takeover": 0, "rt": 1, "cpu_basic": 2, "flags": 3, "exceptions": 
               "cia": 7, "blitter": 8, "fpu": 9, "timing": 10, "devio": 11, "display": 12, "copper": 13,
               "paula": 14, "input": 15, "rtg": 16, "expsound": 17, "network": 18, "misc_hw": 19, "mmu": 20,
               "memory": 21, "dispatch": 22, "dmacontention": 23, "misc_hw_os": 24, "memory_os": 25,
-              "hostspeed": 26}
+              "hostspeed": 26, "cetiming": 27}
 
 
 def module_mask(names):

@@ -167,6 +167,7 @@ def extract(result):
         _screenshot_cases(out, result, [(None, result.get("_merged"))])
         _tone_cases(out, [(None, result.get("_merged"))])
         _speed_cases(out, [(None, result, result.get("_merged"))])
+        _cet_cases(out, result.get("options"))
         return out
     for sub in subs:
         e = _extract_merged(sub.get("_merged"))
@@ -182,6 +183,7 @@ def extract(result):
     _screenshot_cases(out, result, [(sub.get("disk_name"), sub.get("_merged")) for sub in subs])
     _tone_cases(out, [(sub.get("disk_name"), sub.get("_merged")) for sub in subs])
     _speed_cases(out, [(sub.get("disk_name"), sub, sub.get("_merged")) for sub in subs])
+    _cet_cases(out, result.get("options"))
     return out
 
 
@@ -692,6 +694,78 @@ def _speed_cases(out, subs):
             out["cases"][key] = {"mod": "host", "case": body["case"], "st": v["st"], "fp": canonical(body),
                                  "rec": body, "timing": v["timing"], "seq": None, "pseudo": True, "disk": dn,
                                  "engine_dependent": True}
+
+
+CET_PREFIX = "host.cet_"
+CET_TOL = 0.02          # clocks per iteration may differ this much (fraction) from the reference
+# docs/cases/cetiming.md: CPU clocks per loop iteration measured on real
+# hardware, per cetiming perf record name. The source is a published
+# capture (data only, its unambiguous readings); the reference is
+# (ticks - 5) * 20 / iterations, with the 5 E ticks of fixed overhead taken
+# from its bare dbra row.
+CET_REFS = (
+    {"machine": "A1200 (68EC020 at 14.19 MHz, AGA, PAL, no fast RAM)",
+     "match": {"cpu_model": "68020", "cpu_multiplier": "4", "chipset": "aga"},
+     "source": "CopperlineHQ/Copperline timing-test, real-A1200 capture (compare-a1200.py, README)",
+     "clk": {"chip_read": 16.07, "move_reg": 9.00, "lsl_l_8": 11.00, "dbra": 7.00,
+             "move_pair": 11.00, "move_pair_dep": 10.00, "chip_write_nodma": 8.01, "chip_write_6pl": 12.48,
+             "chip_write_spr": 8.03, "chip_write_6pl_spr": 12.48, "chip_write_3pl": 8.07}},
+)
+
+
+def cet_refset(options):
+    """The CET_REFS set for an entry's Amiberry options, or None. Only
+    cycle-exact configs are judged: elsewhere the CPU is not clocked."""
+    o = {k: str(v).lower() for k, v in (options or {}).items()}
+    if o.get("cycle_exact") != "true":
+        return None
+    for rs in CET_REFS:
+        if all(o.get(k) == v for k, v in rs["match"].items()):
+            return rs
+    return None
+
+
+def cet_case(p, options):
+    """One cetiming perf record ({name, ops, ticks}) -> the host.cet_<name>
+    verdict {"st", "fp", "expect", "got", "why", "timing"}, or None when
+    there is no reference for it on this config. Clocks per iteration =
+    E ticks x (5 x cpu_multiplier CPU clocks per E tick) / iterations."""
+    rs = cet_refset(options)
+    if rs is None or p.get("mod") != "cetiming" or p.get("name") not in rs["clk"]:
+        return None
+    ref = rs["clk"][p["name"]]
+    mult = int(str((options or {}).get("cpu_multiplier")))
+    ops, ticks = p.get("ops"), p.get("ticks")
+    if not isinstance(ops, (int, float)) or not ops or not isinstance(ticks, (int, float)):
+        return None
+    clk = ticks * 5 * mult / ops
+    ratio = clk / ref
+    st = "pass" if abs(ratio - 1) <= CET_TOL else "fail"
+    expect = {"clk_per_iter": ref, "tol_pct": CET_TOL * 100, "machine": rs["machine"]}
+    got = {"clk_per_iter": round(clk, 3), "ratio": round(ratio, 4), "ticks": ticks, "iterations": ops}
+    why = (f"{p['name']}: {clk:.2f} CPU clocks per iteration, the real {rs['machine']} takes {ref:g} "
+           f"(+-{CET_TOL:.0%}): {ratio:.1%} of real time" + (" (too fast)" if ratio < 1 else " (too slow)")
+           + f"; reference: {rs['source']}")
+    return {"st": st, "fp": {"st": st}, "expect": expect, "got": got, "why": why,
+            "timing": {"clk_per_iter": round(clk, 3), "ratio": round(ratio, 4)}}
+
+
+def _cet_cases(out, options):
+    """docs/cases/cetiming.md: on cycle-exact entries with a reference set,
+    every cetiming perf record with a reference becomes the pseudo case
+    host.cet_<name>, fingerprinted {st}; clocks per iteration and the
+    ratio to real hardware are its timing values."""
+    if cet_refset(options) is None:
+        return
+    for k, p in out["perf"].items():
+        v = cet_case(p, options)
+        if v is None:
+            continue
+        key = CET_PREFIX + k[len("cetiming."):]          # keeps a "#n" / "@disk" suffix
+        body = dict({"mod": "host", "case": key[len("host."):]}, **v["fp"])
+        out["cases"][key] = {"mod": "host", "case": body["case"], "st": v["st"], "fp": canonical(body),
+                             "rec": body, "timing": v["timing"], "seq": None, "pseudo": True,
+                             "disk": p.get("disk")}
 
 
 def diff_paths(a, b, path=""):

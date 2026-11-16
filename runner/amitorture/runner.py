@@ -1583,6 +1583,11 @@ def host_failed_cases(res, merged):
     for b in casemod.speed_blocks(res, merged):
         if b.get("st") == "fail":
             names.append("host." + casemod.speed_name(b["insn"]))
+    if casemod.cet_refset(res.get("options")) is not None:
+        for p in casemod._extract_merged(merged)["perf"].values():
+            v = casemod.cet_case(p, res.get("options"))
+            if v and v["st"] == "fail":
+                names.append(casemod.CET_PREFIX + p["name"])
     return names
 
 

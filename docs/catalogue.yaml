@@ -81,6 +81,12 @@
   what: instruction throughput fingerprint
   cases: [timing.*]
 
+- id: cpu.cycle_timing
+  area: CPU
+  what: cycle-exact CPU and chip-bus cost per instruction, against real hardware (68020 A1200)
+  cases: [cetiming.*, host.cet_*]
+  entries: [*-ce*]
+
 - id: cpu.jit_parity
   area: CPU
   what: the JIT gives the same results as the interpreter (twins; amt_hot loops)

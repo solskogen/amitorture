@@ -283,7 +283,8 @@ The API is in `disk/rt/mod.h`, which is authoritative; read it. In short:
 | 24 | misc_hw_os | OS | Zorro autoconfig consistency: ConfigDev ExpansionRom, sizes, address ranges, overlaps with boards and memory (OS-phase half of misc_hw; disk: exp) |
 | 25 | memory_os | OS | allocates the per-region test blocks of memory (21) while exec is alive (OS-phase half of memory; disk: exp) |
 | 26 | hostspeed | BARE | timed CPU/FPU/memory/I/O blocks for the runner's real-time check or standalone benchmark disk; `speed` records, no cases (disk: exp) |
-| 27-63 | reserved | | later |
+| 27 | cetiming | BARE | cycle-level CPU/chip-bus timing; perf records the runner judges against real-hardware references, `host.cet_*` (disk: core) |
+| 28-63 | reserved | | later |
 
 Disk groups are in disk/Makefile (`DISK_SET_*`). `make check-groups` fails if a module is in no group or in two.
 

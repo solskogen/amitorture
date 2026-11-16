@@ -778,6 +778,67 @@ class ToneCases(unittest.TestCase):
         self.assertFalse([k for k in fp["cases"] if k.startswith("host.tone_")])
 
 
+class CeTiming(unittest.TestCase):
+    """host.cet_<name> pseudo cases (cases.cet_case): cetiming perf records
+    against real-A1200 clocks per iteration, on cycle-exact 68020 entries."""
+    A1200_CE = {"cycle_exact": "true", "cpu_model": "68020", "cpu_multiplier": "4", "chipset": "aga"}
+
+    def merged(self, rows):
+        recs = [{"v": 1, "seq": i + 1, "t": "perf", "mod": "cetiming", "name": n, "ops": ops, "ticks": t,
+                 "tick_hz": 709379, "unit": "eclock"} for i, (n, ops, t) in enumerate(rows)]
+        return records.merge({"serial": [records.parse_line(records.encode(r)) for r in recs]})
+
+    def test_verdict_from_clocks_per_iteration(self):
+        from amitorture import cases
+        # dbra: 4096 iterations, 1434 ticks x 20 / 4096 = 7.00 clocks (real 7.00); 845 ticks = 4.13
+        m = self.merged([("dbra", 4096, 1434), ("move_reg", 4096, 1280), ("mulu_imm", 4096, 5000),
+                         ("chip_write_6pl", 1024, 646)])
+        fp = cases.extract({"options": self.A1200_CE, "_merged": m})
+        c = fp["cases"]
+        self.assertEqual(c["host.cet_dbra"]["st"], "pass")
+        self.assertTrue(c["host.cet_dbra"]["pseudo"])
+        self.assertEqual(c["host.cet_move_reg"]["st"], "fail")              # 6.25 against 9
+        self.assertAlmostEqual(c["host.cet_move_reg"]["timing"]["clk_per_iter"], 6.25)
+        self.assertEqual(c["host.cet_chip_write_6pl"]["st"], "pass")        # 12.62 against 12.48 (+1.1 %)
+        self.assertNotIn("host.cet_mulu_imm", c)                            # no reference
+        self.assertEqual(c["host.cet_dbra"]["rec"], {"mod": "host", "case": "cet_dbra", "st": "pass"})
+        # just outside the tolerance in either direction fails
+        v = cases.cet_case({"mod": "cetiming", "name": "dbra", "ops": 1000, "ticks": 358}, self.A1200_CE)
+        self.assertEqual(v["st"], "fail")                                   # 7.16 = +2.3 %
+        self.assertIn("too slow", v["why"])
+        v = cases.cet_case({"mod": "cetiming", "name": "dbra", "ops": 1000, "ticks": 342}, self.A1200_CE)
+        self.assertEqual(v["st"], "fail")                                   # 6.84 = -2.3 %
+        self.assertIn("too fast", v["why"])
+        v = cases.cet_case({"mod": "cetiming", "name": "dbra", "ops": 1000, "ticks": 352}, self.A1200_CE)
+        self.assertEqual(v["st"], "pass")                                   # 7.04 = +0.6 %
+
+    def test_only_on_referenced_cycle_exact_entries(self):
+        from amitorture import cases
+        m = self.merged([("dbra", 4096, 845)])
+        for opts in (dict(self.A1200_CE, cycle_exact="false"), dict(self.A1200_CE, cpu_multiplier="0"),
+                     dict(self.A1200_CE, cpu_model="68000", chipset="ocs", cpu_multiplier="2"),
+                     dict(self.A1200_CE, cpu_model="68030")):
+            fp = cases.extract({"options": opts, "_merged": m})
+            self.assertFalse([k for k in fp["cases"] if k.startswith("host.cet_")], opts)
+            self.assertEqual(R.host_failed_cases({"options": opts}, m), [])
+
+    def test_failure_reported_and_counted(self):
+        from amitorture import report, xfail
+        m = self.merged([("dbra", 4096, 845), ("move_pair", 4096, 2253)])     # 4.13 (fail), 11.00 (pass)
+        res = {"id": "a1200-68020-ce", "status": "pass", "options": self.A1200_CE, "_merged": m}
+        items = [i for i in report.collect_failures([res]) if i["kind"] == "case_fail"]
+        self.assertEqual([(i["mod"], i["case"]) for i in items], [("host", "cet_dbra")])
+        self.assertEqual(items[0]["expect"]["clk_per_iter"], 7.0)
+        self.assertAlmostEqual(items[0]["got"]["clk_per_iter"], 4.126, places=3)
+        self.assertEqual(R.host_failed_cases(res, m), ["host.cet_dbra"])
+        status, why = R.classify({"options": self.A1200_CE}, m, "done")
+        self.assertEqual(status, "fail")
+        self.assertIn("host.cet_dbra", why)
+        x = xfail.match(xfail.load(), "host.cet_dbra", "a1200-68ec020-882-ce-sf", self.A1200_CE)
+        self.assertIsNotNone(x)
+        self.assertIsNone(xfail.match(xfail.load(), "host.cet_chip_write_6pl", "a1200-68020-ce", self.A1200_CE))
+
+
 class HrmTiming(unittest.TestCase):
     def test_only_cycle_exact_and_only_differences(self):
         from amitorture import analysis

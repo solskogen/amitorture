@@ -804,5 +804,85 @@
    "tbd": false,
    "seen": "a1200-68ec020-fast-jit-thr and a4000-68040nommu-fast-thr on master e07bdb393 (2026-11-10); pass with PR #2641"
   }
- ]
+ ],
+ "host.cet_chip_read": {
+  "ref": "docs/cases/cetiming.md",
+  "why": "68020 cycle-exact CPU (newcpu.cpp/cpuemu_21 timing tables, as in WinUAE): register and shift instructions and the cached taken dbra cost fewer clocks than the real 68EC020 (move_reg 6.25 vs 9, lsl_l_8 6.25 vs 11, dbra 4.13 vs 7, move_pair 8.37 vs 11, move_pair_dep 8.36 vs 10), and a chip RAM read is about half its real cost (8.27 vs 16.07). Same in upstream WinUAE, not an Amiberry regression",
+  "configs": "a1200-68*020*-ce*",
+  "when": {},
+  "tbd": false,
+  "seen": "cetiming on a1200-68020-ce and a1200-68ec020-ce, Amiberry master 1550f2f1a (2026-11-16)"
+ },
+ "host.cet_move_reg": {
+  "ref": "docs/cases/cetiming.md",
+  "why": "68020 cycle-exact CPU (newcpu.cpp/cpuemu_21 timing tables, as in WinUAE): register and shift instructions and the cached taken dbra cost fewer clocks than the real 68EC020 (move_reg 6.25 vs 9, lsl_l_8 6.25 vs 11, dbra 4.13 vs 7, move_pair 8.37 vs 11, move_pair_dep 8.36 vs 10), and a chip RAM read is about half its real cost (8.27 vs 16.07). Same in upstream WinUAE, not an Amiberry regression",
+  "configs": "a1200-68*020*-ce*",
+  "when": {},
+  "tbd": false,
+  "seen": "cetiming on a1200-68020-ce and a1200-68ec020-ce, Amiberry master 1550f2f1a (2026-11-16)"
+ },
+ "host.cet_lsl_l_8": {
+  "ref": "docs/cases/cetiming.md",
+  "why": "68020 cycle-exact CPU (newcpu.cpp/cpuemu_21 timing tables, as in WinUAE): register and shift instructions and the cached taken dbra cost fewer clocks than the real 68EC020 (move_reg 6.25 vs 9, lsl_l_8 6.25 vs 11, dbra 4.13 vs 7, move_pair 8.37 vs 11, move_pair_dep 8.36 vs 10), and a chip RAM read is about half its real cost (8.27 vs 16.07). Same in upstream WinUAE, not an Amiberry regression",
+  "configs": "a1200-68*020*-ce*",
+  "when": {},
+  "tbd": false,
+  "seen": "cetiming on a1200-68020-ce and a1200-68ec020-ce, Amiberry master 1550f2f1a (2026-11-16)"
+ },
+ "host.cet_dbra": {
+  "ref": "docs/cases/cetiming.md",
+  "why": "68020 cycle-exact CPU (newcpu.cpp/cpuemu_21 timing tables, as in WinUAE): register and shift instructions and the cached taken dbra cost fewer clocks than the real 68EC020 (move_reg 6.25 vs 9, lsl_l_8 6.25 vs 11, dbra 4.13 vs 7, move_pair 8.37 vs 11, move_pair_dep 8.36 vs 10), and a chip RAM read is about half its real cost (8.27 vs 16.07). Same in upstream WinUAE, not an Amiberry regression",
+  "configs": "a1200-68*020*-ce*",
+  "when": {},
+  "tbd": false,
+  "seen": "cetiming on a1200-68020-ce and a1200-68ec020-ce, Amiberry master 1550f2f1a (2026-11-16)"
+ },
+ "host.cet_move_pair": {
+  "ref": "docs/cases/cetiming.md",
+  "why": "68020 cycle-exact CPU (newcpu.cpp/cpuemu_21 timing tables, as in WinUAE): register and shift instructions and the cached taken dbra cost fewer clocks than the real 68EC020 (move_reg 6.25 vs 9, lsl_l_8 6.25 vs 11, dbra 4.13 vs 7, move_pair 8.37 vs 11, move_pair_dep 8.36 vs 10), and a chip RAM read is about half its real cost (8.27 vs 16.07). Same in upstream WinUAE, not an Amiberry regression",
+  "configs": "a1200-68*020*-ce*",
+  "when": {},
+  "tbd": false,
+  "seen": "cetiming on a1200-68020-ce and a1200-68ec020-ce, Amiberry master 1550f2f1a (2026-11-16)"
+ },
+ "host.cet_move_pair_dep": {
+  "ref": "docs/cases/cetiming.md",
+  "why": "68020 cycle-exact CPU (newcpu.cpp/cpuemu_21 timing tables, as in WinUAE): register and shift instructions and the cached taken dbra cost fewer clocks than the real 68EC020 (move_reg 6.25 vs 9, lsl_l_8 6.25 vs 11, dbra 4.13 vs 7, move_pair 8.37 vs 11, move_pair_dep 8.36 vs 10), and a chip RAM read is about half its real cost (8.27 vs 16.07). Same in upstream WinUAE, not an Amiberry regression",
+  "configs": "a1200-68*020*-ce*",
+  "when": {},
+  "tbd": false,
+  "seen": "cetiming on a1200-68020-ce and a1200-68ec020-ce, Amiberry master 1550f2f1a (2026-11-16)"
+ },
+ "host.cet_chip_write_nodma": {
+  "ref": "docs/cases/cetiming.md",
+  "why": "68020 cycle-exact chip RAM write: 2.6-4.8 % slower than the real A1200 (nodma 8.26 vs 8.01, 8 sprites 8.32 vs 8.03, 6 planes+sprites 12.81 vs 12.48, 3 planes 8.46 vs 8.07 clocks per iteration); the 6-plane row is within tolerance (12.66 vs 12.48)",
+  "configs": "a1200-68*020*-ce*",
+  "when": {},
+  "tbd": false,
+  "seen": "cetiming on a1200-68020-ce and a1200-68ec020-ce, Amiberry master 1550f2f1a (2026-11-16)"
+ },
+ "host.cet_chip_write_spr": {
+  "ref": "docs/cases/cetiming.md",
+  "why": "68020 cycle-exact chip RAM write: 2.6-4.8 % slower than the real A1200 (nodma 8.26 vs 8.01, 8 sprites 8.32 vs 8.03, 6 planes+sprites 12.81 vs 12.48, 3 planes 8.46 vs 8.07 clocks per iteration); the 6-plane row is within tolerance (12.66 vs 12.48)",
+  "configs": "a1200-68*020*-ce*",
+  "when": {},
+  "tbd": false,
+  "seen": "cetiming on a1200-68020-ce and a1200-68ec020-ce, Amiberry master 1550f2f1a (2026-11-16)"
+ },
+ "host.cet_chip_write_6pl_spr": {
+  "ref": "docs/cases/cetiming.md",
+  "why": "68020 cycle-exact chip RAM write: 2.6-4.8 % slower than the real A1200 (nodma 8.26 vs 8.01, 8 sprites 8.32 vs 8.03, 6 planes+sprites 12.81 vs 12.48, 3 planes 8.46 vs 8.07 clocks per iteration); the 6-plane row is within tolerance (12.66 vs 12.48)",
+  "configs": "a1200-68*020*-ce*",
+  "when": {},
+  "tbd": false,
+  "seen": "cetiming on a1200-68020-ce and a1200-68ec020-ce, Amiberry master 1550f2f1a (2026-11-16)"
+ },
+ "host.cet_chip_write_3pl": {
+  "ref": "docs/cases/cetiming.md",
+  "why": "68020 cycle-exact chip RAM write: 2.6-4.8 % slower than the real A1200 (nodma 8.26 vs 8.01, 8 sprites 8.32 vs 8.03, 6 planes+sprites 12.81 vs 12.48, 3 planes 8.46 vs 8.07 clocks per iteration); the 6-plane row is within tolerance (12.66 vs 12.48)",
+  "configs": "a1200-68*020*-ce*",
+  "when": {},
+  "tbd": false,
+  "seen": "cetiming on a1200-68020-ce and a1200-68ec020-ce, Amiberry master 1550f2f1a (2026-11-16)"
+ }
 }
