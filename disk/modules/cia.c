@@ -1324,8 +1324,7 @@ static void eclock_perf(int b)
  * once per E clock, 5 colour clocks. An emulator at fastest CPU speed may
  * shorten that wait, but loops that delay, or poll with an iteration bound,
  * by reading a CIA rely on it: at more than PRA_READS_PER_E_MAX reads per E
- * clock they end that many times early. The bound is loose: unthreaded fast
- * emulation makes about 10. CIA-A PRA, the register polled for the fire
+ * clock they end that many times early. CIA-A PRA, the register polled for the fire
  * buttons, read READS_N times; the fastest of PRA_RUNS runs counts (a JIT
  * compiles the loop in the first). */
 #define PRA_READS_N 4096
@@ -1352,6 +1351,9 @@ static void pra_read_rate(void)
         amt_case_open("ciaa_pra_read_rate", AMT_ST_FAIL);
         json_obj("expect");
         json_int("max_reads_per_e", PRA_READS_PER_E_MAX);
+        json_obj_end();
+        json_obj("got");
+        json_int("reads_per_e", best ? (long)((E2CC(PRA_READS_N) + best / 2) / best) : -1);
         json_obj_end();
         json_str("why", "CIA accesses are synchronised to the E clock (one per E clock, 5 colour clocks): "
                         "4096 reads of CIA-A PRA must not take less than 1/32 of that, or CIA delay and "
