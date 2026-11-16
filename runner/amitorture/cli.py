@@ -38,9 +38,10 @@ END_HELP = ("what the disk does after its last module (default halt: the machine
             "screen; the runner stops the emulator itself). reboot = ColdReboot; return = back to the "
             "Kickstart boot code")
 PARAM_HELP = ("an extra run parameter baked into the disks (repeatable): "
-              "flags=unsafe,noserial,nombox,net,noscreen,intcompat,fpucompat "
+              "flags=unsafe,noserial,nombox,net,noscreen,intcompat,fpucompat,fastcpu "
               "(comma-separated; intcompat=32, fpucompat=64 follow configured instruction policies, "
-              "strict options clear stale compatibility flags; JIT uses both compatibility policies), "
+              "strict options clear stale compatibility flags; JIT uses both compatibility policies; "
+              "fastcpu=256 follows cpu_speed: set unless it is real), "
               "baud=N (serial rate, default 115200), modules=MASK (bit n = module id n, "
               "docs/CONTRACT.md section 10; e.g. modules=0x1000 runs only display)")
 REPRO_HELP = ("do not write repro packs. A repro pack is repro/<problem>/ in the results: a one-module disk with "

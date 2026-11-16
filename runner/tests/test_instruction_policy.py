@@ -56,6 +56,15 @@ class InstructionPolicy(unittest.TestCase):
                                     extra_options=strict), 1)
         self.assertEqual(self.flags(strict, extra_options={"cachesize": "8192", "a2065": "slirp"}), 8 | 96)
 
+    def test_fastcpu_follows_cpu_speed(self):
+        for speed in ("max", "MAX", "100", 50):
+            with self.subTest(speed=speed):
+                self.assertEqual(self.flags({"cpu_speed": speed}, {"flags": "unsafe"}), 1 | 96 | 256)
+        for speed in ("real", "Real", "0", 0):
+            with self.subTest(speed=speed):
+                self.assertEqual(self.flags({"cpu_speed": speed}, {"flags": "fastcpu"}), 96)
+        self.assertEqual(self.flags({"cpu_speed": "real"}, extra_options={"cpu_speed": "max"}), 96 | 256)
+
     def test_invalid_options_cannot_silently_select_compatibility(self):
         for options in ({"cpu_no_unimplemented": "typo"}, {"fpu_no_unimplemented": "typo"},
                         {"cachesize": "typo"}):
@@ -76,7 +85,7 @@ class InstructionPolicy(unittest.TestCase):
 
     def test_runtime_declares_matching_policy_and_defaults_to_hardware_strict(self):
         header = (ROOT / "disk/rt/rt.h").read_text()
-        for name, value in (("INTCOMPAT", 32), ("FPUCOMPAT", 64)):
+        for name, value in (("INTCOMPAT", 32), ("FPUCOMPAT", 64), ("FASTCPU", 256)):
             self.assertRegex(header, rf"(?m)^#define AMT_F_{name}\s+{value}\b")
         runtime = (ROOT / "disk/rt/main.c").read_text()
         defaults = runtime.split("static void load_params(void)", 1)[1].split("static void emit_hello", 1)[0]

@@ -1326,7 +1326,9 @@ static void eclock_perf(int b)
  * by reading a CIA rely on it: at more than PRA_READS_PER_E_MAX reads per E
  * clock they end that many times early. CIA-A PRA, the register polled for the fire
  * buttons, read READS_N times; the fastest of PRA_RUNS runs counts (a JIT
- * compiles the loop in the first). */
+ * compiles the loop in the first). Judged only where the CPU is paced to real
+ * timing: with AMT_F_FASTCPU (emulator cpu_speed max or a set speed) the
+ * configuration promises no real-time CPU, so the rate is recorded as a skip. */
 #define PRA_READS_N 4096
 #define PRA_READS_PER_E_MAX 32
 #define PRA_RUNS 8
@@ -1345,7 +1347,10 @@ static void pra_read_rate(void)
             best = t1 - t0;
     }
     (void)acc;
-    if (best * PRA_READS_PER_E_MAX >= E2CC(PRA_READS_N)) {
+    if (amt_par.flags & AMT_F_FASTCPU) {
+        amt_case_open("ciaa_pra_read_rate", AMT_ST_SKIP);
+        json_str("why", "CPU not paced to real timing (flag fastcpu): the read rate is recorded, not judged");
+    } else if (best * PRA_READS_PER_E_MAX >= E2CC(PRA_READS_N)) {
         amt_case_open("ciaa_pra_read_rate", AMT_ST_PASS);
     } else {
         amt_case_open("ciaa_pra_read_rate", AMT_ST_FAIL);

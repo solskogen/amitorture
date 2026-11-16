@@ -560,7 +560,8 @@ _EMU_NET_KEYS = ("a2065", "zz9000_net", "ne2000_pci", "ne2000_pcmcia")
 
 
 FLAG_BITS = {"unsafe": 1, "noserial": 2, "nombox": 4, "net": 8, "noscreen": 16,
-             "intcompat": 32, "fpucompat": 64, "modpace": 128}   # tools/mkadf.py
+             "intcompat": 32, "fpucompat": 64, "modpace": 128,
+             "fastcpu": 256}   # tools/mkadf.py
 
 
 def _add_flag(params, name):
@@ -611,6 +612,7 @@ def _with_entry_flags(params, entry, extra_options=None):
 
     Instruction-policy flags follow the configured options, not user flags.
     Amiberry's JIT fixup makes both instruction policies compatibility-mode.
+    So does fastcpu, from cpu_speed.
     """
     for name in entry.get("flags") or ():
         _add_flag(params, name)
@@ -624,7 +626,15 @@ def _with_entry_flags(params, entry, extra_options=None):
         if value not in ("true", "yes", "1", "false", "no", "0"):
             raise RunnerError(f"invalid instruction policy option {option}={options[option]!r}")
         _set_flag(params, flag, jit or value in ("false", "no", "0"))
+    _set_flag(params, "fastcpu", not real_cpu_speed(options))
     return _with_net_flag(params, options)
+
+
+def real_cpu_speed(options):
+    """True when the configured CPU is paced to real timing (cpu_speed real,
+    Amiberry's default). "max" and a set speed are not: there the CPU may drive
+    the chipset faster than a real one could (AMT_F_FASTCPU)."""
+    return str(options.get("cpu_speed", "real")).strip().lower() in ("real", "0")
 
 
 def base_result(entry):
