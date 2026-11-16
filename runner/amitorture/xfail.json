@@ -811,7 +811,7 @@
   "configs": "a1200-68*020*-ce*",
   "when": {},
   "tbd": false,
-  "seen": "cetiming on a1200-68020-ce and a1200-68ec020-ce, Amiberry master 1550f2f1a (2026-11-16)"
+  "seen": "cetiming on a1200-68020-ce and a1200-68ec020-ce, Amiberry master 1550f2f1a (2026-11-16); pass with Amiberry branch fix/ce020-timing"
  },
  "host.cet_move_reg": {
   "ref": "docs/cases/cetiming.md",
@@ -819,7 +819,7 @@
   "configs": "a1200-68*020*-ce*",
   "when": {},
   "tbd": false,
-  "seen": "cetiming on a1200-68020-ce and a1200-68ec020-ce, Amiberry master 1550f2f1a (2026-11-16)"
+  "seen": "cetiming on a1200-68020-ce and a1200-68ec020-ce, Amiberry master 1550f2f1a (2026-11-16); pass with Amiberry branch fix/ce020-timing"
  },
  "host.cet_lsl_l_8": {
   "ref": "docs/cases/cetiming.md",
@@ -827,7 +827,7 @@
   "configs": "a1200-68*020*-ce*",
   "when": {},
   "tbd": false,
-  "seen": "cetiming on a1200-68020-ce and a1200-68ec020-ce, Amiberry master 1550f2f1a (2026-11-16)"
+  "seen": "cetiming on a1200-68020-ce and a1200-68ec020-ce, Amiberry master 1550f2f1a (2026-11-16); pass with Amiberry branch fix/ce020-timing"
  },
  "host.cet_dbra": {
   "ref": "docs/cases/cetiming.md",
@@ -835,7 +835,7 @@
   "configs": "a1200-68*020*-ce*",
   "when": {},
   "tbd": false,
-  "seen": "cetiming on a1200-68020-ce and a1200-68ec020-ce, Amiberry master 1550f2f1a (2026-11-16)"
+  "seen": "cetiming on a1200-68020-ce and a1200-68ec020-ce, Amiberry master 1550f2f1a (2026-11-16); pass with Amiberry branch fix/ce020-timing"
  },
  "host.cet_move_pair": {
   "ref": "docs/cases/cetiming.md",
@@ -843,7 +843,7 @@
   "configs": "a1200-68*020*-ce*",
   "when": {},
   "tbd": false,
-  "seen": "cetiming on a1200-68020-ce and a1200-68ec020-ce, Amiberry master 1550f2f1a (2026-11-16)"
+  "seen": "cetiming on a1200-68020-ce and a1200-68ec020-ce, Amiberry master 1550f2f1a (2026-11-16); pass with Amiberry branch fix/ce020-timing"
  },
  "host.cet_move_pair_dep": {
   "ref": "docs/cases/cetiming.md",
@@ -851,7 +851,7 @@
   "configs": "a1200-68*020*-ce*",
   "when": {},
   "tbd": false,
-  "seen": "cetiming on a1200-68020-ce and a1200-68ec020-ce, Amiberry master 1550f2f1a (2026-11-16)"
+  "seen": "cetiming on a1200-68020-ce and a1200-68ec020-ce, Amiberry master 1550f2f1a (2026-11-16); pass with Amiberry branch fix/ce020-timing"
  },
  "host.cet_chip_write_nodma": {
   "ref": "docs/cases/cetiming.md",
@@ -859,7 +859,7 @@
   "configs": "a1200-68*020*-ce*",
   "when": {},
   "tbd": false,
-  "seen": "cetiming on a1200-68020-ce and a1200-68ec020-ce, Amiberry master 1550f2f1a (2026-11-16)"
+  "seen": "cetiming on a1200-68020-ce and a1200-68ec020-ce, Amiberry master 1550f2f1a (2026-11-16); pass with Amiberry branch fix/ce020-timing"
  },
  "host.cet_chip_write_spr": {
   "ref": "docs/cases/cetiming.md",
@@ -867,7 +867,7 @@
   "configs": "a1200-68*020*-ce*",
   "when": {},
   "tbd": false,
-  "seen": "cetiming on a1200-68020-ce and a1200-68ec020-ce, Amiberry master 1550f2f1a (2026-11-16)"
+  "seen": "cetiming on a1200-68020-ce and a1200-68ec020-ce, Amiberry master 1550f2f1a (2026-11-16); pass with Amiberry branch fix/ce020-timing"
  },
  "host.cet_chip_write_6pl_spr": {
   "ref": "docs/cases/cetiming.md",
@@ -875,7 +875,7 @@
   "configs": "a1200-68*020*-ce*",
   "when": {},
   "tbd": false,
-  "seen": "cetiming on a1200-68020-ce and a1200-68ec020-ce, Amiberry master 1550f2f1a (2026-11-16)"
+  "seen": "cetiming on a1200-68020-ce and a1200-68ec020-ce, Amiberry master 1550f2f1a (2026-11-16); pass with Amiberry branch fix/ce020-timing"
  },
  "host.cet_chip_write_3pl": {
   "ref": "docs/cases/cetiming.md",
@@ -883,6 +883,6 @@
   "configs": "a1200-68*020*-ce*",
   "when": {},
   "tbd": false,
-  "seen": "cetiming on a1200-68020-ce and a1200-68ec020-ce, Amiberry master 1550f2f1a (2026-11-16)"
+  "seen": "cetiming on a1200-68020-ce and a1200-68ec020-ce, Amiberry master 1550f2f1a (2026-11-16); pass with Amiberry branch fix/ce020-timing"
  }
 }
