@@ -55,7 +55,7 @@ ROMS = {
              "ext": {"ids": [19], "what": "CD32 extended ROM r40.60"}},
     "CDTV": {"ids": [6, 5], "what": "Kickstart 1.3 (CDTV)",
              "ext": {"ids": [22, 21, 20], "what": "CDTV extended ROM (2.7 / 2.30 / 1.0)"}},
-    "AROS": {"builtin": ":AROS", "what": "the AROS ROM built into Amiberry"},
+    "AROS": {"builtin": ":AROS", "what": "the AROS ROM shipped with Amiberry (roms/aros-rom.bin + aros-ext.bin)"},
 }
 
 # ---------------------------------------------------------------------------

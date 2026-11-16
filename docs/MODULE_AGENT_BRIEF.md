@@ -38,7 +38,7 @@ Its purpose is to find bugs and regressions in Amiga emulators (Amiberry first; 
     - 1.2, 1.3, 2.04, 2.05
     - 3.1: A500/A600/A2000 (40.063), A1200, A3000, A4000 (40.068), A4000T (40.070), CD32
     - 3.2.3 for A1200 and A4000T
-    - `--rom aros` for the built-in AROS.
+    - `--rom aros` for the AROS ROM that ships with Amiberry (`roms/aros-rom.bin` + `aros-ext.bin`, staged by the runner).
     
     68000 machines need a 68000-capable ROM (1.2/1.3/2.04/2.05/3.1-40.063, or AROS).
   - Use only your assigned serial port range.

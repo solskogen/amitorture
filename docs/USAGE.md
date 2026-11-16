@@ -16,7 +16,7 @@ All runner commands are run from `runner/` as `python3 -m amitorture <command> â
    ```
    This lists every file and what it was identified as (by CRC32/SHA1), then every matrix entry with the ROM it will use, or why it will be skipped.
    - Encrypted Cloanto ROMs need `rom.key` in the same directory.
-   - AROS entries need no ROM file: they use the AROS ROM built into Amiberry.
+   - AROS entries need no ROM file of yours: they use the AROS ROM that ships with Amiberry (`aros-rom.bin` and `aros-ext.bin` in its `roms/` directory). The runner copies both into each entry's ROM directory from the binary's `roms/` (build tree or portable copy), the installation's `share/amiberry/roms`, `/usr/share/amiberry/roms` or `/usr/local/share/amiberry/roms`, then `--kickstarts`. With neither found, AROS entries end as `error`; a bare copy of the binary elsewhere has no `roms/` next to it.
 5. **Sanity check** (no test disk, about 30 s):
    ```
    python3 -m amitorture run --amiberry /path/to/amiberry --kickstarts ~/Amiberry/ROMs --config a1200-68ec020-fast --selftest

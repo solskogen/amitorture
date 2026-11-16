@@ -279,7 +279,7 @@ Entry `status`:
 | `hang` | the mailbox heartbeat (or, without a mailbox, the serial output) stopped for `--hang` seconds before `done` |
 | `timeout` | still running at `--timeout` without `done` |
 | `incomplete` | the run ended but records are missing, corrupt, inconsistent, modules did not complete, no test evidence arrived, or `done.aborted` > 0 |
-| `error` | a host-side problem (no IPC endpoint, ...), not a finding about the emulator |
+| `error` | a host-side problem (no IPC endpoint, the AROS ROM files not found, Amiberry's log saying it could not open the configured Kickstart ROM, ...), not a finding about the emulator |
 | `skip` | not run; `reason` says why (usually a missing ROM, or an explicitly empty compiled-module selection) |
 
 `ended` says how observation stopped: `done`, `hang`, `timeout`, `crash`,
@@ -457,6 +457,10 @@ the same command (a serial capture is just the bytes).
   module mask), `narrow` (for narrowing launches: `{axis, label, changes, of}`).
 - `media`: what media.py returned, or why there is no test media.
 - `ext_rom`.
+- `rom` for AROS entries: `{builtin: ":AROS", name, files: ["aros-rom.bin", "aros-ext.bin"], source}`, `source` being
+  the directory the runner copied both files from into the entry's ROM path.
+- `rom_load_failed`: the configured Kickstart ROM, when no record arrived and Amiberry's log says
+  `Failed to open '<rom>'`; such a run is classified `error`.
 - `emulator_slot`, `slot_wait_s`: the machine-wide emulator slot (tools/amislot.py) and how long the run waited
   for it.
 - `log_counts`: JIT fallback/flush/fault and illegal-instruction lines counted in the emulator log.

@@ -376,7 +376,12 @@ class Evidence(unittest.TestCase):
         opts = SimpleNamespace(binary="amiberry", params={}, no_disk=True, ports=None, keep=False)
         ctx = {"tmp": str(tmp), "results": str(out), "lock": threading.Lock(), "seq": [0]}
         v = {"ok": False, "error": "dump timed out", "returncode": 7, "stderr": "diagnostic", "differences": []}
+        aros = self.root / "aros"
+        aros.mkdir()
+        for f in runner.AROS_ROM_FILES:
+            (aros / f).write_bytes(b"x")
         with mock.patch.object(runner, "_media_options", return_value=({}, None)), \
+                mock.patch.object(runner, "find_aros_rom_dir", return_value=str(aros)), \
                 mock.patch.object(runner, "audio_wanted", return_value=False), \
                 mock.patch.object(emulator, "pick_port", return_value=12345), \
                 mock.patch.object(emulator, "release_port") as release, \
@@ -411,6 +416,44 @@ class Evidence(unittest.TestCase):
         subs[1]["config"]["dump_ok"] = True
         r = runner.combine(entry, subs)
         self.assertTrue(report.write_all(self.root, {}, [r])["entries"][0]["as_designed"])
+
+
+
+class ArosRomStagingTest(unittest.TestCase):
+    """Amiberry loads ':AROS' from aros-rom.bin/aros-ext.bin in a ROM directory."""
+
+    def _tree(self, root, *dirs):
+        for d in dirs:
+            Path(root, d).mkdir(parents=True, exist_ok=True)
+            for f in runner.AROS_ROM_FILES:
+                Path(root, d, f).write_bytes(b"x")
+
+    def test_binary_relative_roms_win_over_kickstarts(self):
+        with tempfile.TemporaryDirectory() as root:
+            self._tree(root, "build/roms", "kick")
+            Path(root, "build", "amiberry").write_bytes(b"")
+            found = runner.find_aros_rom_dir(str(Path(root, "build", "amiberry")), str(Path(root, "kick")))
+            self.assertEqual(found, str(Path(root, "build", "roms")))
+
+    def test_bare_binary_copy_falls_back_to_kickstarts_or_none(self):
+        with tempfile.TemporaryDirectory() as root:
+            self._tree(root, "kick")
+            Path(root, "half").mkdir()
+            Path(root, "half", "aros-rom.bin").write_bytes(b"x")     # one file is not enough
+            binary = str(Path(root, "amiberry"))
+            with mock.patch.object(runner, "aros_rom_candidates",
+                                   side_effect=lambda b, k=None: [str(Path(root, "half")), *([k] if k else [])]):
+                self.assertEqual(runner.find_aros_rom_dir(binary, str(Path(root, "kick"))), str(Path(root, "kick")))
+                self.assertIsNone(runner.find_aros_rom_dir(binary, None))
+
+    def test_rom_load_failure_without_records_is_a_setup_error(self):
+        empty = records.merge({"serial": []})
+        for ended in ("timeout", "hang"):
+            res = {"rom_load_failed": ":AROS", "hang": {"unchanged_s": 1, "via": "x"}}
+            status, why = runner.classify(res, empty, ended)
+            self.assertEqual(status, "error")
+            self.assertIn(":AROS", why)
+        self.assertEqual(runner.classify({}, empty, "timeout")[0], "timeout")
 
 
 if __name__ == "__main__":

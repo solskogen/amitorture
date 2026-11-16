@@ -5,7 +5,7 @@ A torture test and regression finder for Amiga emulators, Amiberry first.
 A set of bootable test disks (ADFs) exercises the 68000-68060 CPUs and FPUs, the MMUs, the OCS/ECS/AGA chipset, Paula, the CIAs, input, RTG, sound and network cards, the RTC, Gayle/PCMCIA, Zorro, CD32 and CDTV. Every result is checked against the Motorola and Amiga hardware manuals. A host runner boots the disks in the emulator across a matrix of machines and settings, and writes a report detailed enough for an AI (or a person) to find the faulty emulator code.
 
 - **Same tests, any engine:** with the JIT on, the same tests run and must give identical records.
-- **No OS installation needed:** only the Kickstart ROMs you provide (or the AROS ROM built into Amiberry).
+- **No OS installation needed:** only the Kickstart ROMs you provide (or the AROS ROM that ships with Amiberry).
 - **Isolated:** never touches your own Amiberry configuration; everything lives in its own `work/` directory.
 - **Shows its progress on the Amiga's own screen:** each module's counts, the verdict, and which disk to insert next.
 - **Designed to be safe on real hardware:** it writes nothing it doesn't own.

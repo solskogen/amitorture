@@ -20,6 +20,8 @@ class Warp(unittest.TestCase):
         tmp = tempfile.TemporaryDirectory(dir=ROOT / "work" / "tmp")
         self.addCleanup(tmp.cleanup)
         self.root = Path(tmp.name)
+        for f in runner.AROS_ROM_FILES:
+            (self.root / f).write_bytes(b"x")
         self.entry = matrix.find("aros-aga-68020-fast")
 
     def opts(self, **kw):

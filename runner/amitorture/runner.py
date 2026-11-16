@@ -5,6 +5,7 @@ import base64
 import datetime
 import json
 import os
+import re
 import shutil
 import threading
 import time
@@ -521,6 +522,37 @@ def _rom_info(rom):
     return {"file": rom["file"], "source": rom["path"], "crc32": rom["crc32"], "sha1": rom["sha1"], **rom["rom"]}
 
 
+# Amiberry's built-in AROS (":AROS") is not compiled into the binary: Amiberry
+# loads these two files from a ROM directory (memory.cpp,
+# find_kickstart_replacement_directory), which it seeds at start-up from the
+# roms/ directory of the binary or of its installation. The runner gives every
+# entry its own home and ROM path, so it stages them itself.
+AROS_ROM_FILES = ("aros-rom.bin", "aros-ext.bin")
+
+
+def aros_rom_candidates(binary, kickstarts=None):
+    """Directories that may hold AROS_ROM_FILES for `binary`, in the order
+    Amiberry seeds from (executable-relative first, then the installation's
+    data directory), then the --kickstarts directory."""
+    dirs = []
+    for b in dict.fromkeys([os.path.abspath(binary), os.path.realpath(binary)]):
+        bdir = os.path.dirname(b)
+        dirs += [os.path.join(bdir, "roms"),
+                 os.path.join(bdir, "..", "share", "amiberry", "roms"),
+                 os.path.join(bdir, "..", "Resources", "roms")]
+    dirs += ["/usr/share/amiberry/roms", "/usr/local/share/amiberry/roms"]
+    if kickstarts:
+        dirs.append(kickstarts)
+    return [os.path.normpath(d) for d in dict.fromkeys(dirs)]
+
+
+def find_aros_rom_dir(binary, kickstarts=None):
+    for d in aros_rom_candidates(binary, kickstarts):
+        if all(os.path.isfile(os.path.join(d, f)) for f in AROS_ROM_FILES):
+            return d
+    return None
+
+
 # Emulator network backends with no real LAN behind them (user-mode NAT).
 # On these the network module may broadcast its ARP request (run flag
 # "net", AMT_F_NET; CONTRACT section 4): nothing outside the emulator sees it.
@@ -787,9 +819,21 @@ def _run_disk(opts, ctx, entry, binary=None, extra_options=None, disk=None):
     res["binary"] = binary
     res["disk_name"] = dname
     # ROM
+    aros_dir = None
     if "builtin" in entry["rom"]:
         rom_cfg = entry["rom"]["builtin"]
-        res["rom"] = {"builtin": rom_cfg, "name": "AROS ROM built into the Amiberry binary"}
+        kickstarts = getattr(opts, "kickstarts", None)
+        aros_dir = find_aros_rom_dir(binary, kickstarts)
+        if aros_dir is None:
+            res["status"] = "error"
+            res["reason"] = (f"no AROS ROM files: {rom_cfg} needs {' and '.join(AROS_ROM_FILES)}, which ship in "
+                             f"Amiberry's roms/ directory; none found in "
+                             + ", ".join(aros_rom_candidates(binary, kickstarts))
+                             + ". Run the binary from its build or install directory, or put both files in "
+                             "--kickstarts")
+            return res
+        res["rom"] = {"builtin": rom_cfg, "name": "AROS ROM shipped with Amiberry",
+                      "files": list(AROS_ROM_FILES), "source": aros_dir}
     else:
         rom = ctx["romset"].find(entry["rom"]["ids"])
         if rom is None:
@@ -827,6 +871,11 @@ def _run_disk(opts, ctx, entry, binary=None, extra_options=None, disk=None):
         fh.write(rid + "\n")
     media_dir = os.path.join(etmp, "media")
     os.makedirs(media_dir, exist_ok=True)
+    if aros_dir:
+        # amiberry.rom_path (amiberry_cfg.build) is searched first
+        os.makedirs(os.path.join(media_dir, "roms"), exist_ok=True)
+        for f in AROS_ROM_FILES:
+            shutil.copyfile(os.path.join(aros_dir, f), os.path.join(media_dir, "roms", f))
     for mf in entry.get("media_files") or []:
         # board media the entry needs (e.g. a PCMCIA SRAM card image), zero-filled
         with open(os.path.join(media_dir, mf["name"]), "wb") as fh:
@@ -993,6 +1042,10 @@ def _run_disk(opts, ctx, entry, binary=None, extra_options=None, disk=None):
     res["started"] = datetime.datetime.fromtimestamp(t_start, datetime.timezone.utc).isoformat()
     res["process"] = {"pid": proc.proc.pid, "exit_before_stop": exit_before_stop, "stop_method": stop,
                       "exit": proc.exit_info(), "log": f"{rel}amiberry.log", "log_tail": proc.tail(80)}
+    if not run.any_records():
+        m_rom, _ = proc.find(r"Failed to open '" + re.escape(rom_cfg) + "'")
+        if m_rom:
+            res["rom_load_failed"] = rom_cfg
     m_sig, _ = proc.find(r"si_signo = (\d+)")
     if m_sig:
         try:
@@ -1603,6 +1656,10 @@ def classify(res, merged, ended):
         if host_failed:
             why += f"; {len(host_failed)} failed host case(s): " + ", ".join(host_failed)
         return "fail", why + ("; " + "; ".join(integrity) if integrity else "")
+    if ended in ("hang", "timeout") and not merged.records and res.get("rom_load_failed"):
+        return "error", (f"Amiberry could not load the Kickstart ROM {res['rom_load_failed']!r} (its log says "
+                         "\"Failed to open\"), so the machine ran without a ROM: a ROM setup problem, not a "
+                         "guest result")
     if ended == "hang":
         return "hang", f"no progress for {res['hang']['unchanged_s']} s ({res['hang']['via']}) before done"
     if ended == "timeout":
