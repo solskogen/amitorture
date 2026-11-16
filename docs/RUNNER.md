@@ -14,7 +14,7 @@ check in every report).
     The names are short because the IPC socket path must fit AF_UNIX's 107 bytes.
   - The temp root is deleted after the run unless `--keep` is given.
 - **Emulator slots.** At most `nproc - 1` (at least 1) Amiberry processes run on the machine at a time, shared by every agent and
-  tool. `tools/amislot.py` (flock on `~/.cache/amitorture/locks/emu-slot-N`, or `$XDG_CACHE_HOME/amitorture/locks` when that is set, or `$AMT_LOCK_DIR`, shared by every checkout; `AMT_MAX_EMU` can lower the count, never raise it; live Amiberry processes no slot holder accounts for count too) is held for the
+  tool. `tools/amislot.py` (flock on `~/.cache/amitorture/locks/emu-slot-N`, or `$XDG_CACHE_HOME/amitorture/locks` when that is set, or `$AMT_LOCK_DIR`, shared by every checkout; `AMT_MAX_EMU` can lower the count, never raise it; live Amiberry processes no slot holder accounts for count too; those are found in `/proc`, so on a host without procfs, such as macOS, only the locks count) is held for the
   whole lifetime of every Amiberry process the runner starts: `--version`, `--dump-config`, emulation runs,
   narrowing reruns, baseline repetitions, repro runs. `--jobs N` (default 1) runs N entries at once and is capped at
   the slot count. Whatever waits for a free slot is recorded as `slot_wait_s` in `raw/<entry>/result.json`.
@@ -42,6 +42,7 @@ check in every report).
   The guard can't tell who wrote, so every 5 s it also records Amiberry processes whose HOME is the user's real
   home (`user_amiberries`), i.e. not one of the runner's isolated emulators. The report names them as the likely
   cause (`isolation.user_amiberry_seen`); with none seen, the emulator under test is the likely cause.
+  The processes are read from `/proc`: on a host without procfs none is ever seen.
 
 ## Disk set
 

@@ -280,6 +280,18 @@ class Isolation(unittest.TestCase):
             self.assertIn(("a", "size changed"), ch)
             self.assertFalse(g.ok)
 
+    def test_host_without_procfs(self):
+        # macOS has no /proc: no Amiberry process can be seen there, and the
+        # runner must still start (slots are then limited by the locks only).
+        import amislot
+        from unittest import mock
+        with mock.patch.object(isolation.os, "listdir", side_effect=FileNotFoundError("/proc")):
+            self.assertEqual(isolation.user_amiberries(), {})
+        with mock.patch.object(amislot.os, "listdir", side_effect=FileNotFoundError("/proc")):
+            self.assertEqual(amislot._amiberry_procs(), {})
+            self.assertEqual(amislot._amiberry_pids(), set())
+            self.assertEqual(amislot.running_emulators(), 0)
+
     def test_watched_uses_xdg(self):
         p = [x[0] for x in isolation.watched_paths({"HOME": "/h", "XDG_CONFIG_HOME": "/c"})]
         self.assertIn("/c/amiberry", p)

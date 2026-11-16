@@ -54,10 +54,19 @@ def max_slots():
     return min(req, n) if req > 0 else n
 
 
+def _proc_pids():
+    """The entries of /proc, or nothing on a host without procfs (macOS):
+    there only the slot locks limit the emulators."""
+    try:
+        return os.listdir("/proc")
+    except OSError:
+        return []
+
+
 def _amiberry_procs():
     """{pid: ppid} of live amiberry processes."""
     procs = {}
-    for pid in os.listdir("/proc"):
+    for pid in _proc_pids():
         if not pid.isdigit():
             continue
         try:
@@ -74,7 +83,7 @@ def _amiberry_procs():
 
 def _amiberry_pids():
     pids = set()
-    for pid in os.listdir("/proc"):
+    for pid in _proc_pids():
         if not pid.isdigit():
             continue
         try:

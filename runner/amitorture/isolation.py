@@ -19,7 +19,11 @@ def user_amiberries(home=None):
     amitorture emulator: those read and write the user's own config."""
     home = os.path.realpath(home or os.path.expanduser("~"))
     out = {}
-    for pid in os.listdir("/proc"):
+    try:
+        pids = os.listdir("/proc")
+    except OSError:          # no procfs (macOS): nothing to tell
+        pids = []
+    for pid in pids:
         if not pid.isdigit():
             continue
         try:
