@@ -1,5 +1,6 @@
 """The bench disk's host side (bench.py): serial stamps, the guest's
 requests, results, diffs, the matrix and the runner's bench policy."""
+import types
 import contextlib
 import io
 import json
@@ -229,9 +230,27 @@ class Diff(unittest.TestCase):
     def test_tolerances(self):
         v = self.verdicts([blk("a", 100, 1), blk("b", 100, 2), blk("c", 100, 3), blk("d", 100, 4),
                            blk("e", 100, 5, confirmed=False)],
-                          [blk("a", 100.4, 1), blk("b", 100.8, 2), blk("c", 102, 3), blk("d", 97, 4),
-                           blk("e", 102, 5)])
+                          [blk("a", 100.9, 1), blk("b", 102.5, 2), blk("c", 104, 3), blk("d", 96, 4),
+                           blk("e", 104, 5)])
         self.assertEqual(v, {"a": "same", "b": "borderline", "c": "slower", "d": "faster", "e": "noisy"})
+
+    def test_launch_spread_is_the_noise(self):
+        v = self.verdicts([blk("n", 100, 1, launch_spread_pct=2.0), blk("s", 100, 2, launch_spread_pct=0.5),
+                           blk("u", 100, 3, confirmed=False, launch_spread_pct=0.2)],
+                          [blk("n", 105, 1, launch_spread_pct=1.5), blk("s", 105, 2, launch_spread_pct=0.5),
+                           blk("u", 105, 3, launch_spread_pct=0.2)])
+        # 1.5 x (2 + 1.5) = 5.25 covers 5%; 1.5 x 1 does not; unconfirmed repetitions no longer matter
+        self.assertEqual(v, {"n": "noisy", "s": "slower", "u": "slower"})
+
+    def test_merge_launches_keeps_the_fastest(self):
+        a = {"basis": "host", "blocks": [blk("x", 100, 1), blk("y", 50, 2), blk("z", 10, 3)]}
+        b = {"basis": "host", "blocks": [blk("x", 104, 1), blk("y", 60, 2, st="fail"), blk("w", 1, 4)]}
+        m = bench.merge_launches([a, b])
+        got = {x["blk"]: (x["value"], x.get("launch_spread_pct"), x.get("st")) for x in m["blocks"]}
+        self.assertEqual(got, {"x": (100, 4.0, "ok"), "y": (60, 20.0, "fail"), "z": (10, None, "ok"),
+                               "w": (1, None, "ok")})
+        self.assertEqual(m["launches"], 2)
+        self.assertIs(bench.merge_launches([a, None])["blocks"][0].get("launch_spread_pct"), None)
 
     def test_cost_blocks_have_wider_tolerances(self):
         m = "cpu_per_emu_s"
@@ -274,9 +293,51 @@ class Diff(unittest.TestCase):
 
     def test_exit_status(self):
         self.assertEqual(bench.exit_status([{"verdict": "same"}, {"verdict": "faster"}]), (0, "OK"))
-        self.assertEqual(bench.exit_status([{"verdict": "same"}, {"verdict": "noisy"}])[0], 1)
+        self.assertEqual(bench.exit_status([{"verdict": "same"}, {"verdict": "noisy"}])[0], 0)
         self.assertEqual(bench.exit_status([{"verdict": "new"}]), (1, "NOTHING COMPARED"))
         self.assertEqual(bench.exit_status([{"verdict": "slower"}, {"verdict": "fail"}]), (1, "SLOWER"))
+
+
+class Launches(unittest.TestCase):
+    def test_runner_merges_launches_worst_status(self):
+        e = {"id": "bench-x"}
+        one = {"id": "bench-x", "status": "pass", "reason": "ok", "raw": "raw/bench-x/", "duration_s": 10,
+               "bench": {"blocks": [blk("a", 100)]}}
+        two = {"id": "bench-x", "status": "timeout", "reason": "late", "raw": "raw/bench-x/launch2/",
+               "duration_s": 12, "bench": {"blocks": [blk("a", 99)]}}
+        r = runner.merge_launches(e, [one, two])
+        self.assertEqual((r["status"], r["reason"], r["duration_s"]), ("timeout", "launch 2: late", 22))
+        self.assertEqual([x["raw"] for x in r["launches"]], ["raw/bench-x/", "raw/bench-x/launch2/"])
+        self.assertEqual(r["bench"]["blocks"][0]["value"], 99)
+
+    def test_incomplete_rounds_are_dropped(self):
+        e = [{"id": "a"}, {"id": "b"}]
+        first = [{"id": "a", "status": "pass"}, {"id": "b", "status": "pass"}]
+        self.assertIs(runner.merged_rounds(e, [first, [first[0], None]]), first)
+
+    def test_slower_entries_are_launched_again(self):
+        # bench-a runs slow on its first two launches only; bench-b is steady
+        values = {"bench-a": [110, 111, 100], "bench-b": [100, 100]}
+        launched = []
+
+        class Ctx:
+            def run_entries(self, ents):
+                out = []
+                for e in ents:
+                    launched.append((e["id"], e.get("bench_launch", 1)))
+                    v = values[e["id"]][e.get("bench_launch", 1) - 1]
+                    out.append({"id": e["id"], "status": "pass", "duration_s": 1,
+                                "bench": {"pacing": {"effective": False}, "blocks": [blk("x", v)]}})
+                return out
+
+        opts = types.SimpleNamespace(launches=2, verbose=False)
+        base = [entry("bench-a", [blk("x", 100, launch_spread_pct=0.5)]),
+                entry("bench-b", [blk("x", 100, launch_spread_pct=0.5)])]
+        ents = [{"id": "bench-a", "bench_plan": "p"}, {"id": "bench-b", "bench_plan": "p"}]
+        got = runner.run_bench_rounds(opts, Ctx(), ents, "unused", base)
+        self.assertEqual(launched, [("bench-a", 1), ("bench-b", 1), ("bench-a", 2), ("bench-b", 2), ("bench-a", 3)])
+        self.assertEqual([r["bench"]["blocks"][0]["value"] for r in got], [100, 100])
+        self.assertEqual({r["verdict"] for r in bench.diff(base, bench.summary(got))}, {"same"})
 
 
 class Pinning(unittest.TestCase):

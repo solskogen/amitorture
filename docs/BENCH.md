@@ -176,7 +176,7 @@ Amiberry.
 ### Running it
 
 ```
-amitorture run --amiberry BIN --matrix bench [--config 'bench-68020*'] [--bench-baseline RESULTS_DIR] [--pin auto|CPUS|none]
+amitorture run --amiberry BIN --matrix bench [--config 'bench-68020*'] [--bench-baseline RESULTS_DIR] [--pin auto|CPUS|none] [--launches N]
 amitorture bench diff A_RESULTS B_RESULTS [-o BENCH-DIFF.md]
 amitorture bench plan RESULTS [--entry ID] [-o plan.json]
 amitorture compare --amiberry OLD --amiberry NEW [--repeat 3] [--threshold 1] [--pin 2-5]
@@ -194,6 +194,24 @@ one CPU may boost to rather different clocks, and an unpinned launch runs on whi
 scheduler picks. `--pin 2-5` picks the CPUs, `--pin none` turns it off. Each entry records
 `pinned_to`; the diff notes when the two runs used different CPUs. For steadier numbers, also
 use the `performance` governor (the host's governor and boost are recorded in each run).
+
+**Launches.** Pinning does not make one launch repeatable. In A/A runs on a desktop host
+(Ryzen 9 9950X, pinned), a block's value moved by a median of 0.9% between two launches of the
+same binary, and 5% of blocks by more than 4%. Some blocks moved by up to 68%, even though each
+launch had confirmed its time to 0.25%. Disabling address-space randomisation did not help.
+So a bench run launches each entry twice by default (`run --launches N`), in rounds: every
+entry once, then every entry again with the first round's counts. Each block keeps its fastest
+launch (`value`), its per-launch values (`launch_values`) and their spread (`launch_spread_pct`,
+slowest over fastest). A failed launch of a block wins over a faster one, and the entry's status
+is the worst launch's. Raw files of launch 2 and later are in `raw/<entry>/launch<k>/`.
+Sometimes both launches of a run land on the same slow mode (a 68060 JIT block that came out 1.18
+in five runs and 1.30 in both launches of the sixth). So with `--bench-baseline`, an entry with a
+block the diff calls slower is launched again, up to twice more (`bench.RECHECKS`), and the diff
+is made again over all its launches. A real regression is slower on every launch, so it stays
+slower, at the cost of those extra launches. A run without a baseline calibrates its counts in
+launch 1, which came out about 1–5% slower than launch 2 per entry. Its fastest values are still
+right, but the spread is wider, so a diff against it is a little less sensitive than one against
+a run that had a baseline.
 
 **Pacing.** The 68000/68010 entries (cpu_speed=real, no JIT, no threaded CPU) run warped: the
 emulator runs as fast as it can instead of in step with real time, so their timings say what
@@ -233,17 +251,21 @@ Verdict per block, B against A (lower is better):
 
 | verdict | when |
 |---|---|
-| same | within 0.5% (`ns_per_unit`) or 2% (`cpu_per_emu_s`) |
-| borderline | within 1% or 5% |
-| slower / faster | beyond that, and both sides confirmed |
-| noisy | beyond the first limit, but one side is unconfirmed |
+| same | within 1% (`ns_per_unit`) or 2% (`cpu_per_emu_s`) |
+| borderline | within 3% or 5% |
+| slower / faster | beyond that, and beyond 1.5 × the sum of both runs' `launch_spread_pct` (a side with one launch: both sides confirmed) |
+| noisy | beyond borderline, but within that launch allowance (one launch: a side is unconfirmed) |
 | fail | a side's work came out wrong |
 | incomparable | different kernel set, memory, timing basis, pacing or units per count, or a different checksum at the same count (the disk build changed the block's results) |
 | skipped, new, info | nothing to compare (`flood_recovery` is info only) |
 | incomplete | the block or entry is missing from one run |
 
-The diff fails (exit 1) on any slower, fail, noisy or incomplete block, or when nothing was
-compared. It also gives the geometric mean change per entry and tier. That is a summary only: a
+The diff fails (exit 1) on any slower, fail or incomplete block, or when nothing was
+compared. A noisy block is listed but does not fail it: the runs cannot tell. On the A/A runs
+above, these rules flag 0–1 of 284 blocks in simulation; a real A/A run with two launches had 1
+slower block before the recheck, which it covers, and 5 faster. A 5% slowdown is flagged in about 80% of the blocks,
+a 10% slowdown in about 94%; one launch with the old 0.5%/1% limits flagged 18–37 blocks slower and
+over 100 noisy on A/A. It also gives the geometric mean change per entry and tier. That is a summary only: a
 regression in one block can hide in it, so only the per-block verdicts decide.
 
 `compare` runs both binaries `--repeat` times, alternating which goes first, each launch with

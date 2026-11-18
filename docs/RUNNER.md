@@ -636,10 +636,14 @@ amitorture bench diff A_RESULTS B_RESULTS [-o FILE]
 ```
 Compares the bench results of two finished runs, block by block (docs/BENCH.md "Comparing two runs").
 `run --bench-baseline A_RESULTS` does the same at the end of a run, after giving the run A's work counts.
-Exit status 1 on any slower, failed, noisy or missing block.
+Exit status 1 on any slower, failed or missing block (noisy ones are listed only).
 
 A bench `run` pins every emulator to the same host CPUs, by default the 4 fastest-boosting physical
 cores (`--pin auto`; `--pin 2-5` to choose, `--pin none` to not pin; docs/BENCH.md "Host CPUs").
+It launches each bench entry twice (`--launches N`), keeps each block's fastest launch, and the
+diff takes the launch-to-launch spread as the noise (docs/BENCH.md "Launches"). With
+`--bench-baseline`, an entry with a slower block is launched up to twice more before the diff. `compare` runs one
+launch per repeat; its repeats do that job.
 
 ### bench plan
 ```

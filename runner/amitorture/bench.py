@@ -35,7 +35,10 @@ COST_MIN_S = 0.5        # the same for the cost blocks (host CPU per emulated se
 CONFIRM = {"ns_per_unit": 0.0025, "cpu_per_emu_s": 0.01}   # two fastest agree within
 MAX_REPS = 12           # BH_MAX_REPS
 # |change| in percent: same up to the first, borderline up to the second
-TOLERANCE = {"ns_per_unit": (0.5, 1.0), "cpu_per_emu_s": (2.0, 5.0)}
+TOLERANCE = {"ns_per_unit": (1.0, 3.0), "cpu_per_emu_s": (2.0, 5.0)}
+LAUNCHES = 2            # emulator launches per bench entry; each block keeps its fastest
+RECHECKS = 2           # with a baseline: more launches of an entry while a block comes out slower
+SPREAD_FACTOR = 1.5     # beyond borderline: slower/faster only past this many times both runs' launch spreads
 SAMPLED = ("flood_recovery",)       # blocks that need mailbox samples while they run
 COST_UNITS = ("frame", "run")       # blocks whose measure is host CPU per emulated second
 POS_RUN, POS_QUIET = 0x10000, 0x20000
@@ -392,8 +395,39 @@ def summary(results):
                         "flood_holds": eng.get("cpu_thread_flood_holds"), "refloods": eng.get("cpu_thread_refloods"),
                         "basis": b.get("basis"), "pacing": b.get("pacing"), "env": b.get("env"),
                         "pinned_to": (sub.get("host_cpus") or r.get("host_cpus") or {}).get("pinned_to"),
+                        "launches": b.get("launches", 1),
                         "blocks": b.get("blocks") or []})
     return out
+
+
+def merge_launches(benches):
+    """One res["bench"] from the bench results of several launches of the
+    same entry and disk: each block keeps its fastest launch (a failed one
+    wins), with "launch_values" and "launch_spread_pct" (slowest over
+    fastest). Blocks are matched by (blk, id, kset)."""
+    benches = [b for b in benches if b]
+    if not benches:
+        return None
+    key = lambda x: (x.get("blk"), x.get("id"), x.get("kset"))
+    order, cands = [], {}
+    for b in benches:
+        for x in b.get("blocks") or []:
+            if key(x) not in cands:
+                order.append(key(x))
+            cands.setdefault(key(x), []).append(x)
+    blocks = []
+    for k in order:
+        cs = cands[k]
+        fails = [c for c in cs if c.get("st") == "fail"]
+        valued = [c for c in cs if c.get("value") is not None]
+        pick = dict(fails[0] if fails else min(valued, key=lambda c: c["value"]) if valued else cs[0])
+        if len(benches) > 1:
+            vals = [c.get("value") for c in cs]
+            pick["launch_values"] = vals
+            if len(cs) == len(benches) and None not in vals and min(vals) > 0:
+                pick["launch_spread_pct"] = round((max(vals) / min(vals) - 1) * 100, 4)
+        blocks.append(pick)
+    return dict(benches[0], blocks=blocks, launches=len(benches))
 
 
 def plan(entry_summary):
@@ -485,12 +519,20 @@ def _verdict(a, b):
     change = (b["value"] / a["value"] - 1) * 100 if a["value"] else 0.0
     row["change_pct"] = round(change, 3)
     same, border = TOLERANCE.get(row["metric"], TOLERANCE["ns_per_unit"])
+    spreads = (a.get("launch_spread_pct"), b.get("launch_spread_pct"))
     if abs(change) <= same:
         v = "same"
-    elif not (a.get("confirmed") and b.get("confirmed")):
-        v = "noisy"
     elif abs(change) <= border:
         v = "borderline"
+    elif None not in spreads:
+        # several launches each: launch-to-launch variation is the noise
+        allow = SPREAD_FACTOR * sum(spreads)
+        v = "noisy" if abs(change) <= allow else "slower" if change > 0 else "faster"
+        if v == "noisy":
+            row["why"] = f"the launches of the two runs differ by up to {allow:.1f}% between them"
+    elif not (a.get("confirmed") and b.get("confirmed")):
+        v = "noisy"
+        row["why"] = "one launch, unconfirmed repetitions"
     else:
         v = "slower" if change > 0 else "faster"
     return dict(row, verdict=v)
@@ -525,11 +567,11 @@ def diff(a_entries, b_entries):
     return rows
 
 
-FAILING = ("slower", "fail", "noisy", "incomplete")
+FAILING = ("slower", "fail", "incomplete")
 
 
 def exit_status(rows):
-    """(status, word): 1 on a slower, failed, noisy or missing block, or nothing compared."""
+    """(status, word): 1 on a slower, failed or missing block, or nothing compared."""
     if not any(r["verdict"] not in ("new", "incomparable", "skipped") for r in rows):
         return 1, "NOTHING COMPARED"
     for v in FAILING:
@@ -567,8 +609,9 @@ def diff_markdown(rows, a_label="A", b_label="B"):
          "Lower is better: host ns per unit (micro, kernel) or host CPU seconds per emulated second (frame, "
          "thread). Change > 0: slower. same within "
          f"{TOLERANCE['ns_per_unit'][0]}% ({TOLERANCE['cpu_per_emu_s'][0]}% for CPU/s), borderline up to "
-         f"{TOLERANCE['ns_per_unit'][1]}% ({TOLERANCE['cpu_per_emu_s'][1]}%); noisy: beyond 'same' but a side "
-         "never confirmed its time.", ""]
+         f"{TOLERANCE['ns_per_unit'][1]}% ({TOLERANCE['cpu_per_emu_s'][1]}%); beyond that slower/faster, or "
+         f"noisy (not a failure) when within {SPREAD_FACTOR}x the two runs' launch-to-launch spreads (one "
+         "launch: a side never confirmed its time).", ""]
     means = tier_means(rows)
     if means:
         L.extend(["Geometric mean change per tier (a summary, not a verdict):", "",

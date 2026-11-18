@@ -210,7 +210,7 @@ def run(a):
                 raise RunnerError("the test disk or a binary changed during the comparison")
             cmd = [sys.executable, "-m", "amitorture", "run", "--amiberry", by_label[lab],
                    "--matrix", a.matrix, "--workdir", workdir, "--jobs", "1",
-                   "--no-narrow", "--no-repro", "-q"]
+                   "--no-narrow", "--no-repro", "--launches", "1", "-q"]
             if first and a.matrix == "bench":
                 cmd += ["--bench-baseline", first]
             if adf:

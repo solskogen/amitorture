@@ -63,6 +63,7 @@ class Options:
         self.pin = kw.get("pin")                # --pin: CPU list, "auto", "none"; None: auto for bench
         self.pin_cpus = None                    # the resolved list, best first (run())
         self.bench_baseline = kw.get("bench_baseline")  # results dir: its bench counts, then a diff against it
+        self.launches = kw.get("launches")      # launches per bench entry (None: bench.LAUNCHES)
 
 
 def log(opts, msg):
@@ -1024,6 +1025,8 @@ def _run_disk(opts, ctx, entry, binary=None, extra_options=None, disk=None):
         return res
     # Launch
     rel = f"raw/{safe}/{dname}/" if dname else f"raw/{safe}/"
+    if entry.get("bench_launch", 1) > 1:
+        rel += f"launch{entry['bench_launch']}/"
     rawdir = os.path.join(ctx["results"], rel)
     os.makedirs(rawdir, exist_ok=True)
     res["raw"] = rel
@@ -1206,6 +1209,78 @@ def entry_disks(ctx, entry):
         # hardware entries: only the disks of these groups ("<n>-<group>")
         return [d for d in disks if d[0].split("-", 1)[-1] in groups]
     return disks
+
+
+def merge_launches(entry, launches):
+    """One entry result from several launches of a bench entry (pure;
+    unit-tested): per disk, the first launch's result with every block's
+    fastest launch (bench.merge_launches), the worst status and the
+    launches listed under "launches"."""
+    per = [r["disks"] if "disks" in r else [r] for r in launches]
+    subs = []
+    for i, first in enumerate(per[0]):
+        ls = [p[i] for p in per if i < len(p)]
+        sub = dict(first)
+        sub["launches"] = [{k: s.get(k) for k in ("raw", "status", "reason", "duration_s")} for s in ls]
+        worst = min(ls, key=lambda s: STATUS_RANK.get(s.get("status"), 3))
+        if worst is not first:
+            sub["status"] = worst.get("status")
+            sub["reason"] = f"launch {ls.index(worst) + 1}: {worst.get('reason')}"
+        if any(s.get("bench") for s in ls):
+            sub["bench"] = bench.merge_launches([s.get("bench") for s in ls])
+        sub["duration_s"] = round(sum(s.get("duration_s") or 0 for s in ls), 2)
+        subs.append(sub)
+    return combine(entry, subs) if "disks" in launches[0] else subs[0]
+
+
+def run_bench_rounds(opts, ctx, entries, plandir, baseline=None):
+    """Runs the bench entries opts.launches times, a round of every entry at
+    a time, so that a slow spell of the host does not fall on all launches
+    of one entry. Rounds after the first do the first round's work (its
+    counts, unless a baseline froze them already). With a baseline, entries
+    with a block the diff calls slower get up to bench.RECHECKS more
+    launches, one round at a time. Returns the merged results."""
+    n = opts.launches or bench.LAUNCHES
+    rounds = []
+    ctx.bench_rounds = rounds
+    for k in range(1, n + 1):
+        ents = entries if k == 1 else [dict(e, bench_launch=k) for e in entries]
+        if k == 2:
+            fresh = [e for e in ents if not e.get("bench_plan")]
+            bench.freeze_plans(fresh, bench.summary(rounds[0]), plandir)
+        if n > 1:
+            log(opts, f"bench launch {k} of {n}")
+        rounds.append(ctx.run_entries(ents))
+    for k in range(n + 1, n + 1 + (bench.RECHECKS if baseline and n > 1 else 0)):
+        results = merged_rounds(entries, rounds)
+        slower = {r["entry"] for r in bench.diff(baseline, bench.summary(results)) if r["verdict"] == "slower"}
+        idx = [i for i, e in enumerate(entries) if e["id"] in slower]
+        if not idx:
+            break
+        log(opts, f"bench launch {k}: again for {', '.join(entries[i]['id'] for i in idx)} (a block came out "
+            "slower)")
+        ents = [dict(entries[i], bench_launch=k) for i in idx]
+        got = ctx.run_entries(ents)
+        if any(r is None for r in got) or len(got) < len(idx):
+            break
+        rounds.append(dict(zip(idx, got)))
+    return merged_rounds(entries, rounds)
+
+
+def merged_rounds(entries, rounds):
+    """Per entry, the merge of its launches over the rounds. A round cut
+    short (Ctrl+C) is left out; a recheck round is a dict of the entries
+    (by index) it launched again."""
+    full = [r for r in rounds if isinstance(r, dict) or (len(r) == len(entries) and None not in r)]
+    if not full:
+        return None
+    if len(full) == 1:
+        return full[0]
+    out = []
+    for i, e in enumerate(entries):
+        ls = [r[i] for r in full if not isinstance(r, dict) or i in r]
+        out.append(ls[0] if len(ls) == 1 else merge_launches(e, ls))
+    return out
 
 
 def run_entry(opts, ctx, entry, binary=None, extra_options=None):
@@ -2001,6 +2076,8 @@ def run(opts):
         if opts.jobs > 1:
             log(opts, f"--jobs {opts.jobs} ignored: bench entries run one at a time (docs/BENCH.md)")
             opts.jobs = 1
+    if opts.launches is not None and opts.launches < 1:
+        raise RunnerError("--launches must be at least 1")
     opts.pin_cpus = resolve_pin(getattr(opts, "pin", None), bool(nb))
     if opts.pin_cpus:
         log(opts, f"emulators pinned to host CPUs {','.join(map(str, opts.pin_cpus))}")
@@ -2019,7 +2096,10 @@ def run(opts):
         log(opts, f"run {run_id}: matrix {opts.matrix}, {len(entries)} entr{'y' if len(entries) == 1 else 'ies'}, "
             f"results in {outdir}")
         try:
-            results = ctx.run_entries(entries)
+            if nb:
+                results = run_bench_rounds(opts, ctx, entries, os.path.join(outdir, "plans"), baseline)
+            else:
+                results = ctx.run_entries(entries)
             extra = analysis.analyze_run(opts, ctx, entries, results)
         except (KeyboardInterrupt, emulator.Interrupted):
             # Ctrl+C: keep what finished. Interrupted during the entries: the
@@ -2028,6 +2108,8 @@ def run(opts):
             emulator.interrupt()
             emulator.stop_all()
             phase = "entries" if results is None else "analysis"
+            if results is None:
+                results = merged_rounds(entries, getattr(ctx, "bench_rounds", None) or [])
             if results is None:
                 results = [r for r in getattr(ctx, "results_so_far", []) if r is not None]
             extra = None
