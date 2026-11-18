@@ -536,20 +536,12 @@ class SpeedTrims(unittest.TestCase):
         rtg = es["a4000-rtg-a2410"]
         self.assertEqual(rtg["disk_groups"], ["exp"])
         self.assertEqual(int(rtg["params"]["modules"], 16), (1 << 16) | (1 << 24))
-        # a full board entry runs every module (only hostspeed is left out at cpu_speed=max)
+        # a full board entry runs every module
         full = int(es["a4000-rtg-cv64z3"].get("params", {}).get("modules", "0xffffffffffffffff"), 16)
-        self.assertEqual(full | (1 << matrix.MODULE_IDS["hostspeed"]), 0xFFFFFFFFFFFFFFFF)
+        self.assertEqual(full, 0xFFFFFFFFFFFFFFFF)
         zz = es["a4000-rtg-zz9000z2"]
         self.assertTrue(int(zz["params"]["modules"], 16) & (1 << 18))      # network too
         self.assertIn("exp", es["a4000-z2z3-rtg"]["disk_groups"])           # the memory modules
-
-    def test_hostspeed_only_at_real_speed(self):
-        from amitorture import matrix
-        bit = 1 << matrix.MODULE_IDS["hostspeed"]
-        for e in matrix.expand("standard"):
-            mask = int(str(e.get("params", {}).get("modules", "0xffffffffffffffff")), 0)
-            if e["options"].get("cpu_speed") == "max":
-                self.assertFalse(mask & bit, e["id"])
 
     def test_floppy_speed_per_disk(self):
         from amitorture.runner import disk_floppy_speed as f, FLOPPY_TEST_SPEED as R_TEST

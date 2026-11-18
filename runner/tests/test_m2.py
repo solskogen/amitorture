@@ -430,6 +430,15 @@ class Baselines(unittest.TestCase):
         other = dict(self.ENTRY, options=dict(self.ENTRY["options"], cpu_model="68030"))
         self.assertEqual(self.check(self.make([old]), [now], entry=other, registry=registry)["regressions"], 1)
 
+    def test_retired_hostspeed_case_is_not_a_regression(self):
+        v = [{"case": "a", "st": "pass"}]
+        base = self.make([v])
+        c = dict(base["entries"]["e1"]["cases"]["cpu.a"], mod="hostspeed", case="speed_fsin")
+        base["entries"]["e1"]["cases"]["host.speed_fsin"] = c
+        d = self.check(base, [v])
+        self.assertEqual(d["regressions"], 0)
+        self.assertEqual([f["kind"] for f in d["findings"]], ["retired"])
+
     def test_empty_baseline_cases_do_not_hide_new_failures(self):
         base = self.make([[]])
         base["entries"]["e1"]["cases"] = {}

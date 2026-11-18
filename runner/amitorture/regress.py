@@ -226,7 +226,7 @@ def cmd_check(opts, name, binaries, repeat):
 
 CHECK_ORDER = ["entry_status", "missing_entry", "new_failure", "regression", "became_unstable", "missing",
                "perf_missing", "timing_missing", "perf_out_of_band", "timing_out_of_band",
-               "fixed", "new", "perf_new", "new_entry", "unstable_excluded"]
+               "fixed", "new", "perf_new", "new_entry", "unstable_excluded", "retired"]
 
 
 def check_verdict(doc):

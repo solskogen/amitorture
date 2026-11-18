@@ -101,26 +101,6 @@ def _tone_failure(items, dref, m, hello_sum):
     })
 
 
-def _speed_failures(items, dref, sub, merged, hello_sum):
-    """Each failed host.speed_<insn> pseudo case (cases.speed_case) as a
-    case_fail item: the real-time factor with its noise, the frame rates,
-    the host CPU cost per instruction, and the host it was measured on."""
-    from . import cases as casemod
-    for b in casemod.speed_blocks(sub, merged):
-        v = casemod.speed_case(b, sub)
-        if v is None or v["st"] != "fail":
-            continue
-        items.append({
-            "kind": "case_fail", **dref, "mod": "host", "case": casemod.speed_name(b["insn"]),
-            "expect": v["expect"], "got": v["got"], "why": v["why"],
-            "ctx": {"host": sub.get("host_context"), "block": {k: b.get(k) for k in ("insn", "cls", "pos", "n",
-                                                                                   "timing", "dropped")},
-                    "samples": "raw result.json hostspeed.samples"},
-            "in": {"insn": b["insn"], "pos": b.get("pos")}, "seq": None, "boot": None,
-            "sources": ["host"], "record": None, "preceding": [], "hello": hello_sum,
-        })
-
-
 def _cet_failures(items, dref, options, merged, hello_sum):
     """Each failed host.cet_<name> pseudo case (cases.cet_case) as a
     case_fail item: clocks per loop iteration against the real-hardware
@@ -184,9 +164,19 @@ def collect_failures(results):
                             "ctx": rec.get("ctx"), "in": rec.get("in"), "seq": rec.get("seq"), "boot": m["boot"],
                             "sources": m["sources"], "record": rec, "preceding": before, "hello": hello_sum,
                         })
+                    elif rec.get("t") == "bench" and rec.get("ev") == "end" and rec.get("st") == "fail":
+                        # docs/BENCH.md: the block's work came out wrong
+                        items.append({
+                            "kind": "case_fail", **dref, "mod": "bench", "case": rec.get("blk"),
+                            "expect": None, "got": {k: rec.get(k) for k in ("n", "reps", "sum", "sum_last")
+                                                    if rec.get(k) is not None},
+                            "why": f"bench block {rec.get('blk')}: {rec.get('why') or 'failed'}",
+                            "ctx": None, "in": None, "seq": rec.get("seq"), "boot": m["boot"],
+                            "sources": m["sources"], "record": rec,
+                            "preceding": [x["rec"] for x in recs[max(0, i - CONTEXT_RECORDS):i]], "hello": hello_sum,
+                        })
                     elif m.get("host"):
                         _tone_failure(items, dref, m, hello_sum)
-                _speed_failures(items, dref, sub, merged, hello_sum)
                 _cet_failures(items, dref, r.get("options"), merged, hello_sum)
                 if hello and not probe_done:
                     probe_done = True
@@ -516,136 +506,6 @@ def host_summary(results):
                                               "measured_hz": v["got"]["freq_hz"], "why": v["why"]}
         out.append(e)
     return out
-
-
-SPEED_KEYS = ("insn", "cls", "st", "benchmark", "rtf", "sigma", "fps", "frame_hz", "samples", "cpu_per_emu_s",
-              "cpu_total_per_emu_s", "over_idle_per_emu_s", "ops_per_emu_s", "ops_per_host_s", "ns_per_op",
-              "ns_per_iter", "ratio_ref", "ref", "why", "quiet_thread_share", "flood_thread_share", "quiet_samples")
-
-
-def speed_summary(results):
-    """Per entry and disk: the hostspeed blocks (cases.speed_blocks) with
-    their verdicts, real-time factors and host cost per instruction."""
-    from . import cases as casemod
-    out = []
-
-    def thread_key(r):
-        options = tuple(sorted((k, v) for k, v in (r.get("options") or {}).items() if k != "cpu_threaded"))
-        return r.get("binary"), json.dumps(r.get("params") or {}, sort_keys=True), options
-
-    def requested(r):
-        return str((r.get("options") or {}).get("cpu_threaded", "false")).lower() == "true"
-
-    refs = {thread_key(r): r["id"] for r in results if not requested(r) and not casemod.cpu_thread_active(r)}
-    for r in results:
-        for sub in r.get("disks") or [r]:
-            bl = casemod.speed_blocks(sub, sub.get("_merged"))
-            if not bl:
-                continue
-            out.append({"entry": r["id"], "disk": sub.get("disk_name"), "jit": r.get("jit"),
-                        "cpu_threaded": casemod.cpu_thread_active(sub if sub.get("adjusted") else r),
-                        "cpu_threaded_requested": requested(r),
-                        "thread_reference": refs.get(thread_key(r)),
-                        "cpu_speed": (r.get("options") or {}).get("cpu_speed"), "host": sub.get("host_context"),
-                        # the threaded CPU's request-flood fallback, from the emulator log
-                        "flood_holds": (sub.get("engine") or r.get("engine") or {}).get("cpu_thread_flood_holds"),
-                        "refloods": (sub.get("engine") or r.get("engine") or {}).get("cpu_thread_refloods"),
-                        "blocks": [{k: b.get(k) for k in SPEED_KEYS if b.get(k) is not None} for b in bl]})
-    return out
-
-
-def _speed_lines(speeds):
-    L = ["### Host speed per instruction (hostspeed, docs/cases/hostspeed.md)", "",
-         "Each block runs one instruction for about 1 s of emulated time. **rtf** = host seconds per emulated "
-         "second (from the frame counter the runner reads with the host clock; > 1: the emulator fell behind "
-         "real time), +- 3 sigma. **CPU/s**: host CPU seconds of the emulation thread per emulated second (1.0 "
-         "= no headroom left). **ns/op**: host CPU per instruction, net of the emulator's own cost (the STOP "
-         "block) and of the loop (the empty block); **x ref**: that cost relative to ADD.L / FADD. The verdict "
-         "depends on the host: compare it only with runs on the same host. Benchmark-only disks report "
-         "**measured** instead of pass/fail; unsupported workloads are **skip** with a reason. The frame "
-         "blocks (stop, vbl_poll, chipset_load, stop_timer) idle for a number of frames: their measure is CPU/s, "
-         "and **x ref** shows their CPU/s over stop's.", ""]
-    for e in speeds:
-        h = e.get("host") or {}
-        from . import cases as casemod
-        L.append(f"- `{e['entry']}`" + (f" [{e['disk']}]" if e.get("disk") else "")
-                 + f", cpu_speed={e.get('cpu_speed')}, JIT {'on' if e.get('jit') else 'off'}, "
-                 + f"threaded CPU {'on' if e.get('cpu_threaded') else 'off'}; "
-                 + f"host {casemod.host_desc(h)}")
-        L.append("")
-        L.append("  | insn | verdict | rtf (+-3 sigma) | CPU/s | ns/op | x ref |")
-        L.append("  |---|---|---|---|---|---|")
-        for b in e["blocks"]:
-            if b.get("st") == "skip":
-                L.append(f"  | {b['insn']} | skip | {b.get('why') or ''} | | | |")
-                continue
-            rtf = f"{b['rtf']:.4f} +- {3 * b.get('sigma', 0):.4f}" if b.get("rtf") is not None else "-"
-            ns = b.get("ns_per_op", b.get("ns_per_iter"))
-            xref = b.get("ratio_ref", "")
-            if b.get("over_idle_per_emu_s") is not None:
-                xref = f"{b['over_idle_per_emu_s']:+.4f} CPU/s vs stop"
-            L.append(f"  | {b['insn']} | {'**FAIL**' if b['st'] == 'fail' else b['st']} | {rtf} | "
-                     f"{b.get('cpu_per_emu_s', '-')} | {'-' if ns is None else f'{ns:.1f}'} | "
-                     f"{xref} |")
-        L.append("")
-    L.extend(_threaded_speed_lines(speeds))
-    return L
-
-
-def _threaded_speed_lines(speeds):
-    """Only compare like-for-like benchmark entries: CPU threading is the sole option difference."""
-    from . import cases as casemod
-
-    def value(block, key):
-        n = block.get(key)
-        return "-" if n is None else f"{n:.3g}"
-
-    by_entry = {(e["entry"], e.get("disk")): e for e in speeds}
-    L = []
-    inactive = [on for on in speeds if on.get("cpu_threaded_requested") and not on.get("cpu_threaded")]
-    for on in speeds:
-        off = by_entry.get((on.get("thread_reference"), on.get("disk")))
-        if not on.get("cpu_threaded") or off is None:
-            continue
-        refs = {b["insn"]: b for b in off["blocks"] if b.get("benchmark")}
-        blocks = [(refs[b["insn"]], b) for b in on["blocks"] if b.get("benchmark") and b["insn"] in refs]
-        if not blocks:
-            continue
-        if not L:
-            L.extend(["### Threaded CPU off/on benchmarks", "",
-                      "Each pair differs only in `cpu_threaded`, including the same JIT setting. Values are "
-                      "**off / on**. Throughput on/off > 1 is faster; lower ns/op and total CPU/s are cheaper. "
-                      "Host ops/s includes frame pacing; empty counts loop iterations. The frame blocks (stop, vbl_poll, "
-                      "chipset_load, stop_timer) count frames, so only their total CPU/s means anything. A threaded "
-                      "entry behind real time where its twin keeps up, or an idle (stop, stop_timer) one costing "
-                      "much more, is a `thread_speed` problem (docs/cases/hostspeed.md). "
-                      "Treat a single run as a sample, not proof of a speedup.", ""])
-        L.extend([f"`{off['entry']}` / `{on['entry']}`" + (f" [{on['disk']}]" if on.get("disk") else ""), "",
-                  "| workload | host ops/s off / on | throughput on/off | ns/op off / on | total CPU/s off / on |",
-                  "|---|---|---|---|---|"])
-        for a, b in blocks:
-            if a["st"] == "skip" or b["st"] == "skip":
-                skipped = a if a["st"] == "skip" else b
-                L.append(f"| {b['insn']} | skip: {skipped.get('why') or ''} | | | |")
-                continue
-            if a["st"] != "measured" or b["st"] != "measured":
-                L.append(f"| {b['insn']} | {a['st']} / {b['st']} | - | - | - |")
-                continue
-            rate_a, rate_b = a.get("ops_per_host_s"), b.get("ops_per_host_s")
-            ratio = f"{rate_b / rate_a:.3f}x" if rate_a and rate_b is not None else "-"
-            if b["insn"] in casemod.FRAME_BLOCKS:
-                ratio = "- (frames)"
-            L.append(f"| {b['insn']} | {value(a, 'ops_per_host_s')} / {value(b, 'ops_per_host_s')} | {ratio} | "
-                     f"{value(a, 'ns_per_op')} / {value(b, 'ns_per_op')} | "
-                     f"{value(a, 'cpu_total_per_emu_s')} / {value(b, 'cpu_total_per_emu_s')} |")
-        L.append("")
-    if inactive:
-        L.extend(["### Threaded CPU requested but not active", "",
-                  "These entries asked for `cpu_threaded=true`, but the emulator log says the CPU ran on the "
-                  "main thread (see the entry's adjusted options), so they are left out of the off/on "
-                  "comparison:", ""]
-                 + [f"- `{e['entry']}`" + (f" [{e['disk']}]" if e.get("disk") else "") for e in inactive] + [""])
-    return L
 
 
 def write_all(outdir, environment, results, source="run", analysis=None, bench_baseline=None):

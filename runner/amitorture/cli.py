@@ -511,7 +511,7 @@ def _common(p, kick_required=True, param_defaults=True):
     p.add_argument("--warp", choices=["off", "auto", "on"],
                    help="off: normal pacing (default); auto: warp only CPU/FPU/MMU set disks, with normal "
                         "pacing for all other disks and audio captures; on: force warp everywhere "
-                        "(experimental, invalidates audio/input/RTC/hostspeed tests). check inherits the "
+                        "(experimental, invalidates audio/input/RTC tests). check inherits the "
                         "baseline's policy unless specified. Cannot combine with --set warp=...")
     p.add_argument("--boot-warp", choices=["on", "off"], default="on",
                    help="on (default): warp Kickstart, the loader and the probe of every normally paced disk; "

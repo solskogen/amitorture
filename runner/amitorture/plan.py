@@ -24,7 +24,7 @@ MODULE_COST = {
     "devio": (60, 6), "display": (82, 98), "copper": (5, 2.5), "paula": (45, 27), "input": (12, 10),
     "rtg": (1, 1), "expsound": (2, 2), "network": (1, 1), "misc_hw": (20, 20), "mmu": (1, 1), "memory": (15, 1),
     "dispatch": (5, 0.5), "dmacontention": (12, 3), "misc_hw_os": (0.2, 0.2), "memory_os": (0.2, 0.2),
-    "hostspeed": (20, 20), "cetiming": (2.5, 2),
+    "cetiming": (2.5, 2),
 }
 # Host seconds to the first record per disk (emulator start, Kickstart,
 # loader, probe; boot warp on, payload loaded at turbo speed), and outside

@@ -376,6 +376,7 @@ def summary(results):
             out.append({"entry": r["id"], "disk": sub.get("disk_name"), "jit": r.get("jit"),
                         "machine": r.get("machine"), "status": sub.get("status"),
                         "cpu_threaded": casemod.cpu_thread_active(sub if sub.get("adjusted") else r),
+                        "cpu_threaded_requested": threaded(r),
                         "thread_reference": refs.get(thread_key(r)) if threaded(r) else None,
                         "cpu_speed": (r.get("options") or {}).get("cpu_speed"), "host": sub.get("host_context"),
                         "flood_holds": eng.get("cpu_thread_flood_holds"), "refloods": eng.get("cpu_thread_refloods"),
@@ -556,7 +557,9 @@ def report_lines(entries):
     for e in entries:
         L.append(f"- `{e['entry']}`" + (f" [{e['disk']}]" if e.get("disk") else "")
                  + f": basis {e.get('basis')}, pacing {e.get('pacing')}, cpu_speed={e.get('cpu_speed')}, "
-                 f"JIT {'on' if e.get('jit') else 'off'}, threaded CPU {'on' if e.get('cpu_threaded') else 'off'}; "
+                 f"JIT {'on' if e.get('jit') else 'off'}, threaded CPU {'on' if e.get('cpu_threaded') else 'off'}"
+                 + (" (requested, but the emulator ran the CPU on the main thread)"
+                    if e.get("cpu_threaded_requested") and not e.get("cpu_threaded") else "") + "; "
                  f"host {casemod.host_desc(e.get('host') or {})}")
         L.extend(["", "  | block | tier | st | value | measure | reps | spread | note |",
                   "  |---|---|---|---|---|---|---|---|"])

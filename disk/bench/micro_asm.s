@@ -233,7 +233,7 @@ _bm_movep:				; 68000-68040 (unimplemented on the 68060)
 	bne	.o
 	BM_OUT
 
-_bm_trap_rte:				; TRAP #0 -> vector 32 = _bm_rte (hostspeed.c)
+_bm_trap_rte:				; TRAP #0 -> vector 32 = _bm_rte
 	BM_IN
 .o:	moveq	#15,d7
 .i:

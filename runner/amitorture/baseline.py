@@ -19,6 +19,7 @@ one or more binaries and diffs fingerprint by fingerprint:
   new_failure       unexpected failing case only in the check
   became_unstable   stable in the baseline, differs between check runs
   unstable_excluded unstable in the baseline: reported, not compared
+  retired           a check the disks no longer make (RETIRED_CASES): not compared
   perf_out_of_band / timing_out_of_band (direction faster/slower)
   entry_status      the entry as a whole ended differently (crash, skip ...)
 Every finding carries the entry's config changes vs the baseline, so a
@@ -43,6 +44,17 @@ BAND_K = 3.0
 BAND_PCT = 0.05
 BAND_ABS = 1.0
 FORMAT = 1
+# checks the disks no longer make: a baseline that has them is not compared
+# on them (finding "retired", never a regression). host.speed_*: the
+# hostspeed module, replaced by the bench disk (docs/BENCH.md).
+RETIRED_CASES = ("host.speed_",)
+RETIRED_MODS = ("hostspeed",)
+
+
+def retired(key, mod=None):
+    return str(key).startswith(RETIRED_CASES) or mod in RETIRED_MODS
+
+
 REGRESSION_KINDS = {"regression", "missing", "became_unstable", "perf_out_of_band", "timing_out_of_band",
                     "entry_status", "missing_entry", "new_failure", "perf_missing", "timing_missing"}
 
@@ -197,6 +209,10 @@ def diff(baseline, check, registry=None):
                 add(kind, eid, why=f"case {key} is new (not in the baseline)"
                     + (" and unexpectedly fails" if kind == "new_failure" else ""), **item)
                 continue
+            if nc is None and retired(key, bc.get("mod")):
+                add("retired", eid, case_key=key, mod=bc["mod"], case=bc["case"],
+                    why=f"case {key} is no longer made by the disks (retired): not compared", **ctx)
+                continue
             if nc is None:
                 add("missing", eid, case_key=key, mod=bc["mod"], case=bc["case"],
                     baseline={"st": bc["st"], "rec": bc["rec"]}, why=f"case {key} no longer reported", **ctx)
@@ -272,6 +288,8 @@ def diff(baseline, check, registry=None):
         for key, paths_ in b["timing"].items():
             for path, bb in paths_.items():
                 nb = (ntime.get(key) or {}).get(path)
+                if nb is None and retired(key):
+                    continue
                 if nb is None:
                     add("timing_missing", eid, case_key=key, path=path,
                         why=f"timing {key} {path} no longer reported", **ctx)
@@ -311,7 +329,7 @@ def first_changes(per_binary):  # noqa: C901
     seen = {}
     for i, (label, d) in enumerate(per_binary):
         for f in d["findings"]:
-            if f["kind"] in ("unstable_excluded", "perf_new", "new_entry") or f.get("host_dependent"):
+            if f["kind"] in ("unstable_excluded", "perf_new", "new_entry", "retired") or f.get("host_dependent"):
                 continue
             k = finding_key(f)
             if k not in seen:

@@ -126,7 +126,7 @@ static ULONG sy_chipset_load(ULONG units, void *mem)
     screen_bare(1);
     return r;
 }
-/* cia_write: BSET/BCLR on the power LED bit of CIA-A PRA (hostspeed_asm.s),
+/* cia_write: BSET/BCLR on the power LED bit of CIA-A PRA,
  * Kickstart 1.3's Alert pattern: back-to-back CIA writes. With a threaded
  * CPU each one is a hand-off to the thread that runs the chipset, which
  * must still keep real time. The LED bit is put back as it was. */

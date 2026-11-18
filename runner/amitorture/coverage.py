@@ -85,7 +85,6 @@ AXES = {
     "dmacontention": ("chipset", "video", "cpu", "core", "boot", "engine_class", "floppy"),
     "misc_hw_os": ("model", "boards", "memory"),
     "memory_os": ("memory", "model", "boards"),
-    "hostspeed": ("cpu", "fpu", "core", "engine", "chipset", "video"),
     "cetiming": ("chipset", "video", "cpu", "core", "engine_class"),
 }
 
@@ -95,7 +94,7 @@ MODULE_GROUP = {}
 for _g, _mods in (("core", "takeover rt flags exceptions smc interrupts cia blitter timing display copper paula "
                            "input dmacontention cetiming"),
                   ("cpu", "cpu_basic mmu dispatch"),
-                  ("exp", "fpu rtg expsound network misc_hw misc_hw_os devio memory memory_os hostspeed")):
+                  ("exp", "fpu rtg expsound network misc_hw misc_hw_os devio memory memory_os")):
     for _m in _mods.split():
         MODULE_GROUP[_m] = _g
 GROUPS = ("core", "cpu", "exp")

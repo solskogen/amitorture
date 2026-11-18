@@ -24,8 +24,7 @@ acks. Without the flag (real hardware, --module-warp off) nothing changes.
 
 # Modules whose results depend on emulated time only (no host clock, no
 # host input or audio, no real floppy speed). Not: misc_hw (RTC against the
-# host clock), input (IPC key/mouse events), hostspeed (host time is what it
-# measures), paula and dmacontention (real floppy speed, audio capture),
+# host clock), input (IPC key/mouse events), paula and dmacontention (real floppy speed, audio capture),
 # expsound (audio capture), network (external ARP), timing (H-counter
 # polls depend on how often the CPU gets to run, warp changes that on fast
 # cores), interrupts and cia (latency against host scheduling on threaded

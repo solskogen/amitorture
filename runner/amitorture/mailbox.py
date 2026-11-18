@@ -115,8 +115,7 @@ class RingFollower:
         self.pos = 0          # total bytes consumed
         self.header = None
         self.lost = 0
-        # called with each Header right after its read returned (the
-        # hostspeed sampler stamps it with the host clock there)
+        # called with each Header right after its read returned
         self.on_header = on_header
 
     def poll(self):

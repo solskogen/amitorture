@@ -153,14 +153,14 @@ clean:
 #   core  timing-sensitive hardware, floppy DMA (real floppy speed, no warp)
 #   cpu   integer CPU, MMU, random code blocks (functional: warp in
 #         --warp auto)
-#   exp   FPU, expansion hardware, devices, memory, hostspeed
+#   exp   FPU, expansion hardware, devices, memory
 # cpu_basic and fpu each carry over 200 KB of test vectors: keep them apart.
 # devio needs a 128 KB I/O buffer after the pools on a 1 MB chip-only A600:
 # keep the exp disk small enough for that.
 DISK_SETS      := core cpu exp
 DISK_SET_core  := takeover rt flags exceptions smc interrupts cia blitter timing display copper paula input dmacontention cetiming
 DISK_SET_cpu   := cpu_basic mmu dispatch
-DISK_SET_exp   := fpu rtg expsound network misc_hw misc_hw_os devio memory memory_os hostspeed
+DISK_SET_exp   := fpu rtg expsound network misc_hw misc_hw_os devio memory memory_os
 SET := $(B)/set
 # per-segment memory limit of every set disk (CONTRACT.md section 12)
 SET_MAX_SEG ?= 400K

@@ -1378,8 +1378,8 @@ def engine_from_log(lines):
     # so when present the last such line decides, except for a switch to the
     # main thread that a request flood caused (the line before it: 'CPU
     # thread: <n> requests per frame, ... the CPU runs on the main thread for
-    # <s> s.'): that is the threaded CPU's own fallback, which hostspeed's
-    # thread_speed check judges, not a configuration the emulator refused.
+    # <s> s.'): that is the threaded CPU's own fallback, which the bench
+    # thread tier judges, not a configuration the emulator refused.
     runs, flood_holds, flood_pending = [], 0, False
     for line in lines:
         if _re.search(r"CPU thread: \d+ requests per frame.*main thread for", line):
@@ -1641,9 +1641,6 @@ def host_failed_cases(res, merged):
             v = casemod.tone_case(m["rec"])
             if v and v["st"] == "fail":
                 names.append("host." + casemod.tone_name(m["rec"].get("tag") or m["rec"].get("id")))
-    for b in casemod.speed_blocks(res, merged):
-        if b.get("st") == "fail":
-            names.append("host." + casemod.speed_name(b["insn"]))
     if casemod.cet_refset(res.get("options")) is not None:
         for p in casemod._extract_merged(merged)["perf"].values():
             v = casemod.cet_case(p, res.get("options"))

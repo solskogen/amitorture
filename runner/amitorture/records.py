@@ -22,7 +22,7 @@ REQUIRED = {
     "perf": ("mod", "ops", "ticks"),
     "done": ("pass", "fail", "skip", "untestable", "aborted", "records"),
     "request": ("id", "what", "tag"),      # host request channel (CONTRACT §13)
-    "speed": ("mod", "ev", "insn"),        # hostspeed timed blocks (docs/schema.md 1.10)
+    "speed": ("mod", "ev", "insn"),        # legacy: the retired hostspeed module's timed blocks
     "bench": ("ev",),                      # the bench disk (docs/schema.md 1.11)
 }
 MOD_END_REQUIRED = ("pass", "fail", "skip")

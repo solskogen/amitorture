@@ -479,7 +479,7 @@ int main(void) {
         helper = runtime_function("amt_any_pool_on_chip_bus")
         mutant = source.replace(helper, "static int amt_any_pool_on_chip_bus(void) { return amt_any_pool_is_chip(); }")
         self.native(source, [mutant])
-        for module in ("cpu_basic", "hostspeed", "mmu"):
+        for module in ("cpu_basic", "mmu"):
             self.assertIn("amt_any_pool_on_chip_bus()", (MODULES / f"{module}.c").read_text())
 
 
