@@ -588,5 +588,36 @@ class XfailLists(unittest.TestCase):
                                       {"ntsc": "false", "cpu_model": "68020"}))
 
 
+class FinalScreenshot(unittest.TestCase):
+    """The final status screen is kept as final.png after a done record."""
+
+    def setUp(self):
+        from amitorture import runner
+        self.runner = runner
+        self.old = runner.FINAL_SHOT_DELAY
+        runner.FINAL_SHOT_DELAY = 0
+        self.dir = tempfile.mkdtemp()
+
+    def tearDown(self):
+        self.runner.FINAL_SHOT_DELAY = self.old
+
+    def test_saved_and_recorded(self):
+        class IPC:
+            def request(self, line, timeout):
+                write(line.split("\t", 1)[1], b"png")
+                return "OK"
+        res = {}
+        self.runner.final_screenshot(IPC(), self.dir, res)
+        self.assertEqual(res["final_screenshot"], os.path.join(self.dir, "final.png"))
+
+    def test_failure_is_recorded_not_raised(self):
+        class IPC:
+            def request(self, line, timeout):
+                return "ERROR\tFailed to create screenshot"
+        res = {}
+        self.runner.final_screenshot(IPC(), self.dir, res)
+        self.assertIn("Failed", res["final_screenshot"]["error"])
+
+
 if __name__ == "__main__":
     unittest.main()

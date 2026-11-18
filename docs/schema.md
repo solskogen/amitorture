@@ -615,6 +615,7 @@ per-module case totals:
 | `host.jsonl` | the host records of this launch |
 | `shot-<id>-<tag>.png` | screenshots taken for `screenshot` requests (`shot-c<seq>-<tag>.png` for v1 `capture` records) |
 | `audio-<id>-<tag>.wav` | each audio segment between a start and a stop mark (S16 stereo, 44100 Hz) |
+| `final.png` | the guest's final status screen (verdict, next disk), taken 1 s after the done record; `result.json` `final_screenshot` is its path, or `{"error"}` |
 
 ### 5.3 `result.json` (added fields)
 | Field | Meaning |

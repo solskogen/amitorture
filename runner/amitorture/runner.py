@@ -406,6 +406,21 @@ def selftest_records():
 LAUNCH_ATTEMPTS = 3
 
 
+FINAL_SHOT_DELAY = 1.0
+
+
+def final_screenshot(ipc, rawdir, res):
+    """The guest's final status screen (verdict, next disk) as final.png:
+    the guest draws it just after its done record, so give it a moment."""
+    time.sleep(FINAL_SHOT_DELAY)
+    path = os.path.join(rawdir, "final.png")
+    try:
+        reply = ipc.request(f"SCREENSHOT\t{path}", timeout=30)
+    except OSError as e:
+        reply = f"{type(e).__name__}: {e}"
+    res["final_screenshot"] = path if os.path.exists(path) else {"error": f"IPC SCREENSHOT: {reply}"}
+
+
 def _launch_once(opts, entry, run, argv, env, home, rawdir, port, res, extra_options=None):
     proc = emulator.Process(opts.binary, argv, env, os.path.join(rawdir, "amiberry.log"), cwd=home,
                             host_cpus=entry.get("host_cpus"), cpus=getattr(opts, "pin_cpus", None))
@@ -434,6 +449,8 @@ def _launch_once(opts, entry, run, argv, env, home, rawdir, port, res, extra_opt
                 pacing=res["warp"]["effective"], floppy_after=floppy_after,
                 module_warp=res["warp"].get("modules"), bench=run.bench)
             ended = observe(opts, entry, run, proc, serial, ipc, res)
+            if ended == "done":
+                final_screenshot(ipc, rawdir, res)
     except (OSError, RunnerError) as e:
         emulator.check_interrupt()          # the IPC broke because Ctrl+C stopped the emulator
         # A lost IPC connection usually means the emulator is dying: give its
