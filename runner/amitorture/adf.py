@@ -14,7 +14,7 @@ from .emulator import RunnerError, sha256_file
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 DEFAULT_ADF = os.path.join(REPO, "disk", "build", "amitorture.adf")
-BENCHMARK_ADF = os.path.join(REPO, "disk", "build", "benchmarks", "amitorture.adf")
+BENCH_ADF = os.path.join(REPO, "disk", "build", "amitorture-bench.adf")
 DEFAULT_SET = os.path.join(REPO, "disk", "build", "set")
 MKADF = os.path.join(REPO, "tools", "mkadf.py")
 ADF_SIZE = 901120
@@ -49,27 +49,32 @@ def header_info(path):
     return info
 
 
-def bake(src, dst, params: dict, cache_dir=None, lock=None):
+def bake(src, dst, params: dict, cache_dir=None, lock=None, plan=None):
     """Copies src to dst with the run parameters baked in by tools/mkadf.py.
-    cache_dir: keep each (disk, params) baked once there and copy it (the
-    test floppy is write-protected, so a copy is as good as a bake)."""
+    cache_dir: keep each (disk, params, plan) baked once there and copy it
+    (the test floppy is write-protected, so a copy is as good as a bake).
+    plan: a work plan JSON file for the bench disk (mkadf --plan)."""
     if cache_dir and os.path.isfile(src):
         st = os.stat(src)
         key = hashlib.sha256(json.dumps([os.path.realpath(src), st.st_size, st.st_mtime_ns,
-                                         sorted((str(k), str(v)) for k, v in (params or {}).items())])
+                                         sorted((str(k), str(v)) for k, v in (params or {}).items()),
+                                         sha256_file(plan) if plan else None])
                              .encode()).hexdigest()[:20]
         cached = os.path.join(cache_dir, key + ".adf")
         with (lock or contextlib.nullcontext()):
             hit = os.path.isfile(cached)
             if not hit:
                 os.makedirs(cache_dir, exist_ok=True)
-                bake(src, cached + ".tmp", params)
+                bake(src, cached + ".tmp", params, plan=plan)
                 os.replace(cached + ".tmp", cached)
         shutil.copyfile(cached, dst)
         info = header_info(dst)
         info["mkadf_argv"] = [sys.executable, MKADF, "--in", src, "-o", dst] + (
-            ["--param", *[f"{k}={v}" for k, v in params.items()]] if params else [])
+            ["--param", *[f"{k}={v}" for k, v in params.items()]] if params else []) + (
+            ["--plan", plan] if plan else [])
         info["baked_from_cache"] = hit
+        if plan:
+            info["plan"] = plan
         return info
     if not os.path.isfile(src):
         raise RunnerError(f"test disk {src} not found (build the disk set with `make -C disk` and use --disk-set disk/build/set, or build one ADF with `make -C disk MODS=\"rt <modules>\"` and pass --adf PATH)")
@@ -79,6 +84,8 @@ def bake(src, dst, params: dict, cache_dir=None, lock=None):
     argv = [sys.executable, MKADF, "--in", src, "-o", dst]
     if params:
         argv += ["--param", *[f"{k}={v}" for k, v in params.items()]]
+    if plan:
+        argv += ["--plan", plan]
     p = subprocess.run(argv, capture_output=True, text=True, timeout=60)
     if p.returncode != 0:
         raise RunnerError(f"mkadf.py failed ({p.returncode}): {' '.join(argv)}\n{p.stderr.strip()}")
@@ -86,6 +93,8 @@ def bake(src, dst, params: dict, cache_dir=None, lock=None):
     if info.get("params") is None:
         raise RunnerError(f"mkadf.py wrote {dst} without a PARM block")
     info["mkadf_argv"] = argv
+    if plan:
+        info["plan"] = plan
     return info
 
 

@@ -536,7 +536,7 @@ class SerialClient:
                 self.raw.write(data)
                 self.raw.flush()
                 if self.on_data:
-                    self.on_data(data)
+                    self.on_data(data, self.last_data)     # arrival time: the bench host stamps runs with it
         except OSError as e:
             self.error = str(e)
         finally:

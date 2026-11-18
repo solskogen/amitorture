@@ -11,7 +11,7 @@ import threading
 import time
 
 from . import adf as adfmod
-from . import amiberry_cfg, coverage, emulator, envinfo, hostreq, isolation, mailbox, matrix, pacing, records, romid
+from . import amiberry_cfg, bench, coverage, emulator, envinfo, hostreq, isolation, mailbox, matrix, pacing, records, romid
 from . import audio as audiomod
 from . import cdimage
 from .emulator import RunnerError
@@ -60,6 +60,7 @@ class Options:
             raise RunnerError("use --warp or --set warp=..., not both")
         self.ports = kw.get("ports")                  # (lo, hi) serial port range, None = emulator.PORT_RANGE
         self.show = kw.get("show", False)             # emulator windows on the desktop (emulator.display_env)
+        self.bench_baseline = kw.get("bench_baseline")  # results dir: its bench counts, then a diff against it
 
 
 def log(opts, msg):
@@ -112,16 +113,19 @@ class EntryRun:
         self.watch = mailbox.Watch()
         self.last_progress = time.monotonic()
         self.events = []
-        self.pid = None             # the emulator's pid (thread CPU times for hostspeed)
-        self.speed_samples = []     # hostspeed: [t, heartbeat, case, cpu_main_ns, cpu_total_ns, cpu_top_ns]
+        self.pid = None             # the emulator's pid (thread CPU times for the bench host)
+        self.bench = None           # bench.Host on a bench disk baked with the host flag
+        self._bench_taken = 0
 
     def event(self, what, **kw):
         e = {"t": round(time.monotonic() - self.t0, 3), "event": what, **kw}
         self.events.append(e)
         self.mbox_log.write(json.dumps(e) + "\n") if what.startswith("mailbox") else None
 
-    def on_serial(self, data):
+    def on_serial(self, data, t=None):
         with self.lock:
+            if self.bench is not None and self.bench.stamper is not None:
+                self.bench.stamper.feed(data, t)     # before the parser: the stamps are looked up by offset
             self.serial_parser.feed(data)
             self.last_progress = time.monotonic()
             # arrival time of every chunk (seconds since launch, bytes so far):
@@ -179,21 +183,33 @@ class EntryRun:
         self.mb["candidates"] = [f"{a:08x}" for a in found]
         return best
 
-    def speed_sample(self, h):
+    def bench_sample(self, h):
         """RingFollower callback, right after a mailbox header read: while a
-        hostspeed block runs (module 26, case HS_POS0 + block), keep the
-        heartbeat (one per frame: the block sends no records), the host
-        clock and the emulator's thread CPU times of this instant
-        (cases.speed_cases turns them into frame rate and CPU cost)."""
-        if h.mod != SPEED_MOD_ID or not SPEED_POS0 <= h.case < SPEED_POS0 + 1000:
+        bench block runs (or flood_recovery's quiet work), keep the
+        heartbeat, the host clock and the emulator's thread CPU times of
+        this instant (bench.Host: the thread shares of flood_recovery)."""
+        if self.bench is not None and bench.sample_wanted(h.case):
+            self.bench.add_sample(time.monotonic() - self.t0, h, thread_cpu(self.pid) if self.pid else None)
+
+    def start_bench(self):
+        """This launch runs the bench disk with a host: stamp serial arrivals."""
+        self.bench = bench.Host(bench.Stamper(cpu=lambda: thread_cpu(self.pid) if self.pid else None),
+                                pull=self.harvest_bench)
+
+    def harvest_bench(self):
+        """New bench records from serial -> self.bench (the stamps are serial's)."""
+        if self.bench is None:
             return
-        t = time.monotonic() - self.t0
-        cpu = thread_cpu(self.pid) if self.pid else None
-        self.speed_samples.append([round(t, 6), h.heartbeat, h.case] + (list(cpu) if cpu else [None, None, None]))
+        with self.lock:
+            new = self.serial_parser.records[self._bench_taken:]
+            self._bench_taken = len(self.serial_parser.records)
+            for r in new:
+                if r.crc_ok and r.obj is not None and r.obj.get("t") == "bench":
+                    self.bench.ingest(r)
 
     def poll_mailbox(self, ipc):
         if self.follower.on_header is None:
-            self.follower.on_header = self.speed_sample
+            self.follower.on_header = self.bench_sample
         res = self.follower.poll()
         self.mb["polls"] += 1
         if res is None:
@@ -224,6 +240,7 @@ class EntryRun:
         """New request/capture records from both transports -> self.requests."""
         if self.requests is None:
             return
+        self.harvest_bench()        # before the requests: bench_longer/bench_more judge the run records
         with self.lock:
             for src, parser in (("serial", self.serial_parser), ("mailbox", self.mbox_parser)):
                 new = parser.records[self._taken[src]:]
@@ -339,12 +356,6 @@ class EntryRun:
         self.mbox_log.close()
 
 
-# hostspeed (disk/modules/hostspeed.c): its module id and the mailbox case
-# number of its block 0 while a timed block runs
-SPEED_MOD_ID = 26
-SPEED_POS0 = 1000
-
-
 def thread_cpu(pid):
     """(main thread ns, all threads ns, busiest other thread ns) of CPU time
     so far, from /proc/<pid>/task/*/schedstat (first field: ns on the CPU),
@@ -418,7 +429,7 @@ def _launch_once(opts, entry, run, argv, env, home, rawdir, port, res, extra_opt
                 frame_hz=60 if entry["options"].get("ntsc") == "true" else 50, t0=run.t0,
                 log=(lambda m: log(opts, f"{entry['id']}: {m}")) if opts.verbose else None,
                 pacing=res["warp"]["effective"], floppy_after=floppy_after,
-                module_warp=res["warp"].get("modules"))
+                module_warp=res["warp"].get("modules"), bench=run.bench)
             ended = observe(opts, entry, run, proc, serial, ipc, res)
     except (OSError, RunnerError) as e:
         emulator.check_interrupt()          # the IPC broke because Ctrl+C stopped the emulator
@@ -674,6 +685,19 @@ def disk_warp(opts, entry, info, capture=False, extra=None):
     group = build_group(info or {})
     mode = getattr(opts, "warp", None)
     configured = (extra or {}).get("warp", entry["options"].get("warp", "false"))
+    explicit = "warp" in entry["options"] or "warp" in (extra or {})
+    if group == "bench" and mode in (None, "auto") and not explicit:
+        # The bench host times runs with its own clock. A CPU paced to real
+        # timing takes as long on the host as emulated, whatever the host
+        # does: only warp shows the emulator's cost. A threaded or JIT CPU
+        # (cpu_speed max) keeps normal pacing, as it is used.
+        o = entry["options"]
+        jit = str(o.get("cachesize", "0")).strip() not in ("", "0")
+        threaded = str(o.get("cpu_threaded", "false")).strip().lower() == "true"
+        enabled = real_cpu_speed(o) and not jit and not threaded and not capture
+        reason = ("bench disk, CPU paced to real timing: warp so the host's time measures the emulator"
+                  if enabled else "bench disk, JIT/threaded/cpu_speed max: normal pacing")
+        return {"requested": mode or "off", "effective": enabled, "group": group, "reason": reason}
     if mode is None:
         value = str(configured).strip().lower()
         if value not in ("true", "yes", "1", "false", "no", "0"):
@@ -907,7 +931,8 @@ def _run_disk(opts, ctx, entry, binary=None, extra_options=None, disk=None):
     else:
         floppy = os.path.join(media_dir, f"{safe}{dsuf}.adf")
         res["disk"] = adfmod.bake(disk[1] if disk else ctx["adf_src"], floppy, params,
-                                  cache_dir=os.path.join(ctx["tmp"], "baked"), lock=ctx.get("bake_lock"))
+                                  cache_dir=os.path.join(ctx["tmp"], "baked"), lock=ctx.get("bake_lock"),
+                                  plan=entry.get("bench_plan"))
     cd_opts = {}
     if entry.get("boot") == "cd" and not opts.no_disk:
         # CD32/CDTV: boot from a CD made from the baked disk (cdimage.py,
@@ -1023,6 +1048,8 @@ def _run_disk(opts, ctx, entry, binary=None, extra_options=None, disk=None):
                 cap = audiomod.Capture(audio_path, rawdir, rel)
             run = EntryRun(eopts, entry, rawdir, rel, audio=cap, warp=res["warp"]["effective"],
                            boot_warp=res["warp"]["boot"])
+            if res["warp"].get("group") == "bench" and _flag_on(params, "host"):
+                run.start_bench()
             log(opts, f"{rid}{(' [' + dname + ']') if dname else ''}: launching ({entry['title']}), serial port {port}"
                 + (f", attempt {attempt}" if attempt > 1 else "")
                 + (f", binary {binary}" if binary != opts.binary else "")
@@ -1080,9 +1107,6 @@ def _run_disk(opts, ctx, entry, binary=None, extra_options=None, disk=None):
                      "accepted_in_log": bool(m_acc), "bytes": serial.bytes, "closed_by_peer": serial.closed_by_peer,
                      "error": serial.error, "raw": f"{rel}serial.bin"}
     res["mailbox"] = dict(run.mb, raw=f"{rel}mailbox.jsonl")
-    if run.speed_samples:
-        res["hostspeed"] = {"fields": ["t", "heartbeat", "case", "cpu_main_ns", "cpu_total_ns", "cpu_top_ns"],
-                            "samples": run.speed_samples, "poll_s": run.POLL, "pos0": SPEED_POS0}
     res["host_context"] = dict(envinfo.host_brief(), jobs=opts.jobs, loadavg_start=load_start,
                                loadavg_end=_loadavg(), slot_wait_s=res.get("slot_wait_s"))
     if selftest_info is not None:
@@ -1090,6 +1114,9 @@ def _run_disk(opts, ctx, entry, binary=None, extra_options=None, disk=None):
     if ipc:
         res["ipc"]["requests"] = ipc.requests
     merged = records.merge({"serial": run.serial_parser.records, "mailbox": run.mbox_parser.records})
+    if res["warp"].get("group") == "bench":
+        res["bench"], raw = bench_result(run, merged, "warp" if res["warp"]["effective"] else "paced")
+        res.update(raw)
     host_recs = run.requests.host if run.requests else []
     if run.requests is not None:
         res["host_requests"] = dict(run.requests.summary(), raw=f"{rel}host.jsonl")
@@ -1120,6 +1147,22 @@ def _run_disk(opts, ctx, entry, binary=None, extra_options=None, disk=None):
         f"{len(merged.records)} records, stopped by {stop}"
         + (f"; CONFIG ADJUSTED BY EMULATOR: {', '.join(d['option'] for d in adj)}" if adj else ""))
     return res
+
+
+def bench_result(run, merged, pacing):
+    """(res["bench"], raw fields) of a bench disk launch: from the bench host
+    when it timed the runs, else from the guest's own times (merged records)."""
+    if run.bench is not None:
+        run.harvest_bench()
+        h = run.bench
+        raw = {"bench_stamps": h.stamper.export(), "bench_samples": {"fields": bench.SAMPLE_FIELDS,
+                                                                      "samples": h.samples}}
+    else:
+        h = bench.Host(None)
+        for m in merged.records:
+            h.ingest(m["rec"])
+        raw = {}
+    return h.result(pacing), raw
 
 
 def _loadavg():
@@ -1455,8 +1498,14 @@ def observe(opts, entry, run, proc, serial, ipc, res):
             emulator.check_interrupt()
             return "crash"
         run.harvest()
+        # A bench run is being timed: no IPC (Amiberry serves it on the
+        # emulation thread), unless the run outlasts the hang limit.
+        open_s = run.bench.quiet() if run.bench is not None else None
+        paused = open_s is not None and open_s < opts.hang
+        if paused:
+            run.mb["paused_polls"] = run.mb.get("paused_polls", 0) + 1
         urgent = run.requests is not None and run.requests.waiting() and now - last_scan >= run.URGENT_SCAN
-        if run.follower is None and not opts.selftest:
+        if run.follower is None and not opts.selftest and not paused:
             a = run.mbox_from_hello(ipc)
             if a is not None:
                 run.follower = mailbox.RingFollower(ipc, a)
@@ -1464,7 +1513,7 @@ def observe(opts, entry, run, proc, serial, ipc, res):
                 run.mb["found_by"] = "hello"
                 run.mb.setdefault("found_after_s", round(now - run.t0, 3))
                 log(opts, f"{entry['id']}: mailbox at {a:08x} (from hello)")
-        if run.follower is None and not opts.selftest and (urgent or now - last_scan >= run.SCAN_INTERVAL):
+        if run.follower is None and not opts.selftest and not paused and (urgent or now - last_scan >= run.SCAN_INTERVAL):
             last_scan = now
             n_scans += 1
             # Low chip RAM most times (fast), all of chip RAM every 2nd time
@@ -1476,7 +1525,7 @@ def observe(opts, entry, run, proc, serial, ipc, res):
                 run.mb.setdefault("found_after_s", round(now - run.t0, 3))
                 log(opts, f"{entry['id']}: mailbox at {a:08x}")
         h = None
-        if run.follower is not None:
+        if run.follower is not None and not paused:
             try:
                 h = run.poll_mailbox(ipc)
             except OSError:
@@ -1545,7 +1594,8 @@ def observe(opts, entry, run, proc, serial, ipc, res):
                 last_req_n, last_req_t = n, now
         # a request arriving on serial ends the wait early (EntryRun.wake);
         # mailbox-only requests are seen at the next poll
-        run.wake.wait(run.POLL_BUSY if run.boot_warp or now - last_req_t < run.BUSY_WINDOW else run.POLL)
+        busy = run.boot_warp or now - last_req_t < run.BUSY_WINDOW
+        run.wake.wait(EntryRun.POLL if paused else run.POLL_BUSY if busy else run.POLL)
         run.wake.clear()
 
 
@@ -1639,6 +1689,8 @@ def classify(res, merged, ended):
     """
     cases = merged.by_type("case")
     failed = [c for c in cases if c.get("st") == "fail"]
+    # a bench block whose work came out wrong (docs/BENCH.md) fails like a case
+    failed += [b for b in merged.by_type("bench") if b.get("ev") == "end" and b.get("st") == "fail"]
     host_failed = host_failed_cases(res, merged)
     done = merged.by_type("done")
     integrity = []
@@ -1676,7 +1728,9 @@ def classify(res, merged, ended):
     if ended == "error":
         return "error", res.get("reason") or "host-side error"
     if failed or host_failed or any(d.get("fail", 0) > 0 for d in done):
-        why = f"{len(failed)} failed guest case(s)"
+        why = f"{len(failed)} failed guest case(s)" + (
+            f" (bench blocks: {', '.join(b.get('blk', '?') for b in failed if b.get('t') == 'bench')})"
+            if any(b.get("t") == "bench" for b in failed) else "")
         if host_failed:
             why += f"; {len(host_failed)} failed host case(s): " + ", ".join(host_failed)
         return "fail", why + ("; " + "; ".join(integrity) if integrity else "")
@@ -1707,14 +1761,14 @@ def classify(res, merged, ended):
 
 def resolve_disk_set(opts):
     """The disk-set directory to use: --disk-set, else (when no --adf is
-    given) disk/build/set if it exists. The benchmark matrix defaults to
-    its standalone disk. None means a single ADF."""
+    given) disk/build/set if it exists. The bench matrix defaults to the
+    bench disk. None means a single ADF."""
     if getattr(opts, "disk_set", None):
         d = os.path.abspath(opts.disk_set)
         if not os.path.isdir(d):
             raise RunnerError(f"--disk-set {d}: not a directory")
         return d
-    if opts.adf or opts.matrix == "benchmarks":
+    if opts.adf or opts.matrix == "bench":
         return None
     return adfmod.DEFAULT_SET if os.path.isdir(adfmod.DEFAULT_SET) else None
 
@@ -1767,12 +1821,12 @@ class Context:
                 self.d["adf_src"] = self.d["disks"][0][1]
                 self.d["disk_set"] = set_dir
             else:
-                default_adf = adfmod.BENCHMARK_ADF if opts.matrix == "benchmarks" else adfmod.DEFAULT_ADF
+                default_adf = adfmod.BENCH_ADF if opts.matrix == "bench" else adfmod.DEFAULT_ADF
                 self.d["adf_src"] = os.path.abspath(opts.adf or default_adf)
                 if not os.path.isfile(self.d["adf_src"]):
-                    if default_adf == adfmod.BENCHMARK_ADF and not opts.adf:
-                        raise RunnerError(f"benchmark disk {default_adf} not found (build it with "
-                                          "`make -C disk benchmarks`, or pass --adf PATH)")
+                    if default_adf == adfmod.BENCH_ADF and not opts.adf:
+                        raise RunnerError(f"bench disk {default_adf} not found (build it with "
+                                          "`make -C disk bench`, or pass --adf PATH)")
                     raise RunnerError(f"test disk {self.d['adf_src']} not found (build it with `make -C disk set` "
                                       "or `make -C disk`, pass --disk-set DIR / --adf PATH, or use --no-disk)")
         for d in (self.tmp, self.d["media"], os.path.join(self.results, "configs"), os.path.join(self.results, "raw")):
@@ -1888,12 +1942,18 @@ def select_entries(opts):
     entries = matrix.apply_overrides(entries, opts.sets)
     # before planning: the policy looks at whole families (reference + twins)
     pacing.assign(entries)
+    # bench entries run the bench disk whole, at the bench pacing (disk_warp)
+    bench_ents = [e for e in entries if matrix.is_bench(e)]
+    for e in bench_ents:
+        e["module_warp"] = []
     # A matrix run runs each coverage key once (plan.py); entries named with
     # --config run every module, as asked.
-    if getattr(opts, "plan", False) and not opts.configs:
+    if getattr(opts, "plan", False) and not opts.configs and len(bench_ents) < len(entries):
         from . import plan
         allowed = (opts.params or {}).get("modules")
-        entries, opts.plan_info = plan.build(entries, allowed=None if allowed is None else int(str(allowed), 0))
+        rest, opts.plan_info = plan.build([e for e in entries if not matrix.is_bench(e)],
+                                          allowed=None if allowed is None else int(str(allowed), 0))
+        entries = rest + bench_ents
     return entries
 
 
@@ -1906,6 +1966,20 @@ def run(opts):
     outdir = unique_dir(os.path.join(os.path.abspath(opts.workdir), "results", run_id))
     run_id = os.path.basename(outdir)
     entries = select_entries(opts)
+    nb = sum(1 for e in entries if matrix.is_bench(e))
+    if nb and nb < len(entries):
+        raise RunnerError("bench entries run the bench disk, the others the test disks: run them separately")
+    if nb:
+        opts.matrix = "bench"       # the bench disk, also for bench entries named with --config
+    baseline = None
+    if getattr(opts, "bench_baseline", None):
+        if not nb:
+            raise RunnerError("--bench-baseline: no bench entries selected (use --matrix bench)")
+        try:
+            baseline = bench.load(opts.bench_baseline)
+        except ValueError as e:
+            raise RunnerError(f"--bench-baseline: {e}")
+        bench.freeze_plans(entries, baseline, os.path.join(outdir, "plans"))
     ctx = Context(opts, outdir, run_id)
     results, extra = None, None
     try:
@@ -1933,6 +2007,7 @@ def run(opts):
     finally:
         iso = ctx.close()
     ctx.environment["isolation"] = iso
-    summary = report.write_all(outdir, ctx.environment, results, analysis=extra)
+    summary = report.write_all(outdir, ctx.environment, results, analysis=extra,
+                               bench_baseline=None if baseline is None else (baseline, opts.bench_baseline))
     log(opts, f"report: {os.path.join(outdir, 'REPORT.md')}")
     return outdir, summary

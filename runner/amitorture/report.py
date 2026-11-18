@@ -15,6 +15,7 @@ import json
 import os
 import shlex
 
+from . import bench
 from . import records as recmod
 
 STATUS_ORDER = ["crash", "hang", "fail", "timeout", "incomplete", "error", "pass", "skip"]
@@ -647,7 +648,9 @@ def _threaded_speed_lines(speeds):
     return L
 
 
-def write_all(outdir, environment, results, source="run", analysis=None):
+def write_all(outdir, environment, results, source="run", analysis=None, bench_baseline=None):
+    """bench_baseline: (summary.json "bench" entries, label) to diff the bench results against
+    (BENCH-DIFF.md, summary "bench_diff")."""
     from .runner import integrate_host_verdicts
     for r in results:
         integrate_host_verdicts(r)
@@ -694,11 +697,14 @@ def write_all(outdir, environment, results, source="run", analysis=None):
                       "user_amiberry_seen": iso.get("user_amiberry_seen", [])},
         "catalogue": catalogue_summary(results, fps, an.get("parity")),
         "host_requests": host_summary(results),
-        "hostspeed": speed_summary(results),
+        "bench": bench.summary(results),
+        "bench_diff": None,
         "files": {"report": "REPORT.md", "failures": "failures.jsonl", "environment": "environment.json",
                   "configs": "configs/", "raw": "raw/", "narrowing": "narrowing.json", "repro": "repro/"},
     }
     os.makedirs(outdir, exist_ok=True)
+    if bench_baseline is not None:
+        summ["bench_diff"] = bench.write_diff(outdir, bench_baseline[0], summ["bench"], bench_baseline[1])
     with open(os.path.join(outdir, "summary.json"), "w", encoding="utf-8") as fh:
         json.dump(summ, fh, indent=1, default=_default)
     with open(os.path.join(outdir, "environment.json"), "w", encoding="utf-8") as fh:
@@ -902,8 +908,11 @@ def render_markdown(summ, env, results, items, problems, an):
                 if t:
                     L.append(f"    - `{t['case']}` **{t['st']}**: {t['why']}")
         L.append("")
-    if summ.get("hostspeed"):
-        L.extend(_speed_lines(summ["hostspeed"]))
+    if summ.get("bench"):
+        L.extend(bench.report_lines(summ["bench"]))
+    if summ.get("bench_diff"):
+        d = summ["bench_diff"]
+        L.extend([f"Bench diff against `{d.get('against')}`: **{d.get('word')}** ({', '.join(f'{k} {v}' for k, v in sorted((d.get('counts') or {}).items()))}): see `BENCH-DIFF.md`.", ""])
     if an.get("xfail") or an.get("fixed"):
         L.append("### Known bugs (xfail registry)")
         L.append("")

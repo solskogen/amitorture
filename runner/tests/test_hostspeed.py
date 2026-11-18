@@ -228,41 +228,6 @@ class SpeedParity(unittest.TestCase):
         self.assertEqual(info["status"], "compared")
 
 
-class SpeedSampler(unittest.TestCase):
-    def test_samples_only_inside_blocks(self):
-        run = runner.EntryRun.__new__(runner.EntryRun)
-        run.t0, run.pid, run.speed_samples = 0.0, None, []
-
-        def h(mod, case, hb):
-            return mailbox.Header(0, [1, 1, hb, 0, 4096, mod, case])
-        run.speed_sample(h(26, 0, 5))          # hostspeed, between blocks
-        run.speed_sample(h(21, 1003, 6))       # another module
-        run.speed_sample(h(26, 1003, 7))
-        self.assertEqual(len(run.speed_samples), 1)
-        self.assertEqual(run.speed_samples[0][1:3], [7, 1003])
-
-    def test_follower_reads_the_header_once_without_new_bytes(self):
-        img = mailbox.build_image([], ring_size=64, state=1)
-
-        class Mem:
-            reads = 0
-
-            def read_longs(self, addrs):
-                Mem.reads += 1
-                return [int.from_bytes(img[a:a + 4], "big") for a in addrs]
-        seen = []
-        f = mailbox.RingFollower(Mem(), 0, on_header=seen.append)
-        r = f.poll()
-        self.assertEqual(r["data"], b"")
-        self.assertEqual(Mem.reads, 1)
-        self.assertEqual(len(seen), 1)
-
-    def test_thread_cpu_of_this_process(self):
-        main, total, top = runner.thread_cpu(os.getpid())
-        self.assertGreater(main, 0)
-        self.assertGreaterEqual(total, main)
-
-
 class SpeedMatrix(unittest.TestCase):
     def test_real_speed_entries_and_twins(self):
         std = {e["id"]: e for e in matrix.expand("standard")}

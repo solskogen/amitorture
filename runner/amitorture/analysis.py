@@ -9,6 +9,7 @@ import json
 import os
 
 from . import adf as adfmod
+from . import bench
 from . import baseline as basemod
 from . import cases as casemod
 from . import codemap, diagnose, narrow, parity, problems
@@ -48,151 +49,12 @@ def failure_items(results, fps, registry):
     for i, it in enumerate(hrm):
         it["id"] = f"F{n + i + 1:03d}"
     items.extend(hrm)
-    thr = thread_speed_items(results)
+    thr = bench.thread_items(results)
     n = len(items)
     for i, it in enumerate(thr):
         it["id"] = f"F{n + i + 1:03d}"
     items.extend(thr)
     return items, infos
-
-
-# Threaded CPU twins (report.speed_summary pairs: entries that differ only in
-# cpu_threaded, same binary, parameters and run, so the same host). At
-# cpu_speed=max a single block's rtf says little (Amiberry gives the CPU the
-# host time a frame leaves, so the frames stay on time), but the threaded CPU
-# can break exactly that: its hardware accesses are hand-offs to the main
-# thread, and a flood of them held the chipset below real time (Kickstart
-# 1.3's Alert loop, hostspeed cia_write). Its idle CPU can also spin a host
-# core where the unthreaded one sleeps (hostspeed stop_timer). Both are
-# compared with the unthreaded twin, not with a fixed host figure.
-THREAD_RTF_MARGIN = 0.03         # threaded rtf over real time and the twin's, beyond both 3 sigma
-THREAD_IDLE_BLOCKS = ("stop", "stop_timer")
-THREAD_IDLE_COST_MAX = 1.25      # total CPU/s over the twin's, x
-THREAD_IDLE_COST_SLACK = 0.05    # + host CPU s per emulated s
-THREAD_REFLOODS = 2              # re-floods in a row that mean the main thread's count misses floods
-THREAD_RECOVERY_SHARE = 0.6      # flood_recovery: the CPU thread's share of the quiet work
-                                 # (held on the main thread: ~0.2, the other threads; back: ~1)
-
-
-def thread_speed_items(results):
-    """`thread_speed` failure items: a threaded entry that falls behind real
-    time on a hostspeed block where its unthreaded twin keeps up, or whose
-    idle CPU (THREAD_IDLE_BLOCKS) costs much more host CPU than the twin's."""
-    from . import report
-    out = []
-    by_id = {r["id"]: r for r in results}
-    # One usable host CPU (matrix host_cpus): a CPU thread would share it with
-    # the main thread, and every hand-off would wait for the scheduler.
-    for r in results:
-        launches = [r] + list(r.get("disks") or [])
-        pin = next((x["host_cpus"] for x in launches if isinstance(x.get("host_cpus"), dict)), None)
-        eng = next((x["engine"] for x in launches if x.get("engine")), None) or {}
-        if not pin or pin.get("asked") != 1:
-            continue
-        if str((r.get("options") or {}).get("cpu_threaded", "false")).lower() != "true":
-            continue
-        if eng.get("cpu_thread_runs_on") == "CPU":
-            out.append({"kind": "thread_speed", "entry": r["id"], "ref_entry": None, "mod": "host",
-                        "case": "thread_one_cpu", "case_key": "host.thread_one_cpu", "disk": None,
-                        "why": (f"the emulator ran the CPU on its own thread with one usable host CPU "
-                                f"(pinned to {pin.get('pinned_to')}): the CPU thread and the main "
-                                f"thread share it, and every hand-off waits for the scheduler (Amiberry "
-                                f"newcpu.cpp cpu_thread_wanted, cpu_thread.cpp cpu_thread_usable_host_cpus)"),
-                        "ref": {}, "twin": {"runs_on": "CPU thread", "line": eng.get("cpu_thread_runs_line")},
-                        "differing_options": [], "host": casemod.host_desc(r.get("host_context")),
-                        "jit": r.get("jit"), "machine": r.get("machine"),
-                        "config": (r.get("config") or {}).get("file")})
-    speeds = report.speed_summary(results)
-    by_entry = {(e["entry"], e.get("disk")): e for e in speeds}
-    # noisy blocks too ("untestable" for the benchmark's 5 % limit): the
-    # comparison widens its margin by both 3 sigma instead
-    timed = ("measured", "pass", "fail", "untestable")
-    for on in speeds:
-        off = by_entry.get((on.get("thread_reference"), on.get("disk")))
-        if not on.get("cpu_threaded") or off is None:
-            continue
-        refs = {b["insn"]: b for b in off["blocks"]}
-        r = by_id.get(on["entry"]) or {}
-        # Amiberry reports its own counting mismatches: a flood hold ended by
-        # a count on the main thread that saw no flood, while the thread then
-        # flooded again at once. Twice in a row and the workload makes the
-        # CPU go back and forth between the threads (each move flushing the
-        # JIT), wherever the host is slow enough to lose it.
-        if (on.get("refloods") or 0) >= THREAD_REFLOODS:
-            out.append({"kind": "thread_speed", "entry": on["entry"], "ref_entry": off["entry"], "mod": "host",
-                        "case": "thread_refloods", "case_key": "host.thread_refloods", "disk": on.get("disk"),
-                        "why": (f"the CPU went back to its thread when the count on the main thread saw no flood, "
-                                f"and flooded again at once, {on['refloods']} times in a row: the count misses "
-                                f"requests the thread makes (Amiberry newcpu.cpp cpu_thread_count_read, "
-                                f"cpu_thread_snap_read)"),
-                        "ref": {}, "twin": {"refloods": on["refloods"], "flood_holds": on.get("flood_holds")},
-                        "differing_options": [{"option": "cpu_threaded", "ref": "false", "twin": "true"}],
-                        "host": casemod.host_desc(on.get("host")), "jit": r.get("jit"),
-                        "machine": r.get("machine"), "config": (r.get("config") or {}).get("file")})
-        for b in on["blocks"]:
-            if b["insn"] == "flood_recovery":
-                qs, fs = b.get("quiet_thread_share"), b.get("flood_thread_share")
-                # Judged when the emulator's flood fallback was live in this
-                # run (its log counts the holds; cia_write is the same flood):
-                # the flood phases' own share says nothing then, as a flood
-                # that comes just after a retry is not measured and runs on
-                # the thread. Without that count (older results), floods the
-                # thread kept up with (flood share high) are not judged.
-                holds = on.get("flood_holds")
-                exercised = holds > 0 if holds is not None else (fs is None or fs < THREAD_RECOVERY_SHARE)
-                if qs is not None and qs < THREAD_RECOVERY_SHARE and exercised:
-                    keys = ("quiet_thread_share", "flood_thread_share", "quiet_samples")
-                    out.append({"kind": "thread_speed", "entry": on["entry"], "ref_entry": off["entry"], "mod": "host",
-                                "case": casemod.speed_name(b["insn"]), "case_key": SPEED_KEY + str(b["insn"]),
-                                "disk": on.get("disk"),
-                                "why": (f"flood_recovery: after each flood of CIA writes moved the CPU to the main "
-                                        f"thread, the CPU thread ran only {qs:.0%} of the quiet work that followed "
-                                        f"(at least {THREAD_RECOVERY_SHARE:.0%} expected): the CPU stays off its thread "
-                                        f"long after the flood (Amiberry newcpu.cpp cpu_thread_check_flood)"),
-                                "ref": {k: refs.get(b["insn"], {}).get(k) for k in keys
-                                        if refs.get(b["insn"], {}).get(k) is not None},
-                                "twin": {k: b.get(k) for k in keys if b.get(k) is not None},
-                                "differing_options": [{"option": "cpu_threaded", "ref": "false", "twin": "true"}],
-                                "host": casemod.host_desc(on.get("host")), "jit": r.get("jit"),
-                                "machine": r.get("machine"), "config": (r.get("config") or {}).get("file")})
-                continue
-            a = refs.get(b["insn"])
-            if a is None or a.get("st") not in timed or b.get("st") not in timed:
-                continue
-            why = None
-            if a.get("rtf") is not None and b.get("rtf") is not None:
-                sa, sb = 3 * (a.get("sigma") or 0), 3 * (b.get("sigma") or 0)
-                keeps_up = a["rtf"] <= casemod.SPEED_RTF_LIMIT + sa
-                # behind real time itself: an unthreaded twin that runs ahead
-                # of real time (rtf < 1, the JIT at cpu_speed=max) is no bar
-                if keeps_up and b["rtf"] > max(a["rtf"], 1.0) + THREAD_RTF_MARGIN + sa + sb:
-                    why = (f"{b['insn']}: with the threaded CPU the emulator ran at {1 / b['rtf']:.2f}x real time "
-                           f"(rtf {b['rtf']:.3f} +- {sb:.3f}), where the unthreaded twin {off['entry']} kept up "
-                           f"(rtf {a['rtf']:.3f} +- {sa:.3f}): the chipset fell behind serving the CPU thread "
-                           f"(Amiberry newcpu.cpp run_cpu_thread, service_cpu_indirect_request)")
-            ca, cb = a.get("cpu_total_per_emu_s"), b.get("cpu_total_per_emu_s")
-            if why is None and b["insn"] in THREAD_IDLE_BLOCKS and ca is not None and cb is not None:
-                limit = ca * THREAD_IDLE_COST_MAX + THREAD_IDLE_COST_SLACK
-                if cb > limit:
-                    why = (f"{b['insn']}: with the CPU idle in STOP the threaded CPU cost {cb:.3f} host CPU s per "
-                           f"emulated s, the unthreaded twin {off['entry']} {ca:.3f} (limit {limit:.3f}): the idle "
-                           f"CPU thread spins instead of sleeping (Amiberry newcpu.cpp cpu_thread_idle_wait, "
-                           f"cpu_thread_main_wait_wake)")
-            if why is None:
-                continue
-            keys = ("rtf", "sigma", "cpu_total_per_emu_s")
-            out.append({"kind": "thread_speed", "entry": on["entry"], "ref_entry": off["entry"], "mod": "host",
-                        "case": casemod.speed_name(b["insn"]), "case_key": SPEED_KEY + str(b["insn"]),
-                        "disk": on.get("disk"), "why": why,
-                        "ref": {k: a.get(k) for k in keys if a.get(k) is not None},
-                        "twin": {k: b.get(k) for k in keys if b.get(k) is not None},
-                        "differing_options": [{"option": "cpu_threaded", "ref": "false", "twin": "true"}],
-                        "host": casemod.host_desc(on.get("host")), "jit": r.get("jit"), "machine": r.get("machine"),
-                        "config": (r.get("config") or {}).get("file")})
-    return out
-
-
-SPEED_KEY = "host.speed_"
 
 
 def _num(v):

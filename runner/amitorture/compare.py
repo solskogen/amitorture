@@ -1,17 +1,15 @@
-"""compare: the hostspeed benchmarks of two Amiberry binaries, A/B.
+"""compare: the bench disk on two Amiberry binaries, A/B (docs/BENCH.md).
 
-Runs the same entries (normally matrix benchmarks) on binary A and binary B,
+Runs the same entries (normally matrix bench) on binary A and binary B,
 `repeat` times, one launch at a time, alternating which binary goes first
 (A B, B A, A B, ...) so a slow drift of the host (thermal, another process)
 does not favour either. Optionally pins the runner and every emulator to a
 CPU set. Each launch is a normal `run` (its own results dir, REPORT.md and
-summary.json); compare then reads summary.json["hostspeed"] and, per entry
-and block, compares B with A:
-
-  * instruction blocks: host ops/s (higher is better);
-  * frame blocks (cases.FRAME_BLOCKS: stop, vbl_poll, chipset_load), where
-    the CPU idles for a number of frames: total host CPU seconds per
-    emulated second (lower is better).
+summary.json); every launch after the first gets --bench-baseline of the
+first one, so all of them do the same work (the same counts). compare then
+reads summary.json["bench"] and, per entry and block, compares B with A on
+the block's value, lower is better: host ns per unit (micro, kernel tiers)
+or host CPU seconds per emulated second (frame, thread tiers).
 
 Verdict per block, with `threshold` percent:
   slower / faster  the medians differ by more than the threshold and the
@@ -34,6 +32,7 @@ import subprocess
 import sys
 import time
 
+from . import bench
 from . import cases as casemod
 from . import envinfo
 
@@ -66,24 +65,23 @@ def sha256(path):
 
 
 def metric(block):
-    """(value, higher_is_better, unit) of a measured block, or None."""
-    if block.get("st") not in ("measured", "pass"):
+    """(value, higher_is_better, unit) of a timed bench block, or None."""
+    if block.get("st") not in ("ok", "unconfirmed") or block.get("value") is None \
+            or block.get("blk") in bench.SAMPLED:
         return None
-    if block.get("insn") in casemod.FRAME_BLOCKS:
-        v = block.get("cpu_total_per_emu_s")
-        return None if v is None else (v, False, "total CPU/s")
-    v = block.get("ops_per_host_s")
-    return None if v is None else (v, True, "host ops/s")
+    if block.get("metric") == "cpu_per_emu_s":
+        return block["value"], False, "host CPU/emu s"
+    return block["value"], False, f"{'host' if block.get('basis') == 'host' else 'guest'} ns/{block.get('unit')}"
 
 
 def collect(summary):
-    """{(entry, disk, insn): (value, higher_is_better, unit)} from summary.json."""
+    """{(entry, disk, block): (value, higher_is_better, unit)} from summary.json."""
     out = {}
-    for e in summary.get("hostspeed") or []:
+    for e in summary.get("bench") or []:
         for b in e.get("blocks") or []:
             m = metric(b)
             if m is not None:
-                out[(e["entry"], e.get("disk"), b["insn"])] = m
+                out[(e["entry"], e.get("disk"), b["blk"])] = m
     return out
 
 
@@ -115,9 +113,9 @@ def analyse(runs, labels, threshold):
             s = series.setdefault(key, {"higher": higher, "unit": unit, labels[0]: [], labels[1]: []})
             s[r["label"]].append(v)
     rows = []
-    for (entry, disk, insn), s in sorted(series.items(), key=lambda kv: (kv[0][0], str(kv[0][1]), kv[0][2])):
+    for (entry, disk, blk), s in sorted(series.items(), key=lambda kv: (kv[0][0], str(kv[0][1]), kv[0][2])):
         a, b = s[labels[0]], s[labels[1]]
-        row = {"entry": entry, "disk": disk, "insn": insn, "unit": s["unit"], "higher_is_better": s["higher"],
+        row = {"entry": entry, "disk": disk, "blk": blk, "unit": s["unit"], "higher_is_better": s["higher"],
                "a": a, "b": b}
         if not a or not b:
             row.update(verdict="incomplete", change_pct=None)
@@ -145,8 +143,8 @@ def markdown(manifest, rows):
          f"CPU affinity {manifest['affinity']}",
          f"- host: {casemod.host_desc(manifest['host'])}",
          f"- verdicts: " + ", ".join(f"{k} {v}" for k, v in sorted(counts.items())), "",
-         "Change > 0: B is better (more host ops/s; for the frame blocks stop/vbl_poll/chipset_load, less total "
-         "host CPU per emulated second). **slower**/**faster**: beyond the threshold and the repeats do not "
+         "Change > 0: B is better (lower host ns per unit, or less host CPU per emulated second). "
+         "**slower**/**faster**: beyond the threshold and the repeats do not "
          "overlap; borderline: beyond the threshold but they overlap (rerun with more repeats).", "",
          f"| entry | block | measure | {la} | {lb} | change | verdict |", "|---|---|---|---|---|---|---|"]
     for r in rows:
@@ -154,7 +152,7 @@ def markdown(manifest, rows):
         v = f"**{v}**" if v in ("slower", "faster") else v
         ch = "-" if r.get("change_pct") is None else f"{r['change_pct']:+.1f}%"
         name = r["entry"] + (f" [{r['disk']}]" if r.get("disk") else "")
-        L.append(f"| {name} | {r['insn']} | {r['unit']} | {' / '.join(_fmt(x) for x in r['a'])} | "
+        L.append(f"| {name} | {r['blk']} | {r['unit']} | {' / '.join(_fmt(x) for x in r['a'])} | "
                  f"{' / '.join(_fmt(x) for x in r['b'])} | {ch} | {v} |")
     L.extend(["", "## Launches", ""])
     for run in manifest["runs"]:
@@ -182,11 +180,11 @@ def run(a):
             os.sched_setaffinity(0, parse_cpus(a.pin))
         except (ValueError, OSError) as e:
             raise RunnerError(f"--pin {a.pin}: {e}")
-    adf = a.adf or (os.path.join(RUN_DIR, "..", "disk", "build", "benchmarks", "amitorture.adf")
-                    if a.matrix == "benchmarks" else None)
+    from . import adf as adfmod
+    adf = a.adf or (adfmod.BENCH_ADF if a.matrix == "bench" else None)
     adf = adf and os.path.abspath(os.path.normpath(adf))
     if adf and not os.path.isfile(adf):
-        raise RunnerError(f"no test disk at {adf}: build it (make -C disk benchmarks) or pass --adf")
+        raise RunnerError(f"no test disk at {adf}: build it (make -C disk bench) or pass --adf")
     workdir = os.path.abspath(a.workdir)
     out = os.path.join(workdir, "compare", time.strftime("%Y%m%d-%H%M%SZ", time.gmtime()))
     os.makedirs(out, exist_ok=True)
@@ -198,6 +196,7 @@ def run(a):
                 "runs": []}
     by_label = dict(zip(labels, paths))
     runs = []
+    first = None        # the first launch's results: its counts for the others
 
     def save(rows=None):
         doc = dict(manifest, rows=rows)
@@ -210,8 +209,10 @@ def run(a):
             if (adf and sha256(adf) != disk_sha) or sha256(by_label[lab]) != manifest["binaries"][lab]["sha256"]:
                 raise RunnerError("the test disk or a binary changed during the comparison")
             cmd = [sys.executable, "-m", "amitorture", "run", "--amiberry", by_label[lab],
-                   "--matrix", a.matrix, "--workdir", workdir, "--jobs", "1", "--warp", "off",
+                   "--matrix", a.matrix, "--workdir", workdir, "--jobs", "1",
                    "--no-narrow", "--no-repro", "-q"]
+            if first and a.matrix == "bench":
+                cmd += ["--bench-baseline", first]
             if adf:
                 cmd += ["--adf", adf]
             if a.kickstarts:
@@ -238,6 +239,8 @@ def run(a):
             except (OSError, ValueError) as e:
                 raise RunnerError(f"no summary.json in {res} ({e}): see {log}")
             values = collect(summary)
+            if first is None and summary.get("bench"):
+                first = res
             runs.append({"label": lab, "values": values})
             manifest["runs"].append({"repeat": rep, "label": lab, "command": cmd, "returncode": rc, "log": log,
                                      "result": res, "verdict": summary.get("verdict"),

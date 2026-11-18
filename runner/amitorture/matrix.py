@@ -11,7 +11,7 @@ Named matrices:
             softfloat
   full      everything: every CPU variant x FPU x core mode, every model x
             PAL/NTSC, and every twin of every entry that allows it
-  benchmarks hostspeed only, every CPU family plus legal JIT/threaded twins
+  bench     the bench disk (docs/BENCH.md): every CPU family plus legal JIT/threaded twins
 
 *Twins.* A twin differs from its reference entry (``twin_of``) only in the
 options its ``twin_kind`` is about, so a difference in results is the
@@ -36,7 +36,7 @@ from __future__ import annotations
 import copy
 import fnmatch
 
-MATRICES = ("smoke", "standard", "full", "benchmarks")
+MATRICES = ("smoke", "standard", "full", "bench")
 
 # ---------------------------------------------------------------------------
 # ROMs (romdb ids in order of preference, see romdb.json / `amitorture roms`)
@@ -661,10 +661,11 @@ def speed_entries(name):
     return out
 
 
-def benchmark_entries():
-    """CPU-family coverage without the normal max-speed hostspeed exclusion,
-    plus a cycle-exact A500: real-speed pacing, where the frame blocks
-    (stop, vbl_poll, chipset_load) show the host cost of the CE chipset."""
+def bench_entries():
+    """The bench disk (docs/BENCH.md) on every CPU family, with the JIT and
+    threaded twins Amiberry allows, plus a cycle-exact A500. Baked with the
+    host flag: the runner times every run with its own clock (bench.py).
+    The disk has only the bench modules, so no module mask."""
     out = []
     for model, cpu, fpu, core in (
         ("A500", "68000", "none", "compat"),
@@ -677,16 +678,17 @@ def benchmark_entries():
         ("A4000", "68060nommu", "internal", "fast"),
     ):
         base = make_entry(model, cpu, fpu, core, eid=f"bench-{cpu.lower()}" + ("-ce" if core == "ce" else ""),
-                          title_extra=", benchmarks only")
-        base["disk_groups"] = ["exp"]
-        base["params"] = {"modules": module_mask(["hostspeed"])}
-        entries = [base] + _twins_for(base, [""], True, False)
+                          title_extra=", bench disk")
+        base["params"] = {"flags": "host"}
+        # threaded twins on the 68020 only: the thread checks (bench.thread_items)
+        # need one pair, not one per CPU
+        entries = [base] + _twins_for(base, [""], cpu == "68020", False)
         if cpu == "68020":
             # The threaded interpreter twin on one host CPU: the emulator must
             # not run a CPU thread that shares it with the main thread (every
             # hand-off would wait for the scheduler; Amiberry once ran a
-            # polling game at about 1 FPS like that). analysis.thread_speed_items
-            # host.thread_one_cpu.
+            # polling game at about 1 FPS like that). bench.thread_items
+            # thread_one_cpu.
             thr = next(e for e in entries if e["id"] == base["id"] + "-thr")
             one = copy.deepcopy(thr)
             one["id"] = base["id"] + "-thr-1cpu"
@@ -694,7 +696,7 @@ def benchmark_entries():
             one["host_cpus"] = 1
             entries.append(one)
         for entry in entries:
-            entry["matrices"] = {"benchmarks"}
+            entry["matrices"] = {"bench"}
         out.extend(entries)
     return out
 
@@ -823,8 +825,8 @@ def expand(name="standard"):
     if name not in MATRICES:
         raise ValueError(f"unknown matrix {name!r}; known: {', '.join(MATRICES)}")
     if name not in _CACHE:
-        if name == "benchmarks":
-            _CACHE[name] = benchmark_entries()
+        if name == "bench":
+            _CACHE[name] = bench_entries()
             return copy.deepcopy(_CACHE[name])
         elif name == "smoke":
             _CACHE[name] = _dedupe(_from_specs(SMOKE, "smoke") + speed_entries("smoke"))
@@ -852,6 +854,11 @@ def expand(name="standard"):
         _CACHE[name].extend(strict_policy_entries(name))
         _hostspeed_only_at_real_speed(_CACHE[name])
     return copy.deepcopy(_CACHE[name])
+
+
+def is_bench(entry):
+    """An entry of the bench matrix (it runs the bench disk, docs/BENCH.md)."""
+    return "bench" in (entry.get("matrices") or ())
 
 
 def all_entries():

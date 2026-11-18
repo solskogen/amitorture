@@ -35,7 +35,8 @@ import struct
 import time
 
 ACK_OFFSET = 44
-KNOWN = ("screenshot", "audio_mark", "key", "mouse", "joy", "cd32pad", "wait", "pacing")
+KNOWN = ("screenshot", "audio_mark", "key", "mouse", "joy", "cd32pad", "wait", "pacing", "bench_longer",
+         "bench_more")
 
 NO_JOY = ("Amiberry's IPC (src/osdep/amiberry_ipc_socket.cpp) has no joystick/CD32 pad injection: only "
           "SEND_KEY (Amiga keyboard), SEND_MOUSE (mouse device 0) and SET_JOYPORT_MODE")
@@ -84,11 +85,13 @@ class Requests:
                 request sets it (ending a warped boot) before it is acked
     audio       audio.Capture or None (no capture in this launch)
     frame_hz    50 (PAL) / 60 (NTSC): screenshot {"frames": n} waits n frames
+    bench       bench.Host or None: answers bench_longer / bench_more (refused without one)
     """
 
     def __init__(self, ipc, rawdir, rel="", options=None, audio=None, frame_hz=50, clock=time.monotonic,
-                 sleep=time.sleep, t0=None, log=None, pacing=0, floppy_after=None, module_warp=None):
+                 sleep=time.sleep, t0=None, log=None, pacing=0, floppy_after=None, module_warp=None, bench=None):
         self.ipc, self.rawdir, self.rel = ipc, rawdir, rel
+        self.bench = bench
         self.pacing = 1 if pacing else 0
         # pacing.py: the modules that run warped when the guest asks per module
         # (flag modpace); every other module gets the disk's pacing
@@ -175,6 +178,13 @@ class Requests:
             acked = reply == "OK"
             if not acked:
                 result["ack_error"] = reply
+        elif is_req and result.pop("decline", False) and rid is not None:
+            # a deliberate "no" (bench_longer/bench_more): answered, not a failure
+            reply = self._ack(mbox_addr, int(rid) | 0x80000000)
+            acked = reply == "OK"
+            result["declined"] = True
+            if not acked:
+                result["ack_error"] = reply
         elif is_req and not ipc_trouble and rid is not None:
             # cannot serve it (unknown request, no joystick injection, ...):
             # refuse, so the guest stops waiting at once (CONTRACT §13)
@@ -204,6 +214,21 @@ class Requests:
     # -- actions: each returns (ok, result) -----------------------------------
     def _do_wait(self, obj, args, rid, tag):
         return True, {}
+
+    def _do_bench_longer(self, obj, args, rid, tag):
+        """Ack: the guest doubles its count once more (the run was shorter
+        than the host wants); refused: the count stands (docs/BENCH.md)."""
+        if self.bench is None:
+            return False, {"error": "no bench host in this launch"}
+        ack, info = self.bench.decide("bench_longer", args)
+        return ack, dict(info, decline=not ack) if "error" not in info else info
+
+    def _do_bench_more(self, obj, args, rid, tag):
+        """Ack: one more repetition (the two fastest disagree); refused: done."""
+        if self.bench is None:
+            return False, {"error": "no bench host in this launch"}
+        ack, info = self.bench.decide("bench_more", args)
+        return ack, dict(info, decline=not ack) if "error" not in info else info
 
     def _do_pacing(self, obj, args, rid, tag):
         """End of the (possibly warped) boot (tag "boot"), or the start of a

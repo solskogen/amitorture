@@ -257,7 +257,7 @@ def make_options(a, binary):
         boot_warp=getattr(a, "boot_warp", "on") != "off",
         module_warp=getattr(a, "module_warp", None),
         ports=parse_ports(getattr(a, "ports", None)),
-        show=_check_show(a))
+        show=_check_show(a), bench_baseline=getattr(a, "bench_baseline", None))
 
 
 def _check_show(a):
@@ -290,10 +290,15 @@ def cmd_run(a):
         opts.module_warp = "auto"       # run's default: pacing per module (pacing.py)
     outdir, summ = runner.run(opts)
     print(f"{summ['verdict']}: {os.path.join(outdir, 'REPORT.md')}")
+    bd = summ.get("bench_diff")
+    if bd:
+        print(f"bench diff: {bd['word']}: {os.path.join(outdir, bd['file'])}")
     if summ.get("interrupted"):
         return EXIT_INTERRUPTED
     if not summ["isolation"]["ok"]:
         return EXIT_ISOLATION
+    if bd and bd["status"]:
+        return EXIT_PROBLEMS
     return EXIT_OK if summ["verdict"].startswith("PASS") else EXIT_PROBLEMS
 
 
@@ -347,6 +352,24 @@ def cmd_check(a):
     v = regress.check_verdict(doc)
     print(f"{v}: {os.path.join(outdir, 'REPORT.md')}")
     return EXIT_OK if v.startswith("NO REGRESSIONS") else EXIT_PROBLEMS
+
+
+def cmd_bench_diff(a):
+    from . import bench
+    try:
+        rows = bench.diff(bench.load(a.a), bench.load(a.b))
+    except ValueError as e:
+        raise RunnerError(str(e))
+    status, word = bench.exit_status(rows)
+    text = "\n".join([f"# Bench diff: {word}", "", f"Reference (A): `{a.a}`; B: `{a.b}`.", ""]
+                     + bench.diff_markdown(rows)) + "\n"
+    if a.out:
+        with open(a.out, "w", encoding="utf-8") as fh:
+            fh.write(text)
+        print(f"{word}: {a.out}")
+    else:
+        sys.stdout.write(text)
+    return EXIT_PROBLEMS if status else EXIT_OK
 
 
 def cmd_compare(a):
@@ -437,8 +460,8 @@ def _common(p, kick_required=True, param_defaults=True):
                    help="which machines to run (default smoke): smoke = 15 machines, covering CPU classes, chipsets "
                         "and strict instruction policies; standard = 145, every CPU/FPU variant, board and controller; "
                         "full = 543, also every JIT "
-                        "sub-option, threaded and softfloat twin; benchmarks = 19, CPU-family benchmarks with "
-                        "JIT and threaded off/on pairs. `amitorture matrix --matrix NAME` lists them")
+                        "sub-option, threaded and softfloat twin; bench = 15, the bench disk (docs/BENCH.md) per "
+                        "CPU family with JIT and threaded twins. `amitorture matrix --matrix NAME` lists them")
     p.add_argument("--config", action="append", metavar="NAME",
                    help="run only these entries: an entry id or a glob such as 'a1200*', from any matrix "
                         "(repeatable; replaces --matrix)")
@@ -461,7 +484,7 @@ def _common(p, kick_required=True, param_defaults=True):
                         "it exists and --adf is not given)")
     p.add_argument("--adf", metavar="PATH", help="a single test disk instead of the set "
                                                  "(default disk/build/amitorture.adf when there is no set; "
-                                                 "matrix benchmarks uses disk/build/benchmarks/amitorture.adf)")
+                                                 "matrix bench uses disk/build/amitorture-bench.adf)")
     p.add_argument("--mode", default="full" if param_defaults else None, choices=["full", "quick"], help=MODE_HELP)
     p.add_argument("--seed", type=int, default=1 if param_defaults else None, help=SEED_HELP)
     p.add_argument("--end-action", default="halt" if param_defaults else None, choices=["halt", "reboot", "return"],
@@ -562,7 +585,18 @@ def build_parser():
                    help="say in the report, per problem, whether the case passed in this baseline (no diff; "
                         "use `check` for that)")
     p.add_argument("--no-repro", action="store_true", help=REPRO_HELP)
+    p.add_argument("--bench-baseline", metavar="RESULTS_DIR",
+                   help="bench entries: do the work of that earlier run (its counts per block) and diff this run "
+                        "against it (BENCH-DIFF.md; exit 1 on a slower, failed, noisy or missing block)")
     p.set_defaults(fn=cmd_run)
+
+    p = sub.add_parser("bench", help="bench results: `bench diff A B` compares two results dirs (docs/BENCH.md)")
+    bsub = p.add_subparsers(dest="bench_cmd", required=True)
+    q = bsub.add_parser("diff", help="per block same/borderline/slower/faster/noisy of B against A (no emulator)")
+    q.add_argument("a", metavar="A", help="reference results dir (or its summary.json)")
+    q.add_argument("b", metavar="B", help="results dir to check")
+    q.add_argument("-o", "--out", metavar="FILE", help="write the markdown here instead of stdout")
+    q.set_defaults(fn=cmd_bench_diff)
 
     p = sub.add_parser("baseline", help="run each entry N times and store fingerprints, timing and perf bands")
     p.add_argument("--amiberry", metavar="PATH", help="the Amiberry build you trust (default: 'amiberry' on PATH)")
@@ -589,25 +623,25 @@ def build_parser():
                    help="runs per entry and binary (>1 also detects cases that became unstable)")
     p.set_defaults(fn=cmd_check)
 
-    p = sub.add_parser("compare", help="A/B: the hostspeed benchmarks of two binaries, alternating, repeated; "
+    p = sub.add_parser("compare", help="A/B: the bench disk on two binaries, alternating, repeated; "
                                        "per block slower/faster/borderline/same")
     p.add_argument("--amiberry", action="append", metavar="PATH", required=True,
                    help="give it twice: binary A (the reference), then binary B")
     p.add_argument("--label", action="append", metavar="NAME",
                    help="names for A and B in the report, in the same order (default A, B)")
     p.add_argument("--kickstarts", default=DEFAULT_KICKSTARTS, metavar="DIR", help=KICK_HELP)
-    p.add_argument("--matrix", default="benchmarks", choices=matrix.MATRICES,
-                   help="matrix of the entries (default benchmarks)")
+    p.add_argument("--matrix", default="bench", choices=matrix.MATRICES,
+                   help="matrix of the entries (default bench)")
     p.add_argument("--config", action="append", metavar="NAME",
                    help="only entries matching this id or glob (repeatable; default every entry)")
     p.add_argument("--set", action="append", metavar="OPTION=VALUE",
                    help="Amiberry option for every entry on both binaries (repeatable), e.g. cpu_threaded=true")
     p.add_argument("--adf", metavar="PATH",
-                   help="test disk (default disk/build/benchmarks/amitorture.adf for matrix benchmarks)")
+                   help="test disk (default disk/build/amitorture-bench.adf for matrix bench)")
     p.add_argument("--repeat", type=int, default=3, metavar="N",
                    help="launches per binary (default 3); the order alternates: A B, B A, ...")
-    p.add_argument("--threshold", type=float, default=2.0, metavar="PCT",
-                   help="smallest change of the median that counts (default 2 percent)")
+    p.add_argument("--threshold", type=float, default=1.0, metavar="PCT",
+                   help="smallest change of the median that counts (default 1 percent)")
     p.add_argument("--pin", metavar="CPUS",
                    help="run the runner and every emulator on these host CPUs, e.g. 2-5 (sched_setaffinity)")
     p.add_argument("--workdir", default=DEFAULT_WORKDIR, metavar="DIR", help=WORKDIR_HELP)
