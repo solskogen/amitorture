@@ -32,7 +32,7 @@ Times below were measured on a Raspberry Pi 500 with 4 emulators in parallel (`-
 ```
 python3 -m amitorture run --amiberry ./amiberry --kickstarts ~/Amiberry/ROMs --matrix smoke --jobs 4
 ```
-`smoke` covers 12 machines (68000 to 68060, OCS/ECS/AGA, PAL/NTSC, AROS) with JIT twins and strict instruction-policy entries, each running every disk of the set. It takes about 25 minutes, plus up to the narrowing budget if something fails (see 3.3).
+`smoke` covers 16 entries (68000 to 68060, OCS/ECS/AGA, PAL/NTSC, AROS) with JIT twins and strict instruction-policy entries, each running every disk of the set. It takes about 25 minutes, plus up to the narrowing budget if something fails (see 3.3).
 
 Exit code: 0 means no problems, 1 means problems found (read the report), 2 is a host-side error, 3 means the isolation check failed, 130 means the run was stopped with Ctrl+C (see "Stopping a run" below).
 
