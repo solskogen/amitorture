@@ -58,11 +58,43 @@ ___modsi3:
 	rts
 
 ; d0 / d1 -> d0 = quotient, d1 = remainder (division by 0 gives -1, d0)
+; A divisor below 65536 takes two DIVU.W; a larger one leaves a quotient
+; of at most 16 bits, so the shift-subtract loop starts with the dividend's
+; high word already in the remainder and only runs 16 steps.
 udivmod:
 	movem.l	d2-d3,-(sp)
+	tst.l	d1
+	beq.s	.zero
+	cmp.l	#$10000,d1
+	bcc.s	.big
+	move.l	d0,d2
+	clr.w	d2
+	swap	d2			; high word
+	divu.w	d1,d2			; d2 = r1:q1
+	move.l	d2,d3
+	move.w	d0,d2			; r1:low word
+	divu.w	d1,d2			; d2 = r2:q2
+	swap	d3
+	move.w	d2,d3			; q1:q2
+	move.l	d3,d0
+	clr.w	d2
+	swap	d2
+	move.l	d2,d1
+	movem.l	(sp)+,d2-d3
+	rts
+.zero:
+	move.l	d0,d1
+	moveq	#-1,d0
+	movem.l	(sp)+,d2-d3
+	rts
+.big:
 	move.l	d1,d3
-	moveq	#0,d1
-	moveq	#31,d2
+	move.l	d0,d1
+	clr.w	d1
+	swap	d1			; remainder = high word (< divisor)
+	swap	d0
+	clr.w	d0			; low word, shifted up
+	moveq	#15,d2
 .loop:
 	add.l	d0,d0
 	addx.l	d1,d1

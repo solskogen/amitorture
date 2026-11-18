@@ -1,0 +1,135 @@
+// SPDX-License-Identifier: 0BSD
+//
+// zlib deflate and inflate of the text corpus, at the default level 6 that
+// libpng, gzip and most callers use. zlib is the compressor under every PNG
+// and gzip on the Amiga, and its two halves stress different things:
+// deflate is longest_match()'s byte compares and hash-chain walks plus the
+// Huffman tree builder in trees.c, inflate is a bit-at-a-time state machine
+// in inflate() with inflate_fast() as the hot decoding loop.
+//
+// Separate from the PNG benchmark so a change in zlib is measured on its
+// own: a 64 KB stream in one deflate() call, and inflated back in one
+// inflate() call, the way compress2() and uncompress() do it, three times
+// per run.
+
+#include <string.h>
+#include <zlib.h>
+
+#include "bench.h"
+#include "corpus.h"
+
+static UBYTE *plain, *packed, *unpacked;
+static ULONG packed_cap, packed_len;
+
+// Compress the whole corpus in one call. Returns false on a zlib error.
+static bool deflate_corpus(void) {
+    z_stream strm;
+    int rc;
+
+    memset(&strm, 0, sizeof(strm));
+    // zlib's own default allocator reaches malloc(), which FASTMEM does not
+    // reach; deflate's state and window are where this benchmark works.
+    strm.zalloc = bench_zalloc;
+    strm.zfree = bench_zfree;
+    if (deflateInit2(&strm, Z_DEFAULT_COMPRESSION, Z_DEFLATED, KS_ZWBITS, KS_ZMEMLEVEL, Z_DEFAULT_STRATEGY) != Z_OK)
+        return false;
+    strm.next_in = plain;
+    strm.avail_in = CORPUS_SIZE;
+    strm.next_out = packed;
+    strm.avail_out = packed_cap;
+    rc = deflate(&strm, Z_FINISH);
+    packed_len = strm.total_out;
+    deflateEnd(&strm);
+    return rc == Z_STREAM_END;
+}
+
+static void zlib_teardown(void *state) {
+    (void)state;
+    bench_free(plain);
+    bench_free(packed);
+    bench_free(unpacked);
+    plain = packed = unpacked = NULL;
+}
+
+// The buffers stay in this file's globals; the hooks get the corpus as
+// their state.
+static void *zlib_setup(void) {
+    plain = corpus_alloc(CORPUS_SIZE);
+    packed_cap = (ULONG)deflateBound(NULL, CORPUS_SIZE);
+    packed = bench_alloc(packed_cap, "zlib deflate buffer");
+    unpacked = bench_alloc(CORPUS_SIZE, "zlib inflate buffer");
+    if (!plain || !packed || !unpacked || !deflate_corpus()) {
+        zlib_teardown(NULL);
+        return NULL;
+    }
+    return plain;
+}
+
+static const void *deflate_run(void *state) {
+    (void)state;
+    return deflate_corpus() ? packed : NULL;
+}
+
+static bool deflate_verify(void *state, const void *result, ULONG *check) {
+    (void)state;
+    *check = checksum(0, result, packed_len);
+    return true;
+}
+
+// Inflating is about 12 times faster than deflating, so a run inflates the
+// stream this many times to take about as long as the other benchmarks.
+#define INFLATES KS_INFLATES
+
+static const void *inflate_run(void *state) {
+    z_stream strm;
+    int rc, i;
+
+    (void)state;
+    for (i = 0; i < INFLATES; i++) {
+        memset(&strm, 0, sizeof(strm));
+        strm.zalloc = bench_zalloc;
+        strm.zfree = bench_zfree;
+        if (inflateInit2(&strm, KS_ZWBITS) != Z_OK)
+            return NULL;
+        strm.next_in = packed;
+        strm.avail_in = packed_len;
+        strm.next_out = unpacked;
+        strm.avail_out = CORPUS_SIZE;
+        rc = inflate(&strm, Z_FINISH);
+        inflateEnd(&strm);
+        if (rc != Z_STREAM_END || strm.total_out != CORPUS_SIZE)
+            return NULL;
+    }
+    return unpacked;
+}
+
+static bool inflate_verify(void *state, const void *result, ULONG *check) {
+    if (memcmp(result, state, CORPUS_SIZE))
+        return false;
+    *check = checksum(0, result, CORPUS_SIZE);
+    return true;
+}
+
+const struct Bench bench_zlib_deflate = {
+    /* .name= */ "zlib-deflate",
+    /* .desc= */ "zlib level 6 compression of text",
+    /* .group= */ GROUP_COMPRESSION,
+    /* .unit= */ "KB",
+    /* .per_loop= */ CORPUS_SIZE / 1024.0,
+    /* .setup= */ zlib_setup,
+    /* .run= */ deflate_run,
+    /* .verify= */ deflate_verify,
+    /* .teardown= */ zlib_teardown,
+};
+
+const struct Bench bench_zlib_inflate = {
+    /* .name= */ "zlib-inflate",
+    /* .desc= */ "zlib decompression of text",
+    /* .group= */ GROUP_COMPRESSION,
+    /* .unit= */ "KB",
+    /* .per_loop= */ INFLATES * (CORPUS_SIZE / 1024.0),
+    /* .setup= */ zlib_setup,
+    /* .run= */ inflate_run,
+    /* .verify= */ inflate_verify,
+    /* .teardown= */ zlib_teardown,
+};

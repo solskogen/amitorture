@@ -186,4 +186,6 @@ check-gen:
 
 -include $(C_SRCS:%.c=$(B)/%.d) $(B)/modlist.d
 
+include bench/kernels.mk
+
 FORCE:
