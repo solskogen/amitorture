@@ -561,7 +561,7 @@ _EMU_NET_KEYS = ("a2065", "zz9000_net", "ne2000_pci", "ne2000_pcmcia")
 
 FLAG_BITS = {"unsafe": 1, "noserial": 2, "nombox": 4, "net": 8, "noscreen": 16,
              "intcompat": 32, "fpucompat": 64, "modpace": 128,
-             "fastcpu": 256}   # tools/mkadf.py
+             "fastcpu": 256, "host": 512}   # tools/mkadf.py
 
 
 def _add_flag(params, name):
@@ -627,6 +627,7 @@ def _with_entry_flags(params, entry, extra_options=None):
             raise RunnerError(f"invalid instruction policy option {option}={options[option]!r}")
         _set_flag(params, flag, jit or value in ("false", "no", "0"))
     _set_flag(params, "fastcpu", not real_cpu_speed(options))
+    _set_flag(params, "host", True)      # the runner answers requests (rt/main.c boot pacing)
     return _with_net_flag(params, options)
 
 
@@ -1653,10 +1654,18 @@ def classify(res, merged, ended):
     if ended != "selftest":
         integrity.extend(records.module_problems(merged))
     guest = hostreq.guest_records(merged.records)
-    if done and guest and isinstance(done[-1].get("records"), int) and done[-1]["records"] != len(
-            [m for m in guest if m["boot"] == guest[-1]["boot"]]):
-        integrity.append(f"done says {done[-1]['records']} records, got "
-                         f"{len([m for m in guest if m['boot'] == guest[-1]['boot']])}")
+    boots = sorted({m["boot"] for m in guest})
+    for boot in boots:
+        in_boot = [m for m in guest if m["boot"] == boot]
+        bdone = [m["rec"] for m in in_boot if m["rec"].get("t") == "done"]
+        where = f"boot {boot}: " if len(boots) > 1 else ""
+        if not bdone:
+            if boot != boots[-1] and records.started_modules([m["rec"] for m in in_boot]):
+                integrity.append(f"{where}no done record (the boot broke off)")
+            continue
+        n = bdone[-1].get("records")
+        if isinstance(n, int) and n != len(in_boot):
+            integrity.append(f"{where}done says {n} records, got {len(in_boot)}")
     if ended == "crash":
         ex = res.get("process", {}).get("exit_before_stop", {})
         how = ex.get("signal") or f"code {ex.get('returncode')}"
@@ -1666,7 +1675,7 @@ def classify(res, merged, ended):
         return "crash", f"Amiberry exited by itself ({how})"
     if ended == "error":
         return "error", res.get("reason") or "host-side error"
-    if failed or host_failed or (done and done[-1].get("fail", 0) > 0):
+    if failed or host_failed or any(d.get("fail", 0) > 0 for d in done):
         why = f"{len(failed)} failed guest case(s)"
         if host_failed:
             why += f"; {len(host_failed)} failed host case(s): " + ", ".join(host_failed)
@@ -1686,8 +1695,9 @@ def classify(res, merged, ended):
             return "incomplete", "mailbox state says finished but no done record arrived"
         if integrity:
             return "incomplete", "; ".join(integrity)
-        if done[-1].get("aborted"):
-            return "incomplete", f"done.aborted={done[-1]['aborted']}"
+        aborted = next((d["aborted"] for d in done if d.get("aborted")), None)
+        if aborted:
+            return "incomplete", f"done.aborted={aborted}"
         hello = merged.by_type("hello")
         if ended != "selftest" and hello and hello[-1].get("modules") == {}:
             return "skip", "no compiled modules selected by the run mask"

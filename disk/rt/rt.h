@@ -41,6 +41,8 @@ struct amt_params {
 #define AMT_F_FASTCPU   256  /* the CPU is not paced to real timing (emulator cpu_speed max or a
                                 set speed): limits on how fast the CPU may drive the chipset are
                                 recorded, not judged */
+#define AMT_F_HOST      512  /* a host follows the mailbox and answers requests (the runner sets
+                                it): the boot pacing request waits for its answer */
 #define AMT_F_NET       8    /* the host says the network cards are on an emulator-only
                                 backend (user-mode NAT): the network module may transmit */
 

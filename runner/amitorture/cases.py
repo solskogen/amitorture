@@ -146,8 +146,9 @@ def extract_records(recs):
 
 
 def _extract_merged(merged):
-    """The last boot of one disk's records (a reboot restarts seq; the last
-    boot is the complete one)."""
+    """The last boot of one disk's records (a reboot restarts seq). The
+    fingerprints come from the last boot only; runner.classify checks
+    that every boot completed cleanly."""
     if merged is None:
         return {"cases": {}, "perf": {}, "modules": {}}
     boots = [m["boot"] for m in merged.records]

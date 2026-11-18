@@ -208,6 +208,16 @@ class Evidence(unittest.TestCase):
             self.assertEqual(runner.classify({}, m, "done")[0], "pass")
         self.assertEqual((serial, mailbox), snapshot)
 
+    def test_earlier_boot_that_broke_off_mid_module_is_not_hidden(self):
+        crashed = trace()[:3]                       # hello, mod begin, case: then the machine reset
+        m = merged(crashed + trace())
+        status, why = runner.classify({}, m, "done")
+        self.assertEqual(status, "incomplete")
+        self.assertIn("boot 0", why)
+        done_fail = trace()
+        done_fail[-1]["fail"] = 1
+        self.assertEqual(runner.classify({}, merged(done_fail + trace()), "done")[0], "fail")
+
     def test_ambiguous_boot_epochs_cannot_create_a_complete_run(self):
         rows = trace()
         serial = records.parse_bytes(wire(rows + rows), "serial").records

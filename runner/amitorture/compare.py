@@ -248,9 +248,23 @@ def run(a):
     save(rows)
     with open(os.path.join(out, "COMPARE.md"), "w", encoding="utf-8") as fh:
         fh.write(markdown(manifest, rows))
-    slower = [r for r in rows if r["verdict"] == "slower"]
-    print(f"{'SLOWER' if slower else 'OK'}: {len(slower)} slower, "
+    rc, word = exit_status(rows)
+    print(f"{word}: {sum(r['verdict'] == 'slower' for r in rows)} slower, "
           f"{sum(r['verdict'] == 'faster' for r in rows)} faster, "
-          f"{sum(r['verdict'] == 'borderline' for r in rows)} borderline of {len(rows)} blocks: "
+          f"{sum(r['verdict'] == 'borderline' for r in rows)} borderline, "
+          f"{sum(r['verdict'] == 'incomplete' for r in rows)} incomplete of {len(rows)} blocks: "
           f"{os.path.join(out, 'COMPARE.md')}")
-    return 1 if slower else 0
+    return rc
+
+
+def exit_status(rows):
+    """(exit status, word): 1 when a block is slower, or when the
+    comparison measured nothing or not every block on both sides (a broken
+    run must not read as "no regression")."""
+    if any(r["verdict"] == "slower" for r in rows):
+        return 1, "SLOWER"
+    if not rows:
+        return 1, "NOTHING MEASURED"
+    if any(r["verdict"] == "incomplete" for r in rows):
+        return 1, "INCOMPLETE"
+    return 0, "OK"

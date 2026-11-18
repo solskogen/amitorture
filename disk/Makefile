@@ -110,9 +110,15 @@ $(B)/%.o: %.s
 $(B)/payload.exe: $(OBJS)
 	$(CC) $(LDFLAGS) -o $@ $(OBJS) $(LIBGCC)
 
-$(B)/amitorture.adf: $(B)/bootblock.bin $(B)/payload.exe ../tools/mkadf.py
-	$(MKADF) --boot $(B)/bootblock.bin --payload $(B)/payload.exe -o $@ \
-		--build-id "$(BUILD_ID)" $(if $(PARAMS),--param $(PARAMS))
+# rewritten only when BUILD_ID or PARAMS change, so that the ADF follows them
+$(B)/adf.stamp: FORCE
+	@mkdir -p $(dir $@)
+	@printf '%s\n' '$(BUILD_ID)' '$(PARAMS)' '$(MAX_SEG)' | cmp -s - $@ || printf '%s\n' '$(BUILD_ID)' '$(PARAMS)' '$(MAX_SEG)' > $@
+
+$(B)/amitorture.adf: $(B)/bootblock.bin $(B)/payload.exe ../tools/mkadf.py $(B)/adf.stamp
+	$(MKADF) --boot $(B)/bootblock.bin --payload $(B)/payload.exe -o $@.tmp \
+		--build-id "$(BUILD_ID)" $(if $(MAX_SEG),--max-seg $(MAX_SEG)) $(if $(PARAMS),--param $(PARAMS))
+	@mv $@.tmp $@
 
 # `make check`: verify every disk of the set (bootblock checksum, CRC, relocs);
 # with MODS, the single ADF.
@@ -148,19 +154,23 @@ DISK_SET_core  := takeover rt flags exceptions smc interrupts cia blitter timing
 DISK_SET_cpu   := cpu_basic mmu dispatch
 DISK_SET_exp   := fpu rtg expsound network misc_hw misc_hw_os devio memory memory_os hostspeed
 SET := $(B)/set
+# per-segment memory limit of every set disk (CONTRACT.md section 12)
+SET_MAX_SEG ?= 400K
 ALL_MODULE_NAMES := $(shell $(PYTHON) ../tools/genmodlist.py --names $(wildcard modules/*.c))
 
 .PHONY: set check-groups
+# Built into $(SET).new and moved into place only when every disk built: a
+# failed build leaves the previous set as it was, never half a set.
 set: check-groups
-	@mkdir -p $(SET)
-	@rm -f $(SET)/*.adf
+	@rm -rf $(SET).new && mkdir -p $(SET).new
 	@n=0; for g in $(DISK_SETS); do n=$$((n+1)); \
 	  case $$g in core) m="$(DISK_SET_core)";; cpu) m="$(DISK_SET_cpu)";; exp) m="$(DISK_SET_exp)";; esac; \
 	  have=""; for x in $$m; do grep -q "^AMT_MODULE( *$$x *," modules/*.c && have="$$have $$x"; done; \
 	  [ -n "$$have" ] || { echo "set: group $$g has no modules yet, skipped"; continue; }; \
-	  $(MAKE) --no-print-directory B=$(B)/set-$$g MODS="$$have" BUILD_ID="$(BUILD_ID) $$n/$(words $(DISK_SETS)) $$g" || exit 1; \
-	  cp $(B)/set-$$g/amitorture.adf $(SET)/amitorture-$$n-$$g.adf; \
+	  $(MAKE) --no-print-directory B=$(B)/set-$$g MODS="$$have" MAX_SEG=$(SET_MAX_SEG) BUILD_ID="$(BUILD_ID) $$n/$(words $(DISK_SETS)) $$g" || { rm -rf $(SET).new; exit 1; }; \
+	  cp $(B)/set-$$g/amitorture.adf $(SET).new/amitorture-$$n-$$g.adf; \
 	done
+	@rm -rf $(SET).old; [ ! -d $(SET) ] || mv $(SET) $(SET).old; mv $(SET).new $(SET); rm -rf $(SET).old
 	@for f in $(SET)/*.adf; do printf '%s: ' $$f; $(MKADF) --dump $$f | awk '/^alloc_size/{c=$$2}/^data_alloc/{d=$$2}END{print c " code + " d " data bytes in memory"}'; done
 
 check-groups:

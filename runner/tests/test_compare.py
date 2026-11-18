@@ -37,6 +37,12 @@ class Verdict(unittest.TestCase):
         self.assertEqual(rows["add_l"]["verdict"], "slower")
         self.assertEqual(rows["fadd"]["verdict"], "incomplete")
 
+    def test_exit_status_fails_when_nothing_or_not_everything_was_measured(self):
+        self.assertEqual(compare.exit_status([])[0], 1)
+        self.assertEqual(compare.exit_status([{"verdict": "same"}, {"verdict": "incomplete"}])[0], 1)
+        self.assertEqual(compare.exit_status([{"verdict": "same"}, {"verdict": "faster"}])[0], 0)
+        self.assertEqual(compare.exit_status([{"verdict": "slower"}])[0], 1)
+
     def test_parse_cpus(self):
         self.assertEqual(compare.parse_cpus("2-4,8"), {2, 3, 4, 8})
         with self.assertRaises(ValueError):

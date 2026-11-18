@@ -270,12 +270,29 @@ def summarize(merged):
 
 
 def module_problems(merged):
-    """Lifecycle and declared coverage of the latest guest boot."""
+    """Lifecycle and declared coverage of every guest boot (with --resets
+    or a disk that rebooted, an earlier boot that broke off must not hide
+    behind a clean last one)."""
     guest = [m for m in merged.records if not m.get("host")]
     if not guest:
         return ["no modules executed"]
-    boot = guest[-1]["boot"]
-    recs = [m["rec"] for m in guest if m["boot"] == boot]
+    boots = sorted({m["boot"] for m in guest})
+    out = []
+    for boot in boots:
+        recs = [m["rec"] for m in guest if m["boot"] == boot]
+        if boot != boots[-1] and not started_modules(recs):
+            continue                    # reset before the first module: nothing lost
+        probs = _boot_module_problems(recs)
+        out.extend(probs if len(boots) == 1 else [f"boot {boot}: {p}" for p in probs])
+    return out
+
+
+def started_modules(recs):
+    """Whether a boot got as far as running a module (or reporting results)."""
+    return any(r.get("t") in ("mod", "case", "perf", "speed", "bench") for r in recs)
+
+
+def _boot_module_problems(recs):
     hello = next((r for r in recs if r.get("t") == "hello"), {})
     expected = hello.get("modules")
     if expected == {} and not any(r.get("t") in ("mod", "case", "perf", "speed") for r in recs):
@@ -284,7 +301,7 @@ def module_problems(merged):
             return []
     active, seen, completed, evidence, problems = None, set(), set(), False, []
     if not hello:
-        problems.append("no hello record in the latest guest boot")
+        problems.append("no hello record in the guest boot")
     for r in recs:
         t, mod = r.get("t"), r.get("mod")
         if t == "mod":
@@ -335,16 +352,20 @@ def bad_unrecovered(merged) -> list:
     if merged.gaps:
         return list(merged.bad)
     have = {(m.get("boot"), (m.get("rec") or {}).get("seq")) for m in merged.records}
+    last_boot = merged.records[-1].get("boot") if merged.records else None
     out = []
     for b in merged.bad:
         rec = b.get("rec") if isinstance(b, dict) else None
-        key = (b.get("boot") if isinstance(b, dict) else None, (rec or {}).get("seq"))
+        boot = b.get("boot") if isinstance(b, dict) else None
+        key = (boot, (rec or {}).get("seq"))
         if rec is None or key not in have:
             # unparsable: recovered only if nothing is missing (no gaps) and
-            # the stream ended with a consistent done record
-            done = [m["rec"] for m in merged.records if (m.get("rec") or {}).get("t") == "done"]
-            n_guest = len([m for m in merged.records if not (m.get("rec") or {}).get("host")
-                           and m.get("boot") == merged.records[-1].get("boot")]) if merged.records else 0
+            # its boot ended with a consistent done record
+            if boot is None:
+                boot = last_boot
+            in_boot = [m for m in merged.records if m.get("boot") == boot]
+            done = [m["rec"] for m in in_boot if (m.get("rec") or {}).get("t") == "done"]
+            n_guest = len([m for m in in_boot if not m.get("host")])
             if not (done and done[-1].get("records") == n_guest):
                 out.append(b)
     return out

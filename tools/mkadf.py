@@ -3,7 +3,7 @@
 
 Build a disk:
     mkadf.py --boot build/bootblock.bin --payload build/payload.exe -o build/amitorture.adf \
-             [--build-id STR] [--alloc-flags 0x10000] [--param key=value ...]
+             [--build-id STR] [--alloc-flags 0x10000] [--max-seg 400K] [--param key=value ...]
 
 Re-bake the run parameters of an existing disk (the runner does this per run):
     mkadf.py --in build/amitorture.adf -o /tmp/run.adf --param mode=quick seed=5 end_action=0
@@ -12,10 +12,11 @@ Inspect a disk (checks the bootblock checksum, the blob CRC and the relocs):
     mkadf.py --dump build/amitorture.adf
 
 Parameters (section 4): mode=full|quick|<n> (soak = 2 is reserved, runs like full), seed=<n>, end_action=halt|reboot|return|<n>,
-flags=<n>|unsafe,noserial,nombox,net,noscreen,intcompat,fpucompat,modpace,fastcpu (comma or '+' separated), baud=<n>, modules=all|<64-bit mask>, floppy=<percent>|turbo
+flags=<n>|unsafe,noserial,nombox,net,noscreen,intcompat,fpucompat,modpace,fastcpu,host (comma or '+' separated), baud=<n>, modules=all|<64-bit mask>, floppy=<percent>|turbo
 (the drive speed the modules run at; 0 = not stated).
 intcompat (32) and fpucompat (64) declare compatibility instruction policies; flags=0 is hardware-strict.
 fastcpu (256) declares a CPU not paced to real timing: CPU-vs-chipset rate limits are recorded, not judged.
+host (512) says a host follows the mailbox and answers requests (the runner sets it; real hardware leaves it clear).
 Numbers accept 0x prefixes. Any error exits with status 1 and a message on stderr.
 """
 
@@ -45,7 +46,7 @@ MODES = {"full": 0, "quick": 1, "soak": 2}
 END_ACTIONS = {"halt": 0, "reboot": 1, "coldreboot": 1, "return": 2}
 FLAG_BITS = {"unsafe": 1, "noserial": 2, "nombox": 4, "net": 8, "noscreen": 16,
              "intcompat": 32, "fpucompat": 64, "modpace": 128,
-             "fastcpu": 256}
+             "fastcpu": 256, "host": 512}
 ENTRY_SYMBOLS = ("_amt_entry", "amt_entry")
 
 
@@ -299,6 +300,13 @@ def parse_num(s):
         raise Fail(f"bad number {s!r}")
 
 
+def parse_size(s):
+    """'400K', '1M' or a number of bytes."""
+    s = str(s).strip()
+    mult = {"k": 1024, "m": 1024 * 1024}.get(s[-1:].lower(), 1)
+    return parse_num(s[:-1] if mult > 1 else s) * mult
+
+
 def default_params():
     return {"mode": 0, "seed": 1, "end_action": 0, "flags": 0, "baud": 115200,
             "modules": 0xFFFFFFFFFFFFFFFF, "floppy": 0}
@@ -407,6 +415,13 @@ def build(args):
         raise Fail(f"payload does not fit on the disk: it needs {(BLOB_OFF + blob_sectors * SECTOR) // 1024} KB, "
                    f"an ADF holds {ADF_SIZE // 1024} KB. Build the disk set instead (`make -C disk` or "
                    f"`make -C disk set`), or build fewer modules (`make -C disk MODS=\"rt <modules>\"`).")
+    if getattr(args, "max_seg", None):
+        limit = parse_size(args.max_seg)
+        for name, size in (("code (segment 0)", alloc), ("data + BSS (segment 1)", data_alloc)):
+            if size > limit:
+                raise Fail(f"{name} is {size} bytes in memory, over the {limit}-byte limit (--max-seg): it "
+                           f"may not fit the free chip or slow RAM of a 512 KB + 512 KB A500. Move a module "
+                           f"to another disk group (DISK_SET_* in disk/Makefile).")
     params = default_params()
     for item in args.param or []:
         apply_param(params, item)
@@ -558,6 +573,8 @@ def main():
                          + " (intcompat=32, fpucompat=64; default flags=0 is hardware-strict)")
     ap.add_argument("--build-id")
     ap.add_argument("--alloc-flags", default=hex(MEMF_ANY_CLEAR))
+    ap.add_argument("--max-seg", metavar="BYTES",
+                    help="fail if either segment needs more memory than this (e.g. 400K)")
     ap.add_argument("--dump", metavar="ADF")
     args = ap.parse_args()
     try:

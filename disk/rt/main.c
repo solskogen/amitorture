@@ -83,8 +83,9 @@ int amt_main(void)
     mbox_set_state(MBOX_STATE_RUNNING);
     /* The runner may boot warped (Kickstart, loader, probe); it acks once the
      * emulator runs at this disk's pacing, so no module runs warped. Older
-     * runners refuse the request at once (CONTRACT §13). */
-    amt_request("pacing", "boot", 0, 30000);
+     * runners refuse the request at once (CONTRACT §13). Without a host
+     * (flag host clear: real hardware, FPGA) nobody answers: do not wait. */
+    amt_request("pacing", "boot", 0, (amt_par.flags & AMT_F_HOST) ? 30000 : 0);
 
     if (amt_run_modules() < 0)
         amt_n_aborted++;

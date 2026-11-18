@@ -18,7 +18,8 @@ class InstructionPolicy(unittest.TestCase):
         result = runner._with_entry_flags(dict(params or {}), entry, extra_options)
         payload = mkadf.default_params()
         mkadf.apply_param(payload, "flags=" + str(result["flags"]))
-        return payload["flags"]
+        self.assertTrue(payload["flags"] & 512, "the runner always sets flag host")
+        return payload["flags"] & ~512
 
     def test_default_runner_policy_is_compatibility_but_raw_media_is_strict(self):
         self.assertEqual(self.flags(), 32 | 64)
