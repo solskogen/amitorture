@@ -1098,7 +1098,9 @@ def _run_disk(opts, ctx, entry, binary=None, extra_options=None, disk=None):
     res["engine"] = eng
     if eng is not None:
         known = {d["option"] for d in res.get("adjusted", [])}
-        extra_adj = [d for d in engine_adjustments(entry["options"], eng) if d["option"] not in known]
+        extra_adj = [d for d in engine_adjustments(entry["options"], eng) if d["option"] not in known
+                     # on one host CPU the CPU thread must be refused (bench.thread_items)
+                     and not (d["option"] == "cpu_threaded" and entry.get("host_cpus") == 1)]
         if extra_adj:
             res.setdefault("adjusted", []).extend(extra_adj)
             adj = res["adjusted"]
@@ -1440,9 +1442,14 @@ def engine_adjustments(options, eng):
     want_fpu = options.get("fpu_model", "0") or "0"
     if want_fpu != eng["fpu_model"]:
         add("fpu_model", want_fpu, eng["fpu_model"], [eng["line"]])
-    # "softfloat" before Amiberry's FPU core setting, "exact" since (fpu_core)
-    sf = any(k in (eng["fpu_mode"] or "") for k in ("softfloat", "exact"))
-    if eng["fpu_model"] != "0" and (options.get("fpu_softfloat") == "true") != sf:
+    # "softfloat" before Amiberry's FPU core setting, "exact" since (fpu_core).
+    # Since then fpu_softfloat=false is no choice (fpu_core auto: the exact
+    # core for the interpreter, the host FPU for the JIT), so only an older
+    # emulator's exact core contradicts it.
+    mode = eng["fpu_mode"] or ""
+    sf = any(k in mode for k in ("softfloat", "exact"))
+    want_sf = options.get("fpu_softfloat") == "true"
+    if eng["fpu_model"] != "0" and want_sf != sf and (want_sf or "exact" not in mode):
         add("fpu_softfloat", options.get("fpu_softfloat", "false"), "true" if sf else "false", [eng["line"]])
     if options.get("cpu_model") and options["cpu_model"] != eng["cpu_model"]:
         add("cpu_model", options["cpu_model"], eng["cpu_model"], [eng["line"]])

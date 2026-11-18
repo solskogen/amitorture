@@ -162,6 +162,11 @@ class DiskSet(unittest.TestCase):
         self.assertTrue(seen and set(seen) == {"2-cpu"})
 
 
+    def test_bench_blocks_are_not_narrowed(self):
+        items = [{"kind": "case_fail", "entry": "bench-68030", "mod": "bench", "case": "nfs3-clip"}]
+        self.assertEqual(narrow.groups_from(items, [{"id": "bench-68030"}]), [])
+
+
 class EngineFromLog(unittest.TestCase):
     def test_jit_active_and_refused(self):
         from amitorture import runner
@@ -191,6 +196,17 @@ class EngineFromLog(unittest.TestCase):
                                     "CPU=68030, FPU=68882 (host 64b), MMU=0, JIT=0. fast"])
         got = {a["option"] for a in runner.engine_adjustments(base, e)}
         self.assertEqual(got, {"cpu_threaded", "fpu_softfloat"})
+
+    def test_auto_fpu_core_may_pick_exact(self):
+        # fpu_softfloat=false leaves Amiberry's fpu_core on auto, which runs the
+        # interpreter on the exact core; an older emulator ("softfloat") had no auto
+        from amitorture import runner
+        base = {"cachesize": "0", "fpu_model": "68882", "cpu_model": "68030", "mmu_model": "0",
+                "cpu_threaded": "false", "fpu_softfloat": "false"}
+        e = runner.engine_from_log(["CPU=68030, FPU=68882 (exact), MMU=0, JIT=0. fast"])
+        self.assertEqual(runner.engine_adjustments(base, e), [])
+        e = runner.engine_from_log(["CPU=68030, FPU=68882 (softfloat), MMU=0, JIT=0. fast"])
+        self.assertEqual({a["option"] for a in runner.engine_adjustments(base, e)}, {"fpu_softfloat"})
 
     def test_cpu_thread_runs_on_line_decides(self):
         from amitorture import runner

@@ -1,4 +1,4 @@
-; bench harness helpers (harness.h): 68060 PCR and an FPU reset.
+; bench harness helpers (harness.h): 68060 PCR, FPCR and an FPU reset.
 	machine	68020
 	fpu	1
 	opt	o-
@@ -8,6 +8,8 @@
 	xdef	_bh_pcr_get
 	xdef	_bh_pcr_set
 	xdef	_bh_fpu_reset
+	xdef	_bh_fpcr_get
+	xdef	_bh_fpcr_set
 
 _bh_pcr_get:
 	dc.w	$4e7a,$0808		; movec pcr,d0
@@ -15,6 +17,14 @@ _bh_pcr_get:
 _bh_pcr_set:
 	move.l	4(sp),d0
 	dc.w	$4e7b,$0808		; movec d0,pcr
+	rts
+
+_bh_fpcr_get:
+	fmove.l	fpcr,d0
+	rts
+_bh_fpcr_set:
+	move.l	4(sp),d0
+	fmove.l	d0,fpcr
 	rts
 
 _bh_fpu_reset:				; FRESTORE of a null frame: FPU reset

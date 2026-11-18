@@ -263,7 +263,7 @@ class Host:
                 out.append(r)
                 continue
             r.update(st=e.get("st"), n=e.get("n"), reps=e.get("reps"))
-            for k in ("why", "sum", "sum_last", "nonlinear"):
+            for k in ("why", "note", "sum", "sum_last", "nonlinear"):
                 if e.get(k) is not None:
                     r[k] = e[k]
             n = e.get("n") or 0
@@ -610,7 +610,7 @@ def report_lines(entries):
                 measure = "host CPU/emu s"
             else:
                 measure = f"{'host' if b.get('basis') == 'host' else 'guest'} ns/{b.get('unit')}"
-            note = [x for x in (b.get("why"), b.get("kset"), b.get("mem")) if x]
+            note = [x for x in (b.get("why"), b.get("note"), b.get("kset"), b.get("mem")) if x]
             if b.get("rtf") is not None:
                 note.append(f"rtf {b['rtf']:.3f}")
             if b.get("quiet_thread_share") is not None:

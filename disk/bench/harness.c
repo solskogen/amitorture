@@ -201,6 +201,13 @@ static int confirmed(const ULONG *t, int n, ULONG *best, ULONG *second)
     return n >= 2 && c - a <= a / 400;
 }
 
+static const char *note;
+
+void bh_note(const char *s)
+{
+    note = s;
+}
+
 int bh_run(const struct bh_blk *b)
 {
     const struct bh_plan_entry *pe = plan_find(b->id);
@@ -297,6 +304,9 @@ done:
     json_str("st", !ok ? "fail" : conf ? "ok" : "unconfirmed");
     if (why)
         json_str("why", why);
+    if (note)
+        json_str("note", note);
+    note = 0;
     json_int("n", (long)count);
     json_int("reps", n);
     if (!(b->flags & BH_NOSUM)) {

@@ -200,7 +200,8 @@ class Requests:
              "latency_s": round(self.clock() - t_start, 3)}
         if not is_req:
             h["capture_what"] = obj.get("what")
-        if self.log:
+        quiet = what in ("bench_longer", "bench_more") and acked and not result.get("error")
+        if self.log and not quiet:     # the bench asks hundreds of these per entry
             self.log(f"host request {rid} {what} {tag!r}: {'acked' if acked else ('done' if acked is None else 'NOT acked')}"
                      + (f" ({result.get('error')})" if result.get("error") else ""))
         return h

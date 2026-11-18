@@ -153,7 +153,8 @@ def groups_from(failures, results):
         if it.get("kind") not in ("case_fail", "engine_mismatch") or it.get("xfail"):
             continue
         r = by_id.get(it["entry"])
-        if r is None or it.get("mod") in (None, "probe"):
+        # bench blocks: no module to mask, and a rerun answers nothing new
+        if r is None or it.get("mod") in (None, "probe", "bench"):
             continue
         key = it.get("case_key") or f"{it['mod']}.{it['case']}"
         g = groups.setdefault((r["id"], it["mod"]), {"result": r, "mod": it["mod"], "cases": {}, "ref_fp": {},

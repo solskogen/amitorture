@@ -54,6 +54,8 @@ void bh_end(void);
 /* Run one block. Returns 1 if it ran and its results were right. */
 int bh_run(const struct bh_blk *b);
 void bh_skip(const struct bh_blk *b, const char *why);
+/* from inside bh_run (verify): a remark for the block's end record ("note") */
+void bh_note(const char *s);
 
 /* mailbox case number while a block's timed work runs:
  * BH_POS_RUN | id << 8 | sequence (1-255, per timed run) */
@@ -66,6 +68,8 @@ void  bh_mark(ULONG pos);          /* set the mailbox position only (bh_pos() un
 ULONG bh_pcr_get(void);
 void  bh_pcr_set(ULONG);
 void  bh_fpu_reset(void);
+ULONG bh_fpcr_get(void);           /* FPU present only */
+void  bh_fpcr_set(ULONG);
 
 /* The work plan (CONTRACT §15): counts frozen by a baseline, patched into
  * the disk by the runner. Empty on a fresh disk: every block sizes itself. */

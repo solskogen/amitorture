@@ -660,6 +660,9 @@ def render_markdown(summ, env, results, items, problems, an):
                  "the module (aborted before it, or a crash). *unstable*: intermittent in the narrowing reruns.")
         L.append("")
     cat = summ.get("catalogue") or {}
+    bench_ids = {b.get("entry") for b in summ.get("bench") or []}
+    if bench_ids and all(e["id"] in bench_ids or e["status"] == "skip" for e in summ["entries"]):
+        cat = {}          # a bench run: the accuracy catalogue says nothing about it
     if cat.get("rows"):
         t = cat["totals"]
         L.append("### Capability catalogue (docs/catalogue.yaml)")
