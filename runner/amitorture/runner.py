@@ -60,6 +60,8 @@ class Options:
             raise RunnerError("use --warp or --set warp=..., not both")
         self.ports = kw.get("ports")                  # (lo, hi) serial port range, None = emulator.PORT_RANGE
         self.show = kw.get("show", False)             # emulator windows on the desktop (emulator.display_env)
+        self.pin = kw.get("pin")                # --pin: CPU list, "auto", "none"; None: auto for bench
+        self.pin_cpus = None                    # the resolved list, best first (run())
         self.bench_baseline = kw.get("bench_baseline")  # results dir: its bench counts, then a diff against it
 
 
@@ -405,9 +407,9 @@ LAUNCH_ATTEMPTS = 3
 
 def _launch_once(opts, entry, run, argv, env, home, rawdir, port, res, extra_options=None):
     proc = emulator.Process(opts.binary, argv, env, os.path.join(rawdir, "amiberry.log"), cwd=home,
-                            host_cpus=entry.get("host_cpus"))
-    if entry.get("host_cpus"):
-        res["host_cpus"] = {"asked": entry["host_cpus"], "pinned_to": proc.host_cpus}
+                            host_cpus=entry.get("host_cpus"), cpus=getattr(opts, "pin_cpus", None))
+    if entry.get("host_cpus") or getattr(opts, "pin_cpus", None):
+        res["host_cpus"] = {"asked": entry.get("host_cpus"), "pinned_to": proc.host_cpus}
     run.pid = proc.proc.pid
     serial = emulator.SerialClient(port, os.path.join(rawdir, "serial.bin"), on_data=run.on_serial)
     ipc = None
@@ -1958,6 +1960,30 @@ def select_entries(opts):
     return entries
 
 
+# Host CPUs a bench launch gets with --pin auto: Amiberry's main thread, its
+# CPU thread when threaded, audio and the rest.
+BENCH_PIN_CPUS = 4
+
+
+def resolve_pin(spec, bench_run):
+    """--pin to a CPU list, best first, or None (no pinning). Default (None):
+    auto for bench runs, else none. auto: envinfo.best_cpus."""
+    from . import envinfo
+    from .compare import parse_cpus
+    spec = (spec or ("auto" if bench_run else "none")).strip().lower()
+    if spec == "none":
+        return None
+    if spec == "auto":
+        return envinfo.best_cpus(BENCH_PIN_CPUS) or None
+    try:
+        cpus = parse_cpus(spec)
+    except ValueError as e:
+        raise RunnerError(f"--pin {spec!r}: {e}")
+    if hasattr(os, "sched_getaffinity") and not cpus <= os.sched_getaffinity(0):
+        raise RunnerError(f"--pin {spec}: CPUs {sorted(cpus - os.sched_getaffinity(0))} are not available")
+    return envinfo.rank_cpus(cpus)
+
+
 def run(opts):
     """The `run` command: runs the selected entries, then JIT/engine parity,
     xfail, narrowing of failures, problem grouping, repro packs and the
@@ -1975,6 +2001,9 @@ def run(opts):
         if opts.jobs > 1:
             log(opts, f"--jobs {opts.jobs} ignored: bench entries run one at a time (docs/BENCH.md)")
             opts.jobs = 1
+    opts.pin_cpus = resolve_pin(getattr(opts, "pin", None), bool(nb))
+    if opts.pin_cpus:
+        log(opts, f"emulators pinned to host CPUs {','.join(map(str, opts.pin_cpus))}")
     baseline = None
     if getattr(opts, "bench_baseline", None):
         if not nb:

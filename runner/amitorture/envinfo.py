@@ -83,6 +83,43 @@ def cpufreq(root="/sys/devices/system/cpu"):
     return out
 
 
+def best_cpus(n, allowed=None, root="/sys/devices/system/cpu"):
+    """Up to n host CPUs, fastest first, one per physical core: the bench
+    pins the emulator to them so that every run gets the same cores. Cores
+    of one CPU may boost to rather different clocks (AMD preferred cores,
+    Intel hybrid or favoured cores), and a thread the scheduler moves to
+    another core runs a whole block at another speed. Ranked by
+    amd_pstate_prefcore_ranking, else ACPI CPPC highest_perf, else
+    cpuinfo_max_freq; ties by CPU number; CPU 0 last. allowed: the CPUs to choose from
+    (default the runner's affinity). [] when nothing is known."""
+    from .compare import parse_cpus
+    if allowed is None:
+        allowed = os.sched_getaffinity(0) if hasattr(os, "sched_getaffinity") else set()
+    seen, pick = set(), []
+    for c in sorted(allowed):
+        if c in seen:
+            continue
+        sib = _read(os.path.join(root, f"cpu{c}", "topology", "thread_siblings_list"))
+        try:
+            seen |= parse_cpus(sib) if sib else {c}
+        except ValueError:
+            seen.add(c)
+        pick.append(c)
+    return rank_cpus(pick, root)[:max(0, int(n))]
+
+
+def rank_cpus(cpus, root="/sys/devices/system/cpu"):
+    """cpus, fastest first (see best_cpus)."""
+    def rank(c):
+        for name in ("cpufreq/amd_pstate_prefcore_ranking", "acpi_cppc/highest_perf", "cpufreq/cpuinfo_max_freq"):
+            v = _read(os.path.join(root, f"cpu{c}", name))
+            if v and v.isdigit():
+                return int(v)
+        return 0
+    # CPU 0 last: it takes most of the interrupts and housekeeping
+    return sorted(cpus, key=lambda c: (c == 0, -rank(c), c))
+
+
 # ARM "CPU part" ids (/proc/cpuinfo) of common cores, for host_brief()
 _ARM_PARTS = {"0xd03": "Cortex-A53", "0xd04": "Cortex-A35", "0xd05": "Cortex-A55", "0xd07": "Cortex-A57",
               "0xd08": "Cortex-A72", "0xd09": "Cortex-A73", "0xd0a": "Cortex-A75", "0xd0b": "Cortex-A76",

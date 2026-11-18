@@ -638,6 +638,9 @@ Compares the bench results of two finished runs, block by block (docs/BENCH.md "
 `run --bench-baseline A_RESULTS` does the same at the end of a run, after giving the run A's work counts.
 Exit status 1 on any slower, failed, noisy or missing block.
 
+A bench `run` pins every emulator to the same host CPUs, by default the 4 fastest-boosting physical
+cores (`--pin auto`; `--pin 2-5` to choose, `--pin none` to not pin; docs/BENCH.md "Host CPUs").
+
 ### bench plan
 ```
 amitorture bench plan RESULTS [--entry ID] [-o plan.json]

@@ -391,6 +391,7 @@ def summary(results):
                         "cpu_speed": (r.get("options") or {}).get("cpu_speed"), "host": sub.get("host_context"),
                         "flood_holds": eng.get("cpu_thread_flood_holds"), "refloods": eng.get("cpu_thread_refloods"),
                         "basis": b.get("basis"), "pacing": b.get("pacing"), "env": b.get("env"),
+                        "pinned_to": (sub.get("host_cpus") or r.get("host_cpus") or {}).get("pinned_to"),
                         "blocks": b.get("blocks") or []})
     return out
 
@@ -504,12 +505,17 @@ def diff(a_entries, b_entries):
         pace = None
         if ae is not None and ae.get("pacing") != be.get("pacing"):
             pace = f"pacing {ae.get('pacing')} vs {be.get('pacing')}"
+        pin = None
+        if ae is not None and ae.get("pinned_to") != be.get("pinned_to"):
+            pin = f"host CPUs {ae.get('pinned_to') or 'any'} vs {be.get('pinned_to') or 'any'}"
         ab = {x["id"]: x for x in (ae or {}).get("blocks") or []}
         for b in be.get("blocks") or []:
             a = ab.pop(b["id"], None) if ae is not None else None
             r = _verdict(a, b) if ae is not None else dict(_verdict(None, b), why="entry not in the reference")
             if pace and r["verdict"] not in ("fail", "new"):
                 r.update(verdict="incomparable", why=pace)
+            elif pin and r["verdict"] not in ("new", "incomplete"):
+                r["note"] = "; ".join(x for x in (r.get("note"), pin) if x)
             rows.append(dict(r, entry=be["entry"], disk=be.get("disk")))
         for a in ab.values():
             rows.append(dict(_verdict(a, None), entry=be["entry"], disk=be.get("disk")))

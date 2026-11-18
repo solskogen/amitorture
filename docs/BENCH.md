@@ -176,7 +176,7 @@ Amiberry.
 ### Running it
 
 ```
-amitorture run --amiberry BIN --matrix bench [--config 'bench-68020*'] [--bench-baseline RESULTS_DIR]
+amitorture run --amiberry BIN --matrix bench [--config 'bench-68020*'] [--bench-baseline RESULTS_DIR] [--pin auto|CPUS|none]
 amitorture bench diff A_RESULTS B_RESULTS [-o BENCH-DIFF.md]
 amitorture bench plan RESULTS [--entry ID] [-o plan.json]
 amitorture compare --amiberry OLD --amiberry NEW [--repeat 3] [--threshold 1] [--pin 2-5]
@@ -186,6 +186,14 @@ amitorture compare --amiberry OLD --amiberry NEW [--repeat 3] [--threshold 1] [-
 68000, 68000 cycle-exact, 68010, 68020 (JIT, threaded CPU, JIT + threaded, threaded with one host
 CPU), 68030, 68EC030 (+JIT), 68040 without MMU (+JIT) and 68060 without MMU (+JIT). A run takes
 either bench entries or accuracy entries, never both. It always runs one launch at a time.
+
+**Host CPUs.** A bench run pins every emulator to the same host CPUs (`run --pin`, default
+`auto`): the 4 fastest-boosting physical cores, one thread each, CPU 0 last (ranked by
+`amd_pstate_prefcore_ranking`, ACPI CPPC `highest_perf` or the maximum frequency). The cores of
+one CPU may boost to rather different clocks, and an unpinned launch runs on whichever core the
+scheduler picks. `--pin 2-5` picks the CPUs, `--pin none` turns it off. Each entry records
+`pinned_to`; the diff notes when the two runs used different CPUs. For steadier numbers, also
+use the `performance` governor (the host's governor and boost are recorded in each run).
 
 **Pacing.** The 68000/68010 entries (cpu_speed=real, no JIT, no threaded CPU) run warped: the
 emulator runs as fast as it can instead of in step with real time, so their timings say what

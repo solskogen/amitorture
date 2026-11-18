@@ -257,7 +257,7 @@ def make_options(a, binary):
         boot_warp=getattr(a, "boot_warp", "on") != "off",
         module_warp=getattr(a, "module_warp", None),
         ports=parse_ports(getattr(a, "ports", None)),
-        show=_check_show(a), bench_baseline=getattr(a, "bench_baseline", None))
+        show=_check_show(a), bench_baseline=getattr(a, "bench_baseline", None), pin=getattr(a, "pin", None))
 
 
 def _check_show(a):
@@ -615,6 +615,9 @@ def build_parser():
     p.add_argument("--bench-baseline", metavar="RESULTS_DIR",
                    help="bench entries: do the work of that earlier run (its counts per block) and diff this run "
                         "against it (BENCH-DIFF.md; exit 1 on a slower, failed, noisy or missing block)")
+    p.add_argument("--pin", metavar="CPUS|auto|none",
+                   help="run every emulator on these host CPUs, e.g. 2-5 (sched_setaffinity). auto: the "
+                        "4 fastest-boosting physical cores. Default: auto for bench entries, none otherwise")
     p.set_defaults(fn=cmd_run)
 
     p = sub.add_parser("bench", help="bench results: `bench diff A B` compares two results dirs, `bench plan R` freezes a run's counts (docs/BENCH.md)")

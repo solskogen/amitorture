@@ -259,6 +259,11 @@ class Diff(unittest.TestCase):
                           [entry("e", [blk("a", 200)], pacing={"effective": True})])
         self.assertEqual(rows[0]["verdict"], "incomparable")
 
+    def test_other_host_cpus_are_noted(self):
+        rows = bench.diff([entry("e", [blk("a", 100)], pinned_to=[1, 3])],
+                          [entry("e", [blk("a", 100)], pinned_to=None)])
+        self.assertEqual((rows[0]["verdict"], rows[0]["note"]), ("same", "host CPUs [1, 3] vs any"))
+
     def test_tier_means(self):
         rows = bench.diff([entry("e", [blk("a", 100, 1, tier="micro"), blk("b", 100, 2, tier="micro"),
                                        blk("k", 100, 3, tier="kernel", kset="k000")])],
@@ -272,6 +277,31 @@ class Diff(unittest.TestCase):
         self.assertEqual(bench.exit_status([{"verdict": "same"}, {"verdict": "noisy"}])[0], 1)
         self.assertEqual(bench.exit_status([{"verdict": "new"}]), (1, "NOTHING COMPARED"))
         self.assertEqual(bench.exit_status([{"verdict": "slower"}, {"verdict": "fail"}]), (1, "SLOWER"))
+
+
+class Pinning(unittest.TestCase):
+    def sysfs(self, cpus):
+        root = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, root)
+        for c, (sib, rank) in cpus.items():
+            for sub, val in (("topology/thread_siblings_list", sib), ("cpufreq/amd_pstate_prefcore_ranking", rank)):
+                os.makedirs(os.path.dirname(os.path.join(root, f"cpu{c}", sub)), exist_ok=True)
+                Path(root, f"cpu{c}", sub).write_text(f"{val}\n")
+        return root
+
+    def test_best_cores_one_thread_each_cpu0_last(self):
+        from amitorture import envinfo
+        root = self.sysfs({0: ("0,4", 236), 1: ("1,5", 166), 2: ("2,6", 231), 3: ("3,7", 236),
+                           4: ("0,4", 236), 5: ("1,5", 166), 6: ("2,6", 231), 7: ("3,7", 236)})
+        self.assertEqual(envinfo.best_cpus(3, set(range(8)), root), [3, 2, 1])
+        self.assertEqual(envinfo.best_cpus(9, set(range(8)), root), [3, 2, 1, 0])
+        self.assertEqual(envinfo.rank_cpus([5, 6, 7], root), [7, 6, 5])     # a given list: all of it
+
+    def test_default_pins_bench_runs_only(self):
+        self.assertIsNone(runner.resolve_pin(None, False))
+        self.assertIsNone(runner.resolve_pin("none", True))
+        with self.assertRaises(runner.RunnerError):
+            runner.resolve_pin("100000", True)
 
 
 class Plans(unittest.TestCase):
