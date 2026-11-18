@@ -1158,10 +1158,7 @@ def bench_result(run, merged, pacing):
         raw = {"bench_stamps": h.stamper.export(), "bench_samples": {"fields": bench.SAMPLE_FIELDS,
                                                                       "samples": h.samples}}
     else:
-        h = bench.Host(None)
-        for m in merged.records:
-            h.ingest(m["rec"])
-        raw = {}
+        return bench.from_merged(merged, pacing) or bench.Host(None).result(pacing), {}
     return h.result(pacing), raw
 
 

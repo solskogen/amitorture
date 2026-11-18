@@ -1,5 +1,7 @@
 """The bench disk's host side (bench.py): serial stamps, the guest's
 requests, results, diffs, the matrix and the runner's bench policy."""
+import contextlib
+import io
 import json
 import os
 import re
@@ -373,6 +375,56 @@ def thread_result(eid, threaded, blocks, engine=None, pin=None):
             "options": {"cpu_threaded": "true" if threaded else "false"}, "engine": engine or {},
             "host_cpus": pin, "status": "pass",
             "bench": {"basis": "host", "pacing": None, "env": {}, "blocks": blocks}}
+
+
+class Import(unittest.TestCase):
+    """A serial capture from real hardware or an FPGA core: the guest's own
+    times become bench results that `bench diff` compares."""
+
+    @staticmethod
+    def capture(best):
+        def rec(seq, t, **o):
+            js = json.dumps({"v": 1, "seq": seq, "t": t, **o}, separators=(",", ":")).encode()
+            return js + b" *" + records.crc32_hex(js).encode() + b"\n"
+        recs = [rec(0, "hello", build="x", cpu="68000", fpu="none", mode="full"),
+                line(1, ev="env", tick_hz=TICK_HZ, res_ticks=1, min_ticks=70938, host=0, plan=-1),
+                line(2, ev="begin", blk="add_l", tier="micro", id=1, unit="insn", per=64)]
+        seq = 3
+        for i, t in enumerate((best, best + 1, best)):
+            recs += [line(seq, ev="go", id=1, rs=i + 1),
+                     line(seq + 1, ev="run", blk="add_l", ph="rep", n=256, rs=i + 1, timing={"t": t})]
+            seq += 2
+        recs += [line(seq, ev="end", blk="add_l", st="ok", n=256, reps=3, sum="00000001",
+                      timing={"best": best, "second": best}),
+                 rec(seq + 1, "done", **{"pass": 0, "fail": 0, "skip": 0, "untestable": 0, "aborted": 0,
+                                         "records": seq + 2})]
+        return b"".join(recs)
+
+    def test_imported_captures_diff(self):
+        from amitorture import report
+        WORK_TMP.mkdir(parents=True, exist_ok=True)
+        d = Path(tempfile.mkdtemp(dir=WORK_TMP))
+        try:
+            outs = []
+            for name, best in (("a", 100000), ("b", 110000)):
+                cap = d / f"{name}.bin"
+                cap.write_bytes(self.capture(best))
+                out = d / name
+                out.mkdir()
+                report.import_files([str(cap)], str(out), name)
+                outs.append(bench.load(str(out)))
+            blk = outs[0][0]["blocks"][0]
+            self.assertEqual((blk["basis"], blk["confirmed"]), ("guest", True))
+            self.assertAlmostEqual(blk["value"], 100000 / TICK_HZ / (256 * 64) * 1e9, places=2)
+            rows = bench.diff(*outs)
+            self.assertEqual([r["verdict"] for r in rows], ["slower"])
+            from amitorture import cli
+            plan = d / "plan.json"
+            with contextlib.redirect_stdout(io.StringIO()):
+                self.assertEqual(cli.main(["bench", "plan", str(d / "a"), "-o", str(plan)]), 0)
+            self.assertEqual(json.loads(plan.read_text()), {"entries": [{"id": 1, "count": 256}]})
+        finally:
+            shutil.rmtree(d, ignore_errors=True)
 
 
 class ThreadItems(unittest.TestCase):

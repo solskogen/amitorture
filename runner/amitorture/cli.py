@@ -372,6 +372,33 @@ def cmd_bench_diff(a):
     return EXIT_PROBLEMS if status else EXIT_OK
 
 
+def cmd_bench_plan(a):
+    from . import bench
+    try:
+        ents = bench.load(a.results)
+    except ValueError as e:
+        raise RunnerError(str(e))
+    if a.entry:
+        ents = [e for e in ents if e["entry"] == a.entry]
+    elif len({e["entry"] for e in ents}) > 1:
+        raise RunnerError("the results hold several entries: pick one with --entry "
+                          + ", ".join(sorted({e["entry"] for e in ents})))
+    if not ents:
+        raise RunnerError(f"no bench results for entry {a.entry}")
+    p = bench.plan(ents[0])
+    if not p["entries"]:
+        raise RunnerError("no block of that run has a count to repeat")
+    text = json.dumps(p, indent=1) + "\n"
+    if a.out:
+        with open(a.out, "w", encoding="utf-8") as fh:
+            fh.write(text)
+        print(f"{len(p['entries'])} blocks: {a.out}; then tools/mkadf.py --in amitorture-bench.adf -o OUT.adf "
+              f"--plan {a.out}")
+    else:
+        sys.stdout.write(text)
+    return EXIT_OK
+
+
 def cmd_compare(a):
     from . import compare
     return compare.run(a)
@@ -590,13 +617,19 @@ def build_parser():
                         "against it (BENCH-DIFF.md; exit 1 on a slower, failed, noisy or missing block)")
     p.set_defaults(fn=cmd_run)
 
-    p = sub.add_parser("bench", help="bench results: `bench diff A B` compares two results dirs (docs/BENCH.md)")
+    p = sub.add_parser("bench", help="bench results: `bench diff A B` compares two results dirs, `bench plan R` freezes a run's counts (docs/BENCH.md)")
     bsub = p.add_subparsers(dest="bench_cmd", required=True)
     q = bsub.add_parser("diff", help="per block same/borderline/slower/faster/noisy of B against A (no emulator)")
     q.add_argument("a", metavar="A", help="reference results dir (or its summary.json)")
     q.add_argument("b", metavar="B", help="results dir to check")
     q.add_argument("-o", "--out", metavar="FILE", help="write the markdown here instead of stdout")
     q.set_defaults(fn=cmd_bench_diff)
+    q = bsub.add_parser("plan", help="the work plan (mkadf --plan JSON) that repeats one run's counts, so later "
+                                     "runs on any machine do exactly the same work")
+    q.add_argument("results", metavar="RESULTS", help="results dir (or its summary.json)")
+    q.add_argument("--entry", metavar="ID", help="which entry, when the results hold several")
+    q.add_argument("-o", "--out", metavar="FILE", help="write the plan here instead of stdout")
+    q.set_defaults(fn=cmd_bench_plan)
 
     p = sub.add_parser("baseline", help="run each entry N times and store fingerprints, timing and perf bands")
     p.add_argument("--amiberry", metavar="PATH", help="the Amiberry build you trust (default: 'amiberry' on PATH)")

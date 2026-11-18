@@ -638,6 +638,14 @@ Compares the bench results of two finished runs, block by block (docs/BENCH.md "
 `run --bench-baseline A_RESULTS` does the same at the end of a run, after giving the run A's work counts.
 Exit status 1 on any slower, failed, noisy or missing block.
 
+### bench plan
+```
+amitorture bench plan RESULTS [--entry ID] [-o plan.json]
+```
+Writes the work plan (`tools/mkadf.py --plan`) that repeats one entry's counts, so a later run (an imported
+capture from real hardware or an FPGA core, too) does exactly the same work. `run --bench-baseline` does this
+by itself for emulator runs.
+
 ### repro
 ```
 results/<run>/repro/P01/run.sh [--amiberry BIN] [--gdb] [--keep]

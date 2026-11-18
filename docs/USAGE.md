@@ -316,6 +316,7 @@ python3 -m amitorture import ~/core.txt ~/cpu.txt ~/fpu.txt … --label hw-a1200
 - **Inputs:** raw serial captures, or `mailbox.jsonl` files written by `run`. All files must come from one machine.
 - **Disks:** each boot is matched to its disk by the build id in its `hello` record (it ends with `n/N group`), so the file names and their order don't matter. A serial capture and a mailbox dump of the same boot are merged as two transports of one disk run. Boot each disk once: a disk booted twice shows up as two runs (`core`, `core#2`).
 - **Status:** the report has one entry, `imported`. Each disk gets its own status and the entry gets the worst. A disk without a `done` record is reported as "no done record: the capture stopped, or the machine hung, before this disk finished". The probe results of the disks are compared (free memory ignored): a difference, i.e. the disks did not all see the same machine, is reported as `probe_inconsistent`.
+- **The bench disk:** a capture of `amitorture-bench.adf` gives bench results timed by the Amiga's own clock; `bench diff` compares two of them, and `bench plan` freezes a run's counts for the next (docs/BENCH.md, "Real hardware and FPGA cores").
 - **What you get:** the same REPORT.md, `summary.json` and `failures.jsonl`, with problems grouped, `xfail.json` applied and the docs/cases lines. There is no narrowing, no repro packs, no engine parity, and no code pointers or emulator log, because no emulator ran. The exit code is 0 for PASS, 1 otherwise.
 
 ### What the disks do to the machine

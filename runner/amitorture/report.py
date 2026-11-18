@@ -1304,6 +1304,9 @@ def import_files(paths, outdir, label="import"):
             sub["reason"] = ("no done record: the capture stopped, or the machine hung, before this disk finished"
                              if m.records else "no records in the capture (did the disk boot? baud rate?)")
         sub["ended"] = "done" if d else "capture_ended"
+        b = bench.from_merged(m, "capture")
+        if b:
+            sub["bench"] = b
         subs.append(sub)
     merged = runmod.merge_disks(subs) if len(subs) > 1 else subs[0]["_merged"]
     hellos = [(s["disk_name"], s["records"]["hello"]) for s in subs]
@@ -1330,6 +1333,8 @@ def import_files(paths, outdir, label="import"):
         r["ended"] = worst["ended"]
     else:
         r["status"], r["reason"], r["ended"] = subs[0]["status"], subs[0]["reason"], subs[0]["ended"]
+        if subs[0].get("bench"):
+            r["bench"] = subs[0]["bench"]
     # The probe cannot be checked against a config here: drop that comparison.
     r["machine_from_probe"] = True
     os.makedirs(os.path.join(outdir, "raw", "imported"), exist_ok=True)

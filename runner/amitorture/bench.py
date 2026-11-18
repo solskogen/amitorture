@@ -353,6 +353,15 @@ def from_serial(data, stamps=None, samples=None, pacing=None):
     return h.result(pacing)
 
 
+def from_merged(merged, pacing=None):
+    """Host.result from the guest's own times (merged records): imported
+    captures (real hardware, FPGA) and launches the runner did not time."""
+    h = Host(None)
+    for m in merged.records:
+        h.ingest(m["rec"])
+    return h.result(pacing) if h.blocks or h.env else None
+
+
 # -- runs and summaries ------------------------------------------------------
 def summary(results):
     """summary.json "bench": per entry (and disk) its bench blocks."""

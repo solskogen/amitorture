@@ -138,6 +138,29 @@ run only the listed blocks (`exclusive`).
 
 All times are in guest colour clocks.
 
+## Real hardware and FPGA cores
+
+Write `amitorture-bench.adf` to a floppy (or a Gotek, or the core's disk image slot) and boot it.
+The status screen shows each module's progress. The results go to the serial port: 115200 baud,
+8N1, no handshake (docs/USAGE.md §5, "Real hardware and FPGA", has the cable,
+capture and baud-rate details).
+
+Without the runner, every block is timed by the Amiga's own clock (`basis: guest`). The frame
+and thread tiers need a host clock, so they are skipped. To check a core change:
+
+```
+python3 -m amitorture import before.txt --label core-before
+python3 -m amitorture bench plan ../work/results/core-before -o plan.json        # optional: freeze the counts
+python3 ../tools/mkadf.py --in ../disk/build/amitorture-bench.adf -o fixed.adf --plan plan.json
+# boot fixed.adf on the changed core, capture after.txt
+python3 -m amitorture import after.txt --label core-after
+python3 -m amitorture bench diff ../work/results/core-before ../work/results/core-after
+```
+
+With the plan, both runs do exactly the same work. Without it, a run sizes each block itself, and
+two runs may pick different counts. The values are per unit, so they still compare, and the diff
+notes the different count.
+
 ## The runner (Amiberry)
 
 The guest side above works anywhere. Everything below is the runner's, and is specific to
@@ -148,6 +171,7 @@ Amiberry.
 ```
 amitorture run --amiberry BIN --matrix bench [--config 'bench-68020*'] [--bench-baseline RESULTS_DIR]
 amitorture bench diff A_RESULTS B_RESULTS [-o BENCH-DIFF.md]
+amitorture bench plan RESULTS [--entry ID] [-o plan.json]
 amitorture compare --amiberry OLD --amiberry NEW [--repeat 3] [--threshold 1] [--pin 2-5]
 ```
 
