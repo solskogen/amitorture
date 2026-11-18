@@ -641,7 +641,7 @@ Matrix entries (`summary.json` → `configs/`, and `matrix --json`) may have the
 - `host_requests`: `[{"entry","requests","acked","not_acked":[{"id","what","tag","disk","why"}],"screenshots":[{"id","tag","path","sha256","disk"}],"audio":[{"id","tag","disk","seconds","dominant_hz","expect_hz","freq_ok","expect_side","side_ok","rms":{"L","R"},"freq":{"L","R"},"wav","tone":{"case","st","expect","measured_hz","why"}}]}]`, one item per entry that made requests (`tone`: the `host.tone_<tag>` verdict, when the mark had an expected frequency).
 
 - `bench`: bench runs only, one item per entry and disk: `{"entry","disk","jit","machine","status","cpu_threaded","cpu_threaded_requested","thread_reference","cpu_speed","host","flood_holds","refloods","basis","pacing","env","blocks"}` (`blocks` as in `result.json` `bench`; `thread_reference` the unthreaded twin of a threaded entry).
-- `bench_diff`: with `run --bench-baseline`: `{"against","status","word","counts","file":"BENCH-DIFF.md","rows":[{"entry","disk","blk","id","metric","a","b","change_pct","verdict","why","note"}]}`; verdicts in docs/BENCH.md "Comparing two runs". `status` 1 makes the run exit with 1.
+- `bench_diff`: with `run --bench-baseline`: `{"against","status","word","counts","file":"BENCH-DIFF.md","tier_means":[{"entry","disk","tier","blocks","change_pct"}],"rows":[{"entry","disk","blk","id","metric","tier","a","b","change_pct","verdict","why","note"}]}`; `tier_means` is the geometric mean of the compared blocks' B/A ratios per tier, a summary only; verdicts in docs/BENCH.md "Comparing two runs". `status` 1 makes the run exit with 1.
 
 ### 5.5 check: finding kind `fail_detail_changed`
 This is a case that failed in the baseline and still fails, and one of these is true:

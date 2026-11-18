@@ -252,6 +252,14 @@ class Diff(unittest.TestCase):
                           [entry("e", [blk("a", 200)], pacing={"effective": True})])
         self.assertEqual(rows[0]["verdict"], "incomparable")
 
+    def test_tier_means(self):
+        rows = bench.diff([entry("e", [blk("a", 100, 1, tier="micro"), blk("b", 100, 2, tier="micro"),
+                                       blk("k", 100, 3, tier="kernel", kset="k000")])],
+                          [entry("e", [blk("a", 121, 1, tier="micro"), blk("b", 100, 2, tier="micro"),
+                                       blk("k", 100, 3, tier="kernel", kset="k020")])])
+        self.assertEqual([(m["tier"], m["blocks"], m["change_pct"]) for m in bench.tier_means(rows)],
+                         [("micro", 2, 10.0)])     # sqrt(1.21) = 1.1; the incomparable kernel is left out
+
     def test_exit_status(self):
         self.assertEqual(bench.exit_status([{"verdict": "same"}, {"verdict": "faster"}]), (0, "OK"))
         self.assertEqual(bench.exit_status([{"verdict": "same"}, {"verdict": "noisy"}])[0], 1)

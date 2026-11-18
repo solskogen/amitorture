@@ -228,7 +228,8 @@ Verdict per block, B against A (lower is better):
 | incomplete | the block or entry is missing from one run |
 
 The diff fails (exit 1) on any slower, fail, noisy or incomplete block, or when nothing was
-compared.
+compared. It also gives the geometric mean change per entry and tier. That is a summary only: a
+regression in one block can hide in it, so only the per-block verdicts decide.
 
 `compare` runs both binaries `--repeat` times, alternating which goes first, each launch with
 `--bench-baseline` of the first launch. It compares the medians of the repeats: **slower** or

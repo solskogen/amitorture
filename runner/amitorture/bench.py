@@ -25,6 +25,7 @@ samples (SAMPLED).
 from __future__ import annotations
 
 import json
+import math
 import os
 import re
 import time
@@ -449,12 +450,13 @@ def write_diff(outdir, a_entries, b_entries, a_label):
     with open(os.path.join(outdir, "BENCH-DIFF.md"), "w", encoding="utf-8") as fh:
         fh.write("\n".join(L) + "\n")
     return {"against": a_label, "status": status, "word": word, "counts": counts, "file": "BENCH-DIFF.md",
-            "rows": rows}
+            "tier_means": tier_means(rows), "rows": rows}
 
 
 def _verdict(a, b):
     """One block, A (reference) against B. Returns a row."""
-    row = {"blk": (b or a)["blk"], "id": (b or a).get("id"), "metric": (b or a).get("metric")}
+    row = {"blk": (b or a)["blk"], "id": (b or a).get("id"), "metric": (b or a).get("metric"),
+           "tier": (b or a).get("tier")}
     if a is None:
         return dict(row, verdict="new")
     if b is None:
@@ -530,6 +532,21 @@ def _fmt(v, m=None):
     return f"{v:.4f}" if m == "cpu_per_emu_s" else f"{v:.4g}"
 
 
+def tier_means(rows):
+    """Geometric mean of the B/A ratios per (entry, disk, tier), as a change
+    in percent: a summary only, never a verdict (one block's regression can
+    hide in it)."""
+    acc = {}
+    for r in rows:
+        if r.get("change_pct") is None or r["verdict"] not in ("same", "borderline", "slower", "faster", "noisy"):
+            continue
+        k = (r["entry"], r.get("disk"), r.get("tier"))
+        acc.setdefault(k, []).append(math.log1p(r["change_pct"] / 100))
+    return [{"entry": e, "disk": d, "tier": t, "blocks": len(v),
+             "change_pct": round(math.expm1(sum(v) / len(v)) * 100, 3)}
+            for (e, d, t), v in sorted(acc.items(), key=lambda kv: tuple(str(x) for x in kv[0]))]
+
+
 def diff_markdown(rows, a_label="A", b_label="B"):
     counts = {}
     for r in rows:
@@ -539,8 +556,15 @@ def diff_markdown(rows, a_label="A", b_label="B"):
          "thread). Change > 0: slower. same within "
          f"{TOLERANCE['ns_per_unit'][0]}% ({TOLERANCE['cpu_per_emu_s'][0]}% for CPU/s), borderline up to "
          f"{TOLERANCE['ns_per_unit'][1]}% ({TOLERANCE['cpu_per_emu_s'][1]}%); noisy: beyond 'same' but a side "
-         "never confirmed its time.", "",
-         f"| entry | block | {a_label} | {b_label} | change | verdict | note |", "|---|---|---|---|---|---|---|"]
+         "never confirmed its time.", ""]
+    means = tier_means(rows)
+    if means:
+        L.extend(["Geometric mean change per tier (a summary, not a verdict):", "",
+                  "| entry | tier | blocks | change |", "|---|---|---|---|"])
+        L.extend(f"| {m['entry']}" + (f" [{m['disk']}]" if m.get("disk") else "")
+                 + f" | {m['tier']} | {m['blocks']} | {m['change_pct']:+.2f}% |" for m in means)
+        L.append("")
+    L += [f"| entry | block | {a_label} | {b_label} | change | verdict | note |", "|---|---|---|---|---|---|---|"]
     order = {v: i for i, v in enumerate(("fail", "slower", "noisy", "incomplete", "borderline", "faster",
                                           "incomparable", "skipped", "new", "info", "same"))}
     for r in sorted(rows, key=lambda r: (order.get(r["verdict"], 99), r["entry"], str(r.get("blk")))):
