@@ -119,7 +119,7 @@ compatibility must not be reported as having tested those strict assertions.
 | `case` | `mod`, `case`, `st` ("pass"/"fail"/"skip"/"untestable"); on fail: `expect`, `got`, `why`; optional `ctx`, `in` | one test case result |
 | `capture` | `what` ("screen"/"audio_start"/"audio_stop"), `tag` | asks the host to capture now (best effort) |
 | `perf` | `mod`, `ops`, `ticks`; optional `tick_hz`, `unit` | throughput; `amt_perf()` uses colour clocks (`unit:"cck"`), while `amt_perf_hz()` specifies its clock |
-| `speed` | `mod`, `ev` ("begin"/"end"/"skip"), `insn`; begin/end also `cls`, `pos`; end also `n` and `timing` (`cck`, `empty_cck`, `frames`, `units`); skip also `why`; optional `benchmark:1` | a hostspeed timed block (docs/schema.md 1.10); not a case; benchmark-only blocks are informational rather than real-time verdicts |
+| `speed` | `mod`, `ev` ("begin"/"end"/"skip"), `insn`, ... | legacy: the retired hostspeed module's timed blocks (docs/schema.md 1.10). Current disks do not send it; readers still accept it in old captures |
 | `done` | `pass`, `fail`, `skip`, `untestable`, `aborted`, `records` (count of all records sent this boot, including `done`) | last record |
 
 New disks also emit `hello.modules`, an object mapping every selected compiled module name to its unique id
@@ -283,7 +283,7 @@ The API is in `disk/rt/mod.h`, which is authoritative; read it. In short:
 | 23 | dmacontention | BARE | CPU vs blitter/copper/bitplane/audio DMA (disk: core) |
 | 24 | misc_hw_os | OS | Zorro autoconfig consistency: ConfigDev ExpansionRom, sizes, address ranges, overlaps with boards and memory (OS-phase half of misc_hw; disk: exp) |
 | 25 | memory_os | OS | allocates the per-region test blocks of memory (21) while exec is alive (OS-phase half of memory; disk: exp) |
-| 26 | hostspeed | BARE | timed CPU/FPU/memory/I/O blocks for the runner's real-time check or standalone benchmark disk; `speed` records, no cases (disk: exp) |
+| 26 | (retired) | | was hostspeed; replaced by the bench disk (docs/BENCH.md). Not reused, so old captures stay unambiguous |
 | 27 | cetiming | BARE | cycle-level CPU/chip-bus timing; perf records the runner judges against real-hardware references, `host.cet_*` (disk: core) |
 | 28-39 | reserved | | later |
 | 40 | bench_micro | BARE | bench disk only: micro tier (docs/BENCH.md) |
@@ -391,7 +391,7 @@ The test ships as three ADFs, built by `make -C disk` (or `make -C disk set`) in
 |---|---|---|
 | `amitorture-1-core.adf` | takeover rt flags exceptions smc interrupts cia blitter timing display copper paula input dmacontention | ~345 KB + ~66 KB |
 | `amitorture-2-cpu.adf` | cpu_basic mmu dispatch | ~229 KB + ~241 KB |
-| `amitorture-3-exp.adf` | fpu rtg expsound network misc_hw misc_hw_os devio memory memory_os hostspeed | ~234 KB + ~290 KB |
+| `amitorture-3-exp.adf` | fpu rtg expsound network misc_hw misc_hw_os devio memory memory_os | ~218 KB + ~297 KB |
 
 - Each ADF is a complete payload (runtime + probe + its modules) and boots on its own. The minimum machine is 1 MB: 512 KB chip + 512 KB slow RAM on Kickstart 1.x (A500). The two segments (§1) are allocated separately, so neither has to fit in one region together with the other.
 - Every module is on exactly one disk, so (mod, case) is unique across the set.
@@ -423,8 +423,8 @@ Used for things the guest can't do or observe itself: screenshots, audio capture
 | `cd32pad` | `{"port":p,"buttons":mask}`: absolute; mask bit0 blue, 1 red, 2 yellow, 3 green, 4 forward, 5 reverse, 6 play (the pad's shift order) | as above (not acked on Amiberry). A host that has a CD32 pad attached on that port (Amiberry: `joyportN=<device>`, `joyportNmode=cd32joy`, e.g. joyport1=kbd1) but cannot press its buttons may ack `buttons:0` only: the guest then checks the pad id/released state. |
 | `wait` | `{}` | host acks immediately (round-trip/latency test) |
 | `pacing` | `{}` (tag `boot`) | sent once by the runtime right after `hello`, before the first module. A host that warped the boot (Kickstart, loader, probe) switches the emulator to the disk's own pacing (Amiberry: IPC `SET_WARP`, checked with `GET_WARP`) and acks only after that; result: `warp`, `was`, `switched`. A host that loaded a disk testing the floppy hardware at turbo drive speed sets real drive speed here too (Amiberry: IPC `SET_FLOPPY_SPEED 100`, checked with `GET_FLOPPY_SPEED`), before the ack; result `floppy_speed`. A host that cannot switch refuses it (N \| $80000000). Either way the guest just continues: this request has no case. With run-parameter flag `modpace` (128) the runtime also sends it before every module, tag = the module name (`rt/mod.c` `run_module`); the host sets that module's pacing the same way (the runner's per-module policy: `runner/amitorture/pacing.py`) and acks before the module's `mod` begin record; result adds `module`. Without the flag (the default, real hardware) no per-module request is sent. |
-| `bench_longer` | `{"n":count,"reps":0,"id":plan_id}`, tag = block name | bench disk, flag `host` only (docs/BENCH.md): a sizing run of `count` reached the guest's 100 ms floor. Ack = the host's own timing of the run was too short, double the count again; refuse = long enough. No answer: the guest decides with its own clock. |
-| `bench_more` | `{"n":count,"reps":r,"id":plan_id}` | after r ≥ 2 repetitions: ack = run another; refuse = enough. No answer: the guest's own rule (fastest two within 0.25%). The guest stops at 12 regardless. |
+| `bench_longer` | `{"n":count,"reps":0,"id":plan_id}`, tag = block name | bench disk, flag `host` only (docs/BENCH.md): a sizing run of `count` reached the guest's 100 ms floor. Ack = the host's own timing of the run was too short, double the count again; refuse = long enough. No answer: the guest decides with its own clock. The runner acks below 0.2 s of host time (0.5 s for the frame and thread tiers) or when it has no host time for the run. |
+| `bench_more` | `{"n":count,"reps":r,"id":plan_id}` | after r ≥ 2 repetitions: ack = run another; refuse = enough. No answer: the guest's own rule (fastest two within 0.25%). The guest stops at 12 regardless; the runner refuses at r ≥ 12 without judging. The runner acks while its own times of the fastest two differ by more than 0.25% (1% for the frame and thread tiers). |
 
 Unknown `what` values are never acknowledged.
 

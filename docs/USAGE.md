@@ -32,7 +32,7 @@ Times below were measured on a Raspberry Pi 500 with 4 emulators in parallel (`-
 ```
 python3 -m amitorture run --amiberry ./amiberry --kickstarts ~/Amiberry/ROMs --matrix smoke --jobs 4
 ```
-`smoke` covers 12 machines (68000 to 68060, OCS/ECS/AGA, PAL/NTSC, AROS) with JIT twins, plus a 68020 at real CPU speed with JIT on and off for the hostspeed test, each running every disk of the set. It takes about 25 minutes, plus up to the narrowing budget if something fails (see 3.3).
+`smoke` covers 12 machines (68000 to 68060, OCS/ECS/AGA, PAL/NTSC, AROS) with JIT twins and strict instruction-policy entries, each running every disk of the set. It takes about 25 minutes, plus up to the narrowing budget if something fails (see 3.3).
 
 Exit code: 0 means no problems, 1 means problems found (read the report), 2 is a host-side error, 3 means the isolation check failed, 130 means the run was stopped with Ctrl+C (see "Stopping a run" below).
 
@@ -49,37 +49,34 @@ Do not dismiss such differences merely because the warp policy changed.
 ### Thorough runs
 | Matrix | Entries | Time (Pi 5, `--jobs 3`, without narrowing) | What it adds |
 |---|---|---|---|
-| `smoke` | 18 | 22 min | one machine per CPU class and chipset |
-| `standard` | 149 (148 planned) | 78 min (old-style, `--plan off --module-warp off`: 2 h 22 min) | every CPU/FPU variant, every RTG, sound and network board, Gayle/PCMCIA, RTC boards, SCSI controllers, MMU configs, CD32, CDTV |
-| `full` | 587 (524 planned) | 4 h 38 min (old-style about 13 h, estimated) | every JIT sub-option, threaded and softfloat twins |
+| `smoke` | 16 | 22 min | one machine per CPU class and chipset |
+| `standard` | 145 (144 planned) | 78 min (old-style, `--plan off --module-warp off`: 2 h 22 min) | every CPU/FPU variant, every RTG, sound and network board, Gayle/PCMCIA, RTC boards, SCSI controllers, MMU configs, CD32, CDTV |
+| `full` | 583 (521 planned) | 4 h 38 min (old-style about 13 h, estimated) | every JIT sub-option, threaded and softfloat twins |
 
 The time is emulator time divided by the emulator slots: `amitorture matrix --matrix full --plan` prints the
-estimate (13.6 h of emulator time for `full`; measured 13.9 h), so a host with 14 slots (`nproc` 15 or more) runs
+estimate (14.3 h of emulator time for `full`; measured 13.9 h with an earlier matrix), so a host with 14 slots (`nproc` 15 or more) runs
 `full` in about an hour. Narrowing adds up to its budget (`--narrow-budget`, 2 h by default) when something fails.
 
 `python3 -m amitorture matrix --matrix standard` lists the entries.
 
-### Lightweight benchmarks (including threaded CPU off/on)
+### Benchmarks (speed regressions)
 
-Build `make -C disk benchmarks` from the repository root, then from `runner/`:
+Build `make -C disk bench` from the repository root, then from `runner/`:
 
 ```
-python3 -m amitorture run --amiberry /path/to/amiberry --kickstarts ~/Amiberry/ROMs \
-    --matrix benchmarks --jobs 1 --warp off
+python3 -m amitorture run --amiberry ./amiberry-old --kickstarts ~/Amiberry/ROMs --matrix bench
+python3 -m amitorture run --amiberry ./amiberry-new --kickstarts ~/Amiberry/ROMs --matrix bench \
+    --bench-baseline results/<the first run>
 ```
 
-This runs only CPU/FPU/memory/I/O benchmark blocks, covering 68000 through 68060.
-Unsupported workloads are explicitly skipped. Legal fast-core entries include matched threaded CPU
-off/on pairs, separately for interpreter and JIT, with throughput and CPU-cost comparison tables in
-REPORT.md. Measurements are informational, not correctness failures. Keep `--jobs 1` for comparable
-samples and repeat on the same host for each before/after emulator build.
+The bench disk is separate from the accuracy disks and has no correctness tests apart from checking that its
+work came out right. The second run does exactly the same work as the first (its counts), then writes
+BENCH-DIFF.md with a same/borderline/slower/faster/noisy verdict per block, and exits with 1 if anything got
+slower. `amitorture bench diff A B` compares two finished runs, and `amitorture compare` runs two binaries
+alternately with repeats. Use the same host, load and CPU governor for both runs.
 
-The benchmark disk also runs on its own (real Amiga, FPGA, or an emulator without the runner): the
-status screen shows `Benchmark n/N: <block>` with an estimate of the time left, then an **integer
-score** (A500 = 1.00) and, with an FPU, an **FPU score** in operations per second. Both are timed with
-the Amiga's own clock, so they are real speed on real hardware and emulated speed in an emulator.
-Per-block details go to the serial port.
-See [hostspeed.md](cases/hostspeed.md#benchmark-only-build-and-threaded-cpu-comparisons).
+The disk also runs on its own (real Amiga, FPGA, or an emulator without the runner), timed by the Amiga's own
+clock; its results go to the serial port. See [BENCH.md](BENCH.md).
 
 ### "Did my change break or fix anything?" (regression check)
 1. **Once, with a build you trust,** record a baseline: 3 runs, so flaky cases are recognised.
@@ -172,7 +169,7 @@ Every disk shows what it is doing on the Amiga's own display: the emulator windo
 | `ok` | finished: no failure, at least one pass or untestable |
 | `FAIL` | at least one case failed |
 | `skip` | finished with skips only |
-| `done` | finished without reporting cases (hostspeed: its results are `speed` records) |
+| `done` | finished without reporting cases (bench modules: their results are `bench` records) |
 | `ABRT` | the module aborted (unexpected exception or watchdog) |
 
 The background is blue while the disk runs, green when it finished without failures, and red when a case failed or a module aborted. At the end the screen says `FINISHED: no failures.` or `FINISHED: n failed case(s).`, then `Next: insert disk n, then reset.` (or `That was the last disk of the set.`), and `Halted. Reset to continue.` with the default end action.
@@ -236,7 +233,7 @@ Failures that share a cause are grouped into one problem: same module, same narr
 
 **Narrowing.** When a case fails, the runner reruns only that case on neighbouring configs: JIT off/on and each `comp_*` option, core mode, `mmu_model=0`, 24-bit addressing, `gfx_resolution`, FPU native/softfloat, threaded off, and so on. It records which setting flips the result. The default budget is 2 hours (`--narrow-budget S`, or `--no-narrow`). "Budget exhausted" means some variants were not tried; the report lists them.
 
-**Host speed (`host.speed_<insn>`).** The hostspeed module runs costly CPU/FPU instructions (MULx.L, DIVx.L, bit fields, CAS, TRAP/RTE, the FPU transcendentals, packed decimal, FMOVEM ...) for 1 s of emulated time each, and the runner reads the guest's frame counter with its own clock meanwhile. The "Host speed per instruction" table gives, per entry, each block's real-time factor rtf (host seconds per emulated second, +- 3 sigma of the measured noise), the emulation thread's host CPU per emulated second, and the host CPU per instruction (also relative to ADD.L/FADD). A block fails when the emulator ran more than 1 % slower than real time (rtf > 1.01 + 3 sigma); it is untestable when the noise is too large to tell. The rtf matters at cpu_speed=real: the `*-fast-real` entries (with JIT twins), the compatible and cycle-exact ones; at cpu_speed=max the frames stay on time by design and only the CPU cost tells. **The verdict depends on the host:** a slower machine, or more emulators in parallel (`--jobs`), may fail where a faster one passes. Each failure names the host (CPU model, cores, `--jobs`, load); baselines and checks of these cases are only meaningful on the same host. See [cases/hostspeed.md](cases/hostspeed.md).
+**Speed.** The accuracy disks no longer measure host speed; the bench disk does (see [BENCH.md](BENCH.md)). Baselines that still hold the retired `host.speed_*` cases report them as `retired`, not as regressions.
 
 ### 3.4 Machine-readable copies
 | File | Contents |

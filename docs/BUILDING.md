@@ -35,7 +35,7 @@ make -C disk clean
 |---|---|
 | `amitorture-1-core.adf` | takeover rt flags exceptions smc interrupts cia blitter timing display copper paula input dmacontention |
 | `amitorture-2-cpu.adf` | cpu_basic mmu dispatch |
-| `amitorture-3-exp.adf` | fpu rtg expsound network misc_hw misc_hw_os devio memory memory_os hostspeed |
+| `amitorture-3-exp.adf` | fpu rtg expsound network misc_hw misc_hw_os devio memory memory_os |
 
 The build prints each disk's code and data sizes in memory. The bootblock loads them as two separate allocations (CONTRACT §1-2), so the minimum machine is 1 MB: a 512 KB chip + 512 KB slow RAM Kickstart 1.x A500. Keep each segment under about 400 KB, so that it fits one of those regions with the module pools still allocatable (CONTRACT §12). All the modules together are too big for one 880 KB ADF, which is why the set exists.
 

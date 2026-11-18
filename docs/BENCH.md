@@ -137,3 +137,93 @@ run only the listed blocks (`exclusive`).
 - or a single `skip`.
 
 All times are in guest colour clocks.
+
+## The runner (Amiberry)
+
+The guest side above works anywhere. Everything below is the runner's, and is specific to
+Amiberry.
+
+### Running it
+
+```
+amitorture run --amiberry BIN --matrix bench [--config 'bench-68020*'] [--bench-baseline RESULTS_DIR]
+amitorture bench diff A_RESULTS B_RESULTS [-o BENCH-DIFF.md]
+amitorture compare --amiberry OLD --amiberry NEW [--repeat 3] [--threshold 1] [--pin 2-5]
+```
+
+`--matrix bench` (15 entries, runner/amitorture/matrix.py `bench_entries`) runs the bench disk on
+68000, 68000 cycle-exact, 68010, 68020 (JIT, threaded CPU, JIT + threaded, threaded with one host
+CPU), 68030, 68EC030 (+JIT), 68040 without MMU (+JIT) and 68060 without MMU (+JIT). A run takes
+either bench entries or accuracy entries, never both. It always runs one launch at a time.
+
+**Pacing.** The 68000/68010 entries (cpu_speed=real, no JIT, no threaded CPU) run warped: the
+emulator runs as fast as it can instead of in step with real time, so their timings say what
+the emulator costs and not how fast the real machine was. The 020+ entries run at cpu_speed=max,
+which never waits for real time anyway. Each block records its `pacing` (`warp` or `paced`);
+results with different pacing are not compared.
+
+**Timing.** The runner stamps each serial byte with the host's monotonic clock and its process
+CPU time as it arrives (TCP_NODELAY, one write per byte). A timed run is the time from the newline of its
+`go` record to the first byte of its `run` record. While a run is open the runner does not poll
+the emulator over IPC, because each IPC request costs the emulation thread up to a few
+milliseconds. The exception is `flood_recovery`: it needs samples of the threads' CPU time while it runs.
+
+**Answering the guest** (CONTRACT §13):
+- `bench_longer`: ack (make the run longer) while the last run took less than 0.2 s of host time
+  (0.5 s for the cost blocks), or when the host has no time for it.
+- `bench_more`: ack while the two fastest repetitions differ by more than 0.25% (1% for the
+  cost blocks). It always refuses at 12 repetitions.
+
+**Values** (`summary.json` `bench`, docs/schema.md §5): each block's `value` is from its fastest
+repetition:
+- micro and kernel tiers: host ns per unit (`ns_per_unit`), or guest ns when the host could not
+  time it (`basis: guest`);
+- frame and thread tiers: host CPU seconds per emulated second (`cpu_per_emu_s`), and `rtf`
+  (host seconds per emulated second; above 1 means slower than real time).
+
+A block is `confirmed` when its two fastest repetitions agree.
+
+### Comparing two runs
+
+`run --bench-baseline DIR` first writes each entry's counts from the baseline run into its
+disk (the work plan), so both runs do exactly the same work. After the run it writes
+`BENCH-DIFF.md` and `summary.json` `bench_diff`, and returns exit status 1 when the diff is not
+OK. `bench diff A B` does the same for two finished runs.
+
+Verdict per block, B against A (lower is better):
+
+| verdict | when |
+|---|---|
+| same | within 0.5% (`ns_per_unit`) or 2% (`cpu_per_emu_s`) |
+| borderline | within 1% or 5% |
+| slower / faster | beyond that, and both sides confirmed |
+| noisy | beyond the first limit, but one side is unconfirmed |
+| fail | a side's work came out wrong |
+| incomparable | different kernel set, memory, timing basis or pacing |
+| skipped, new, info | nothing to compare (`flood_recovery` is info only) |
+| incomplete | the block or entry is missing from one run |
+
+The diff fails (exit 1) on any slower, fail, noisy or incomplete block, or when nothing was
+compared.
+
+`compare` runs both binaries `--repeat` times, alternating which goes first, each launch with
+`--bench-baseline` of the first launch. It compares the medians of the repeats: **slower** or
+**faster** when they differ by more than `--threshold` percent (default 1) and the repeats do not
+overlap, **borderline** when they overlap. Writes `COMPARE.md` and `compare.json`; exit status 1
+when any block is slower.
+
+### Threaded CPU checks
+
+A threaded entry is compared with its unthreaded twin in the same run (same binary, parameters
+and options except `cpu_threaded`). These give `thread_speed` items (docs/schema.md §5.6a) in the
+report verdict:
+- a frame or thread block falls behind real time where the twin keeps up;
+- `stop` or `stop_timer` costs much more host CPU than the twin (the idle CPU thread spins);
+- `flood_recovery`: the CPU thread runs less than 60% of the quiet work after a flood;
+- the CPU goes back to its thread and floods again at once, repeatedly (`refloods`);
+- with one usable host CPU, the emulator still runs the CPU on its own thread.
+
+A bench block whose work comes out wrong is a `case_fail` item (`mod` `bench`).
+
+The bench disk replaces the accuracy disks' former `hostspeed` module (id 26, retired). Baselines
+that still hold its `host.speed_*` cases report them as `retired`, never as regressions.

@@ -1968,6 +1968,9 @@ def run(opts):
         raise RunnerError("bench entries run the bench disk, the others the test disks: run them separately")
     if nb:
         opts.matrix = "bench"       # the bench disk, also for bench entries named with --config
+        if opts.jobs > 1:
+            log(opts, f"--jobs {opts.jobs} ignored: bench entries run one at a time (docs/BENCH.md)")
+            opts.jobs = 1
     baseline = None
     if getattr(opts, "bench_baseline", None):
         if not nb:

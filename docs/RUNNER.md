@@ -98,7 +98,7 @@ any launch requiring audio capture stay normally paced. `--audio off` does not m
 a timing-sensitive disk eligible for warp. Module masks never change this decision.
 All selected disks and cases still run with their existing assertions and verdict rules.
 
-The policy is applied before each fresh boot, so audio/input/RTC/hostspeed sections
+The policy is applied before each fresh boot, so audio/input/RTC sections
 never inherit a warped clock, muted audio buffers or synthetic key releases from a
 previous section. There are no asynchronous mid-module mode changes. The runner
 checks the resolved config and `GET_WARP` at launch; an unsupported command, malformed
@@ -202,7 +202,7 @@ With run-parameter flag `modpace` the runtime sends a `pacing` request before ev
 name, CONTRACT §13); the runner sets the warp state that module runs with, checks it with `GET_WARP` and only
 then acks. `pacing.py` holds the policy:
 - only modules that measure emulated time alone (`WARP_SAFE`) are ever warped: never misc_hw (RTC against the
-  host clock), input (IPC key events), hostspeed, paula/dmacontention (real floppy speed, audio), expsound,
+  host clock), input (IPC key events), paula/dmacontention (real floppy speed, audio), expsound,
   network, timing, interrupts, cia;
 - 68000/68010 and cycle-exact machines warp every safe module (measured: about half the host time), other
   machines only display (96 -> 75 s, JIT 97 -> 52 s; the cpu modules get slower under the JIT);
@@ -232,7 +232,7 @@ planner's estimate) start first.
 
 ### roms
 ```
-amitorture roms --kickstarts ~/Amiberry/ROMs [--matrix smoke|standard|full|benchmarks] [--recursive] [--json]
+amitorture roms --kickstarts ~/Amiberry/ROMs [--matrix smoke|standard|full|bench] [--recursive] [--json]
 ```
 `--recursive` also scans subdirectories. Identifies every file by CRC32/SHA1 (romdb.json, from Amiberry's rommgr) and shows which ROM each entry of the
 matrix would use, or `SKIP: needs ...`.
@@ -252,10 +252,10 @@ The matrices (runner/amitorture/matrix.py):
 
 | name | size | contents |
 |---|---|---|
-| benchmarks | 23 | hostspeed only on 68000, 68010, 68020, 68030+68882/MMU, EC030, 68040 and 68060, plus an A500 68000 cycle-exact entry at real speed (`bench-68000-ce`, chipset load); each legal fast core has interpreter and JIT threaded CPU off/on pairs. The 040/060 use their internal FPUs. Defaults to the standalone disk from `make -C disk benchmarks`; measurements and capability skips, no performance pass/fail threshold. Use `--jobs 1 --warp off`. |
-| smoke | 10 | A500 68000 CE, A600 ECS NTSC compat, A1200 68EC020 (+JIT), A3000 68030+68882 MMU compat, A4000 68040 (+JIT), A4000 68060 (+JIT), AROS AGA 68020 |
-| standard | 142 | every model preset (A1000, A500, A500+, A600, A2000, A3000, A4000, A4000T, A1200, CD32 and CDTV booting from CD, AROS ECS/AGA), PAL+NTSC samples, every CPU variant, compat/CE on 020-060, JIT twins of every JIT-capable entry, every JIT sub-option on the A4000 68040, threaded CPU, softfloat; MMU configurations (68030/68040/68060 with their MMU in compat/CE, the EC MMU modes `mmu_model=68ec030/68ec040/68ec060`; no JIT twin: the JIT does not support the MMU); one entry per expansion board (below) |
-| full | 540 | every CPU variant (68000, 68010, 68EC020, 68020, 68EC030 (mmu 0 and mmu_model=68ec030), 68030, 68EC040, 68LC040, 68040, 68040 without MMU emulation, 68EC060, 68LC060, 68060, 68060 without MMU emulation) x every FPU it can have (none/68881/68882/internal) x fast/compatible/cycle-exact; 68060 PCR revisions; CE with cpu_multiplier=0; every model x PAL/NTSC; OCS/ECS-Agnus/ECS-Denise/ECS; and for every entry that allows it: JIT default + cachesize 128/16384 + comp_trust{byte,word,long,naddr}=indirect + compfpu off + comp_constjump off + comp_flushmode hard + comp_nf off + comp_catchfault off, threaded CPU, JIT+threaded, softfloat, JIT+softfloat; the MMU configurations and every board entry of standard, plus the full-only boards |
+| bench | 15 | the bench disk (docs/BENCH.md) on 68000, 68000 CE, 68010, 68020 (+JIT, threaded, JIT+threaded, threaded on one host CPU), 68030, 68EC030 (+JIT), 68040 and 68060 without MMU (+JIT); runs one launch at a time; cannot be mixed with accuracy entries |
+| smoke | 16 | A500 68000 CE, A600 ECS NTSC compat, A1200 68EC020 (+JIT), A3000 68030+68882 MMU compat, A4000 68040 (+JIT), A4000 68060 (+JIT), AROS AGA 68020 |
+| standard | 145 | every model preset (A1000, A500, A500+, A600, A2000, A3000, A4000, A4000T, A1200, CD32 and CDTV booting from CD, AROS ECS/AGA), PAL+NTSC samples, every CPU variant, compat/CE on 020-060, JIT twins of every JIT-capable entry, every JIT sub-option on the A4000 68040, threaded CPU, softfloat; MMU configurations (68030/68040/68060 with their MMU in compat/CE, the EC MMU modes `mmu_model=68ec030/68ec040/68ec060`; no JIT twin: the JIT does not support the MMU); one entry per expansion board (below) |
+| full | 583 | every CPU variant (68000, 68010, 68EC020, 68020, 68EC030 (mmu 0 and mmu_model=68ec030), 68030, 68EC040, 68LC040, 68040, 68040 without MMU emulation, 68EC060, 68LC060, 68060, 68060 without MMU emulation) x every FPU it can have (none/68881/68882/internal) x fast/compatible/cycle-exact; 68060 PCR revisions; CE with cpu_multiplier=0; every model x PAL/NTSC; OCS/ECS-Agnus/ECS-Denise/ECS; and for every entry that allows it: JIT default + cachesize 128/16384 + comp_trust{byte,word,long,naddr}=indirect + compfpu off + comp_constjump off + comp_flushmode hard + comp_nf off + comp_catchfault off, threaded CPU, JIT+threaded, softfloat, JIT+softfloat; the MMU configurations and every board entry of standard, plus the full-only boards |
 
 - **Entry id.** `<model>-<cpu variant>[-<881|882>]-<fast|compat|ce>[-ntsc]`, plus a twin suffix: `-jit`,
   `-jit-<variant>`, `-thr`, `-jit-thr`, `-sf`, `-jit-sf`. Board entries: `<model>-<kind>-<board>`, e.g.
@@ -326,12 +326,12 @@ amitorture run --amiberry BIN --kickstarts DIR [--matrix smoke] [--config GLOB .
    a hang, a crash or the timeout (as in milestone 1). Test media for devio come from `runner/amitorture/media.py`
    (`prepare(entry, options, media_dir, seed)` returns config options) when that file exists; without it the run
    goes on without media.
-   A completed guest boot must have matched module begin/end records and test evidence (case, perf or speed
-   records). New disks announce their selected compiled modules in `hello.modules`; all must complete with
+   A completed guest boot must have matched module begin/end records and test evidence (case or perf
+   records; `speed` records of the retired hostspeed module in old captures). New disks announce their selected compiled modules in `hello.modules`; all must complete with
    matching ids. A disk with an explicitly empty selection is `skip`, not PASS, and does not stop the remaining
    disks of a set. Older captures without the manifest receive lifecycle checks but cannot prove selected-module
    coverage. Synthetic host selftests are exempt from guest-module checks.
-   Runner-owned `host.tone_*` and `host.speed_*` failures also make the disk and
+   Runner-owned `host.tone_*` failures also make the disk and
    entry **fail**, even when the guest's `done.fail` is zero. Guest totals stay
    guest-only; the host verdicts and measurements are listed separately.
    Reanalysis upgrades historical guest-only passes using their saved host evidence.
@@ -413,11 +413,10 @@ amitorture run --amiberry BIN --kickstarts DIR [--matrix smoke] [--config GLOB .
    `cycle_exact=true`, every pair that differs is an `hrm_timing_mismatch` item. It is low severity, so it appears
    under Notes and not in the verdict. Timing fields are never fingerprinted, so it is not a baseline regression
    either. Other core modes are legitimately not cycle-exact and are not compared.
-5a. **Threaded CPU twins.** Each entry with the CPU thread really running is compared with its unthreaded twin
-   (same binary, parameters and options except `cpu_threaded`) block by block on hostspeed: falling behind real
-   time where the twin keeps up, or an idle block (`stop`, `stop_timer`) costing much more host CPU, is a
-   `thread_speed` item (schema.md 5.6a). It is normal severity, so it is in the verdict: the comparison is within
-   one run on one host, unlike the host-relative `host.speed_*` verdicts.
+5a. **Threaded CPU twins.** On the bench matrix, each entry with the CPU thread really running is compared
+   with its unthreaded twin (same binary, parameters and options except `cpu_threaded`) on the bench disk's
+   frame and thread blocks: a `thread_speed` item (schema.md 5.6a, docs/BENCH.md "Threaded CPU checks"). It is
+   normal severity, so it is in the verdict: the comparison is within one run on one host.
 6. **Problems.** Failures become one problem only when all of these match:
    - the module;
    - the narrowing signature (the flipping settings plus the determinism);
@@ -618,19 +617,26 @@ both ran; exit 1 if there are any.
 amitorture compare --amiberry OLD --amiberry NEW [--label old --label new] [--config 'bench-68020*'] \
                    [--repeat 3] [--threshold 2] [--pin 2-5] [--set OPTION=VALUE] [--adf PATH]
 ```
-A/B performance check of two binaries on the hostspeed benchmarks (default `--matrix benchmarks` and its
-disk). It runs `run --jobs 1 --warp off` once per binary per repeat, alternating the order (A B, B A, ...) so
-drift and thermal effects hit both, and with `--pin` every emulator runs on the given host CPUs. Per entry
-and block it compares the medians of the measured runs:
-- operation blocks: host ops/s, higher is better; frame blocks (`stop`, `vbl_poll`, `chipset_load`): total
-  process CPU s per emulated second, lower is better;
-- **slower** / **faster**: the median moved by more than `--threshold` percent and the two sets of repeats do
-  not overlap; **borderline**: beyond the threshold but overlapping (repeat it); **same**: within it;
-  **incomplete**: a side has no measured run.
+A/B performance check of two binaries on the bench disk (default `--matrix bench`). It runs `run --jobs 1`
+once per binary per repeat, alternating the order (A B, B A, ...) so drift and thermal effects hit both, and
+with `--pin` every emulator runs on the given host CPUs. Every launch after the first gets `--bench-baseline`
+of the first, so all do the same work. Per entry and block it compares the medians of the repeats on the
+block's value, lower is better (docs/BENCH.md):
+- **slower** / **faster**: the median moved by more than `--threshold` percent (default 1) and the two sets of
+  repeats do not overlap; **borderline**: beyond the threshold but overlapping (repeat it); **same**: within it;
+  **incomplete**: a side has no value.
 
 Output: `WORKDIR/compare/<time>/COMPARE.md` and `compare.json` (binaries with their SHA-256, the host and
 governor, every run's results directory). Exit status 1 when any block is slower, else 0. Compare like with
 like: same host, load and governor; a `powersave` governor makes the threaded CPU's numbers noisier.
+
+### bench diff
+```
+amitorture bench diff A_RESULTS B_RESULTS [-o FILE]
+```
+Compares the bench results of two finished runs, block by block (docs/BENCH.md "Comparing two runs").
+`run --bench-baseline A_RESULTS` does the same at the end of a run, after giving the run A's work counts.
+Exit status 1 on any slower, failed, noisy or missing block.
 
 ### repro
 ```

@@ -51,19 +51,19 @@ python3 -m amitorture check    --amiberry /path/to/new/amiberry --kickstarts ~/A
 ```
 
 Emulators run headless; add `--show` to watch their windows. At most `nproc - 1` emulators run at once, machine-wide (at least 1), so a core stays free for the runner and the host.
-For lightweight measurements rather than correctness tests, build `benchmarks` and run:
+For speed rather than correctness, build the bench disk (`make -C disk bench`) and run:
 
 ```
-python3 -m amitorture run --amiberry /path/to/amiberry --kickstarts ~/Amiberry/ROMs \
-    --matrix benchmarks --jobs 1 --warp off
+python3 -m amitorture run --amiberry /path/to/amiberry --kickstarts ~/Amiberry/ROMs --matrix bench
+python3 -m amitorture run --amiberry /path/to/new/amiberry --kickstarts ~/Amiberry/ROMs --matrix bench \
+    --bench-baseline results/<first run>      # same work as the first run, then a block-by-block diff
 ```
 
-This covers 68000 through 68060, with interpreter/JIT and **threaded CPU off/on pairs** where supported.
-Unsupported CPU/FPU/MMU workloads are explicitly skipped. The report includes paired throughput and
-host CPU-cost tables; benchmark measurements do not impose a speed pass/fail threshold.
-Booted on a real Amiga or an FPGA, the benchmark disk shows its progress and an integer score
-(A500 = 1.00) plus an FPU score on screen.
-See [hostspeed.md](docs/cases/hostspeed.md#benchmark-only-build-and-threaded-cpu-comparisons).
+One disk covers 68000 through 68060: instruction classes, memory paths, real workloads (dhrystone, zlib,
+AES-GCM ...) and the emulator's own cost per frame, with JIT and threaded CPU entries. Each block does a fixed
+amount of work and reports how long it took; nothing runs for a fixed time. The disk itself does not depend on
+the emulator: it also runs on real hardware and FPGA cores, timed by the Amiga's own clock.
+See [docs/BENCH.md](docs/BENCH.md).
 To check a change for performance regressions, compare two binaries:
 
 ```

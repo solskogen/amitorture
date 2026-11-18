@@ -185,40 +185,12 @@ without resuming execution.
 {"v":1,"seq":4,"t":"done","pass":1,"fail":0,"skip":0,"untestable":0,"aborted":0,"records":5} *7b717812
 ```
 
-### 1.10 `speed`: a hostspeed timed block (not a case)
+### 1.10 `speed`: legacy (the retired hostspeed module)
 
-The hostspeed module (docs/cases/hostspeed.md) runs one block per instruction class for about 1 s of
-emulated time and brackets it with two records; the runner's verdict on it is the pseudo case
-`host.speed_<insn>` (5.1). Skipped classes get one `skip` record.
+Old captures may hold `speed` records (`mod` `hostspeed`, `ev` `begin`/`end`/`skip`/`score`, `insn`, ...)
+of the retired hostspeed module (id 26). Readers accept them; current disks do not send them, and the
+runner makes no cases from them. The bench disk (1.11) replaced it.
 
-| Field | Type | Meaning |
-|---|---|---|
-| `mod` | string | `hostspeed` |
-| `ev` | `begin` / `end` / `skip` / `score` | before the block, after it, not run on this CPU/FPU, or (benchmark-only builds, after the last block) the guest's own score |
-| `insn` | string | the block: `add_l`, `fsin`, ... (`stop`, `empty`, `empty_end` are the references) |
-| `cls` | `int` / `fpu` | the class (its cost reference: `add_l` or `fadd`) |
-| `pos` | int | the mailbox case number (offset 40) while the block runs: 1000 + block index; module (offset 36) is 26 |
-| `benchmark` | int, optional | `1` on benchmark-only builds: informational measurements, no real-time pass/fail pseudo case |
-| `n` | int | `end`: instructions executed (`stop`: STOPs = frames; `empty`: DBF iterations) |
-| `timing` | object | `end`: `cck` emulated colour clocks of the block, `empty_cck` the loop alone for the same units, `frames` VBLs counted, `units` outer loop count |
-| `why` | string | `skip`: why it does not run here |
-| `blocks` | int | `score`: how many blocks went into it |
-| `x100` | int | `score`, `insn` `int`: integer score x 100, relative to `ref` (`A500`) = 100 |
-| `ops` | int | `score`, `insn` `fpu`: FPU score, net operations per second |
-
-`score` records (`insn` `int` or `fpu`; benchmark-only builds) are timed with the guest's colour
-clock: real time on real hardware, emulated time in an emulator. The runner does not judge them
-(docs/cases/hostspeed.md, "On-screen progress and scores").
-
-```
-{"v":1,"seq":2,"t":"speed","mod":"hostspeed","ev":"begin","insn":"fsin","cls":"fpu","pos":1031} *xxxxxxxx
-{"v":1,"seq":3,"t":"speed","mod":"hostspeed","ev":"end","insn":"fsin","cls":"fpu","pos":1031,"n":3465216,"timing":{"cck":3537250,"empty_cck":69522,"frames":50,"units":3384}} *xxxxxxxx
-```
-
-`n` and `timing` depend on the engine's emulated timing (the JIT charges cycles per block), so they
-differ between a JIT twin and its reference. No fingerprint or parity check looks at `speed` records.
-
----------------------------------------------------------------------------
 ### 1.11 `bench`: the bench disk (docs/BENCH.md)
 
 The bench disk writes only `hello`, `mod`, `request`, `bench` and `done` records. All times
@@ -630,42 +602,12 @@ per-module case totals:
     `side_ok`; `why` says both frequencies, the channel, the tolerance and the offset in %; `ctx.wav` is the
     segment. The host requests section of REPORT.md shows each tone's verdict under its audio line.
 
-- on entries whose launch ran the normal hostspeed module, each timed block becomes the pseudo case
-  `host.speed_<insn>` (docs/cases/hostspeed.md). Fingerprint: `{"mod":"host","case":"speed_<insn>","st"}`
-  only, because the measurement depends on the host. Its `timing` holds `rtf` (host seconds per emulated
-  second), `sigma`, `fps`, `cpu_per_emu_s`, `cpu_total_per_emu_s`, `ns_per_op`, `gross_ns_per_op`,
-  `ratio_ref` (banded like any timing value).
-  - Measurement: the runner keeps, at every mailbox poll while a block runs (mailbox module 26, case
-    1000 + block), `[t, heartbeat, case, cpu_main_ns, cpu_total_ns, cpu_top_ns]`: host seconds since
-    launch, the guest's frame count, and /proc/<pid>/task/*/schedstat CPU times. They are in the disk's
-    `result.json` as `hostspeed: {"fields","samples","poll_s","pos0"}`, with `host_context:
-    {"cpu_model","cpus","board","jobs","loadavg_start","loadavg_end","slot_wait_s","cpufreq"}`; `cpufreq`
-    (Linux only, omitted when unreadable) is `{"governor","driver","epp","boost"}`, values that differ between
-    CPUs joined with "/".
-  - Benchmark summaries add `over_idle_per_emu_s` to the frame blocks `vbl_poll` and `chipset_load`
-    (`cases.FRAME_BLOCKS`): their total CPU s per emulated second minus the `stop` block's.
-  - `st`: `fail` when rtf > 1.01 + 3 sigma (`cases.SPEED_RTF_LIMIT`); `pass` when not, and either rtf + 3
-    sigma <= 1.01 or 3 sigma <= 0.5 %; `untestable` without samples, with fewer than 3 in the block, or
-    when the noise is too large to tell. A `skip` record makes no case.
-  - Parity skips these cases (`engine_dependent`): the JIT and the interpreter run at different speeds by
-    design.
-  - A failed `host.speed_<insn>` is a `case_fail` item (`mod` `host`): `expect` `{"rtf_max","limit"}`,
-    `got` `{"rtf","sigma","fps","frame_hz","samples","span_s","cpu_per_emu_s","ns_per_op","ratio_ref",
-    "ipc_bound"}`, `ctx.host` the host context, `ctx.block` the guest's block; `why` reads like "FSIN: the
-    emulator ran at 0.75x real time while executing it (rtf 1.337, ...); 250 ns host per instruction,
-    3.5x FADD. Measured on Cortex-A76 x4 (Raspberry Pi 500 Rev 1.0), --jobs 1, ...".
-  - Benchmark-only blocks (`benchmark:1`) produce no correctness pseudo case. Their `st` is `measured`,
-    `skip` or `untestable`; missing end records/samples or 3-sigma timing uncertainty over 5% of
-    measured rtf are not measurements. The real-time test's CPU-busy rejection does not apply.
-    Reports retain CPU costs, rates and skip reasons. `ops_per_emu_s` is `n * cck_hz / cck`;
-    `ops_per_host_s` divides that by rtf. This includes frame pacing. Ordinary instruction blocks count
-    instructions, STOP counts frames and empty loops count DBF iterations.
-  - `summary.json` `hostspeed`: `[{"entry","disk","jit","cpu_speed","cpu_threaded","thread_reference","host","blocks":[{"insn","cls","st","benchmark",
-    "rtf","sigma","fps","frame_hz","samples","cpu_per_emu_s","cpu_total_per_emu_s","ns_per_op",
-    "ns_per_iter","ops_per_emu_s","ops_per_host_s","ratio_ref","ref","why"}]}]`; REPORT.md shows it as
-    "Host speed per instruction". Threaded benchmark entries additionally get paired off/on tables:
-    `thread_reference` matches a nonthreaded entry with otherwise identical emulator options, binary,
-    run parameters and disk. Interpreter and JIT pairs remain separate; no match means no comparison.
+- bench disk launches (docs/BENCH.md) make no cases. Their result is `result.json` `bench` (5.3), and a block
+  whose `end` has `st: "fail"` (its work came out wrong) is a `case_fail` item with `mod` `bench`, `case` the
+  block name, `got` `{"n","reps","sum","sum_last"}` and `record` the end record.
+  - Every launch's `result.json` has `host_context: {"cpu_model","cpus","board","jobs","loadavg_start",
+    "loadavg_end","slot_wait_s","cpufreq"}`; `cpufreq` (Linux only, omitted when unreadable) is
+    `{"governor","driver","epp","boost"}`, values that differ between CPUs joined with "/".
 
 ### 5.2 `raw/<entry>/<disk>/` (added files)
 | File | Content |
@@ -683,6 +625,9 @@ per-module case totals:
 | `board_roms` | ROMs a board entry needed: ROM identity plus the `option` it was given in |
 | `mailbox.found_after_s` | seconds from launch until the mailbox was found |
 | `command.env.SDL_AUDIO_DISK_OUTPUT_FILE` | present when the audio was captured (`SDL_AUDIO_DRIVER=disk`) |
+| `bench` | bench disk launches: `{"env","basis","pacing","blocks","decisions"}`. `basis` `host` (the runner timed the runs from its serial stamps) or `guest` (the guest's own times); `pacing` `warp`/`paced`; `env` the guest's `env` record; `decisions` every `bench_longer`/`bench_more` answer. Each block: `blk`, `tier`, `id`, `unit`, `per`, `metric` (`ns_per_unit` or `cpu_per_emu_s`), `mem`, `kset`, `st` (`ok`/`unconfirmed`/`fail`/`skip`), `why`, `n`, `reps`, `sum`, `sum_last`, `nonlinear`, `basis`, `cold_guest_ns`, `guest_t` and `host_s` (per repetition at the final count), `value` (from the fastest repetition: ns per unit, or host CPU s per emulated s), `rtf` and `cpu_main_per_emu_s` (cost blocks), `confirmed` (the two fastest agree), `spread_pct`; `flood_recovery` also `quiet_thread_share`, `flood_thread_share`, `quiet_samples` |
+| `bench_stamps` | bench launches timed by the runner: the serial stamps of the `go` and `run` records |
+| `bench_samples` | `{"fields","samples"}`: mailbox samples taken while a sampled block (`flood_recovery`) ran, `[t, heartbeat, case, cpu_main_ns, cpu_total_ns, cpu_top_ns]` |
 
 Matrix entries (`summary.json` → `configs/`, and `matrix --json`) may have these fields:
 - `boot` (`"cd"`);
@@ -694,6 +639,9 @@ Matrix entries (`summary.json` → `configs/`, and `matrix --json`) may have the
 ### 5.4 `summary.json` (added fields)
 - `catalogue`: `{"file":"docs/catalogue.yaml","totals":{"covered","partial","not_covered"},"rows":[{"id","area","what","status","why","pass","fail","skip","untestable","entries":[...],"cases":<distinct case keys matched>}]}`. It is null when the file is missing, or `{"error"}` when it can't be parsed. Statuses are explained in docs/RUNNER.md, Coverage catalogue.
 - `host_requests`: `[{"entry","requests","acked","not_acked":[{"id","what","tag","disk","why"}],"screenshots":[{"id","tag","path","sha256","disk"}],"audio":[{"id","tag","disk","seconds","dominant_hz","expect_hz","freq_ok","expect_side","side_ok","rms":{"L","R"},"freq":{"L","R"},"wav","tone":{"case","st","expect","measured_hz","why"}}]}]`, one item per entry that made requests (`tone`: the `host.tone_<tag>` verdict, when the mark had an expected frequency).
+
+- `bench`: bench runs only, one item per entry and disk: `{"entry","disk","jit","machine","status","cpu_threaded","cpu_threaded_requested","thread_reference","cpu_speed","host","flood_holds","refloods","basis","pacing","env","blocks"}` (`blocks` as in `result.json` `bench`; `thread_reference` the unthreaded twin of a threaded entry).
+- `bench_diff`: with `run --bench-baseline`: `{"against","status","word","counts","file":"BENCH-DIFF.md","rows":[{"entry","disk","blk","id","metric","a","b","change_pct","verdict","why","note"}]}`; verdicts in docs/BENCH.md "Comparing two runs". `status` 1 makes the run exit with 1.
 
 ### 5.5 check: finding kind `fail_detail_changed`
 This is a case that failed in the baseline and still fails, and one of these is true:
@@ -711,34 +659,32 @@ This item is made only for cycle-exact entries, when a case's `timing.hrm_<x>` d
 grouped into a low-severity problem (REPORT.md Notes) and never affects the verdict or a baseline check.
 
 ### 5.6a failures.jsonl: kind `thread_speed`
-`{"id","kind":"thread_speed","entry","ref_entry","mod":"host","case":"speed_<insn>","case_key":"host.speed_<insn>","disk","why","ref":{"rtf","sigma","cpu_total_per_emu_s"},"twin":{...},"differing_options":[{"option":"cpu_threaded","ref":"false","twin":"true"}],"host","jit","machine","config"}`.
-Made by `analysis.thread_speed_items` for a threaded entry and its unthreaded twin (`report.speed_summary` pairs:
-the same binary, parameters and options except `cpu_threaded`, so the same run and host), when on a hostspeed block
-- the twin keeps real time (rtf <= 1.01 + 3 sigma) and the threaded entry's rtf is more than 0.03 above
-  max(1, the twin's rtf), beyond both 3 sigma (`THREAD_RTF_MARGIN`); or
-- the block is idle (`stop`, `stop_timer`) and the threaded entry's total CPU/s exceeds 1.25 x the twin's + 0.05
-  (`THREAD_IDLE_COST_MAX`, `THREAD_IDLE_COST_SLACK`).
+`{"id","kind":"thread_speed","entry","ref_entry","mod":"bench","case":<block or rule>,"case_key":"bench.<case>","disk","why","ref":{...},"twin":{...},"differing_options":[{"option":"cpu_threaded","ref":"false","twin":"true"}],"host","jit","machine","config"}`.
+Made by `bench.thread_items` on bench runs, for a threaded entry and its unthreaded twin (`thread_reference`: the
+same binary, parameters and options except `cpu_threaded`, so the same run and host), on the bench disk's frame
+and thread blocks (`metric` `cpu_per_emu_s`), when
+- the twin keeps real time (rtf <= 1.01) and the threaded entry's rtf is more than 0.03 above max(1, the twin's
+  rtf) (`THREAD_RTF_MARGIN`); or
+- the block is idle (`stop`, `stop_timer`) and the threaded entry's host CPU per emulated second exceeds 1.25 x the
+  twin's + 0.05 (`THREAD_IDLE_COST_MAX`, `THREAD_IDLE_COST_SLACK`).
 
-A third rule is the block's own: on `flood_recovery`, a threaded entry whose CPU thread ran less than 0.6 of a core in the
-quiet phases (`quiet_thread_share`), after floods that moved it off its thread (`flood_thread_share` below 0.6), is a
-`thread_speed` item too (`THREAD_RECOVERY_SHARE`).
+On `flood_recovery`, a threaded entry whose CPU thread ran less than 0.6 of a core in the quiet phases
+(`quiet_thread_share`), after floods that moved it off its thread, is a `thread_speed` item too
+(`THREAD_RECOVERY_SHARE`).
 
 An entry with `host_cpus: 1` (the runner pins the emulator to one host CPU; result `host_cpus: {asked, pinned_to}`)
 asked for `cpu_threaded=true` whose log says the CPU ran on its own thread is a `thread_speed` item, case key
-`host.thread_one_cpu`.
+`bench.thread_one_cpu`.
 
-A fourth comes from Amiberry's own log: its re-flood guard reports a flood hold that a count on the main thread ended
-while the thread flooded again at once ("the flood came back as soon as the CPU thread was tried again (<n> in a
-row)"). Two or more in a row (`THREAD_REFLOODS`, `cpu_thread_refloods` from `runner.engine_from_log`) is a
-`thread_speed` item with case key `host.thread_refloods`: the count misses requests the thread makes, and the CPU goes
-back and forth between the threads. It is reported on whatever host loses such a workload, without a dedicated block.
+Amiberry's re-flood guard reports a flood hold that a count on the main thread ended while the thread flooded again
+at once. Two or more in a row (`THREAD_REFLOODS`, `cpu_thread_refloods` from `runner.engine_from_log`) is a
+`thread_speed` item with case key `bench.thread_refloods`.
 
 Only entries where the CPU thread really ran are compared (the emulator log, see `cpu_threaded` adjustments). A switch
 to the main thread right after a request flood line ("CPU thread: <n> requests per frame ... main thread for <s> s.")
 is the threaded CPU's own fallback, not a refused configuration: the thread still counts as active
-(`runner.engine_from_log`, `cpu_thread_flood_holds`). The
-items form one normal-severity problem ("threaded CPU behind its unthreaded twin (<blocks>) on N entries"), which is
-in the verdict. docs/cases/hostspeed.md "Threaded CPU verdict".
+(`runner.engine_from_log`, `cpu_thread_flood_holds`). The items form one normal-severity problem, which is in the
+verdict.
 
 ### 5.7 Diagnosis fields (problems in summary.json; result.json)
 Problems of kind case_fail/engine_mismatch carry these fields:
