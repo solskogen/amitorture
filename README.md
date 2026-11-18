@@ -29,7 +29,7 @@ You need an Amiga cross toolchain (vasm and bebbo's m68k-amigaos-gcc) in `/opt/a
 ```
 make -C disk             # the disk set: disk/build/set/amitorture-<n>-<group>.adf
 make -C disk check       # verify every disk
-make -C disk benchmarks  # standalone benchmark-only disk/build/benchmarks/amitorture.adf
+make -C disk bench       # the bench disk: disk/build/amitorture-bench.adf (docs/BENCH.md)
 ```
 
 All the modules together don't fit on one 880 KB disk, so the test is a set of three disks. Each one is a complete, bootable payload that runs on a 1 MB (512 KB chip + 512 KB slow RAM) Kickstart 1.x A500 or anything bigger.

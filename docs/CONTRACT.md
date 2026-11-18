@@ -32,6 +32,7 @@ Standard 880 KB DD ADF (901120 bytes, 1760 sectors × 512).
 | 40 | u32 | `data_size`: bytes of initialised data at the start of segment 1 (multiple of 4) |
 | 44 | u32 | `data_sectors`: sectors holding data + relocs = ceil((data_size + reloc_count*4)/512) |
 | 48 | u32 | `data_alloc`: segment 1 size = max(data_sectors*512, data_size + bss_size, 4) |
+| 52 | u32 | `plan_offset`: blob offset of the bench work plan (§15), 0 = none (every disk but the bench disk) |
 | 64 | 64 bytes | **Run parameters** (§4), baked in per run by the runner via `mkadf.py --param` |
 | 128 | 64 bytes | build id: an ASCII, NUL-padded string (git rev + build date) |
 | rest | | zero |
@@ -284,7 +285,11 @@ The API is in `disk/rt/mod.h`, which is authoritative; read it. In short:
 | 25 | memory_os | OS | allocates the per-region test blocks of memory (21) while exec is alive (OS-phase half of memory; disk: exp) |
 | 26 | hostspeed | BARE | timed CPU/FPU/memory/I/O blocks for the runner's real-time check or standalone benchmark disk; `speed` records, no cases (disk: exp) |
 | 27 | cetiming | BARE | cycle-level CPU/chip-bus timing; perf records the runner judges against real-hardware references, `host.cet_*` (disk: core) |
-| 28-63 | reserved | | later |
+| 28-39 | reserved | | later |
+| 40 | bench_micro | BARE | bench disk only: micro tier (docs/BENCH.md) |
+| 41 | bench_kernels | BARE | bench disk only: kernel tier |
+| 42 | bench_system | BARE | bench disk only: frame and thread tiers |
+| 43-63 | reserved | | later |
 
 Disk groups are in disk/Makefile (`DISK_SET_*`). `make check-groups` fails if a module is in no group or in two.
 
@@ -418,6 +423,8 @@ Used for things the guest can't do or observe itself: screenshots, audio capture
 | `cd32pad` | `{"port":p,"buttons":mask}`: absolute; mask bit0 blue, 1 red, 2 yellow, 3 green, 4 forward, 5 reverse, 6 play (the pad's shift order) | as above (not acked on Amiberry). A host that has a CD32 pad attached on that port (Amiberry: `joyportN=<device>`, `joyportNmode=cd32joy`, e.g. joyport1=kbd1) but cannot press its buttons may ack `buttons:0` only: the guest then checks the pad id/released state. |
 | `wait` | `{}` | host acks immediately (round-trip/latency test) |
 | `pacing` | `{}` (tag `boot`) | sent once by the runtime right after `hello`, before the first module. A host that warped the boot (Kickstart, loader, probe) switches the emulator to the disk's own pacing (Amiberry: IPC `SET_WARP`, checked with `GET_WARP`) and acks only after that; result: `warp`, `was`, `switched`. A host that loaded a disk testing the floppy hardware at turbo drive speed sets real drive speed here too (Amiberry: IPC `SET_FLOPPY_SPEED 100`, checked with `GET_FLOPPY_SPEED`), before the ack; result `floppy_speed`. A host that cannot switch refuses it (N \| $80000000). Either way the guest just continues: this request has no case. With run-parameter flag `modpace` (128) the runtime also sends it before every module, tag = the module name (`rt/mod.c` `run_module`); the host sets that module's pacing the same way (the runner's per-module policy: `runner/amitorture/pacing.py`) and acks before the module's `mod` begin record; result adds `module`. Without the flag (the default, real hardware) no per-module request is sent. |
+| `bench_longer` | `{"n":count,"reps":0,"id":plan_id}`, tag = block name | bench disk, flag `host` only (docs/BENCH.md): a sizing run of `count` reached the guest's 100 ms floor. Ack = the host's own timing of the run was too short, double the count again; refuse = long enough. No answer: the guest decides with its own clock. |
+| `bench_more` | `{"n":count,"reps":r,"id":plan_id}` | after r ≥ 2 repetitions: ack = run another; refuse = enough. No answer: the guest's own rule (fastest two within 0.25%). The guest stops at 12 regardless. |
 
 Unknown `what` values are never acknowledged.
 
@@ -467,3 +474,31 @@ The image is a plain ISO 9660, built by the runner from the already parameter-ba
 - `cdimage0=<iso>,image`, `nr_floppies=0`, `floppy0type=-1`. Test floppies (DF1) are dropped, so there is no floppy drive, as on a real CD32. The CDTV is booted the same way.
 - `chipset_compatible=CD32|CDTV` turns on Akiko or the DMAC and the CD drive.
 - Results come back over serial and the mailbox as usual.
+
+---------------------------------------------------------------------------
+## 15. Bench disk work plan
+
+The bench disk (docs/BENCH.md) carries a work plan: the `count` of each block. It is
+initialised data in the payload (symbol `_amt_plan`, `disk/bench/harness.c`). mkadf stores
+its blob offset in header offset 52 and writes it with `--plan FILE.json`, which also
+recomputes `blob_crc32`. All fields are big-endian:
+
+| Off | Type | Field |
+|---|---|---|
+| 0 | char[4] | `"PLAN"` |
+| 4 | u16 | version = 1 |
+| 6 | u16 | `n`: entries used (0..120) |
+| 8 | u16 | flags: bit 0 = exclusive (blocks not listed are skipped) |
+| 10 | u16 | 0 |
+| 12 | u32 | CRC-32 (zlib) of the `n` entries |
+| 16 | 120 × 8 | entries: u16 block id, u16 flags (bit 0 = skip), u32 count (0 = size it) |
+
+- Block ids are unique on the disk and never reused: micro 1-63, kernels 64-191 (per set,
+  see docs/BENCH.md), system 200-255.
+- A plan that fails its magic, version or CRC check is ignored (the `env` record says
+  `plan: -1`), and every block sizes itself.
+- A plan says nothing about what code a block runs. The runner checks that the disk's blocks
+  are the baseline's before it patches counts in.
+
+JSON for `mkadf.py --plan`: `{"exclusive": bool, "entries": [{"id": n, "count": n, "skip": bool}]}`.
+`--plan none` writes an empty plan.

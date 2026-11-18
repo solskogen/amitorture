@@ -151,6 +151,9 @@ void amt_capture(const char *what, const char *tag);
  * `args_json` is a JSON object text or NULL. Works in both phases; kicks
  * the watchdog while waiting. Typical timeout: 10 s (amt_secs(10)). */
 int amt_request(const char *what, const char *tag, const char *args_json, ULONG timeout_frames);
+/* As amt_request, but tells a refusal from silence: 1 acknowledged,
+ * -1 refused (the host answered id | $80000000), 0 no answer in time. */
+int amt_request3(const char *what, const char *tag, const char *args_json, ULONG timeout_frames);
 ULONG amt_secs(ULONG s);          /* seconds -> frames (50 PAL / 60 NTSC) */
 
 /* Throughput record for the current module. */

@@ -339,6 +339,38 @@ class Integrity(unittest.TestCase):
         self.assertEqual(struct.unpack_from(">I", image, 4)[0], 512 + 4)
         self.assertEqual(struct.unpack_from(">I", image, 512)[0], 8)
 
+    def test_bench_plan_round_trip(self):
+        # CODE (4 bytes), DATA: 8 bytes, then the empty work plan at symbol _amt_plan
+        H = struct.pack
+        plan = H(mkadf.PLAN_HDR, b"PLAN", 1, 0, 0, 0, 0).ljust(mkadf.PLAN_SIZE, b"\0")
+        dlongs = (8 + len(plan)) // 4
+        exe = H(">IIIII", mkadf.HUNK_HEADER, 0, 2, 0, 1) + H(">II", 1, dlongs)
+        exe += H(">II", mkadf.HUNK_CODE, 1) + H(">I", 0x4e754e75) + H(">I", mkadf.HUNK_END)
+        exe += H(">II", mkadf.HUNK_DATA, dlongs) + bytes(8) + plan
+        exe += H(">II", mkadf.HUNK_SYMBOL, 3) + b"_amt_plan\0\0\0" + H(">II", 8, 0) + H(">I", mkadf.HUNK_END)
+        (self.root / "boot.bin").write_bytes(b"\x4e\x75")
+        (self.root / "p.exe").write_bytes(exe)
+        (self.root / "plan.json").write_text(json.dumps(
+            {"exclusive": True, "entries": [{"id": 12, "count": 4096}, {"id": 64, "skip": True}]}))
+        args = SimpleNamespace(boot=str(self.root / "boot.bin"), payload=str(self.root / "p.exe"),
+                               output=str(self.root / "b.adf"), alloc_flags="0x10000", param=[], build_id="t")
+        rp = SimpleNamespace(input=args.output, output=str(self.root / "r.adf"), param=None, build_id=None,
+                             plan=str(self.root / "plan.json"))
+        with contextlib.redirect_stdout(io.StringIO()):
+            mkadf.build(args)
+            self.assertEqual(mkadf.read_plan((self.root / "b.adf").read_bytes()), (512 + 8, 1, 0, [], True))
+            mkadf.repatch(rp)
+            self.assertEqual(mkadf.dump(rp.output), 0)          # blob CRC follows the patch
+        adf = (self.root / "r.adf").read_bytes()
+        self.assertEqual(mkadf.read_plan(adf),
+                         (520, 1, mkadf.PLAN_EXCLUSIVE, [(12, 0, 4096), (64, mkadf.PLAN_SKIP, 0)], True))
+        # the guest's check: crc32 of the entries as stored
+        at = mkadf.BLOB_OFF + 520
+        self.assertEqual(struct.unpack_from(">I", adf, at + 12)[0], zlib.crc32(adf[at + 16:at + 32]))
+        (self.root / "plan.json").write_text(json.dumps({"entries": [{"id": 12}, {"id": 12}]}))
+        with self.assertRaises(mkadf.Fail):
+            mkadf.repatch(rp)
+
     def test_valid_adf_and_exact_boundary_remain_accepted(self):
         for image in (4, mkadf.ADF_SIZE - mkadf.BLOB_OFF):
             with self.subTest(image=image):

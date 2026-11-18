@@ -397,6 +397,11 @@ static ULONG beam_frames_wait_step(ULONG *lastv)
 
 int amt_request(const char *what, const char *tag, const char *args_json, ULONG timeout_frames)
 {
+    return amt_request3(what, tag, args_json, timeout_frames) > 0;
+}
+
+int amt_request3(const char *what, const char *tag, const char *args_json, ULONG timeout_frames)
+{
     static ULONG req_id;
     ULONG id = ++req_id, frames = 0, lastv = 0;
     json_begin("request");
@@ -412,7 +417,7 @@ int amt_request(const char *what, const char *tag, const char *args_json, ULONG 
         /* the host says it cannot do this (CONTRACT §13: id | $80000000):
          * give up at once instead of waiting out the timeout */
         if (amt_mbox->host_ack == (id | 0x80000000UL))
-            return 0;
+            return -1;
         frames += beam_frames_wait_step(&lastv);
         if (frames > timeout_frames)
             return 0;

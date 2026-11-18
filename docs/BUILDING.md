@@ -56,25 +56,17 @@ Variables:
 It rejects payload/relocation ranges and sector spans that extend beyond the physical image, even if the
 available bytes have a matching CRC.
 
-### Benchmark-only disk
+### Bench disk
 
 ```
-make -C disk benchmarks
-make -C disk check-benchmarks
+make -C disk bench        # disk/build/amitorture-bench.adf
+make -C disk bench-check  # mkadf.py --dump on it
 ```
 
-This builds only `hostspeed` plus the boot/runtime/probe needed to run it, into
-`disk/build/benchmarks/amitorture.adf`. It does not build the correctness modules or the disk set.
-`B=dir` places it in `dir/benchmarks/amitorture.adf`; that separate directory prevents stale module tables
-or benchmark-mode objects from leaking into normal builds. Normal `make -C disk` is unchanged.
+One disk for every CPU, with no accuracy tests: the bench harness, its modules (`disk/bench/`) and the
+kernel sets, built in `disk/build/bench/`. See docs/BENCH.md for what it measures and how. The kernel
+sets alone build with `make -C disk ksets`. `B=dir` puts everything under `dir/`.
 
-Benchmark-only records carry `benchmark:1`: the runner reports measurements and CPU-specific skips
-instead of turning real-time performance into correctness verdicts. The same workloads in a normal
-disk retain the existing `host.speed_*` verdicts. See
-[hostspeed.md](cases/hostspeed.md#benchmark-only-build-and-threaded-cpu-comparisons) for running the
-CPU-family matrix and threaded CPU off/on comparisons.
-
----------------------------------------------------------------------------
 ## 3. Generated tables
 
 Four modules use tables made by host-side reference models. The generated files are checked in, so a normal build doesn't run the generators.

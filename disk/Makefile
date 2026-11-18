@@ -3,8 +3,8 @@
 #   make            the disk set: build/set/amitorture-<n>-<group>.adf (all modules)
 #   make MODS="rt x" one ADF with only those modules: build/amitorture.adf
 #   make check      mkadf.py --dump on the ADF (header, params, CRC, relocs)
-#   make benchmarks       benchmark-only ADF: build/benchmarks/amitorture.adf
-#   make check-benchmarks verify the benchmark-only ADF
+#   make bench      the bench disk: build/amitorture-bench.adf (docs/BENCH.md)
+#   make bench-check  mkadf.py --dump on the bench disk, kernel set checks
 #   make clean
 #
 # AMIGA_TOOLCHAIN   toolchain bin dir (default /opt/amiga/bin)
@@ -25,9 +25,6 @@ B ?= build
 CFLAGS  := -m68000 -Os -ffreestanding -nostdlib -fno-builtin -noixemul -fomit-frame-pointer -MMD -MP \
            -fno-tree-loop-distribute-patterns -Wall -Wextra -Wno-unused-parameter \
            -I$(NDK_INCLUDE) -Irt -Iprobe
-ifeq ($(BENCHMARK_ONLY),1)
-CFLAGS += -DAMT_BENCHMARK_ONLY
-endif
 ASFLAGS := -Fhunk -quiet -m68000 -I$(NDK_INCLUDE)
 LDFLAGS := -m68000 -nostdlib -nostartfiles -noixemul
 LIBGCC  := $(shell $(CC) -m68000 -print-libgcc-file-name)
@@ -41,7 +38,12 @@ RT_S   := rt/takeover_asm.s rt/takeover_010.s rt/divmod.s rt/bare.s rt/cpustate.
 # MODS="rt cia" limits the build to those modules (modules/<name>.c and
 # modules/<name>_*.{c,s}); default: all. Use with B=build-<x> so parallel
 # builds of different module sets don't share a build directory.
-ifeq ($(MODS),)
+ifeq ($(BENCH),1)
+# the bench disk (`make bench`): the bench harness and its modules, and the
+# kernel sets (bench/kernels.mk)
+MOD_C  := $(wildcard bench/*.c)
+MOD_S  := $(wildcard bench/*.s)
+else ifeq ($(MODS),)
 MOD_C  := $(wildcard modules/*.c)
 MOD_S  := $(wildcard modules/*.s)
 else
@@ -74,13 +76,15 @@ all: $(B)/amitorture.adf
 endif
 one: $(B)/amitorture.adf
 
-.PHONY: benchmarks check-benchmarks
-benchmarks:
-	$(MAKE) --no-print-directory B=$(B)/benchmarks MODS=hostspeed BENCHMARK_ONLY=1 \
-		BUILD_ID="$(BUILD_ID) benchmarks" one
+# The bench disk: one ADF for every CPU (docs/BENCH.md). Built in
+# $(B)/bench, copied to $(B)/amitorture-bench.adf.
+.PHONY: bench bench-check
+bench:
+	$(MAKE) --no-print-directory B=$(B)/bench BENCH=1 BUILD_ID="$(BUILD_ID) bench" one
+	cp $(B)/bench/amitorture.adf $(B)/amitorture-bench.adf
 
-check-benchmarks: benchmarks
-	$(MKADF) --dump $(B)/benchmarks/amitorture.adf
+bench-check: bench
+	$(MKADF) --dump $(B)/amitorture-bench.adf
 
 $(B)/bootblock.bin: boot/bootblock.s
 	@mkdir -p $(dir $@)
@@ -102,6 +106,10 @@ $(B)/modlist.o: $(B)/modlist.c rt/mod.h Makefile
 $(B)/%.o: %.c rt/rt.h rt/mod.h rt/screen.h probe/probe.h Makefile
 	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) $(call cpuflag,$<) -c -o $@ $<
+
+$(B)/bench/%.o: bench/%.c rt/rt.h rt/mod.h rt/screen.h probe/probe.h bench/harness.h bench/kernels/kexpect.h Makefile
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -c -o $@ $<
 
 $(B)/%.o: %.s
 	@mkdir -p $(dir $@)
@@ -187,5 +195,9 @@ check-gen:
 -include $(C_SRCS:%.c=$(B)/%.d) $(B)/modlist.d
 
 include bench/kernels.mk
+ifeq ($(BENCH),1)
+OBJS += $(KSETS:%=$(KB)/%.o)
+$(B)/payload.exe: $(KSETS:%=$(KB)/%.o)
+endif
 
 FORCE:

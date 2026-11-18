@@ -11,6 +11,11 @@ Re-bake the run parameters of an existing disk (the runner does this per run):
 Inspect a disk (checks the bootblock checksum, the blob CRC and the relocs):
     mkadf.py --dump build/amitorture.adf
 
+Patch the work plan of a bench disk (CONTRACT section 15), with or without --param:
+    mkadf.py --in build/amitorture-bench.adf -o /tmp/run.adf --plan plan.json
+plan.json: {"exclusive": false, "entries": [{"id": 12, "count": 4096}, {"id": 13, "skip": true}]};
+--plan none empties it (every block sizes itself).
+
 Parameters (section 4): mode=full|quick|<n> (soak = 2 is reserved, runs like full), seed=<n>, end_action=halt|reboot|return|<n>,
 flags=<n>|unsafe,noserial,nombox,net,noscreen,intcompat,fpucompat,modpace,fastcpu,host (comma or '+' separated), baud=<n>, modules=all|<64-bit mask>, floppy=<percent>|turbo
 (the drive speed the modules run at; 0 = not stated).
@@ -48,6 +53,14 @@ FLAG_BITS = {"unsafe": 1, "noserial": 2, "nombox": 4, "net": 8, "noscreen": 16,
              "intcompat": 32, "fpucompat": 64, "modpace": 128,
              "fastcpu": 256, "host": 512}
 ENTRY_SYMBOLS = ("_amt_entry", "amt_entry")
+PLAN_SYMBOLS = ("_amt_plan", "amt_plan")
+PLAN_PTR_OFF = 52           # header: u32 blob offset of the work plan, 0 = none
+PLAN_MAX = 120
+PLAN_HDR = ">4sHHHHI"       # magic, version, n, flags, pad, crc32 of the entries
+PLAN_ENTRY = ">HHI"         # id, flags, count
+PLAN_SIZE = struct.calcsize(PLAN_HDR) + PLAN_MAX * struct.calcsize(PLAN_ENTRY)
+PLAN_EXCLUSIVE = 1
+PLAN_SKIP = 1
 
 
 class Fail(Exception):
@@ -282,6 +295,25 @@ def flatten(hunks, alloc_flags):
     return bytes(images[0]), bytes(images[1]), bss_size, relocs, entry
 
 
+def find_plan(hunks, code, data, relocs, alloc):
+    """Blob offset of the bench work plan (symbol amt_plan), or 0."""
+    for name in PLAN_SYMBOLS:
+        for h in hunks:
+            if name in h.symbols:
+                if h.kind == HUNK_BSS:
+                    raise Fail(f"{name} is in BSS: it must be initialised data")
+                seg = 0 if h.kind == HUNK_CODE else 1
+                off = h.flat + h.symbols[name]
+                img = (code, data)[seg]
+                if off + PLAN_SIZE > len(img) or img[off:off + 4] != b"PLAN":
+                    raise Fail(f"{name} at {off:#x} is not an initialised work plan")
+                for r in relocs:
+                    if bool(r & RELOC_LOC_SEG1) == bool(seg) and off - 3 <= (r & RELOC_OFF_MASK) < off + PLAN_SIZE:
+                        raise Fail(f"{name} contains a relocation")
+                return off + (alloc if seg else 0)
+    return 0
+
+
 def layout(code, data, bss, nrel):
     """(code_sectors, data_sectors, data_alloc) of a payload (section 1)."""
     code_sectors = align(len(code), SECTOR) // SECTOR
@@ -409,6 +441,7 @@ def build(args):
     code, data, bss, relocs, entry = flatten(hunks, alloc_flags)
     code_sectors, data_sectors, data_alloc = layout(code, data, bss, len(relocs))
     alloc = code_sectors * SECTOR
+    plan_off = find_plan(hunks, code, data, relocs, alloc)
     blob_sectors = code_sectors + data_sectors
     blob = code.ljust(alloc, b"\0") + data + b"".join(struct.pack(">I", r) for r in relocs)
     if BLOB_OFF + blob_sectors * SECTOR > ADF_SIZE:
@@ -432,12 +465,15 @@ def build(args):
     struct.pack_into(HDR_FMT, hdr, 0, b"AMTP", HDR_VERSION, len(code), bss, len(relocs), entry,
                      blob_sectors, zlib.crc32(blob) & 0xFFFFFFFF, alloc, alloc_flags,
                      len(data), data_sectors, data_alloc)
+    struct.pack_into(">I", hdr, PLAN_PTR_OFF, plan_off)
     hdr[64:128] = pack_params(params)
     hdr[128:128 + len(bid)] = bid
     adf = bytearray(ADF_SIZE)
     adf[0:1024] = boot
     adf[HDR_OFF:HDR_OFF + SECTOR] = hdr
     adf[BLOB_OFF:BLOB_OFF + len(blob)] = blob
+    if getattr(args, "plan", None):
+        patch_plan(adf, args.plan)
     write_out(args.output, adf)
     print(f"{args.output}: code {len(code)} data {len(data)} bss {bss} relocs {len(relocs)} "
           f"entry {entry:#x} blob {blob_sectors} sectors, alloc {alloc} + {data_alloc}")
@@ -450,10 +486,72 @@ def write_out(path, data):
         f.write(data)
 
 
+def load_plan(spec):
+    """[(id, flags, count)], header flags from --plan FILE.json | none."""
+    if spec == "none":
+        return [], 0
+    import json
+    with open(spec) as f:
+        try:
+            j = json.load(f)
+        except ValueError as e:
+            raise Fail(f"{spec}: {e}")
+    if not isinstance(j, dict) or not isinstance(j.get("entries", []), list):
+        raise Fail(f"{spec}: expected an object with an \"entries\" list")
+    out, seen = [], set()
+    for e in j.get("entries", []):
+        if not isinstance(e, dict) or not isinstance(e.get("id"), int):
+            raise Fail(f"{spec}: every entry needs an integer \"id\"")
+        i, n = e["id"], e.get("count", 0)
+        if not 0 < i <= 0xFFFF or i in seen:
+            raise Fail(f"{spec}: bad or repeated id {i}")
+        if not isinstance(n, int) or not 0 <= n <= 0xFFFFFFFF:
+            raise Fail(f"{spec}: id {i}: bad count {n!r}")
+        seen.add(i)
+        out.append((i, PLAN_SKIP if e.get("skip") else 0, n))
+    if len(out) > PLAN_MAX:
+        raise Fail(f"{spec}: {len(out)} entries, at most {PLAN_MAX}")
+    return out, PLAN_EXCLUSIVE if j.get("exclusive") else 0
+
+
+def patch_plan(adf, spec):
+    """Write the work plan into the blob and fix the blob CRC."""
+    off = struct.unpack_from(">I", adf, HDR_OFF + PLAN_PTR_OFF)[0]
+    if not off:
+        raise Fail("this disk has no work plan (not a bench disk)")
+    at = BLOB_OFF + off
+    if adf[at:at + 4] != b"PLAN":
+        raise Fail(f"no work plan at blob offset {off:#x}")
+    entries, flags = load_plan(spec)
+    body = b"".join(struct.pack(PLAN_ENTRY, *e) for e in entries).ljust(PLAN_MAX * 8, b"\0")
+    crc = zlib.crc32(body[:len(entries) * 8]) & 0xFFFFFFFF
+    adf[at:at + PLAN_SIZE] = struct.pack(PLAN_HDR, b"PLAN", 1, len(entries), flags, 0, crc) + body
+    code, nrel, data = (struct.unpack_from(">I", adf, HDR_OFF + o)[0] for o in (8, 16, 40))
+    alloc = struct.unpack_from(">I", adf, HDR_OFF + 32)[0]
+    nbytes = alloc + data + nrel * 4
+    struct.pack_into(">I", adf, HDR_OFF + 28, zlib.crc32(adf[BLOB_OFF:BLOB_OFF + nbytes]) & 0xFFFFFFFF)
+
+
+def read_plan(adf):
+    """(blob offset, version, flags, [(id, flags, count)], crc ok) or None."""
+    off = struct.unpack_from(">I", adf, HDR_OFF + PLAN_PTR_OFF)[0]
+    if not off:
+        return None
+    at = BLOB_OFF + off
+    magic, ver, n, flags, _, crc = struct.unpack_from(PLAN_HDR, adf, at)
+    if magic != b"PLAN" or n > PLAN_MAX:
+        return off, ver, flags, None, False
+    body = adf[at + 16:at + 16 + n * 8]
+    entries = [struct.unpack_from(PLAN_ENTRY, body, 8 * i) for i in range(n)]
+    return off, ver, flags, entries, (zlib.crc32(body) & 0xFFFFFFFF) == crc
+
+
 def repatch(args):
     with open(args.input, "rb") as f:
         adf = bytearray(f.read())
     check_adf_basic(adf)
+    if args.plan:
+        patch_plan(adf, args.plan)
     p = unpack_params(adf[HDR_OFF + 64:HDR_OFF + 128]) or default_params()
     for item in args.param or []:
         apply_param(p, item)
@@ -553,6 +651,20 @@ def dump(path):
     print(f"relocs        {nrel} ({'ok' if bad == 0 else f'{bad} BAD'})")
     if bad:
         errors.append(f"{bad} relocs out of range")
+    plan = read_plan(adf)
+    if plan:
+        off, pver, pflags, entries, ok = plan
+        if entries is None:
+            errors.append(f"no work plan at blob offset {off:#x}")
+        else:
+            print(f"plan          at {off:#x}: version {pver}, {len(entries)} entries"
+                  f"{', exclusive' if pflags & PLAN_EXCLUSIVE else ''} ({'ok' if ok else 'BAD CRC'})")
+            for i, f, n in entries:
+                print(f"  id {i:5d}  {'skip' if f & PLAN_SKIP else f'count {n}' if n else 'size'}")
+            if not ok:
+                errors.append("work plan CRC mismatch")
+            if off + PLAN_SIZE > nbytes:
+                errors.append("work plan extends beyond the blob")
     if any(adf[BLOB_OFF + code:BLOB_OFF + alloc]):
         errors.append("code padding not zero")
     if any(adf[BLOB_OFF + nbytes:BLOB_OFF + sectors * SECTOR]):
@@ -575,6 +687,8 @@ def main():
     ap.add_argument("--alloc-flags", default=hex(MEMF_ANY_CLEAR))
     ap.add_argument("--max-seg", metavar="BYTES",
                     help="fail if either segment needs more memory than this (e.g. 400K)")
+    ap.add_argument("--plan", metavar="FILE.json|none",
+                    help="bench disk: write this work plan (CONTRACT section 15)")
     ap.add_argument("--dump", metavar="ADF")
     args = ap.parse_args()
     try:

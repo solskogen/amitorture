@@ -49,18 +49,19 @@ class BenchmarkMatrix(unittest.TestCase):
         for eid in ("bench-68000-thr", "bench-68010-thr", "bench-68030-thr"):
             self.assertIn(eid, entries)
 
-    def test_make_target_is_isolated_and_contains_no_correctness_module(self):
+    def test_bench_target_is_isolated_and_contains_no_correctness_module(self):
         make = shutil.which("make")
         if not make:
             self.skipTest("GNU make unavailable")
         with tempfile.TemporaryDirectory(dir=ROOT / "work" / "tmp") as tmp:
             result = subprocess.run([make, "-C", str(ROOT / "disk"), "--dry-run",
-                                     f"B={tmp}", "benchmarks"], check=True, capture_output=True, text=True)
-            self.assertIn(f"B={tmp}/benchmarks MODS=hostspeed BENCHMARK_ONLY=1", result.stdout)
-            self.assertIn("-DAMT_BENCHMARK_ONLY", result.stdout)
-            modules = set(re.findall(r" -c -o \S+ (modules/\S+\.c)", result.stdout))
-            self.assertEqual(modules, {"modules/hostspeed.c"})
-            self.assertIn(f"{tmp}/benchmarks/amitorture.adf", result.stdout)
+                                     f"B={tmp}", "bench"], check=True, capture_output=True, text=True)
+            self.assertIn(f"B={tmp}/bench BENCH=1", result.stdout)
+            sources = set(re.findall(r" -c -o \S+ ((?:modules|bench)/[^/\s]+\.c)", result.stdout))
+            self.assertEqual(sources, {"bench/harness.c", "bench/micro.c", "bench/kern.c", "bench/system.c"})
+            for kset in ("k000", "k020", "k020f", "k020s"):
+                self.assertIn(f"{tmp}/bench/kset/{kset}.o", result.stdout)
+            self.assertIn(f"{tmp}/amitorture-bench.adf", result.stdout)
 
     def test_benchmark_matrix_does_not_fall_back_to_the_correctness_disk_set(self):
         opts = SimpleNamespace(matrix="benchmarks", adf=None, disk_set=None)
