@@ -161,7 +161,7 @@ The layout (all u32 big-endian):
 | 44 | **host_ack**: written by the HOST, the id of the last `request` it completed (§13) |
 | 48 | ring[ring_size]: the record lines, wrapping |
 
-The host finds it by scanning chip RAM (from 0, in 16-byte steps) for the magic. It reads the ring and uses offset 28 to get the new bytes and detect overruns.
+The host finds it by scanning chip RAM (from 0, in 16-byte steps) for the magic. It reads `ring_size` from the header (never assumes it), reads the ring and uses offset 28 to get the new bytes and detect overruns.
 
 ---------------------------------------------------------------------------
 ## 8. Probe result (`disk/probe/`)
@@ -178,18 +178,7 @@ The host finds it by scanning chip RAM (from 0, in 16-byte steps) for the magic.
 
 ---------------------------------------------------------------------------
 ## 9. Repository layout
-```
-disk/boot/      bootblock.s
-disk/rt/        start.s, main.c, mod.c/mod.h (module runner), out.c (serial+mailbox+json), crc32.c, takeover.c/.s,
-                screen.c/screen.h (status screen), rt.h
-disk/probe/     probe.h, probe.c, probe_asm.s
-disk/modules/   (milestone 2+)
-disk/Makefile   builds build/payload.exe, build/bootblock.bin, build/amitorture.adf
-tools/mkadf.py  ADF builder (+ --param key=value, --dump to inspect an ADF)
-runner/         Python package `amitorture` (CLI entry: runner/amitorture/__main__.py), run as `python3 -m amitorture` from runner/
-docs/           CONTRACT.md (this), schema.md, catalogue.yaml
-```
-Toolchain: `AMIGA_TOOLCHAIN` (default `/opt/amiga/bin`): `vasmm68k_mot`, `m68k-amigaos-gcc`, `m68k-amigaos-ld`, `vlink`, `m68k-amigaos-objdump`.
+See docs/BUILDING.md §6 ("Where things are") and §1 for the toolchain.
 
 ---------------------------------------------------------------------------
 ## 10. Test modules (milestone 2+)
@@ -224,7 +213,8 @@ The API is in `disk/rt/mod.h`, which is authoritative; read it. In short:
   `fatal_cleanup`, marks the mailbox aborted, disables interrupts/task scheduling and quarantines
   in place. It never unwinds through `amt_try`, starts another module, or resumes the OS; the test
   environment must be reset. It deliberately does not emit a normal `done` record or free buffers
-  that an unquiesced DMA engine might still access.
+  that an unquiesced DMA engine might still access. If the fatal report itself traps, the outer bare
+  recovery stops the machine at SR=$2700 instead (sticky quarantine): it does not try again.
 
 ### Rules for every module
 1. **Expectations come from the architecture,** i.e. the M68000 PRM, the 68020/030/040/060 user manuals, the 6888x manual and the Amiga Hardware Reference Manual, **for the detected variant**. Never encode "what Amiberry does".
@@ -423,21 +413,14 @@ Used for things the guest can't do or observe itself: screenshots, audio capture
 | `cd32pad` | `{"port":p,"buttons":mask}`: absolute; mask bit0 blue, 1 red, 2 yellow, 3 green, 4 forward, 5 reverse, 6 play (the pad's shift order) | as above (not acked on Amiberry). A host that has a CD32 pad attached on that port (Amiberry: `joyportN=<device>`, `joyportNmode=cd32joy`, e.g. joyport1=kbd1) but cannot press its buttons may ack `buttons:0` only: the guest then checks the pad id/released state. |
 | `wait` | `{}` | host acks immediately (round-trip/latency test) |
 | `pacing` | `{}` (tag `boot`) | sent once by the runtime right after `hello`, before the first module. A host that warped the boot (Kickstart, loader, probe) switches the emulator to the disk's own pacing (Amiberry: IPC `SET_WARP`, checked with `GET_WARP`) and acks only after that; result: `warp`, `was`, `switched`. A host that loaded a disk testing the floppy hardware at turbo drive speed sets real drive speed here too (Amiberry: IPC `SET_FLOPPY_SPEED 100`, checked with `GET_FLOPPY_SPEED`), before the ack; result `floppy_speed`. A host that cannot switch refuses it (N \| $80000000). Either way the guest just continues: this request has no case. With run-parameter flag `modpace` (128) the runtime also sends it before every module, tag = the module name (`rt/mod.c` `run_module`); the host sets that module's pacing the same way (the runner's per-module policy: `runner/amitorture/pacing.py`) and acks before the module's `mod` begin record; result adds `module`. Without the flag (the default, real hardware) no per-module request is sent. |
-| `bench_longer` | `{"n":count,"reps":0,"id":plan_id}`, tag = block name | bench disk, flag `host` only (docs/BENCH.md): a sizing run of `count` reached the guest's 100 ms floor. Ack = the host's own timing of the run was too short, double the count again; refuse = long enough. No answer: the guest decides with its own clock. The runner acks below 0.2 s of host time (0.5 s for the frame and thread tiers) or when it has no host time for the run. |
-| `bench_more` | `{"n":count,"reps":r,"id":plan_id}` | after r ≥ 2 repetitions: ack = run another; refuse = enough. No answer: the guest's own rule (fastest two within 0.25%). The guest stops at 12 regardless; the runner refuses at r ≥ 12 without judging. The runner acks while its own times of the fastest two differ by more than 0.25% (1% for the frame and thread tiers). |
+| `bench_longer` | `{"n":count,"reps":0,"id":plan_id}`, tag = block name | bench disk, flag `host` only (docs/BENCH.md): a sizing run of `count` reached the guest's 100 ms floor. Ack = the host's own timing of the run was too short, double the count again; refuse = long enough. No answer: the guest decides with its own clock. The runner's limits: docs/BENCH.md "Answering the guest". |
+| `bench_more` | `{"n":count,"reps":r,"id":plan_id}` | after r ≥ 2 repetitions: ack = run another; refuse = enough. No answer: the guest's own rule (fastest two within 0.25%). The guest stops at 12 regardless. |
 
 Unknown `what` values are never acknowledged.
 
-Runner notes (runner/amitorture/hostreq.py, docs/RUNNER.md "Host request channel"):
-- `mouse` reaches the guest only on a port whose config has `joyportN=mouse`: SEND_MOUSE moves the host mouse device 0.
-- `joy` is never acked by Amiberry runs, because its IPC has no joystick injection.
-- `pcmcia` (`{"op":"eject"|"insert"}`, used by misc_hw) is not served. Amiberry's IPC has no PCMCIA eject/insert command: gayle.cpp's pcmcia_eject/pcmcia_reinsert are reached only from the GUI's hardfile change. It stays an unknown `what`, never acked.
-- `cd32pad` with `{"buttons":0}` is acked when the port is a `cd32joy` port (CD32 entries: port 1), because nothing can press a button there. Any other button mask is never acked.
-- `audio_mark` is acked only when the launch captures audio (the default `--audio auto` captures every disk that contains an `audio_mark` request).
-- **Expectations in the marks.** The start mark may describe the tone with `expect_hz`, or `freq_mhz`, or `clock` + `period` + `samples`, and with `side`: `left`/`right` (the tone on that output alone), or `both` (a mono source: on both outputs, the quieter at least half the louder). The stop mark may repeat or override any of these. The host then reports `freq_ok` / `side_ok` in its analysis.
+How the runner (Amiberry) serves each request, and which it cannot: docs/RUNNER.md "Host request channel".
 
-The mailbox ring size is defined by `MBOX_RING_SIZE` (`disk/rt/rt.h`, section 7 above).
-The host must read `ring_size` from the header, never assume it.
+- **Expectations in the marks.** The start mark may describe the tone with `expect_hz`, or `freq_mhz`, or `clock` + `period` + `samples`, and with `side`: `left`/`right` (the tone on that output alone), or `both` (a mono source: on both outputs, the quieter at least half the louder). The stop mark may repeat or override any of these. The host then reports `freq_ok` / `side_ok` in its analysis.
 
 ---------------------------------------------------------------------------
 ## 14. CLI start and CD boot (CD32, CDTV)

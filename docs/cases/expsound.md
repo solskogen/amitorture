@@ -51,8 +51,7 @@ watchdog aborts, before restoring CIA-B masks or propagating the abort to the ru
 cleanup is a failure, never a successful restore. Cleanup readiness/quiescence failures or
 exceptions call `amt_abort_fatal`: permanent in-place halt, with no OS resumption, subsequent
 module, buffer release or normal completion. Nested abort catchers cannot swallow that halt.
-If fatal reporting itself traps, sticky quarantine stops outer bare recovery at SR=$2700 before
-restoration or further module execution.
+(Sticky quarantine if fatal reporting itself traps: CONTRACT §10.)
 CIA-B (also on INT6) uses `cia_hw.h`; unrelated
 shared-line activity makes the IRQ-dependent verdict untestable rather than a card failure.
 Every interrupt hook has a 20000-entry storm guard. Board reset/quiescence still relies on the
@@ -136,4 +135,4 @@ it), the uaesnd capture registers ($00C0-$00DC, $0900-$090C; they need a host ca
 recording on the codec boards (Amiberry takes it from a host capture device).
 
 Native/source-model regressions (no emulator):
-`cd runner && TMPDIR=/home/solskogen/source/amitorture/work/tmp PYTHONDONTWRITEBYTECODE=1 python3 -B -m unittest -v tests.test_guest_board_claim tests.test_guest_expansion tests.test_guest_expansion_fatal`.
+`cd runner && TMPDIR=../work/tmp PYTHONDONTWRITEBYTECODE=1 python3 -B -m unittest -v tests.test_guest_board_claim tests.test_guest_expansion tests.test_guest_expansion_fatal`.

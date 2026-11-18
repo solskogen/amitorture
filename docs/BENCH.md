@@ -277,13 +277,9 @@ when any block is slower.
 ### Threaded CPU checks
 
 A threaded entry is compared with its unthreaded twin in the same run (same binary, parameters
-and options except `cpu_threaded`). These give `thread_speed` items (docs/schema.md §5.6a) in the
-report verdict:
-- a frame or thread block falls behind real time where the twin keeps up;
-- `stop` or `stop_timer` costs much more host CPU than the twin (the idle CPU thread spins);
-- `flood_recovery`: the CPU thread runs less than 60% of the quiet work after a flood;
-- the CPU goes back to its thread and floods again at once, repeatedly (`refloods`);
-- with one usable host CPU, the emulator still runs the CPU on its own thread.
+and options except `cpu_threaded`) on the frame and thread blocks: falling behind real time, a
+spinning idle CPU thread, poor flood recovery, repeated refloods, and a CPU thread with one host
+CPU each give a `thread_speed` item in the report verdict. The rules and limits: docs/schema.md §5.6a.
 
 A bench block whose work comes out wrong is a `case_fail` item (`mod` `bench`).
 

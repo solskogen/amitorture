@@ -11,15 +11,9 @@ Its purpose is to find bugs and regressions in Amiga emulators (Amiberry first; 
 4. `disk/probe/probe.h` (+ README.md): what you know about the machine (`amt_probe_result`, `AMT_CPU()` ids `AMT_CPU_68000..AMT_CPU_68060`, `AMT_FPU()`, `AMT_MMU()`, `.pal`, chipset fields).
 
 ## Hard rules
-- **Correct by the manuals,** for the detected CPU/FPU/chipset variant: the M68000 Family Programmer's Reference Manual; the MC68020/030/040/060 user manuals; the MC68881/882 manual; the Amiga Hardware Reference Manual.
-  - Never write a test to match what an emulator does.
+- **The rules for every module in CONTRACT §10 apply** (expectations from the manuals for the detected variant, determinism, the JIT runs the same tests with `amt_hot_checked()`/`amt_hot()`, real-hardware safety, `AMT_MF_OWNS_DISPLAY` and the status screen, stable snake_case case ids). In addition:
   - If Amiberry fails a test you believe is correct, keep the test. Re-check your reasoning against the manual and, if you can, find the responsible code in Amiberry's source tree (`src/`, read-only), then report it as a FINDING in your final report: case id, configs, expected vs got, manual reference, suspected Amiberry code.
-  - If the manual leaves a result undefined, accept all allowed results and say so.
-- **Deterministic:** the same seed and the same variant must give byte-identical records, because JIT on/off and different emulators are compared case by case. Timing values only go in `perf` records or clearly separate `ctx` fields.
-- **The JIT runs exactly the same tests.** Never detect or branch on a JIT. Use `amt_hot()` for computational cases where practical, so that interpreted and compiled executions are compared inside one run.
-- **Safe on real hardware:** touch only the pools/your BSS/your stack, vectors via `amt_vec_set`, and the hardware you test; restore what the runtime doesn't (CIA registers, blitter, audio, copper). No writes to unmapped space unless `amt_par.flags & AMT_F_UNSAFE`. **Never** touch floppy/HD data except signed test-owned media (devio only).
-- **DMA state and the status screen:** a bare module starts with DMAEN|BPLEN|COPEN on, because the runtime's copper list shows the status screen (`disk/rt/screen.c`). If your module tests the display, copper, blitter or Paula DMA/interrupts, measures DMA or beam timing, or needs DMACON or the copper to itself, declare it with `AMT_MF_OWNS_DISPLAY` (`disk/rt/mod.h`): it then starts with all DMA off. Otherwise leave DMACON's display bits, COP1LC and the display registers alone. With the `noscreen` run flag every bare module starts with all DMA off. Details: BUILDING.md section 5.
-- **Stable snake_case case ids:** they are baseline keys. Fewer inputs in `AMT_QUICK()` mode, but the same ids.
+  - **Never** touch floppy/HD data except signed test-owned media (devio only).
 - **Toolchain:** `/opt/amiga/bin` (vasmm68k_mot Motorola syntax; m68k-amigaos-gcc 16 freestanding, `-m68000` by default; CPU-specific files use the `_020/_030/_040/_060/_fpu` suffix, or vasm `machine`/`mc680x0` directives inside the file). There's no libc; `rt/mem.c` has memcpy/memset; `rt/divmod.s` has the division and multiply helpers. Prefer asm for anything where the exact instruction matters (it nearly always does in CPU tests): gcc picks instructions itself.
 - **Write only your own files:**
   - `disk/modules/<yourmodule>*`
@@ -51,7 +45,7 @@ Its purpose is to find bugs and regressions in Amiga emulators (Amiberry first; 
 ## Host-dependent checks
 Anything the CPU can't observe itself (screen output, audio output, input events) goes through the **host request channel**: `amt_request()` in rt/mod.h, protocol in CONTRACT §13. The runner implements the host side (being added in parallel by the runner agent). If a request isn't acknowledged, report the dependent case `untestable`, never `fail`. smoke_disk.py doesn't answer requests: test those paths with the runner (`cd runner && python3 -m amitorture run --config ... --disk-set ...`) once it supports them. Until then, check that your module degrades to `untestable` cleanly.
 
-Your module belongs to exactly one disk group (see the module id table in CONTRACT §10; the groups are in disk/Makefile). Build only your modules (`make B=build-<mod> MODS="rt <mod>"`), and check the in-memory size with `python3 tools/mkadf.py --dump`: the whole group's disk must stay below ~300 KB.
+Your module belongs to exactly one disk group (see the module id table in CONTRACT §10; the groups are in disk/Makefile). Build only your modules (`make B=build-<mod> MODS="rt <mod>"`), and check the in-memory size with `python3 tools/mkadf.py --dump`: each of the group's two segments (code, data) must stay below ~400 KB (CONTRACT §12).
 
 ## Final report (concise)
 - the files you wrote

@@ -34,6 +34,7 @@ check in every report).
     `INTERRUPTED (n of m entries finished): `, or `INTERRUPTED (all entries finished; parity, narrowing and repro
     packs not done): ` when it came during the analysis. `environment.json` and `summary.json` record it as
     `interrupted` (`during`, `finished`, `selected`, `not_run`). An entry whose disks only partly ran is left out.
+    `report DIR` rebuilds parity and the repro packs of a run stopped during the analysis; narrowing needs a new run.
   - `baseline` leaves an existing baseline untouched (see baseline). The other commands just stop.
   - A second Ctrl+C SIGKILLs the emulators and quits at once (`os._exit(130)`), leaving temp files under
     `WORKDIR/tmp`.
@@ -252,7 +253,7 @@ The matrices (runner/amitorture/matrix.py):
 
 | name | size | contents |
 |---|---|---|
-| bench | 15 | the bench disk (docs/BENCH.md) on 68000, 68000 CE, 68010, 68020 (+JIT, threaded, JIT+threaded, threaded on one host CPU), 68030, 68EC030 (+JIT), 68040 and 68060 without MMU (+JIT); runs one launch at a time; cannot be mixed with accuracy entries |
+| bench | 15 | the bench disk; entries and rules in docs/BENCH.md "Running it" |
 | smoke | 16 | A500 68000 CE, A600 ECS NTSC compat, A1200 68EC020 (+JIT), A3000 68030+68882 MMU compat, A4000 68040 (+JIT), A4000 68060 (+JIT), AROS AGA 68020 |
 | standard | 145 | every model preset (A1000, A500, A500+, A600, A2000, A3000, A4000, A4000T, A1200, CD32 and CDTV booting from CD, AROS ECS/AGA), PAL+NTSC samples, every CPU variant, compat/CE on 020-060, JIT twins of every JIT-capable entry, every JIT sub-option on the A4000 68040, threaded CPU, softfloat; MMU configurations (68030/68040/68060 with their MMU in compat/CE, the EC MMU modes `mmu_model=68ec030/68ec040/68ec060`; no JIT twin: the JIT does not support the MMU); one entry per expansion board (below) |
 | full | 583 | every CPU variant (68000, 68010, 68EC020, 68020, 68EC030 (mmu 0 and mmu_model=68ec030), 68030, 68EC040, 68LC040, 68040, 68040 without MMU emulation, 68EC060, 68LC060, 68060, 68060 without MMU emulation) x every FPU it can have (none/68881/68882/internal) x fast/compatible/cycle-exact; 68060 PCR revisions; CE with cpu_multiplier=0; every model x PAL/NTSC; OCS/ECS-Agnus/ECS-Denise/ECS; and for every entry that allows it: JIT default + cachesize 128/16384 + comp_trust{byte,word,long,naddr}=indirect + compfpu off + comp_constjump off + comp_flushmode hard + comp_nf off + comp_catchfault off, threaded CPU, JIT+threaded, softfloat, JIT+softfloat; the MMU configurations and every board entry of standard, plus the full-only boards |
@@ -317,7 +318,7 @@ amitorture run --amiberry BIN --kickstarts DIR [--matrix smoke] [--config GLOB .
                [--no-disk] [--selftest]
 ```
 - `--end-action`: what the disk does after its last module (default `halt`; the runner stops the emulator itself).
-- `--show` (also `baseline`, `check`, `repro`): show the emulator windows on your desktop (`run`, `baseline`, `check`, `repro`, and `tests/smoke_disk.py`); one window per running emulator, so `--jobs 4` gives four. Your own display settings are used as they are (your `SDL_*` video variables, `DISPLAY`, `WAYLAND_DISPLAY`); audio stays the runner's. HOME and `XDG_RUNTIME_DIR` stay isolated (Amiberry names its IPC socket `$XDG_RUNTIME_DIR/amiberry.sock`, which a test emulator must never take from your own Amiberry), so a relative `WAYLAND_DISPLAY` is passed as the full path of the same socket and an unset `XAUTHORITY` as your `~/.Xauthority`. Run it from a terminal on the desktop. Timing values may differ from a headless run. Implementation: `emulator.display_env`; without it every emulator runs with SDL's offscreen driver.
+- `--show` (`run`, `baseline`, `check`, `repro` and `tests/smoke_disk.py`): show the emulator windows on your desktop; one window per running emulator, so `--jobs 4` gives four. Your own display settings are used as they are (your `SDL_*` video variables, `DISPLAY`, `WAYLAND_DISPLAY`); audio stays the runner's. HOME and `XDG_RUNTIME_DIR` stay isolated (Amiberry names its IPC socket `$XDG_RUNTIME_DIR/amiberry.sock`, which a test emulator must never take from your own Amiberry), so a relative `WAYLAND_DISPLAY` is passed as the full path of the same socket and an unset `XAUTHORITY` as your `~/.Xauthority`. Run it from a terminal on the desktop. Timing values may differ from a headless run. Implementation: `emulator.display_env`; without it every emulator runs with SDL's offscreen driver.
 - `--no-disk`: no disk in DF0; checks only the launch, IPC, serial and the mailbox scan.
 - `--selftest`: `--no-disk` plus a synthetic mailbox written over IPC, to check the scan and ring reading.
 
@@ -413,10 +414,7 @@ amitorture run --amiberry BIN --kickstarts DIR [--matrix smoke] [--config GLOB .
    `cycle_exact=true`, every pair that differs is an `hrm_timing_mismatch` item. It is low severity, so it appears
    under Notes and not in the verdict. Timing fields are never fingerprinted, so it is not a baseline regression
    either. Other core modes are legitimately not cycle-exact and are not compared.
-5a. **Threaded CPU twins.** On the bench matrix, each entry with the CPU thread really running is compared
-   with its unthreaded twin (same binary, parameters and options except `cpu_threaded`) on the bench disk's
-   frame and thread blocks: a `thread_speed` item (schema.md 5.6a, docs/BENCH.md "Threaded CPU checks"). It is
-   normal severity, so it is in the verdict: the comparison is within one run on one host.
+5a. **Threaded CPU twins** (bench matrix only): `thread_speed` items, schema.md §5.6a.
 6. **Problems.** Failures become one problem only when all of these match:
    - the module;
    - the narrowing signature (the flipping settings plus the determinism);
@@ -532,6 +530,7 @@ a duplicate) and serves them in order (`hostreq.py`):
 | `joy` | none: Amiberry's IPC has no joystick injection | not acked |
 | `cd32pad` | no injection either; `{"buttons":0}` is acked when `joyport<port>mode=cd32joy` (default port 1; CD32 entries have `joyport1=kbd1`, `joyport1mode=cd32joy`, and no host key is ever pressed, so every button reads released) | released state, or not acked |
 | `wait` | none | acked at once |
+| `pcmcia` | none: Amiberry's IPC has no PCMCIA eject/insert (gayle.cpp reaches it only from the GUI) | not acked |
 | `pacing` | if the boot was warped: `SET_WARP <disk pacing>`, checked with `GET_WARP` (boot warp, "Automatic warp" above) | `warp`, `was`, `switched`; refused (id \| $80000000) if the switch fails |
 
 - **The ack.** After acting, the runner writes the id to `host_ack` (mailbox+44) with `WRITE_MEM <addr> 4 <id>`
@@ -617,33 +616,18 @@ both ran; exit 1 if there are any.
 amitorture compare --amiberry OLD --amiberry NEW [--label old --label new] [--config 'bench-68020*'] \
                    [--repeat 3] [--threshold 2] [--pin 2-5] [--set OPTION=VALUE] [--adf PATH]
 ```
-A/B performance check of two binaries on the bench disk (default `--matrix bench`). It runs `run --jobs 1`
-once per binary per repeat, alternating the order (A B, B A, ...) so drift and thermal effects hit both, and
-with `--pin` every emulator runs on the given host CPUs. Every launch after the first gets `--bench-baseline`
-of the first, so all do the same work. Per entry and block it compares the medians of the repeats on the
-block's value, lower is better (docs/BENCH.md):
-- **slower** / **faster**: the median moved by more than `--threshold` percent (default 1) and the two sets of
-  repeats do not overlap; **borderline**: beyond the threshold but overlapping (repeat it); **same**: within it;
-  **incomplete**: a side has no value.
-
-Output: `WORKDIR/compare/<time>/COMPARE.md` and `compare.json` (binaries with their SHA-256, the host and
-governor, every run's results directory). Exit status 1 when any block is slower, else 0. Compare like with
-like: same host, load and governor; a `powersave` governor makes the threaded CPU's numbers noisier.
+A/B performance check of two binaries on the bench disk (default `--matrix bench`): `--repeat` runs of
+`run --jobs 1` per binary, alternating the order, all doing the first launch's work. Verdicts, pinning and output
+(`WORKDIR/compare/<time>/COMPARE.md`, `compare.json`): docs/BENCH.md "Comparing two runs". Exit status 1 when any
+block is slower, else 0.
 
 ### bench diff
 ```
 amitorture bench diff A_RESULTS B_RESULTS [-o FILE]
 ```
-Compares the bench results of two finished runs, block by block (docs/BENCH.md "Comparing two runs").
-`run --bench-baseline A_RESULTS` does the same at the end of a run, after giving the run A's work counts.
-Exit status 1 on any slower, failed or missing block (noisy ones are listed only).
-
-A bench `run` pins every emulator to the same host CPUs, by default the 4 fastest-boosting physical
-cores (`--pin auto`; `--pin 2-5` to choose, `--pin none` to not pin; docs/BENCH.md "Host CPUs").
-It launches each bench entry twice (`--launches N`), keeps each block's fastest launch, and the
-diff takes the launch-to-launch spread as the noise (docs/BENCH.md "Launches"). With
-`--bench-baseline`, an entry with a slower block is launched up to twice more before the diff. `compare` runs one
-launch per repeat; its repeats do that job.
+Compares the bench results of two finished runs, block by block. `run --bench-baseline A_RESULTS` does the
+same at the end of a run. Verdicts, exit status, host CPU pinning (`--pin`), launches (`--launches`) and rechecks:
+docs/BENCH.md "Running it" and "Comparing two runs".
 
 ### bench plan
 ```
@@ -726,8 +710,7 @@ Builds the same report from serial captures or `mailbox.jsonl` made elsewhere (r
 4. Notes (low severity: probe mismatches with low confidence, configs not applied, softfloat differences).
 5. Environment (binary, source, host, disk, params, matrix, isolation, ROMs), transports per entry, files.
 
-Machine-readable files next to it: `summary.json`, `failures.jsonl`, `narrowing.json`, `environment.json`,
-`configs/`, `raw/<entry>/`, `repro/`. Schema: docs/schema.md.
+The machine-readable files next to it: docs/schema.md §3.
 
 ## Code layout
 

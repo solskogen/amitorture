@@ -36,8 +36,7 @@ are disabled and its saved MAC restored. Only then are saved CIA masks restored.
 failure is reported, not called restoration. No pre-existing driver ownership is resumed.
 Unconfirmed LANCE STOP or an exception during cleanup calls `amt_abort_fatal`: permanent in-place
 halt, not an ordinary caught abort, OS return, buffer release or continuation with another module.
-If fatal reporting itself traps, sticky quarantine stops outer bare recovery at SR=$2700 before
-restoration or policy hooks.
+(Sticky quarantine if fatal reporting itself traps: CONTRACT §10.)
 
 CSR3 is always BSWP=1 (68000 byte order), ACON=BCON=0. All A2065 loopback cases use MODE LOOP|INTL
 (internal loopback: nothing reaches the cable). Frames are 24 bytes (+4 FCS), inside the Am7990
@@ -118,5 +117,4 @@ assumed absent because one request was sent.
 
 `no_board`: skip when no known board is present.
 
-Native/source-model regressions (no emulator):
-`cd runner && TMPDIR=/home/solskogen/source/amitorture/work/tmp PYTHONDONTWRITEBYTECODE=1 python3 -B -m unittest -v tests.test_guest_board_claim tests.test_guest_expansion tests.test_guest_expansion_fatal`.
+Native/source-model regressions (no emulator): the command in docs/cases/expsound.md covers this module too.

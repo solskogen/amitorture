@@ -34,49 +34,25 @@ python3 -m amitorture run --amiberry ./amiberry --kickstarts ~/Amiberry/ROMs --m
 ```
 `smoke` covers 16 entries (68000 to 68060, OCS/ECS/AGA, PAL/NTSC, AROS) with JIT twins and strict instruction-policy entries, each running every disk of the set. It takes about 25 minutes, plus up to the narrowing budget if something fails (see 3.3).
 
-Exit code: 0 means no problems, 1 means problems found (read the report), 2 is a host-side error, 3 means the isolation check failed, 130 means the run was stopped with Ctrl+C (see "Stopping a run" below).
+Exit code 0 means no problems, 1 means problems found (read the report); the others are in [RUNNER.md "Ground rules"](RUNNER.md#ground-rules).
 
-Add `--warp auto` for selective acceleration: CPU/FPU/MMU set disks run in warp;
-all other disks and any audio-captured launch retain normal pacing. Coverage and
-assertions are unchanged. The report lists each disk's effective mode and runtime
-verification. Baselines record this policy and checks inherit it. `--warp off`
-forces normal pacing. Do not use `--warp on` or `--set warp=true` for equivalent
-correctness results: continuous warp changes audio, keyboard and RTC behaviour.
-The existing Paula/timing observation gates can vary even between normal-paced
-runs; automatic warp has not yet demonstrated identical outcomes for every case.
-Do not dismiss such differences merely because the warp policy changed.
+Add `--warp auto` to run the CPU/FPU/MMU disks warped; coverage and assertions are unchanged. Details and caveats: [RUNNER.md "Automatic warp"](RUNNER.md#automatic-warp).
 
 ### Thorough runs
-| Matrix | Entries | Time (Pi 5, `--jobs 3`, without narrowing) | What it adds |
-|---|---|---|---|
-| `smoke` | 16 | 22 min | one machine per CPU class and chipset |
-| `standard` | 145 (144 planned) | 78 min (old-style, `--plan off --module-warp off`: 2 h 22 min) | every CPU/FPU variant, every RTG, sound and network board, Gayle/PCMCIA, RTC boards, SCSI controllers, MMU configs, CD32, CDTV |
-| `full` | 583 (521 planned) | 4 h 38 min (old-style about 13 h, estimated) | every JIT sub-option, threaded and softfloat twins |
+| Matrix | Entries | What it adds |
+|---|---|---|
+| `smoke` | 16 | one machine per CPU class and chipset |
+| `standard` | 145 | every CPU/FPU variant, every RTG, sound and network board, Gayle/PCMCIA, RTC boards, SCSI controllers, MMU configs, CD32, CDTV |
+| `full` | 583 | every JIT sub-option, threaded and softfloat twins |
 
-The time is emulator time divided by the emulator slots: `amitorture matrix --matrix full --plan` prints the
-estimate (14.3 h of emulator time for `full`; measured 13.9 h with an earlier matrix), so a host with 14 slots (`nproc` 15 or more) runs
-`full` in about an hour. Narrowing adds up to its budget (`--narrow-budget`, 2 h by default) when something fails.
+`python3 -m amitorture matrix --matrix full --plan` prints a plan and its estimated host time; measured times are in [RUNNER.md "Plans"](RUNNER.md#plans-every-check-once---plan-on-the-default). The time scales with the emulator slots, and narrowing adds up to its budget (`--narrow-budget`, 2 h by default) when something fails.
 
 `python3 -m amitorture matrix --matrix standard` lists the entries.
 
 ### Benchmarks (speed regressions)
 
-Build `make -C disk bench` from the repository root, then from `runner/`:
-
-```
-python3 -m amitorture run --amiberry ./amiberry-old --kickstarts ~/Amiberry/ROMs --matrix bench
-python3 -m amitorture run --amiberry ./amiberry-new --kickstarts ~/Amiberry/ROMs --matrix bench \
-    --bench-baseline results/<the first run>
-```
-
-The bench disk is separate from the accuracy disks and has no correctness tests apart from checking that its
-work came out right. The second run does exactly the same work as the first (its counts), then writes
-BENCH-DIFF.md with a same/borderline/slower/faster/noisy verdict per block, and exits with 1 if anything got
-slower. `amitorture bench diff A B` compares two finished runs, and `amitorture compare` runs two binaries
-alternately with repeats. Use the same host, load and CPU governor for both runs.
-
-The disk also runs on its own (real Amiga, FPGA, or an emulator without the runner), timed by the Amiga's own
-clock; its results go to the serial port. See [BENCH.md](BENCH.md).
+The bench disk is separate from the accuracy disks: build it with `make -C disk bench`, run it with `--matrix bench`,
+and compare two binaries with `--bench-baseline`, `bench diff` or `compare`. Everything about it is in [BENCH.md](BENCH.md).
 
 ### "Did my change break or fix anything?" (regression check)
 1. **Once, with a build you trust,** record a baseline: 3 runs, so flaky cases are recognised.
@@ -88,20 +64,7 @@ clock; its results go to the serial port. See [BENCH.md](BENCH.md).
    ```
    python3 -m amitorture check --amiberry ./amiberry-new --kickstarts ~/Amiberry/ROMs --baseline good --jobs 4
    ```
-   The result is `work/results/check-<time>/REPORT.md`:
-
-   | Kind | Meaning |
-   |---|---|
-   | `regression` | a case that was stable in the baseline now gives a different result. Counted. |
-   | `fixed` | it failed in the baseline and passes now |
-   | `became_unstable` | it was stable, now it differs between runs. Counted. |
-   | `fail_detail_changed` | it still fails the same way and only the context changed (addresses after a rebuild). Informational. |
-   | `perf_out_of_band` / `timing_out_of_band` | speed moved; informational when the entry runs at `cpu_speed=max` |
-   | `unstable_excluded` | it was already flaky in the baseline, so it isn't compared |
-   | `new` / `missing` | the case ran only in the check / only in the baseline. `missing` is counted. |
-   | `entry_status` | the machine as a whole ended differently (crash, hang, skip …) |
-
-   Every finding lists the config options that differ from the baseline, so a deliberate `--set` shows up pinned to the cases it changed.
+   The result is `work/results/check-<time>/REPORT.md`. Each finding has a kind (`regression`, `fixed`, `became_unstable`, …; [RUNNER.md "check"](RUNNER.md#check)) and lists the config options that differ from the baseline, so a deliberate `--set` shows up pinned to the cases it changed.
 3. **Bisecting without building:** pass several binaries, oldest first:
    ```
    python3 -m amitorture check --amiberry ./a ./b ./c --baseline good
@@ -141,13 +104,7 @@ Run it from the repository root. It boots the core disk by default, prints every
 - Ctrl+C stops the emulator and exits with code 130.
 
 ### Stopping a run (Ctrl+C)
-Press Ctrl+C once (SIGTERM does the same). The runner starts no new emulator and stops the running ones: SIGTERM first, SIGKILL for any still alive after 5 s. Then it exits with code 130.
-- **`run`** writes a partial report of the entries that finished. The verdict starts with `INTERRUPTED (n of m entries finished)`, and REPORT.md lists the entries that did not run. An entry whose disks only partly ran is left out. Parity and narrowing are not done.
-  - Stopped after every entry had run, i.e. during the analysis (narrowing): the verdict starts with `INTERRUPTED (all entries finished; parity, narrowing and repro packs not done)`. `python3 -m amitorture report DIR` rebuilds parity and the repro packs from it. Narrowing needs a new run.
-- **`baseline`** writes nothing. A new baseline is recorded into `runs.new/` first and replaces an existing baseline of the same name only once it is complete, so the old one stays exactly as it was.
-- **`check`** and the other commands stop without a report.
-
-A second Ctrl+C kills the emulators and quits at once. Temp files under `WORKDIR/tmp` are left behind then.
+Press Ctrl+C once (or send SIGTERM): the runner stops the emulators and exits with code 130. `run` writes a partial report of the finished entries (verdict `INTERRUPTED …`; `python3 -m amitorture report DIR` rebuilds parity and the repro packs if the analysis was cut short), `baseline` leaves an existing baseline untouched, and the other commands stop without a report. A second Ctrl+C quits at once. Details: [RUNNER.md "Ground rules"](RUNNER.md#ground-rules).
 
 ### The status screen
 Every disk shows what it is doing on the Amiga's own display: the emulator window, or a real machine's monitor. The runner's emulators run headless, so there you see it only with `tests/smoke_disk.py --screenshots` or a Amiberry window of your own (open the ADF as DF0).
@@ -187,17 +144,7 @@ Start with `work/results/<run-id>/REPORT.md`. It is written to be read by an AI 
 
 ### 3.1 The top
 - **Coverage:** modules × entries with pass/fail/skip/untestable/xfail/engine_mismatch counts, then the capability catalogue ([catalogue.yaml](catalogue.yaml)) with covered/partial/not_covered per run. Anything `not_covered` or only `untestable` was not tested in this run.
-- **Entries:** one row per machine, with a status (worst over its disks). The statuses:
-
-  | Status | Meaning |
-  |---|---|
-  | `pass` | done, no failures |
-  | `fail` | at least one case failed (very common: most machines hit a known Amiberry bug) |
-  | `crash`, `hang`, `timeout` | the emulator crashed, stopped making progress, or ran too long |
-  | `incomplete` | records were lost, or a module aborted |
-  | `skip` | a ROM is missing |
-  | `error` | host-side trouble |
-
+- **Entries:** one row per machine, with a status (worst over its disks; the statuses are in [schema.md §3.2](schema.md#32-summaryjson)). `fail` is very common: most machines hit a known Amiberry bug.
 - **"As designed":** `no` means Amiberry changed or ignored an option of that config (see "config adjusted by the emulator"). Such an entry is not counted as run as intended.
 - **Engine parity:** each JIT, threaded or softfloat twin against its reference entry. The same tests must give the same records; differences are `engine_mismatch`.
 
@@ -231,19 +178,10 @@ Failures that share a cause are grouped into one problem: same module, same narr
 - **Settings that change what the module's cases may expect:** the resolved emulator options that matter for that module, for each failing entry.
 - **Repro pack:** `repro/<problem>/`. See 4.
 
-**Narrowing.** When a case fails, the runner reruns only that case on neighbouring configs: JIT off/on and each `comp_*` option, core mode, `mmu_model=0`, 24-bit addressing, `gfx_resolution`, FPU native/softfloat, threaded off, and so on. It records which setting flips the result. The default budget is 2 hours (`--narrow-budget S`, or `--no-narrow`). "Budget exhausted" means some variants were not tried; the report lists them.
-
-**Speed.** The accuracy disks no longer measure host speed; the bench disk does (see [BENCH.md](BENCH.md)). Baselines that still hold the retired `host.speed_*` cases report them as `retired`, not as regressions.
+**Narrowing.** When a case fails, the runner reruns only that case on neighbouring configs and records which setting flips the result (`--narrow-budget S`, default 2 h, or `--no-narrow`; [RUNNER.md "run"](RUNNER.md#run) step 4). "Budget exhausted" means some variants were not tried; the report lists them.
 
 ### 3.4 Machine-readable copies
-| File | Contents |
-|---|---|
-| `summary.json` | the whole report |
-| `failures.jsonl` | one line per failure |
-| `narrowing.json` | every narrowing launch |
-| `environment.json` | binary sha256 and version, ROM ids, host |
-| `configs/` | the exact Amiberry configs and the emulator's resolved view of them |
-| `raw/<entry>/<disk>/` | every record (`records.jsonl`), the serial capture, mailbox reads, `amiberry.log` |
+`summary.json`, `failures.jsonl`, `narrowing.json`, `environment.json`, `configs/` and `raw/<entry>/<disk>/` hold the same data for programs: [schema.md §3](schema.md#3-result-files-what-the-runner-writes).
 
 `python3 -m amitorture report DIR` rebuilds REPORT.md from that data without the emulator. That's useful after editing `xfail.json`; add `--xfail FILE` to use another registry.
 
@@ -291,7 +229,7 @@ cat /dev/ttyUSB0 > capture.txt
 ```
 - One long capture across all three disks works: each boot is told apart by its `hello` record, and the lines between them (noise around a reset) are ignored.
 - Separate files work too, one per disk, with any names.
-- **Baud rate accuracy:** Paula's rate is the colour clock divided by an integer, so 115200 comes out as 114416 baud on PAL (0.7% slow) and 115469 on NTSC (0.2% fast), well within what a PC UART accepts. If the capture is still garbled, or `import` finds bad CRCs or no records (a long or poor cable), use a lower rate such as 38400.
+- **Baud rate accuracy:** 115200 comes out within 0.7% (CONTRACT §6), well within what a PC UART accepts. If the capture is still garbled, or `import` finds bad CRCs or no records (a long or poor cable), use a lower rate such as 38400.
 
 ### Changing the baud rate or other parameters
 The run parameters are in each disk's header (CONTRACT §4). `tools/mkadf.py` writes them into a copy (from the repository root):
@@ -304,7 +242,7 @@ mkdir -p hw
 for f in disk/build/set/*.adf; do python3 tools/mkadf.py --in "$f" -o "hw/$(basename "$f")" --param baud=38400; done
 ```
 - Always give `-o`: without it mkadf rewrites the input file. It doesn't create the output directory.
-- Keys: `mode=full|quick`, `seed=N`, `end_action=halt|reboot|return`, `baud=N`, `modules=all|MASK`, and `flags=` with `unsafe`, `noserial`, `nombox`, `net`, `noscreen` (comma-separated, or a number). `flags=` replaces all flags at once.
+- Keys: `mode`, `seed`, `end_action`, `baud`, `modules`, `floppy` and `flags` (comma-separated names or a number; it replaces all flags at once). Values and flag names: CONTRACT §4.
 - Parameters not given keep the value already in the disk. `python3 tools/mkadf.py --dump FILE` shows them.
 
 ### Making the report
@@ -313,16 +251,14 @@ From `runner/`:
 python3 -m amitorture import ~/capture.txt --out ../work/results/hw-a1200
 python3 -m amitorture import ~/core.txt ~/cpu.txt ~/fpu.txt … --label hw-a1200     # -> work/results/hw-a1200
 ```
-- **Inputs:** raw serial captures, or `mailbox.jsonl` files written by `run`. All files must come from one machine.
-- **Disks:** each boot is matched to its disk by the build id in its `hello` record (it ends with `n/N group`), so the file names and their order don't matter. A serial capture and a mailbox dump of the same boot are merged as two transports of one disk run. Boot each disk once: a disk booted twice shows up as two runs (`core`, `core#2`).
-- **Status:** the report has one entry, `imported`. Each disk gets its own status and the entry gets the worst. A disk without a `done` record is reported as "no done record: the capture stopped, or the machine hung, before this disk finished". The probe results of the disks are compared (free memory ignored): a difference, i.e. the disks did not all see the same machine, is reported as `probe_inconsistent`.
-- **The bench disk:** a capture of `amitorture-bench.adf` gives bench results timed by the Amiga's own clock; `bench diff` compares two of them, and `bench plan` freezes a run's counts for the next (docs/BENCH.md, "Real hardware and FPGA cores").
-- **What you get:** the same REPORT.md, `summary.json` and `failures.jsonl`, with problems grouped, `xfail.json` applied and the docs/cases lines. There is no narrowing, no repro packs, no engine parity, and no code pointers or emulator log, because no emulator ran. The exit code is 0 for PASS, 1 otherwise.
+- Inputs are raw serial captures or `mailbox.jsonl` files, all from one machine. File names and order don't matter; boot each disk once (a disk booted twice shows up as `core` and `core#2`).
+- You get the same REPORT.md, `summary.json` and `failures.jsonl`, with one entry, `imported`, but no narrowing, repro packs, engine parity, code pointers or emulator log. How boots are matched and combined: [RUNNER.md "import"](RUNNER.md#import).
+- A capture of `amitorture-bench.adf` gives bench results timed by the Amiga's own clock (BENCH.md, "Real hardware and FPGA cores").
 
 ### What the disks do to the machine
 - **Memory and hardware:** a module touches only its pools, its own stack and BSS, the vector table (through `amt_vec_set`) and the hardware it tests. No writes to unmapped addresses unless the run has the `unsafe` flag (CONTRACT §10, rule 4). After every module the runtime resets the interrupts, DMA and vectors. Default halt resumes OS execution for the screen/mailbox, but CIA timer-latch restoration is only best-effort: counters cannot reveal the original reload values. Use halt/reboot only in a disposable emulator or a machine intended for reboot, not on a working desktop. `end_action=return` therefore runs OS modules but skips bare tests before takeover; it releases pools, mailbox and per-region allocations before returning.
-- **Floppies and hard disks:** nothing is written to a disk unit unless it carries the test-owned signature in its first and its last block (CONTRACT §11). devio (exp disk) reads only block 0 of any other unit, to look for the signature. The paula module (core disk) only reads DF0, its own boot disk, and writes DF1 only when it is signed and not write-protected. Only the runner makes such media (`runner/amitorture/media.py`), for emulator runs, so your own disks are never written.
-- **Takeover guard** (rt/mod.c): before it takes the machine over, the runtime waits until floppy DMA and the blitter are idle, and, when started from a CLI, the Gayle or A4000 IDE port too. If they are still busy after 10 s it refuses: nothing is taken over, and every bare module reports one `module` skip with the reason (CONTRACT §14).
+- **Floppies and hard disks:** nothing is written to a disk unit unless it carries the test-owned signature (CONTRACT §11). Only the runner makes such media, for emulator runs, so your own disks are never written.
+- **Takeover guard:** the runtime waits until floppy DMA, the blitter (and, from a CLI, the IDE port) are idle; after 10 s it refuses and every bare module reports a `module` skip (CONTRACT §14).
 - **Other hardware:** on a Gayle machine (A600/A1200) misc_hw sends IDENTIFY DEVICE to the IDE drive, a command that only reads, and restores the task file. The battery-backed clock is saved and set back at the end, adjusted for the time the test took. A network card sends no frame onto the network unless the `net` or `unsafe` flag is set (the A2065 tests use the LANCE's internal loopback; the one external frame is an ARP broadcast).
 - **The `unsafe` flag** is off by default; leave it off on real hardware. It allows: a read of an unmapped address to provoke a bus error (exceptions), reading block 0 of units that are not test-owned (devio, read only), writes to the ZZ9000's RAM (rtg), probing for a Prelude 1200 on the clock port (expsound), transmitting on a network card (network), and the Gayle IDE tests when started from a CLI (misc_hw).
 
@@ -331,7 +267,7 @@ These boot from CD (CONTRACT §14): for an emulator run, the runner turns each b
 
 ### Not verified yet
 - No run on a real Amiga or an FPGA core so far: the takeover and restore, the timing expectations and the serial rate tolerance are untried there.
-- No DF1 results disk: the planned transport that writes the records to a signed DF1 is not implemented (TODO in disk/modules/devio.c, CONTRACT §11). Serial is the only way to get results off a real machine.
+- No DF1 results disk (CONTRACT §11): serial is the only way to get results off a real machine.
 - The mailbox is only read by the runner, through the emulator's IPC. On real hardware nothing reads it.
 
 ---------------------------------------------------------------------------
@@ -347,11 +283,11 @@ These boot from CD (CONTRACT §14): for an emulator run, the runner turns each b
 | `--timeout S` / `--hang S` | per-disk launch limit (default 600 s) / no-progress limit (default 120 s) |
 | `--audio auto|on|off` | capture emulator audio for audio checks (default: only disks that ask for it) |
 | `--keep` | keep per-run temp directories (otherwise removed) |
-| `--show` | show the emulator windows on your desktop (`run`, `baseline`, `check`, `repro`, and `tests/smoke_disk.py`); one window per running emulator, so `--jobs 4` gives four. Your own display settings are used as they are (your `SDL_*` video variables, `DISPLAY`, `WAYLAND_DISPLAY`); audio stays the runner's. HOME and `XDG_RUNTIME_DIR` stay isolated (Amiberry names its IPC socket `$XDG_RUNTIME_DIR/amiberry.sock`, which a test emulator must never take from your own Amiberry), so a relative `WAYLAND_DISPLAY` is passed as the full path of the same socket and an unset `XAUTHORITY` as your `~/.Xauthority`. Run it from a terminal on the desktop. Timing values may differ from a headless run. |
+| `--show` | show the emulator windows on your desktop, one per running emulator; run it from a terminal on the desktop (details: [RUNNER.md "run"](RUNNER.md#run)) |
 | `--end-action halt|reboot|return` | what the disk does when finished. The runner stops the emulator itself; leave it at `halt`. |
 | `TMPDIR` | point it into the work dir if `/tmp` is a small tmpfs. amitorture's own temp files always go to `<workdir>/tmp`. |
 
-Isolation: every emulator gets its own HOME and XDG directories under the work dir and a generated config, so your own Amiberry settings, ROM paths and recent-file lists are never read or written. A run fails loudly (exit code 3) if your real Amiberry config directory changed during it. The runner also looks for Amiberry processes running on your real HOME during the run (every 5 s) and names them in the report as the likely cause, e.g. an Amiberry you started yourself meanwhile. If it saw none, the emulator under test is the likely cause.
+Isolation: every emulator gets its own HOME and XDG directories under the work dir and a generated config, so your own Amiberry settings are never read or written; a run fails with exit code 3 if your real Amiberry config changed during it ([RUNNER.md "Ground rules"](RUNNER.md#ground-rules)).
 
 ---------------------------------------------------------------------------
 ## 7. Troubleshooting

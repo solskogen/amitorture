@@ -31,11 +31,7 @@ make -C disk clean
 
 `make` builds the **disk set**: three bootable ADFs in `disk/build/set/`, one per module group. Each disk is a complete payload: bootblock, runtime, probe and its own modules.
 
-| Disk | Modules |
-|---|---|
-| `amitorture-1-core.adf` | takeover rt flags exceptions smc interrupts cia blitter timing display copper paula input dmacontention |
-| `amitorture-2-cpu.adf` | cpu_basic mmu dispatch |
-| `amitorture-3-exp.adf` | fpu rtg expsound network misc_hw misc_hw_os devio memory memory_os |
+The disks and their modules are listed in CONTRACT §12.
 
 The build prints each disk's code and data sizes in memory. The bootblock loads them as two separate allocations (CONTRACT §1-2), so the minimum machine is 1 MB: a 512 KB chip + 512 KB slow RAM Kickstart 1.x A500. Keep each segment under about 400 KB, so that it fits one of those regions with the module pools still allocatable (CONTRACT §12). All the modules together are too big for one 880 KB ADF, which is why the set exists.
 
@@ -50,7 +46,7 @@ Variables:
 | `MODS="rt cia"` | build one ADF with only these modules, `$(B)/amitorture.adf` (development) |
 | `B=dir` | build directory, default `build`. Use one per `MODS` selection, so different builds don't share objects. |
 | `BUILD_ID=…` | string baked into the disk header (default: git revision and date). The set build appends ` <n>/<N> <group>` (e.g. `1/3 core`); the status screen shows "disk n of N" from it when the id before it has at least two words, as the default has. |
-| `PARAMS="mode=quick seed=5"` | default run parameters baked into the disk (the keys are listed at the top of `tools/mkadf.py` and in [USAGE.md](USAGE.md) section 5). The runner patches its own parameters into a copy anyway. |
+| `PARAMS="mode=quick seed=5"` | default run parameters baked into the disk (the keys are listed at the top of `tools/mkadf.py` and in CONTRACT §4). The runner patches its own parameters into a copy anyway. |
 
 `tools/mkadf.py --dump some.adf` shows any disk's header, baked-in parameters, sizes and CRCs.
 It rejects payload/relocation ranges and sector spans that extend beyond the physical image, even if the
@@ -105,7 +101,7 @@ To try a disk on an emulator without the runner, see [USAGE.md](USAGE.md#boot-on
    - `AMT_MF_NEEDS_FPU`: the whole module is one `module` skip on a machine without an FPU;
    - `AMT_MF_OWNS_DISPLAY`: see below.
 
-   **The status screen and `AMT_MF_OWNS_DISPLAY`.** A bare module without the flag starts with DMAEN, BPLEN and COPEN on: the copper runs the runtime's list that shows the status screen (`disk/rt/screen.c`: one lores bitplane, about 30 copper moves at the top of the frame). Set the flag if the module tests the display, the copper, the blitter, Paula's DMA or interrupts, or measures DMA or beam timing; in short, if its results depend on which DMA runs, or it needs DMACON, the copper or the bitplane and colour registers to itself. It then starts with all DMA off and the screen blank (`run*` on the screen). The modules that set it today: blitter, copper, display, dmacontention, interrupts, paula, timing. A module without the flag should leave DMAEN, BPLEN, COPEN, COP1LC and the display registers alone: the runtime puts them back after the module, but the screen is broken meanwhile. With the `noscreen` run flag every bare module starts with all DMA off.
+   **The status screen and `AMT_MF_OWNS_DISPLAY`.** Set the flag if the module's results depend on which DMA runs, or it needs DMACON, the copper or the display registers to itself; then it starts with all DMA off and the screen blank (`run*`). The exact DMA and register state either way: CONTRACT §10.
 3. Build and boot just that module:
    ```
    make -C disk B=build-x MODS="rt <name>"

@@ -231,16 +231,7 @@ and reported as such.
 
 ### 3.1 `REPORT.md`: start here
 
-Sections (milestone 2): verdict line; **Coverage** (modules × entries with
-pass/fail/skip/untestable/xfail/engine_mismatch/unstable counts and where a
-module failed or was missing; one row per entry: machine, ROM, engine/twin,
-status, as designed, counts, why; skipped entries and why; configs adjusted
-by the emulator; engine parity per twin pair; xfail/fixed); **Problems**
-(grouped by module + narrowing signature; each with title, scope, the
-representative failure in full including the docs/cases intent/rule line,
-the narrowing result, code pointers, the repro pack, history, then every
-other failure); Notes (low severity); Environment; Transports and process;
-Files. docs/RUNNER.md describes the layout in detail.
+The layout of its sections: docs/RUNNER.md "REPORT.md layout".
 
 ### 3.2 `summary.json`
 
