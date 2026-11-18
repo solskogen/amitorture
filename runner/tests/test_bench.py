@@ -247,6 +247,13 @@ class Diff(unittest.TestCase):
         self.assertEqual(v, {"k": "incomparable", "f": "fail", "gone": "incomplete", "new": "new",
                              "flood_recovery": "info"})
 
+    def test_other_work_is_incomparable(self):
+        v = self.verdicts([blk("a", 100, 1, sum="00000001"), blk("b", 100, 2, sum="00000001"),
+                           blk("c", 100, 3, sum="00000001", n=512)],
+                          [blk("a", 100, 1, sum="00000002"), blk("b", 100, 2, sum="00000001", per=32),
+                           blk("c", 100, 3, sum="00000002")])
+        self.assertEqual(v, {"a": "incomparable", "b": "incomparable", "c": "same"})
+
     def test_other_pacing_is_incomparable(self):
         rows = bench.diff([entry("e", [blk("a", 100)])],
                           [entry("e", [blk("a", 200)], pacing={"effective": True})])

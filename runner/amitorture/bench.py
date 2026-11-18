@@ -466,9 +466,15 @@ def _verdict(a, b):
         return dict(row, verdict="fail", why=b.get("why") or a.get("why"))
     if "skip" in (a.get("st"), b.get("st")):
         return dict(row, verdict="skipped", why=b.get("why") or a.get("why"))
-    for k in ("kset", "mem", "basis", "metric", "unit"):
+    for k in ("blk", "kset", "mem", "basis", "metric", "unit", "per"):
         if a.get(k) != b.get(k):
             return dict(row, verdict="incomparable", why=f"{k}: {a.get(k)} vs {b.get(k)}")
+    # the same count must give the same result: else the block's code or
+    # input changed between the two disks, and so did its work
+    if a.get("n") == b.get("n") and None not in (a.get("sum"), b.get("sum")) and a["sum"] != b["sum"]:
+        return dict(row, verdict="incomparable",
+                    why=f"checksum {a['sum']} vs {b['sum']} at the same count: the block does other work "
+                        f"(a different disk build?)")
     if a.get("value") is None or b.get("value") is None:
         return dict(row, verdict="skipped", why=b.get("why_no_value") or "no value")
     if a.get("blk") == "flood_recovery":

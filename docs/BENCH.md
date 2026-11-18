@@ -223,7 +223,7 @@ Verdict per block, B against A (lower is better):
 | slower / faster | beyond that, and both sides confirmed |
 | noisy | beyond the first limit, but one side is unconfirmed |
 | fail | a side's work came out wrong |
-| incomparable | different kernel set, memory, timing basis or pacing |
+| incomparable | different kernel set, memory, timing basis, pacing or units per count, or a different checksum at the same count (the disk build changed the block's work) |
 | skipped, new, info | nothing to compare (`flood_recovery` is info only) |
 | incomplete | the block or entry is missing from one run |
 

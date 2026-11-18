@@ -497,8 +497,10 @@ recomputes `blob_crc32`. All fields are big-endian:
   see docs/BENCH.md), system 200-255.
 - A plan that fails its magic, version or CRC check is ignored (the `env` record says
   `plan: -1`), and every block sizes itself.
-- A plan says nothing about what code a block runs. The runner checks that the disk's blocks
-  are the baseline's before it patches counts in.
+- A plan says nothing about what code a block runs. The runner does not check that before it
+  patches counts in; its diff (docs/BENCH.md) calls a block `incomparable` when its name, unit,
+  units per count or kernel set differ, or when the same count gave a different checksum (the
+  block's code or input changed between the two disk builds).
 
 JSON for `mkadf.py --plan`: `{"exclusive": bool, "entries": [{"id": n, "count": n, "skip": bool}]}`.
 `--plan none` writes an empty plan.
