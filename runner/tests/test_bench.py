@@ -106,6 +106,24 @@ class Stamps(unittest.TestCase):
         self.assertEqual(b["basis"], "guest")
         self.assertAlmostEqual(b["value"], 70000 / TICK_HZ * 1e9 / 1024, places=2)
 
+    def test_guest_times_from_a_nonlinear_clock_are_not_confirmed(self):
+        L = Launch(host=False)
+        L.begin("cia_write", 210)
+        L.run(64, 0, 372768)
+        L.run(64, 0, 372768)
+        L.end(n=64, reps=2, nonlinear=1)
+        self.assertFalse(L.h.result()["blocks"][0]["confirmed"])
+
+    def test_lost_frames_are_kept(self):
+        L = Launch(host=False)
+        L.begin("cia_write", 210)
+        for rs in (1, 2):
+            L.send(ev="go", id=210, rs=rs)
+            L.send(ev="run", blk="cia_write", ph="rep", n=64, rs=rs, lost_frames=4, timing={"t": 657000})
+        L.end(n=64, reps=2)
+        b = L.h.result()["blocks"][0]
+        self.assertEqual((b["lost_frames"], b["guest_t"], b["confirmed"]), (8, [657000, 657000], True))
+
     def test_cost_blocks_are_host_cpu_per_emulated_second(self):
         L = Launch()
         L.begin("stop", 200, unit="frame", tier="frame")

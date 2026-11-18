@@ -21,7 +21,8 @@ Compare only runs that used the same memory.
 ## Guest side: the same disk everywhere
 
 The disk does not know what it runs on. It uses only:
-- the beam counter as its clock (`amt_ticks()`: colour clocks, 3546895 per second PAL);
+- the beam counter as its clock (`amt_ticks()`: colour clocks, 3546895 per second PAL),
+  with CIA-B's TOD line counter as a check on it (below, "Lost frames");
 - the serial port and the memory mailbox for its output (CONTRACT §5-7).
 
 With run-parameter flag `host` (512), which the runner sets, the disk also asks the host
@@ -70,10 +71,27 @@ gets a larger `count`, so the time per repetition stays about the same.
 
 ### Linearity
 
-When sizing reaches the floor, the harness compares the time of `count` with the time of
-`count/2`. It should be close to double (between 1.96 and 2.04 times). If it is not, the
-end record has `nonlinear: 1`. That means the clock does not follow the work, for example
-an emulator whose emulated time does not advance with CPU work (JIT).
+At every doubling during sizing, the harness checks that doubling `count` doubles the time
+the run adds: (time(n) − time(n/2)) should be 1.96 to 2.04 times (time(n/2) − time(n/4)).
+Comparing the added time means that a fixed cost per run, such as a frame block starting
+part-way into a frame, does not count against it. Steps too short to judge are skipped:
+the added time must be at least 12.5 ms and 100 × `res_ticks`. If any step fails, the end
+record has `nonlinear: 1`. That means the clock does not follow the work, for example an
+emulator whose emulated time does not advance with CPU work (JIT). Without a host the
+guest's clock is the only one, so the block then ends `unconfirmed` even if its
+repetitions agree, and the runner does not confirm its guest times either. With a host,
+the host's times are used and the flag is only a remark.
+
+### Lost frames
+
+`amt_ticks()` counts frames in the VERTB interrupt. A machine that serves that interrupt
+more than a frame late loses a whole frame from the clock: two vertical blanks are
+counted as one. One FPGA core did this during back-to-back CIA writes (`cia_write`), and
+its times were short by whole frames. CIA-B's TOD counter counts lines by itself, without
+an interrupt. At startup the harness checks it against the beam over 200 lines (env
+`tod: 1` if it counts them). If it does, every timed run also reads it, and a run whose
+line count says it took more frames than `amt_ticks()` counted has the missing frames
+added back. Its `run` record then has `lost_frames`.
 
 ## Tiers
 

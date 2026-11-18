@@ -11,6 +11,8 @@ static ULONG res_ticks;        /* the clock's resolution, colour clocks */
 static ULONG floor_ticks;      /* 100 ms: shortest repetition */
 static ULONG min_ticks;        /* repetition length the guest's own clock needs */
 static ULONG seq, cur_pos, pcr_saved;
+static int tod_ok;             /* CIA-B's TOD counts lines: lost frames are put back */
+static ULONG frame_cck;        /* colour clocks per frame, as amt_ticks() counts them */
 static UBYTE fpu_on;
 
 ULONG bh_pos(void) { return cur_pos; }
@@ -45,6 +47,37 @@ static ULONG measure_res(void)
     return best == 0xffffffffUL ? limit : best;
 }
 
+/* CIA-B's TOD counter: horizontal syncs, counted by the CIA itself.
+ * Reading the high byte latches all three until the low byte is read. */
+static ULONG tod_lines(void)
+{
+    ULONG h = *(volatile UBYTE *)0xbfda00;
+    ULONG m = *(volatile UBYTE *)0xbfd900;
+    ULONG l = *(volatile UBYTE *)0xbfd800;
+    return (h << 16) | (m << 8) | l;
+}
+
+/* Does the TOD counter count the beam's lines? Compared with the beam
+ * over 200 lines of one frame, so the check does not depend on the VERTB
+ * interrupt that amt_ticks() counts frames with. */
+static int tod_check(void)
+{
+    ULONG f = amt_frames_now(), v0, v, l0, l1, d;
+    while (amt_frames_now() == f)
+        ;
+    f = amt_frames_now();
+    v0 = amt_beam() >> 8;
+    l0 = tod_lines();
+    do
+        v = amt_beam() >> 8;
+    while (v < v0 + 200 && amt_frames_now() == f);
+    l1 = tod_lines();
+    if (amt_frames_now() != f || v < v0 + 200)
+        return 0;
+    d = (l1 - l0) & 0xffffffUL;
+    return d + 2 >= v - v0 && d <= v - v0 + 2;
+}
+
 static int plan_valid(void)
 {
     if (amt_plan.magic[0] != 'P' || amt_plan.magic[1] != 'L' || amt_plan.magic[2] != 'A' ||
@@ -70,6 +103,8 @@ void bh_begin(void)
         inited = 1;
         host = (amt_par.flags & AMT_F_HOST) && amt_mbox;
         res_ticks = measure_res();
+        frame_cck = (amt_probe_result.pal ? 313UL : 263UL) * 227UL;
+        tod_ok = tod_check();
         floor_ticks = amt_cck_hz() / 10;
         min_ticks = res_ticks > floor_ticks / 400 ? res_ticks * 400 : floor_ticks;
         plan_ok = plan_valid();
@@ -78,6 +113,7 @@ void bh_begin(void)
         json_int("tick_hz", (long)amt_cck_hz());
         json_int("res_ticks", (long)res_ticks);
         json_int("min_ticks", (long)min_ticks);
+        json_int("tod", tod_ok);
         json_int("host", host);
         json_int("plan", plan_ok ? amt_plan.n : -1);
         if (plan_ok && (amt_plan.flags & BH_PLAN_EXCLUSIVE))
@@ -132,7 +168,7 @@ static void wait_frame(void)
  * the display and refresh DMA from the same point of the frame */
 static ULONG timed(const struct bh_blk *b, ULONG count, const char *phase, ULONG *sum)
 {
-    ULONG t0, t1, s;
+    ULONG t0, t1, l0 = 0, l1 = 0, s, d, lost = 0;
     if (++seq > 255)
         seq = 1;
     amt_watchdog_kick();
@@ -147,8 +183,23 @@ static ULONG timed(const struct bh_blk *b, ULONG count, const char *phase, ULONG
     json_end();
     set_pos(BH_POS_RUN | ((ULONG)b->id << 8) | seq);
     t0 = amt_ticks();
+    if (tod_ok)
+        l0 = tod_lines();
     s = b->run(count, b->ctx);
     t1 = amt_ticks();
+    if (tod_ok)
+        l1 = tod_lines();
+    d = t1 - t0;
+    /* amt_ticks() counts frames in the VERTB handler; a machine that serves
+     * that interrupt more than a frame late loses whole frames. The TOD
+     * line count says how many: put them back. */
+    if (tod_ok) {
+        ULONG cck = ((l1 - l0) & 0xffffffUL) * 227UL;
+        if (cck > d + frame_cck / 2) {
+            lost = (cck - d + frame_cck / 2) / frame_cck;
+            d += lost * frame_cck;
+        }
+    }
     set_pos(0);
     amt_watchdog_kick();
     if (sum)
@@ -157,11 +208,13 @@ static ULONG timed(const struct bh_blk *b, ULONG count, const char *phase, ULONG
     json_str("ph", phase);
     json_int("n", (long)count);
     json_int("rs", (long)seq);
+    if (lost)
+        json_int("lost_frames", (long)lost);
     json_obj("timing");
-    json_int("t", (long)(t1 - t0));
+    json_int("t", (long)d);
     json_obj_end();
     json_end();
-    return t1 - t0;
+    return d;
 }
 
 /* 1: the host wants it (a longer sizing run, another repetition);
@@ -211,7 +264,7 @@ void bh_note(const char *s)
 int bh_run(const struct bh_blk *b)
 {
     const struct bh_plan_entry *pe = plan_find(b->id);
-    ULONG t[BH_MAX_REPS], cold = 0, count, prev = 0, sum0 = 0, sum1 = 0, best, second;
+    ULONG t[BH_MAX_REPS], cold = 0, count, prev = 0, prev2 = 0, sum0 = 0, sum1 = 0, best, second;
     int n = 0, ok = 1, nonlinear = 0, conf, a;
     const char *why = 0;
 
@@ -259,16 +312,23 @@ int bh_run(const struct bh_blk *b)
          * one, 400 x the guest clock's resolution */
         for (count = 1;; count <<= 1) {
             ULONG tt = timed(b, count, "size", &sum0);
+            /* the clock follows the work: doubling the count doubles the
+             * time it adds (a fixed cost per run, as the frame blocks' start
+             * inside a frame, adds nothing), judged at every doubling long
+             * enough to time */
+            if (count >= 4 && prev - prev2 >= floor_ticks / 8 && prev - prev2 >= res_ticks * 100) {
+                ULONG d1 = prev - prev2, d2 = tt - prev;
+                if (tt < prev || d2 < d1 / 25 * 49 || d2 > d1 / 25 * 51)
+                    nonlinear = 1;
+            }
             if (tt >= floor_ticks || count >= 0x40000000UL) {
                 a = ask(b, "bench_longer", count, 0);
                 if (count >= 0x40000000UL || a < 0 || (a == 0 && tt >= min_ticks)) {
                     t[n++] = tt;
-                    /* time(n) / time(n/2) should be 2: the clock follows the work */
-                    if (prev >= floor_ticks / 2 && (tt < prev / 25 * 49 || tt > prev / 25 * 51))
-                        nonlinear = 1;
                     break;
                 }
             }
+            prev2 = prev;
             prev = tt;
         }
     } else
@@ -301,7 +361,9 @@ int bh_run(const struct bh_blk *b)
 
 done:
     rec(b, "end");
-    json_str("st", !ok ? "fail" : conf ? "ok" : "unconfirmed");
+    /* without a host the guest's clock is the only one: a clock that did
+     * not follow the work leaves the time unconfirmed */
+    json_str("st", !ok ? "fail" : conf && !(nonlinear && !host) ? "ok" : "unconfirmed");
     if (why)
         json_str("why", why);
     if (note)

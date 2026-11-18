@@ -145,6 +145,8 @@ class Host:
         elif ev == "run":
             run = {"ph": o.get("ph"), "n": o.get("n"), "rs": o.get("rs"),
                    "t": (o.get("timing") or {}).get("t")}
+            if o.get("lost_frames"):
+                run["lost_frames"] = o["lost_frames"]
             g, self._go = self._go, None
             if self.stamper is not None:
                 run["host_s"] = None
@@ -277,6 +279,9 @@ class Host:
             if cold and cold[0].get("t") and tick_hz:
                 r["cold_guest_ns"] = round(cold[0]["t"] / tick_hz * 1e9, 1)
             r["guest_t"] = [x["t"] for x in runs]
+            lost = sum(x.get("lost_frames", 0) for x in b["runs"])
+            if lost:
+                r["lost_frames"] = lost
             if self.stamper is not None:
                 r["host_s"] = [None if x.get("host_s") is None else round(x["host_s"], 6) for x in runs]
             if not vals:
@@ -303,7 +308,9 @@ class Host:
                 r.update(self._flood_shares(g.get("id")))
                 r["confirmed"] = True
             else:
-                r["confirmed"] = second is not None and second - best <= best * CONFIRM[m]
+                # guest times from a clock that did not follow the work are not confirmed by agreeing
+                r["confirmed"] = (second is not None and second - best <= best * CONFIRM[m]
+                                  and not (basis == "guest" and r.get("nonlinear")))
             if second is not None and best:
                 r["spread_pct"] = round((second - best) / best * 100, 4)
             out.append(r)
