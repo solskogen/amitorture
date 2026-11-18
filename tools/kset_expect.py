@@ -5,9 +5,12 @@ single-precision floats) and running them once with tools/kset_host.c.
 
 The kernels are portable C and their checksums don't depend on byte order,
 so the native result is the reference; tools/kset_sim.py checks that the
-68k builds agree under Musashi. The float kernels use IEEE single
-precision: the soft-float sets and an FPU with FPCR set to single
-precision both give the native value.
+68k builds agree under Musashi. The soft-float sets use IEEE single
+precision, as SSE does. A set with FP flags (k020f, built for a 6888x/040/
+060 FPU with FPCR at single precision) is built for the x87 instead, with
+the same flags and the x87 set to single precision: both round every result
+to a single's mantissa but keep the extended exponent range in registers,
+so they agree with each other and not always with SSE.
 
   kset_expect.py [-o FILE]       (default: stdout)
 
@@ -49,6 +52,12 @@ def ndk_include():
 def run_set(name, tmp):
     info = set_info(name)
     defs = info["defs"]
+    fp = info.get("fp", [])
+    flags = FLAGS
+    if fp:
+        flags = [f for f in FLAGS if f not in ("-msse2", "-mfpmath=sse")] + \
+            ["-mfpmath=387"] + fp
+        defs = defs + ["-DKSET_HOST_X87_SINGLE"]
     inc = [f"-I{K}/inc", f"-I{K}", f"-I{ndk_include()}", f"-I{K}/third_party/zlib",
            f"-I{K}/third_party/amissl/shim", "-DZ_SOLO",
            "-Dmalloc=k_malloc", "-Dfree=k_free"]
@@ -58,17 +67,17 @@ def run_set(name, tmp):
             continue
         obj = os.path.join(tmp, name + "_" + src.replace("/", "_") + ".o")
         extra = ["-DSTANDALONE_"] if "freetype/" in src else []
-        subprocess.run([CC] + FLAGS + defs + inc + extra + ["-c", os.path.join(K, src), "-o", obj],
+        subprocess.run([CC] + flags + defs + inc + extra + ["-c", os.path.join(K, src), "-o", obj],
                        check=True)
         objs.append(obj)
     for src in info["cxx"]:
         obj = os.path.join(tmp, name + "_" + src.replace("/", "_") + ".o")
-        subprocess.run([CXX] + FLAGS + defs + ["-std=c++17", "-fno-exceptions", "-fno-rtti",
+        subprocess.run([CXX] + flags + defs + ["-std=c++17", "-fno-exceptions", "-fno-rtti",
                                                f"-I{K}", "-c", os.path.join(K, src), "-o", obj],
                        check=True)
         objs.append(obj)
     drv = os.path.join(tmp, name + "_host.o")
-    subprocess.run([CC] + FLAGS + defs + inc + ["-c", os.path.join(ROOT, "tools", "kset_host.c"),
+    subprocess.run([CC] + flags + defs + inc + ["-c", os.path.join(ROOT, "tools", "kset_host.c"),
                                                 "-o", drv], check=True)
     exe = os.path.join(tmp, name)
     subprocess.run([CXX, "-m32"] + objs + [drv, "-o", exe], check=True)

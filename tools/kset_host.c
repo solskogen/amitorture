@@ -1,7 +1,8 @@
 /* SPDX-License-Identifier: 0BSD
  *
  * Host driver for tools/kset_expect.py: runs every kernel of a kernel set
- * built natively (32-bit, SSE floats) once, the way the bench harness does,
+ * built natively (32-bit, SSE floats, or x87 at single precision for a set
+ * built for an FPU) once, the way the bench harness does,
  * and prints "name checksum" per kernel. The kernels are portable C, so
  * these are the checksums the Amiga build must produce.
  */
@@ -17,6 +18,16 @@ static unsigned char arena[8 << 20] __attribute__((aligned(16)));
 int main(void)
 {
     int i, rc = 0;
+
+#ifdef KSET_HOST_X87_SINGLE
+    {
+        unsigned short cw;
+
+        __asm__ volatile("fnstcw %0" : "=m"(cw));
+        cw &= ~0x300;
+        __asm__ volatile("fldcw %0" : : "m"(cw));
+    }
+#endif
 
     for (i = 0; i < kset.n; i++) {
         const struct Bench *b = kset.benches[i];

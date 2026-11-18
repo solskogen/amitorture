@@ -4,7 +4,7 @@
  * A kernel's memory comes from an arena in the module's any-pool (fast RAM
  * when there is some); its checksum after the first and the last
  * repetition must be the one the host computed when the disk was built
- * (kexpect.h), except for k020f: see kn_verify. */
+ * (kexpect.h). */
 #include "harness.h"
 #include "kernels/kset.h"
 #include "kernels/kexpect.h"
@@ -48,9 +48,6 @@ struct kn_ctx {
     const struct kset_api *api;
     const struct Bench *b;
     const struct kexpect *expect;   /* NULL: none for this kernel */
-    int fpu;                        /* k020f: computed by the FPU */
-    int seen;                       /* fpu: first checksum taken */
-    ULONG first;
     void *state;
     const void *result;
     ULONG mark;                     /* the arena after setup() */
@@ -74,24 +71,7 @@ static int kn_verify(void *p, ULONG *sum)
     ULONG check = 0;
     int ok = c->result && !c->api->arena_failed() && c->b->verify(c->state, c->result, &check);
     *sum = check;
-    if (!ok || !c->expect)
-        return 0;
-    if (c->expect->check == check)
-        return 1;
-    if (!c->fpu)
-        return 0;
-    /* The reference is IEEE single precision. amt_run_bench_kernels sets the FPCR to
-     * single, which an exact 6888x/040/060 follows, but an emulator's FPU
-     * may compute in its host's double precision and ignore the FPCR
-     * (Amiberry's default FPU, its JIT): its results are then right but
-     * differ in the last bits. The checksum must still repeat. */
-    bh_note("checksum differs from the IEEE single-precision reference (the FPU's precision)");
-    if (!c->seen) {
-        c->seen = 1;
-        c->first = check;
-        return 1;
-    }
-    return check == c->first;
+    return ok && c->expect && c->expect->check == check;
 }
 
 static int same(const char *a, const char *b)
@@ -137,8 +117,6 @@ static void run_set(const struct kn_set *s)
         c.b = b;
         c.expect = i < s->n_expect && same(s->expect[i].name, b->name) ? &s->expect[i] : 0;
         c.result = 0;
-        c.fpu = api == &k020f_kset;
-        c.seen = 0;
         blk.name = b->name;
         blk.tier = "kernel";
         blk.id = (UWORD)(s->id_base + i);
@@ -184,7 +162,8 @@ void amt_run_bench_kernels(void)
         if ((s->api == &k020f_kset && !fpu) || (s->api == &k020s_kset && fpu))
             continue;
         if (s->api == &k020f_kset) {
-            /* round every operation to single precision, like the reference
+            /* round every result to single precision, as the reference
+             * (tools/kset_expect.py: x87 at single precision) does
              * (rounding precision bits 7-6 = 01, round to nearest) */
             ULONG fpcr = bh_fpcr_get();
             bh_fpcr_set((fpcr & ~0xf0UL) | 0x40);

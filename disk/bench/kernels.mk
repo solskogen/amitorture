@@ -51,6 +51,11 @@ KSET_k020_C     := $(K_INT_C)
 KSET_k020_CXX   :=
 KSET_k020f_CPU  := -m68020-60 -m68881
 KSET_k020f_DEFS := -DKSET_020 -DKSET_FLOAT
+# The FPU keeps extended exponent range in registers (FPCR rounds only the
+# mantissa): pin ISO excess-precision rules so the code, and with it the
+# checksums tools/kset_expect.py mirrors on x87, don't depend on GCC's
+# register allocation.
+KSET_k020f_FP   := -fexcess-precision=standard
 KSET_k020f_C    := $(K_FLOAT_BASE_C) $(K_FLOAT_C)
 KSET_k020f_CXX  := $(K_FLOAT_CXX)
 KSET_k020s_CPU  := -m68020-60
@@ -73,12 +78,12 @@ $(1)_OBJS  := $$($(1)_SRC_S:%.s=%.o) $$(KSET_$(1)_S:%.s=$(KB)/$(1)/asm/%.o)
 
 $(KB)/$(1)/%.s: $(K)/%.c $(K_DEPS)
 	@mkdir -p $$(@D)
-	$(CC) $$(KSET_$(1)_CPU) $(K_CFLAGS) $$(KSET_$(1)_DEFS) \
+	$(CC) $$(KSET_$(1)_CPU) $(K_CFLAGS) $$(KSET_$(1)_DEFS) $$(KSET_$(1)_FP) \
 		$$(if $$(findstring freetype/ftgrays,$$<),-DSTANDALONE_) -S -o $$@ $$<
 
 $(KB)/$(1)/%.s: $(K)/%.cpp $(K_DEPS)
 	@mkdir -p $$(@D)
-	$(CXX) $$(KSET_$(1)_CPU) $(K_CXXFLAGS) $$(KSET_$(1)_DEFS) -S -o $$@ $$<
+	$(CXX) $$(KSET_$(1)_CPU) $(K_CXXFLAGS) $$(KSET_$(1)_DEFS) $$(KSET_$(1)_FP) -S -o $$@ $$<
 
 $(KB)/$(1)/%.o: $(KB)/$(1)/%.s ../tools/kset_check.py
 	$(KSET_CHECK) --set $(1) $$<
@@ -111,3 +116,4 @@ kset-info-%:
 	@echo "defs: $(KSET_$*_DEFS)"
 	@echo "c: $(KSET_$*_C)"
 	@echo "cxx: $(KSET_$*_CXX)"
+	@echo "fp: $(KSET_$*_FP)"

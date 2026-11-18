@@ -202,7 +202,7 @@ are guest colour clocks (`tick_hz` per second).
 | `begin` | `blk`, `tier` (`micro`/`kernel`/`frame`/`thread`), `id` (plan id), `unit`, `per` (units per count), `mem` (`chip`/`slow`/`fast`/`rom`, if any), `kset` (kernels), `plan` (the count from the plan, if any) |
 | `go` | `id`, `rs`: sent right before a timed run starts (nothing else is sent until its `run` record), so a host stamping serial arrival times has the run's start in this record's newline and its end in the first byte of the `run` record |
 | `run` | `blk`, `ph` (`cold`/`size`/`rep`), `n` (count), `rs` (run sequence 1-255; mailbox position `$10000 \| id<<8 \| rs` during the run), `timing.t` |
-| `end` | `blk`, `st` (`ok`/`unconfirmed`/`fail`), `why` (if not ok), `note` (a remark, e.g. a k020f checksum that differs from the reference), `n`, `reps`, `sum` (first checksum) and `sum_last` (if different; neither for blocks reading hardware), `nonlinear` (1 if time(n) is not about 2 × time(n/2)), `timing{best, second, cold}` |
+| `end` | `blk`, `st` (`ok`/`unconfirmed`/`fail`), `why` (if not ok), `note` (a remark about the block), `n`, `reps`, `sum` (first checksum) and `sum_last` (if different; neither for blocks reading hardware), `nonlinear` (1 if time(n) is not about 2 × time(n/2)), `timing{best, second, cold}` |
 | `skip` | `blk`, `tier`, `id`, `why` |
 
 ```

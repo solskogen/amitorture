@@ -46,11 +46,14 @@ For every block the harness (`disk/bench/harness.c`):
    reaches 12 repetitions without agreement is reported `unconfirmed`.
 4. **Check.** After the first and the last repetition the results are checked:
    - kernels: the checksum must equal the one computed on the host at build time
-     (`disk/bench/kernels/kexpect.h`). The reference for the float kernels is IEEE single
-     precision, and `k020f` runs them with the FPCR set to single precision. An exact FPU then
-     gives the reference. An emulator's FPU may compute in host double precision and ignore the
-     FPCR (Amiberry's default FPU and its JIT do). Its `k020f` checksum must then be the same on
-     every repetition, and the end record notes that it differs from the reference;
+     (`disk/bench/kernels/kexpect.h`). `k020s` (soft float) must give IEEE single precision
+     results. `k020f` runs with the FPCR at single precision and is built with
+     `-fexcess-precision=standard`: the FPU rounds every result to a single's mantissa but keeps
+     the extended exponent range in registers. Its reference comes from the same code built for
+     the x87 at single precision, which does the same, and can differ from IEEE single (it does
+     for `nfs3-clip`). The checksum doesn't depend on whether the FPU computes in single, double
+     or extended precision internally, as long as it rounds as told: Amiberry's exact FPU and
+     its JIT both give the reference;
    - micro blocks: all repetitions must return the same checksum, except blocks that read
      changing hardware registers.
 
@@ -227,7 +230,7 @@ Verdict per block, B against A (lower is better):
 | slower / faster | beyond that, and both sides confirmed |
 | noisy | beyond the first limit, but one side is unconfirmed |
 | fail | a side's work came out wrong |
-| incomparable | different kernel set, memory, timing basis, pacing or units per count, or a different checksum at the same count (the disk build, or for `k020f` the FPU's precision, changed the block's results) |
+| incomparable | different kernel set, memory, timing basis, pacing or units per count, or a different checksum at the same count (the disk build changed the block's results) |
 | skipped, new, info | nothing to compare (`flood_recovery` is info only) |
 | incomplete | the block or entry is missing from one run |
 

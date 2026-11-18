@@ -34,7 +34,7 @@ static const struct kexpect kexpect_k020[] = {
 
 static const struct kexpect kexpect_k020f[] = {
     {"nfs3-project", 0x394bd009UL},
-    {"nfs3-clip", 0xc5283504UL},
+    {"nfs3-clip", 0x519b4531UL},
 };
 
 static const struct kexpect kexpect_k020s[] = {
