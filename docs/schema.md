@@ -228,14 +228,16 @@ are guest colour clocks (`tick_hz` per second).
 |---|---|
 | `env` | `tick_hz`; `res_ticks` (the smallest clock step seen); `min_ticks` (the shortest repetition without a host); `host` (0/1); `plan` (entries, -1 = invalid plan); `plan_exclusive` (if set) |
 | `begin` | `blk`, `tier` (`micro`/`kernel`/`frame`/`thread`), `id` (plan id), `unit`, `per` (units per count), `mem` (`chip`/`slow`/`fast`/`rom`, if any), `kset` (kernels), `plan` (the count from the plan, if any) |
-| `run` | `blk`, `ph` (`cold`/`size`/`rep`), `n` (count), `seq` (1-255; mailbox position `$10000 \| id<<8 \| seq` during the run), `timing.t` |
+| `go` | `id`, `rs`: sent right before a timed run starts (nothing else is sent until its `run` record), so a host stamping serial arrival times has the run's start in this record's newline and its end in the first byte of the `run` record |
+| `run` | `blk`, `ph` (`cold`/`size`/`rep`), `n` (count), `rs` (run sequence 1-255; mailbox position `$10000 \| id<<8 \| rs` during the run), `timing.t` |
 | `end` | `blk`, `st` (`ok`/`unconfirmed`/`fail`), `why` (if not ok), `n`, `reps`, `sum` (first checksum) and `sum_last` (if different; neither for blocks reading hardware), `nonlinear` (1 if time(n) is not about 2 × time(n/2)), `timing{best, second, cold}` |
 | `skip` | `blk`, `tier`, `id`, `why` |
 
 ```
 {"v":1,"seq":9,"t":"bench","ev":"begin","blk":"dhrystone","tier":"kernel","id":64,"unit":"loop","per":1,"mem":"fast","kset":"k000"} *xxxxxxxx
-{"v":1,"seq":10,"t":"bench","ev":"run","blk":"dhrystone","ph":"cold","n":1,"seq":7,"timing":{"t":21455}} *xxxxxxxx
-{"v":1,"seq":16,"t":"bench","ev":"end","blk":"dhrystone","st":"ok","n":32,"reps":3,"sum":"cdafab83","timing":{"best":684112,"second":684190,"cold":21455}} *xxxxxxxx
+{"v":1,"seq":10,"t":"bench","ev":"go","id":64,"rs":7} *xxxxxxxx
+{"v":1,"seq":11,"t":"bench","ev":"run","blk":"dhrystone","ph":"cold","n":1,"rs":7,"timing":{"t":21455}} *xxxxxxxx
+{"v":1,"seq":19,"t":"bench","ev":"end","blk":"dhrystone","st":"ok","n":32,"reps":3,"sum":"cdafab83","timing":{"best":684112,"second":684190,"cold":21455}} *xxxxxxxx
 ```
 
 ## 2. Mailbox (how the host reads the records out of memory)

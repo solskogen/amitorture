@@ -137,6 +137,14 @@ static ULONG timed(const struct bh_blk *b, ULONG count, const char *phase, ULONG
         seq = 1;
     amt_watchdog_kick();
     wait_frame();
+    /* the last record before the run: a host that stamps the arrival of
+     * serial bytes has the run's start in its newline, and its end in the
+     * first byte of the run record (nothing is sent in between) */
+    json_begin("bench");
+    json_str("ev", "go");
+    json_int("id", b->id);
+    json_int("rs", (long)seq);
+    json_end();
     set_pos(BH_POS_RUN | ((ULONG)b->id << 8) | seq);
     t0 = amt_ticks();
     s = b->run(count, b->ctx);
@@ -148,7 +156,7 @@ static ULONG timed(const struct bh_blk *b, ULONG count, const char *phase, ULONG
     rec(b, "run");
     json_str("ph", phase);
     json_int("n", (long)count);
-    json_int("seq", (long)seq);
+    json_int("rs", (long)seq);
     json_obj("timing");
     json_int("t", (long)(t1 - t0));
     json_obj_end();

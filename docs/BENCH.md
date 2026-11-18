@@ -52,9 +52,11 @@ For every block the harness (`disk/bench/harness.c`):
 
    Wrong results give `st: fail`. The timing is still reported.
 
-Every timed run starts on a frame edge and sets the mailbox position to
-`$10000 | id << 8 | seq`, so a host that samples its own clock can tell which run is going.
-The position is 0 between runs.
+Every timed run starts just after a frame edge. Right before it the guest sends a `go`
+record and sets the mailbox position to `$10000 | id << 8 | rs` (`rs`: the run's sequence
+number, 1-255); the position is 0 between runs. Nothing is sent during a run, so a host that
+stamps the arrival of serial bytes times the run from the `go` record's newline to the
+first byte of the `run` record. The runner does that (below).
 
 Time is what the work takes. Nothing runs for a fixed number of seconds. A faster machine
 gets a larger `count`, so the time per repetition stays about the same.
@@ -131,7 +133,7 @@ run only the listed blocks (`exclusive`).
 
 `bench` records (docs/schema.md §1.11):
 - `env` once;
-- for every block, `begin`, one `run` per timed run, and `end`;
+- for every block, `begin`, a `go` and a `run` per timed run, and `end`;
 - or a single `skip`.
 
 All times are in guest colour clocks.

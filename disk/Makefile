@@ -80,7 +80,7 @@ one: $(B)/amitorture.adf
 # $(B)/bench, copied to $(B)/amitorture-bench.adf.
 .PHONY: bench bench-check
 bench:
-	$(MAKE) --no-print-directory B=$(B)/bench BENCH=1 BUILD_ID="$(BUILD_ID) bench" one
+	$(MAKE) --no-print-directory B=$(B)/bench BENCH=1 BUILD_ID="$(BUILD_ID) 1/1 bench" one
 	cp $(B)/bench/amitorture.adf $(B)/amitorture-bench.adf
 
 bench-check: bench

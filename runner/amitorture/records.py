@@ -23,6 +23,7 @@ REQUIRED = {
     "done": ("pass", "fail", "skip", "untestable", "aborted", "records"),
     "request": ("id", "what", "tag"),      # host request channel (CONTRACT §13)
     "speed": ("mod", "ev", "insn"),        # hostspeed timed blocks (docs/schema.md 1.10)
+    "bench": ("ev",),                      # the bench disk (docs/schema.md 1.11)
 }
 MOD_END_REQUIRED = ("pass", "fail", "skip")
 CASE_FAIL_REQUIRED = ("expect", "got", "why")
@@ -295,7 +296,7 @@ def started_modules(recs):
 def _boot_module_problems(recs):
     hello = next((r for r in recs if r.get("t") == "hello"), {})
     expected = hello.get("modules")
-    if expected == {} and not any(r.get("t") in ("mod", "case", "perf", "speed") for r in recs):
+    if expected == {} and not any(r.get("t") in ("mod", "case", "perf", "speed", "bench") for r in recs):
         done = next((r for r in recs if r.get("t") == "done"), {})
         if done and not any(done.get(k) for k in CASE_STATES):
             return []
@@ -323,6 +324,11 @@ def _boot_module_problems(recs):
                 else:
                     completed.add(mod)
                     active = None
+        elif t == "bench":
+            # bench records name no module: they belong to the one running
+            evidence = True
+            if active is None:
+                problems.append(f"bench record ({r.get('ev')}) outside a module's begin/end")
         elif t in ("case", "perf", "speed"):
             evidence = True
             if active != mod:
@@ -332,7 +338,7 @@ def _boot_module_problems(recs):
     if not seen:
         problems.append("no modules executed")
     elif not evidence:
-        problems.append("no case, perf or speed records were produced")
+        problems.append("no case, perf, speed or bench records were produced")
     if isinstance(expected, dict):
         missing = sorted(set(expected) - completed)
         if missing:
