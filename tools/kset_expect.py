@@ -10,7 +10,10 @@ precision, as SSE does. A set with FP flags (k020f, built for a 6888x/040/
 060 FPU with FPCR at single precision) is built for the x87 instead, with
 the same flags and the x87 set to single precision: both round every result
 to a single's mantissa but keep the extended exponent range in registers,
-so they agree with each other and not always with SSE.
+so they agree with each other and not always with SSE. Such a set's
+second checksum ("wide") is the same build with the x87 at extended
+precision: what an FPU that ignores FPCR's rounding precision gives.
+For the other sets it equals the first.
 
   kset_expect.py [-o FILE]       (default: stdout)
 
@@ -49,7 +52,7 @@ def ndk_include():
     return os.environ.get("NDK_INCLUDE", os.path.join(tc, "..", "m68k-amigaos", "ndk-include"))
 
 
-def run_set(name, tmp):
+def run_set(name, tmp, wide=False):
     info = set_info(name)
     defs = info["defs"]
     fp = info.get("fp", [])
@@ -57,7 +60,9 @@ def run_set(name, tmp):
     if fp:
         flags = [f for f in FLAGS if f not in ("-msse2", "-mfpmath=sse")] + \
             ["-mfpmath=387"] + fp
-        defs = defs + ["-DKSET_HOST_X87_SINGLE"]
+        defs = defs + ["-DKSET_HOST_X87_EXTENDED" if wide else "-DKSET_HOST_X87_SINGLE"]
+    elif wide:
+        return None
     inc = [f"-I{K}/inc", f"-I{K}", f"-I{ndk_include()}", f"-I{K}/third_party/zlib",
            f"-I{K}/third_party/amissl/shim", "-DZ_SOLO",
            "-Dmalloc=k_malloc", "-Dfree=k_free"]
@@ -95,17 +100,22 @@ def generate():
         "struct kexpect {",
         "    const char *name;",
         "    unsigned long check;",
+        "    unsigned long wide;     /* the FPU ignored FPCR's rounding precision */",
         "};",
     ]
     with tempfile.TemporaryDirectory() as tmp:
         for s in SETS:
             rows = run_set(s, tmp)
+            wide = run_set(s, tmp, wide=True)
+            wide = dict(wide) if wide else {}
             lines.append("")
             lines.append(f"static const struct kexpect kexpect_{s}[] = {{")
             for name, check in rows:
-                if not re.fullmatch(r"[0-9a-f]{8}", check):
-                    raise SystemExit(f"{s}/{name}: bad checksum {check!r}")
-                lines.append(f'    {{"{name}", 0x{check}UL}},')
+                w = wide.get(name, check)
+                for c in (check, w):
+                    if not re.fullmatch(r"[0-9a-f]{8}", c):
+                        raise SystemExit(f"{s}/{name}: bad checksum {c!r}")
+                lines.append(f'    {{"{name}", 0x{check}UL, 0x{w}UL}},')
             lines.append("};")
     lines += ["", "#endif", ""]
     return "\n".join(lines)

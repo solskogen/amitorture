@@ -54,7 +54,10 @@ For every block the harness (`disk/bench/harness.c`):
      the x87 at single precision, which does the same, and can differ from IEEE single (it does
      for `nfs3-clip`). The checksum doesn't depend on whether the FPU computes in single, double
      or extended precision internally, as long as it rounds as told: Amiberry's exact FPU and
-     its JIT both give the reference;
+     its JIT both give the reference. An FPU that ignores the FPCR's rounding precision
+     (Musashi, the MiSTer Minimig core's) gives the second, "wide" checksum in kexpect.h,
+     the same build on the x87 at extended precision. That counts as correct, with the note
+     that the FPU ignored the rounding precision: the work and its time are the same;
    - micro blocks: all repetitions must return the same checksum, except blocks that read
      changing hardware registers.
 
@@ -75,7 +78,9 @@ At every doubling during sizing, the harness checks that doubling `count` double
 the run adds: (time(n) − time(n/2)) should be 1.96 to 2.04 times (time(n/2) − time(n/4)).
 Comparing the added time means that a fixed cost per run, such as a frame block starting
 part-way into a frame, does not count against it. Steps too short to judge are skipped:
-the added time must be at least 12.5 ms and 100 × `res_ticks`. If any step fails, the end
+the added time must be at least 12.5 ms and 100 × `res_ticks`. Very short runs are noise,
+and one can take less time than the run before it; once a run is 12.5 ms or longer, the
+next one taking less time fails the check. If any step fails, the end
 record has `nonlinear: 1`. That means the clock does not follow the work, for example an
 emulator whose emulated time does not advance with CPU work (JIT). Without a host the
 guest's clock is the only one, so the block then ends `unconfirmed` even if its
@@ -88,8 +93,10 @@ the host's times are used and the flag is only a remark.
 more than a frame late loses a whole frame from the clock: two vertical blanks are
 counted as one. One FPGA core did this during back-to-back CIA writes (`cia_write`), and
 its times were short by whole frames. CIA-B's TOD counter counts lines by itself, without
-an interrupt. At startup the harness checks it against the beam over 200 lines (env
-`tod: 1` if it counts them). If it does, every timed run also reads it, and a run whose
+an interrupt. At startup the harness checks it against the beam alone, over 150 lines
+of one frame, up to four times (env `tod: 1` if it counts them; otherwise `tod_lines` and
+`tod_beam` give the counts of the last try). A counter that doesn't move at all is
+restarted once by writing its low byte, as a write to its high byte stops it. If it does, every timed run also reads it, and a run whose
 line count says it took more frames than `amt_ticks()` counted has the missing frames
 added back. Its `run` record then has `lost_frames`.
 

@@ -71,7 +71,16 @@ static int kn_verify(void *p, ULONG *sum)
     ULONG check = 0;
     int ok = c->result && !c->api->arena_failed() && c->b->verify(c->state, c->result, &check);
     *sum = check;
-    return ok && c->expect && c->expect->check == check;
+    if (!ok || !c->expect)
+        return 0;
+    if (c->expect->check == check)
+        return 1;
+    /* the same work at extended precision: a valid time, an inexact FPU */
+    if (c->expect->wide != c->expect->check && c->expect->wide == check) {
+        bh_note("the FPU ignored FPCR's rounding precision: the result is the extended-precision one");
+        return 1;
+    }
+    return 0;
 }
 
 static int same(const char *a, const char *b)

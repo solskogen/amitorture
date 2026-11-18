@@ -198,7 +198,7 @@ are guest colour clocks (`tick_hz` per second).
 
 | `ev` | Fields |
 |---|---|
-| `env` | `tick_hz`; `res_ticks` (the smallest clock step seen); `min_ticks` (the shortest repetition without a host); `host` (0/1); `tod` (1: CIA-B's TOD counts lines, so lost frames are put back, BENCH.md "Lost frames"); `plan` (entries, -1 = invalid plan); `plan_exclusive` (if set) |
+| `env` | `tick_hz`; `res_ticks` (the smallest clock step seen); `min_ticks` (the shortest repetition without a host); `host` (0/1); `tod` (1: CIA-B's TOD counts lines, so lost frames are put back, BENCH.md "Lost frames"); `tod_lines` and `tod_beam` (if `tod` is 0: the TOD and beam line counts of the last check, -1 = none); `plan` (entries, -1 = invalid plan); `plan_exclusive` (if set) |
 | `begin` | `blk`, `tier` (`micro`/`kernel`/`frame`/`thread`), `id` (plan id), `unit`, `per` (units per count), `mem` (`chip`/`slow`/`fast`/`rom`, if any), `kset` (kernels), `plan` (the count from the plan, if any) |
 | `go` | `id`, `rs`: sent right before a timed run starts (nothing else is sent until its `run` record), so a host stamping serial arrival times has the run's start in this record's newline and its end in the first byte of the `run` record |
 | `run` | `blk`, `ph` (`cold`/`size`/`rep`), `n` (count), `rs` (run sequence 1-255; mailbox position `$10000 \| id<<8 \| rs` during the run), `lost_frames` (frames the clock missed and the harness added back, if any), `timing.t` (with them added) |

@@ -6,40 +6,41 @@
 struct kexpect {
     const char *name;
     unsigned long check;
+    unsigned long wide;     /* the FPU ignored FPCR's rounding precision */
 };
 
 static const struct kexpect kexpect_k000[] = {
-    {"dhrystone", 0xcdafab83UL},
-    {"scene-2d", 0x5213784dUL},
-    {"zlib-deflate", 0xb14af591UL},
-    {"zlib-inflate", 0x6e0dd610UL},
-    {"ftgrays", 0xc5f7d9fcUL},
-    {"memcpy-large", 0x15938099UL},
-    {"aesgcm", 0x407e1b28UL},
-    {"chacha20poly1305", 0x9e34fe0eUL},
-    {"nfs3-project", 0x02de700bUL},
-    {"nfs3-clip", 0xe0e577eaUL},
+    {"dhrystone", 0xcdafab83UL, 0xcdafab83UL},
+    {"scene-2d", 0x5213784dUL, 0x5213784dUL},
+    {"zlib-deflate", 0xb14af591UL, 0xb14af591UL},
+    {"zlib-inflate", 0x6e0dd610UL, 0x6e0dd610UL},
+    {"ftgrays", 0xc5f7d9fcUL, 0xc5f7d9fcUL},
+    {"memcpy-large", 0x15938099UL, 0x15938099UL},
+    {"aesgcm", 0x407e1b28UL, 0x407e1b28UL},
+    {"chacha20poly1305", 0x9e34fe0eUL, 0x9e34fe0eUL},
+    {"nfs3-project", 0x02de700bUL, 0x02de700bUL},
+    {"nfs3-clip", 0xe0e577eaUL, 0xe0e577eaUL},
 };
 
 static const struct kexpect kexpect_k020[] = {
-    {"dhrystone", 0x485e35afUL},
-    {"scene-2d", 0xce295738UL},
-    {"zlib-deflate", 0x96fa083eUL},
-    {"zlib-inflate", 0xdc4c8450UL},
-    {"ftgrays", 0x5986fd18UL},
-    {"memcpy-large", 0x15938099UL},
-    {"aesgcm", 0xfb7c6f32UL},
-    {"chacha20poly1305", 0xf6f2de89UL},
+    {"dhrystone", 0x485e35afUL, 0x485e35afUL},
+    {"scene-2d", 0xce295738UL, 0xce295738UL},
+    {"zlib-deflate", 0x96fa083eUL, 0x96fa083eUL},
+    {"zlib-inflate", 0xdc4c8450UL, 0xdc4c8450UL},
+    {"ftgrays", 0x5986fd18UL, 0x5986fd18UL},
+    {"memcpy-large", 0x15938099UL, 0x15938099UL},
+    {"aesgcm", 0xfb7c6f32UL, 0xfb7c6f32UL},
+    {"chacha20poly1305", 0xf6f2de89UL, 0xf6f2de89UL},
 };
 
 static const struct kexpect kexpect_k020f[] = {
-    {"nfs3-project", 0x394bd009UL},
-    {"nfs3-clip", 0x519b4531UL},
+    {"nfs3-project", 0x394bd009UL, 0x861986e4UL},
+    {"nfs3-clip", 0x519b4531UL, 0x14ae4de7UL},
 };
 
 static const struct kexpect kexpect_k020s[] = {
-    {"nfs3-project", 0x394bd009UL},
-    {"nfs3-clip", 0xc5283504UL},
+    {"nfs3-project", 0x394bd009UL, 0x394bd009UL},
+    {"nfs3-clip", 0xc5283504UL, 0xc5283504UL},
 };
 
 #endif

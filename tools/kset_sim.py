@@ -11,7 +11,7 @@ linked into a hunk executable, loaded flat at 0x1000 and its kset_api is
 driven exactly like the bench harness does: setup, run (N loops, arena
 released after each), verify, teardown. Checksums are compared with
 kexpect.h (tools/kset_expect.py). Musashi's FPU ignores the FPCR rounding
-precision, so k020f's float kernels differ there; that is not a failure.
+precision, so k020f's float kernels give the "wide" checksum there.
 """
 
 import argparse
@@ -35,16 +35,16 @@ KEXPECT = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__)
 
 
 def load_expect(path=KEXPECT):
-    """{set: {kernel: checksum}} from kexpect.h."""
+    """{set: {kernel: (checksum, wide checksum)}} from kexpect.h."""
     out, cur = {}, None
     with open(path) as f:
         for line in f:
             m = re.match(r"static const struct kexpect kexpect_(\w+)\[\]", line)
             if m:
                 cur = out.setdefault(m.group(1), {})
-            m = re.match(r'\s*\{"([^"]+)", 0x([0-9a-f]{8})UL\}', line)
+            m = re.match(r'\s*\{"([^"]+)", 0x([0-9a-f]{8})UL, 0x([0-9a-f]{8})UL', line)
             if m and cur is not None:
-                cur[m.group(1)] = m.group(2)
+                cur[m.group(1)] = (m.group(2), m.group(3))
     return out
 
 
@@ -205,8 +205,8 @@ def main(argv=None):
         for r in recs:
             want = expect.get(r["set"], {}).get(r["name"])
             if "check" in r and want is not None:
-                r["expect"] = want
-                r["match"] = want == r["check"]
+                r["expect"] = want[0]
+                r["match"] = r["check"] in want
         allrecs += recs
         if a.json:
             continue
@@ -221,10 +221,8 @@ def main(argv=None):
                   f"{'  OOM' if r['oom'] else ''}")
     if a.json:
         json.dump(allrecs, sys.stdout, indent=1)
-    # Musashi's FPU ignores the FPCR rounding precision, so k020f's float
-    # kernels don't give the IEEE single results there; they're not counted.
     def good(r):
-        return r.get("ok") and (r.get("match") is not False or r["set"] == "k020f")
+        return r.get("ok") and r.get("match") is not False
     return 0 if all(good(r) for r in allrecs) else 1
 
 

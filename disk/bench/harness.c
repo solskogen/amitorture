@@ -57,25 +57,45 @@ static ULONG tod_lines(void)
     return (h << 16) | (m << 8) | l;
 }
 
+static ULONG tod_d = 0xffffffffUL, tod_v;  /* the last check's counts */
+
 /* Does the TOD counter count the beam's lines? Compared with the beam
- * over 200 lines of one frame, so the check does not depend on the VERTB
- * interrupt that amt_ticks() counts frames with. */
+ * alone over 150 lines of one frame (lines 20-60 to 170-210), so the check
+ * depends neither on the VERTB interrupt that amt_ticks() counts frames
+ * with nor on when it is served. */
+static int tod_try(void)
+{
+    ULONG v0, v, l0, l1, d;
+    do
+        v0 = amt_beam() >> 8;
+    while (v0 < 20 || v0 > 60);
+    l0 = tod_lines();
+    do {
+        v = amt_beam() >> 8;
+        if (v < v0)
+            return 0;
+    } while (v < v0 + 150);
+    l1 = tod_lines();
+    d = (l1 - l0) & 0xffffffUL;
+    tod_d = d;
+    tod_v = v - v0;
+    return d + 2 >= v - v0 && d <= v - v0 + 2;
+}
+
 static int tod_check(void)
 {
-    ULONG f = amt_frames_now(), v0, v, l0, l1, d;
-    while (amt_frames_now() == f)
-        ;
-    f = amt_frames_now();
-    v0 = amt_beam() >> 8;
-    l0 = tod_lines();
-    do
-        v = amt_beam() >> 8;
-    while (v < v0 + 200 && amt_frames_now() == f);
-    l1 = tod_lines();
-    if (amt_frames_now() != f || v < v0 + 200)
-        return 0;
-    d = (l1 - l0) & 0xffffffUL;
-    return d + 2 >= v - v0 && d <= v - v0 + 2;
+    int i;
+    for (i = 0; i < 4; i++) {
+        if (tod_try())
+            return 1;
+        /* stopped: a write to the high byte stops the counter until the
+         * low byte is written (unless CRB bit 7 selects the alarm) */
+        if (i == 1 && tod_d == 0 && !(*(volatile UBYTE *)0xbfdf00 & 0x80)) {
+            UBYTE lo = *(volatile UBYTE *)0xbfd800;
+            *(volatile UBYTE *)0xbfd800 = lo;
+        }
+    }
+    return 0;
 }
 
 static int plan_valid(void)
@@ -114,6 +134,11 @@ void bh_begin(void)
         json_int("res_ticks", (long)res_ticks);
         json_int("min_ticks", (long)min_ticks);
         json_int("tod", tod_ok);
+        if (!tod_ok) {
+            /* why not: TOD and beam lines over the last check (-1: none) */
+            json_int("tod_lines", (long)tod_d);
+            json_int("tod_beam", (long)tod_v);
+        }
         json_int("host", host);
         json_int("plan", plan_ok ? amt_plan.n : -1);
         if (plan_ok && (amt_plan.flags & BH_PLAN_EXCLUSIVE))
@@ -315,12 +340,15 @@ int bh_run(const struct bh_blk *b)
             /* the clock follows the work: doubling the count doubles the
              * time it adds (a fixed cost per run, as the frame blocks' start
              * inside a frame, adds nothing), judged at every doubling long
-             * enough to time */
-            if (count >= 4 && prev - prev2 >= floor_ticks / 8 && prev - prev2 >= res_ticks * 100) {
+             * enough to time. Shorter runs are noise: one can be faster
+             * than the run before it. */
+            if (count >= 4 && prev >= prev2 && prev - prev2 >= floor_ticks / 8 &&
+                prev - prev2 >= res_ticks * 100) {
                 ULONG d1 = prev - prev2, d2 = tt - prev;
                 if (tt < prev || d2 < d1 / 25 * 49 || d2 > d1 / 25 * 51)
                     nonlinear = 1;
-            }
+            } else if (prev >= floor_ticks / 8 && (prev2 > prev || tt < prev))
+                nonlinear = 1;
             if (tt >= floor_ticks || count >= 0x40000000UL) {
                 a = ask(b, "bench_longer", count, 0);
                 if (count >= 0x40000000UL || a < 0 || (a == 0 && tt >= min_ticks)) {
