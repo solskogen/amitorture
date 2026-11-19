@@ -341,11 +341,13 @@ int bh_run(const struct bh_blk *b)
              * time it adds (a fixed cost per run, as the frame blocks' start
              * inside a frame, adds nothing), judged at every doubling long
              * enough to time. Shorter runs are noise: one can be faster
-             * than the run before it. */
+             * than the run before it. The slack, 2 % plus 1/16 frame, covers
+             * per-frame costs (interrupts) that a run picks up depending on
+             * where in the frame it starts; a lost frame is far outside it. */
             if (count >= 4 && prev >= prev2 && prev - prev2 >= floor_ticks / 8 &&
                 prev - prev2 >= res_ticks * 100) {
-                ULONG d1 = prev - prev2, d2 = tt - prev;
-                if (tt < prev || d2 < d1 / 25 * 49 || d2 > d1 / 25 * 51)
+                ULONG d1 = prev - prev2, d2 = tt - prev, slack = d1 / 25 + frame_cck / 16;
+                if (tt < prev || d2 + slack < 2 * d1 || d2 > 2 * d1 + slack)
                     nonlinear = 1;
             } else if (prev >= floor_ticks / 8 && (prev2 > prev || tt < prev))
                 nonlinear = 1;

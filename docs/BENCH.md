@@ -75,7 +75,10 @@ gets a larger `count`, so the time per repetition stays about the same.
 ### Linearity
 
 At every doubling during sizing, the harness checks that doubling `count` doubles the time
-the run adds: (time(n) − time(n/2)) should be 1.96 to 2.04 times (time(n/2) − time(n/4)).
+the run adds: (time(n) − time(n/2)) should be twice (time(n/2) − time(n/4)), within 2 % of
+the latter plus 1/16 frame. The 1/16 frame covers per-frame costs, such as interrupts,
+that a run picks up or misses depending on where in the frame it starts. A lost frame is
+far outside it.
 Comparing the added time means that a fixed cost per run, such as a frame block starting
 part-way into a frame, does not count against it. Steps too short to judge are skipped:
 the added time must be at least 12.5 ms and 100 × `res_ticks`. Very short runs are noise,
