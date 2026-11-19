@@ -8,7 +8,8 @@
 #   make clean
 #
 # AMIGA_TOOLCHAIN   toolchain bin dir (default /opt/amiga/bin)
-# BUILD_ID          string baked into the header (default: git rev + date)
+# BUILD_ID          string baked into the header (default: git rev, -dirty
+#                   with uncommitted changes, + date)
 # PARAMS            extra mkadf --param arguments, e.g. PARAMS="mode=quick seed=5"
 
 AMIGA_TOOLCHAIN ?= /opt/amiga/bin
@@ -29,7 +30,7 @@ ASFLAGS := -Fhunk -quiet -m68000 -I$(NDK_INCLUDE)
 LDFLAGS := -m68000 -nostdlib -nostartfiles -noixemul
 LIBGCC  := $(shell $(CC) -m68000 -print-libgcc-file-name)
 
-BUILD_ID ?= $(shell git rev-parse --short HEAD 2>/dev/null || echo nogit) $(shell date -u +%Y-%m-%d)
+BUILD_ID ?= $(shell git describe --always --dirty --abbrev=7 --exclude="*" 2>/dev/null || echo nogit) $(shell date -u +%Y-%m-%d)
 
 # start.s must be linked first; then the rest of the runtime.
 RT_C   := rt/main.c rt/out.c rt/crc32.c rt/takeover.c rt/mem.c rt/mod.c rt/screen.c

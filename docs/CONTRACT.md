@@ -34,7 +34,7 @@ Standard 880 KB DD ADF (901120 bytes, 1760 sectors × 512).
 | 48 | u32 | `data_alloc`: segment 1 size = max(data_sectors*512, data_size + bss_size, 4) |
 | 52 | u32 | `plan_offset`: blob offset of the bench work plan (§15), 0 = none (every disk but the bench disk) |
 | 64 | 64 bytes | **Run parameters** (§4), baked in per run by the runner via `mkadf.py --param` |
-| 128 | 64 bytes | build id: an ASCII, NUL-padded string (git rev + build date) |
+| 128 | 64 bytes | build id: an ASCII, NUL-padded string (git rev, `-dirty` if built from uncommitted source, + build date) |
 | rest | | zero |
 
 ### Relocation semantics
