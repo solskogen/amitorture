@@ -281,6 +281,38 @@ static int confirmed(const ULONG *t, int n, ULONG *best, ULONG *second)
 
 static const char *note;
 
+/* every block's result on this boot, for bench_score (bh_result) */
+#define RES_MAX 160
+struct res {
+    const char *name, *kset;
+    int st;
+    ULONG n, best, per;
+};
+static struct res res[RES_MAX];
+static int n_res;
+
+static int same(const char *a, const char *b)
+{
+    if (!a || !b)
+        return a == b;
+    while (*a && *a == *b)
+        a++, b++;
+    return *a == *b;
+}
+
+int bh_result(const char *name, const char *kset, ULONG *n, ULONG *best, ULONG *per)
+{
+    int i;
+    for (i = n_res - 1; i >= 0; i--)
+        if (same(res[i].name, name) && (!kset || same(res[i].kset, kset))) {
+            *n = res[i].n;
+            *best = res[i].best;
+            *per = res[i].per;
+            return res[i].st;
+        }
+    return 0;
+}
+
 void bh_note(const char *s)
 {
     note = s;
@@ -290,7 +322,7 @@ int bh_run(const struct bh_blk *b)
 {
     const struct bh_plan_entry *pe = plan_find(b->id);
     ULONG t[BH_MAX_REPS], cold = 0, count, prev = 0, prev2 = 0, sum0 = 0, sum1 = 0, best, second;
-    int n = 0, ok = 1, nonlinear = 0, conf, a;
+    int n = 0, ok = 1, nonlinear = 0, conf, a, st;
     const char *why = 0;
 
     if (plan_ok && ((pe && (pe->flags & BH_PLAN_SKIP)) || (!pe && (amt_plan.flags & BH_PLAN_EXCLUSIVE)))) {
@@ -390,10 +422,20 @@ int bh_run(const struct bh_blk *b)
     }
 
 done:
+    st = !ok ? 3 : conf && !(nonlinear && !host) ? 1 : 2;
+    if (n_res < RES_MAX) {
+        struct res *r = &res[n_res++];
+        r->name = b->name;
+        r->kset = b->kset;
+        r->st = st;
+        r->n = count;
+        r->best = best;
+        r->per = b->per;
+    }
     rec(b, "end");
     /* without a host the guest's clock is the only one: a clock that did
      * not follow the work leaves the time unconfirmed */
-    json_str("st", !ok ? "fail" : conf && !(nonlinear && !host) ? "ok" : "unconfirmed");
+    json_str("st", st == 3 ? "fail" : st == 1 ? "ok" : "unconfirmed");
     if (why)
         json_str("why", why);
     if (note)

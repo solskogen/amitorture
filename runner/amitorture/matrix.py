@@ -637,6 +637,9 @@ def bench_entries():
         ("A4000", "68EC030", "none", "fast"),
         ("A4000", "68040nommu", "internal", "fast"),
         ("A4000", "68060nommu", "internal", "fast"),
+        # with the MMU, for the MMU tier (Amiberry: slow core, no JIT)
+        ("A4000", "68040", "internal", "fast"),
+        ("A4000", "68060", "internal", "fast"),
     ):
         base = make_entry(model, cpu, fpu, core, eid=f"bench-{cpu.lower()}" + ("-ce" if core == "ce" else ""),
                           title_extra=", bench disk")

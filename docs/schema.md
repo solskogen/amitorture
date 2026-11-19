@@ -199,11 +199,12 @@ are guest colour clocks (`tick_hz` per second).
 | `ev` | Fields |
 |---|---|
 | `env` | `tick_hz`; `res_ticks` (the smallest clock step seen); `min_ticks` (the shortest repetition without a host); `host` (0/1); `tod` (1: CIA-B's TOD counts lines, so lost frames are put back, BENCH.md "Lost frames"); `tod_lines` and `tod_beam` (if `tod` is 0: the TOD and beam line counts of the last check, -1 = none); `plan` (entries, -1 = invalid plan); `plan_exclusive` (if set) |
-| `begin` | `blk`, `tier` (`micro`/`kernel`/`frame`/`thread`), `id` (plan id), `unit`, `per` (units per count), `mem` (`chip`/`slow`/`fast`/`rom`, if any), `kset` (kernels), `plan` (the count from the plan, if any) |
+| `begin` | `blk`, `tier` (`micro`/`kernel`/`frame`/`thread`/`mmu`), `id` (plan id), `unit`, `per` (units per count), `mem` (`chip`/`slow`/`fast`/`rom`, if any), `kset` (kernels), `plan` (the count from the plan, if any) |
 | `go` | `id`, `rs`: sent right before a timed run starts (nothing else is sent until its `run` record), so a host stamping serial arrival times has the run's start in this record's newline and its end in the first byte of the `run` record |
 | `run` | `blk`, `ph` (`cold`/`size`/`rep`), `n` (count), `rs` (run sequence 1-255; mailbox position `$10000 \| id<<8 \| rs` during the run), `lost_frames` (frames the clock missed and the harness added back, if any), `timing.t` (with them added) |
 | `end` | `blk`, `st` (`ok`/`unconfirmed`/`fail`), `why` (if not ok), `note` (a remark about the block), `n`, `reps`, `sum` (first checksum) and `sum_last` (if different; neither for blocks reading hardware), `nonlinear` (1 if doubling the count did not double the time it adds, BENCH.md "Linearity"; without a host the block is then `unconfirmed`), `timing{best, second, cold}` |
 | `skip` | `blk`, `tier`, `id`, `why` |
+| `score` | once, at the end (BENCH.md "Score"); each field only if its blocks ran: `dmips_x100`, `dhry_kset`, `mflops_x100`, `chip_mbs_x100`, `fast_mbs_x100`, `rom_mbs_x100`, `mmu_hit_pct_x10` (`mmu_hit` over `mmu_off`, tenths of a percent), `mmu_miss_ns_x10`, `mmu_fault_ns`, `mmu_pflusha_ns_x10`, `mmu_ptest_ns_x10` (PLPAR on a 68060) |
 
 ```
 {"v":1,"seq":9,"t":"bench","ev":"begin","blk":"dhrystone","tier":"kernel","id":64,"unit":"loop","per":1,"mem":"fast","kset":"k000"} *xxxxxxxx

@@ -157,6 +157,45 @@ need a host that times them with its own clock, and they are skipped without one
 | `stop_timer` | thread | STOP woken 1500 times a second by a CIA timer, as an idle AmigaOS |
 | `flood_recovery` | thread | a CIA write flood, then quiet integer work; mailbox position `$20000` during the quiet phases |
 
+### MMU tier (`bench_mmu`, module 43)
+
+Paged MMU costs on a 68030, 68040 or 68060 (`disk/bench/mmu_asm.s`). The module builds its own
+translation tables in its pool and maps a 2 MB test window at a free logical address. If a
+transparent translation register covers the window, it is cleared while the MMU is on, and its
+cache mode is copied into the pages. All of it is undone after each run. It is skipped on EC
+CPUs, on a 68020 + 68851, and when the MMU is already enabled (its tables belong to someone else).
+
+| Block | Unit | What |
+|---|---|---|
+| `mmu_off` | read | reads with the MMU off: the reference |
+| `mmu_hit` | read | the same reads through the window, every page already in the ATC |
+| `mmu_walk` | read | reads striding over more pages than the ATC holds, so each one is a table walk |
+| `mmu_fault` | fault | a read of an invalid page: bus error, the handler validates the page, RTE retries |
+| `mmu_pflusha` | insn | PFLUSHA |
+| `mmu_ptest` | insn | PTESTR (68030/68040) |
+| `mmu_plpa` | insn | PLPAR (68060) |
+
+The three read blocks read the same physical addresses, so they share one checksum.
+
+### Score (`bench_score`, module 44)
+
+The last module runs nothing. It turns the results of the blocks before it into absolute
+numbers, sends them as one `score` record, and shows them at the bottom of the screen, like
+xsysinfo. There is no reference machine.
+
+| Number | From |
+|---|---|
+| DMIPS | `dhrystone` loops per second / 1757 (VAX 11/780 = 1). The `k020` set when it ran, else `k000` |
+| MFLOPS | harmonic mean of the `fadd` and `fmul` rates; `none` without an FPU |
+| MB/s chip, fast, rom | the `mem_read_*` blocks |
+| MMU hit | how much slower `mmu_hit` is than `mmu_off`, in percent |
+| MMU miss | `mmu_walk` minus `mmu_hit`: the time of one table walk, in ns |
+| MMU fault | one `mmu_fault` round trip, in µs |
+| pflusha, ptest | ns per instruction (`ptest` shows PLPAR on a 68060) |
+
+These come from the guest's own clock, so they are the speed the Amiga sees. Under an emulator
+that is what a program would measure, not what the host spent.
+
 ## The work plan (CONTRACT §15)
 
 A fresh disk sizes every block itself. A baseline run records each block's `count`. The
@@ -169,7 +208,8 @@ run only the listed blocks (`exclusive`).
 `bench` records (docs/schema.md §1.11):
 - `env` once;
 - for every block, `begin`, a `go` and a `run` per timed run, and `end`;
-- or a single `skip`.
+- or a single `skip`;
+- `score` once, at the end.
 
 All times are in guest colour clocks.
 
@@ -210,9 +250,10 @@ amitorture bench plan RESULTS [--entry ID] [-o plan.json]
 amitorture compare --amiberry OLD --amiberry NEW [--repeat 3] [--threshold 1] [--pin 2-5]
 ```
 
-`--matrix bench` (15 entries, runner/amitorture/matrix.py `bench_entries`) runs the bench disk on
+`--matrix bench` (17 entries, runner/amitorture/matrix.py `bench_entries`) runs the bench disk on
 68000, 68000 cycle-exact, 68010, 68020 (JIT, threaded CPU, JIT + threaded, threaded with one host
-CPU), 68030, 68EC030 (+JIT), 68040 without MMU (+JIT) and 68060 without MMU (+JIT). A run takes
+CPU), 68030, 68EC030 (+JIT), 68040 and 68060 without MMU (+JIT), and 68040 and 68060 with MMU
+(no JIT: Amiberry's MMU emulation needs the interpreter). A run takes
 either bench entries or accuracy entries, never both. It always runs one launch at a time.
 
 **Host CPUs.** A bench run pins every emulator to the same host CPUs (`run --pin`, default

@@ -445,7 +445,8 @@ class Matrix(unittest.TestCase):
             out = subprocess.run([make, "-C", str(ROOT / "disk"), "--dry-run", f"B={tmp}", "bench"],
                                  check=True, capture_output=True, text=True).stdout
             sources = set(re.findall(r" -c -o \S+ ((?:modules|bench)/[^/\s]+\.c)", out))
-            self.assertEqual(sources, {"bench/harness.c", "bench/micro.c", "bench/kern.c", "bench/system.c"})
+            self.assertEqual(sources, {"bench/harness.c", "bench/micro.c", "bench/kern.c", "bench/system.c",
+                                              "bench/mmu.c", "bench/score.c"})
             self.assertIn(f"{tmp}/amitorture-bench.adf", out)
 
 

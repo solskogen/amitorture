@@ -279,7 +279,9 @@ The API is in `disk/rt/mod.h`, which is authoritative; read it. In short:
 | 40 | bench_micro | BARE | bench disk only: micro tier (docs/BENCH.md) |
 | 41 | bench_kernels | BARE | bench disk only: kernel tier |
 | 42 | bench_system | BARE | bench disk only: frame and thread tiers |
-| 43-63 | reserved | | later |
+| 43 | bench_mmu | BARE | bench disk only: MMU tier |
+| 44 | bench_score | BARE | bench disk only: the score record and screen |
+| 45-63 | reserved | | later |
 
 Disk groups are in disk/Makefile (`DISK_SET_*`). `make check-groups` fails if a module is in no group or in two.
 

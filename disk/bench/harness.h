@@ -57,6 +57,11 @@ void bh_skip(const struct bh_blk *b, const char *why);
 /* from inside bh_run (verify): a remark for the block's end record ("note") */
 void bh_note(const char *s);
 
+/* The result of a block that ran earlier on this boot (kset NULL: any):
+ * 0 none, 1 ok, 2 unconfirmed, 3 fail; n = count, best = colour clocks for
+ * n counts of per operations each. For bench_score. */
+int bh_result(const char *name, const char *kset, ULONG *n, ULONG *best, ULONG *per);
+
 /* mailbox case number while a block's timed work runs:
  * BH_POS_RUN | id << 8 | sequence (1-255, per timed run) */
 #define BH_POS_RUN   0x10000UL
