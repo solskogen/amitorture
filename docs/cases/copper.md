@@ -1,4 +1,4 @@
-# copper (module 13, AMT_PH_BARE, disk "chip")
+# copper (module 13, AMT_PH_BARE, disk group "core")
 
 Audit observation gates: `copen_pause_resume` needs at least one valid
 disable-window trial; four missed windows are untestable. After the tested WAIT,

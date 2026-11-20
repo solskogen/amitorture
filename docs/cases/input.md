@@ -1,4 +1,4 @@
-# input (module 15, AMT_PH_BARE, disk group "chip")
+# input (module 15, AMT_PH_BARE, disk group "core")
 
 Audit timing gates: the keyboard hold test's deadline starts before the first
 host request, conservatively including both round trips. It needs enough
@@ -25,7 +25,7 @@ acknowledged; DDRA is restored; PRA writes keep the LED bit and write OVL = 0. P
 pins outputs, high), which is what Kickstart 2.04+ and AROS write at boot (POTGO is write-only). JOY0DAT is
 restored through JOYTEST, so the OS pointer does not jump. Keys injected are pressed one at a time (plus one
 A+S rollover); never Ctrl-Amiga-Amiga, never caps lock ($62: the LED key toggles and is not observable),
-never $68-$7F (reset warning $78, CDTV keys). Keyboard lost-sync recovery is out of scope.
+never $68-$7F (reset warning $78, CDTV keys). Keyboard lost-sync recovery is out of scope. The UART cases send one newline on the runtime's serial line (harmless to the host: an empty line) and clear INTREQ RBF; SERPER is not changed.
 
 ## Requests sent (the host must implement these, CONTRACT §13)
 - `wait` `{}`
@@ -69,4 +69,6 @@ never $68-$7F (reset warning $78, CDTV keys). Keyboard lost-sync recovery is out
 | `cd32_id_released` | cd32pad | buttons=0: the 9 reads are $0FF (7 released buttons = 1, then 1, then 0) | lowlevel.library CD32 pad protocol | no pad, or wrong shift sequence / id bits |
 | `cd32_buttons_single` | cd32pad | each of the 7 buttons alone: only its read is 0 | as above, order blue, red, yellow, green, forward, reverse, play | button order wrong |
 | `cd32_buttons_combo` | cd32pad | masks $7F, $55, $2A | as above | buttons interfere |
+| `uart_tsre_after_send` | no | Paula UART at the runtime's SERPER: after TBE\|TSRE, write SERDAT = $10A (8N1 newline); SERDATR TBE and TSRE (bits 13, 12) both set again within 4x the 10-bit frame time + 4 lines; `timing` cck, expect_cck (frame time; informational). Skipped with run flag `noserial` | HRM A SERDATR: TSRE = shift register empty, set when the stop bit has gone out and the buffer is empty | TSRE never set (polled senders hang) |
+| `uart_ovrun_clear` | no | INTREQ = $0800 (clear RBF): SERDATR OVRUN and RBF (bits 15, 14) read 0. Skipped with `noserial` | HRM A SERDATR: OVRUN is cleared together with RBF in INTREQ | OVRUN or RBF stays set after the clear (a receiver driver then loops) |
 | `cd32_normal_mode` | cd32pad | red+blue pressed with pin 5 high: PRA bit 7 = 0 and DATRY = 0; released: both 1 | CD32 pad 2-button mode | normal mode not emulated |

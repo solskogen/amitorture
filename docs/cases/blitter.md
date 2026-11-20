@@ -53,6 +53,8 @@ not exist there.
 | `fill_incl_inplace`, `fill_excl_inplace` | the polygon idiom: one edge plane filled in place (A=D) | as above | |
 | `line_o1_0` … `line_o8_2` (24) | 3 slopes per octant (codes as in hardware/blit.h OCTANT1..8). The middle slope has dmin = dmax/2, so the error term reaches exactly 0 | BLTAPTL = 4dmin-2dmax, SIGN set if negative. Each pixel: SIGN clear means a minor step and error += BLTAMOD (4(dmin-dmax)); SIGN set means error += BLTBMOD (4dmin); the major step is always taken. SUD/SUL/AUL choose the axes; BLTSIZE = (dmax+1)<<6 \| 2 ("Line mode"). BZERO checked in every line case (see "Unsure") | octant decoding, sign test (< 0 vs <= 0), error update order, word-crossing of ASH; BZERO stale after a line blit |
 | `line_horizontal`, `line_horizontal_left`, `line_vertical`, `line_vertical_up`, `line_diag`, `line_single_pixel`, `line_two_pixels`, `line_long` | degenerate and long lines (dmin=0, 45 degrees, 1 pixel, 320 pixels) | as above | |
+| `line_dmin_1`, `line_dmin_dmax_m1`, `line_len_1024` | error-term edges: dmin = 1 (SIGN stays set almost to the end), dmin = dmax−1 (SIGN clear almost every step), and the longest line, BLTSIZE height field 0 = 1024 pixels | as above; BLTSIZE H = 0 means 1024 ("Line mode", BLTSIZE) | 10-bit length counter wraps or stops early; sign/error saturates |
+| `line_dpt_ne_cpt`, `line_dpt_ne_cpt_sing` | BLTDPT ≠ BLTCPT: the first pixel goes to the word at BLTDPT, every later pixel to the C pointer stepped by the line (D takes the value of C after each step); the second case with SING and $4A | HRM "Line mode" loads BLTCPT and BLTDPT with the same start word. The behaviour for different values is the one fill-line code depends on (D pointed at a scratch word so the first dot is not drawn), and WinUAE/Amiberry `blitter.cpp` copies BLTCPT into BLTDPT after each step | D pointer stepped on its own, or the first dot written through C |
 | `line_sing_o1` … `line_sing_o8` | SING with the XOR minterm $4A, one line per octant | SING draws one pixel per horizontal line (the fill-able line idiom). Modelled as the first pixel on each row | SING ignored, or the wrong pixel kept |
 | `line_texture_0` … `_5` | BLTBDAT patterns with different BSH start bits | the BLTBDAT texture bit decides each pixel; BSH is the start bit, 0 = least significant; the next pixel uses the next lower bit (see "Unsure") | texture ignored, or rotated the wrong way |
 | `line_lf_fa`, `_0a`, `_4a`, `_2a`, `_8a`, `_ba` | line minterms of the form X<<4 \| $A, with a texture | A is the pixel bit ($8000>>ASH) and B the texture bit; outside the pixel D = C | wrong A/B roles in line mode |
@@ -93,8 +95,9 @@ BBUSY clear for that blit. It is timing only and not compared.
   masks the A data whether fetched or preloaded (`blitter_doblit`: with A off
   `bltadat = blt_info.bltadat`, then `&= blit_masktable[i]`;
   `blitter_loadadat`: `&= bltafwm` / `bltalwm`). Not confirmed on real
-  hardware: a real-hardware fail of `mask_adat_rect` means this rule is
-  wrong, not that the hardware is.
+  hardware. For that reason `mask_adat_rect` is info-only (flag `BF_INFO`):
+  a mismatch is reported UNTESTABLE with `undef_crc_model`/`undef_crc_got`,
+  never FAIL.
 - **The A/B previous-word registers at the start of a blit** are not
   specified. The priming blit makes them zero under both possible behaviours
   (cleared at the start, or kept from the last blit). The data registers of

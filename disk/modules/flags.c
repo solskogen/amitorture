@@ -52,8 +52,6 @@ void fl_trap_table(UWORD *out);
 void fl_trap1_h(void);
 void fl_trap2_h(void);
 void fl_trap3_h(void);
-void fl_trapv_h(void);
-extern volatile ULONG fl_trapv_count;
 typedef ULONG (*fg_fn)(ULONG a, ULONG b, ULONG ccr, UBYTE *out);
 extern fg_fn fg_tab[];
 void fl_movefromccr_table(UWORD *out);   /* flags_010.s, 68010+ */
@@ -816,44 +814,30 @@ static const struct mpcase mp_cases[] = {
 };
 
 /* ------------------------------------------------------------ TRAP / RTE */
-static const char *const nm_trap[] = { "sr_after_trap1", "sr_after_trap2", "sr_in_trap3", "sr_after_trapv" };
+static const char *const nm_trap[] = { "sr_after_trap1", "sr_after_trap2", "sr_in_trap3" };
 static ULONG run_trap(void)
 {
     ULONG i;
-    fl_trapv_count = 0;
     fl_trap_table(wbuf);
-    for (i = 0; i < 128; i++)
+    for (i = 0; i < 96; i++)
         got[i] = wbuf[i];
-    got[128] = fl_trapv_count;
-    got[129] = got[130] = got[131] = 0;
-    return crc_got(132);
+    return crc_got(96);
 }
 /* PRM/UM exception processing: the SR is copied, S set, T cleared; the CCR
- * is unchanged on entry and RTE restores the stacked SR. TRAPV traps only
- * when V is set (vector 7). */
+ * is unchanged on entry and RTE restores the stacked SR. (TRAPV is the
+ * exceptions module's trapv_v_set / trapv_v_clear.) */
 static void model_trap(ULONG i, ULONG *e)
 {
-    if (i == 32) {
-        e[0] = 16;
-        e[1] = e[2] = e[3] = 0;
-        return;
-    }
     e[0] = sr_hi | i;
     e[1] = sr_hi | (i ^ 0x1f);
     e[2] = sr_hi | i;
-    e[3] = sr_hi | i;
 }
 static void in_trap(ULONG i)
 {
-    if (i == 32) {
-        json_str("what", "TRAPV taken count over ccr 0..31 (V set in 16)");
-        return;
-    }
     in_ccr(i);
     json_str("trap1", "handler EORI #$1F,CCR; RTE");
     json_str("trap2", "handler EORI.W #$1F,(SP); RTE (stacked SR)");
     json_str("trap3", "handler MOVE SR,D5; RTE");
-    json_str("trapv", "handler ADDQ.L #1,mem; RTE");
 }
 
 /* ------------------------------------------------------------ flags across gaps */
@@ -1011,7 +995,7 @@ void amt_run_flags(void)
 {
     int i, k;
     struct tcase t;
-    amt_vec_fn o1, o2, o3, o4;
+    amt_vec_fn o1, o2, o3;
 
     /* the contract value (CONTRACT section 10: the bare phase runs at SR =
      * $2000), not a read-back: a wrong upper SR byte must not agree with
@@ -1038,19 +1022,17 @@ void amt_run_flags(void)
             TC("preserve_nonflag", "instruction changed the CCR although the PRM says it does not (or SWAP set N/Z/V/C wrong)", 32 * FL_NPRES, 1, nm_sr, preserve),
             TC("x_vs_c", "an instruction that sets C (or none) changed X, or N/Z/V/C wrong; X must be unaffected and visible to ROXL/ADDX (PRM per-instruction condition codes)", 4 * FL_NXC, 3, nm_xc, xc),
             TC("shift_rotate_xc", "shift/rotate result or flags wrong: ROXd count 0 sets C=X, ROd never touches X, LSd/ASd set X=C, count 0 clears C, ASL V if MSB ever changes (PRM ASL/LSL/ROL/ROXL)", SH_N, 2, nm_shift, shift),
-            TC("trap_rte_ccr", "CCR not preserved into a TRAP handler / restored by RTE, stacked SR change not applied, or TRAPV wrong (PRM 6.3 exception processing, RTE, TRAPV)", 33, 4, nm_trap, trap),
+            TC("trap_rte_ccr", "CCR not preserved into a TRAP handler / restored by RTE, or stacked SR change not applied (PRM 6.3 exception processing, RTE)", 32, 3, nm_trap, trap),
         };
         for (i = 0; i < (int)(sizeof(tcs) / sizeof(tcs[0])); i++) {
             if (i == 8) {
                 o1 = amt_vec_set(33, fl_trap1_h);
                 o2 = amt_vec_set(34, fl_trap2_h);
                 o3 = amt_vec_set(35, fl_trap3_h);
-                o4 = amt_vec_set(7, fl_trapv_h);
                 run_tcase(&tcs[i]);
                 amt_vec_set(33, o1);
                 amt_vec_set(34, o2);
                 amt_vec_set(35, o3);
-                amt_vec_set(7, o4);
                 continue;
             }
             run_tcase(&tcs[i]);

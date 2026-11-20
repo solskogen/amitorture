@@ -57,8 +57,8 @@
 - id: cpu.vbr_movec_moves
   area: CPU
   what: VBR, MOVEC, MOVES
-  cases: [exceptions.*movec*, exceptions.*vbr*, cpu_basic.*movec*, mmu.*moves*, memory.*moves*, probe.hello]
-  partial: VBR/CACR are read by the probe and used by every BARE module; MOVES is only reached by the mmu/memory modules
+  cases: [exceptions.*movec*, exceptions.*vbr*, exceptions.*moves*, cpu_basic.*movec*, mmu.*moves*, memory.*moves*, probe.hello]
+  partial: VBR/CACR are read by the probe and used by every BARE module; exceptions.moves_sfc_dfc covers MOVES with SFC/DFC = 5 (supervisor data) only; other function codes are reached only by the mmu/memory modules
 
 - id: cpu.060_unimplemented
   area: CPU
@@ -72,7 +72,7 @@
 
 - id: cpu.timing
   area: CPU
-  what: instruction throughput fingerprint
+  what: fixed CPU loop results, beam/E-clock sanity (throughput: bench disk)
   cases: [timing.*]
 
 - id: cpu.cycle_timing
@@ -101,8 +101,8 @@
 
 - id: agnus.beamcon0
   area: Agnus/Alice
-  what: BEAMCON0 (ECS/AGA programmable sync, PAL/NTSC switching)
-  cases: [display.*beamcon*, display.*sync*]
+  what: BEAMCON0 (ECS/AGA PAL/NTSC switching; programmable sync not tested)
+  cases: [display.beamcon0_*]
 
 - id: agnus.diw_ddf
   area: Agnus/Alice
@@ -268,7 +268,7 @@
 - id: paula.uart
   area: Paula
   what: UART (SERPER, 8/9 bit, RBF/TBE interrupts, overrun)
-  cases: [paula.*ser*, paula.*uart*, interrupts.map_tbe]
+  cases: [paula.*ser*, paula.*uart*, input.uart_*, interrupts.map_tbe]
   partial: the UART carries the results; loopback/overrun need the serial port looped back
 
 - id: paula.pots
@@ -280,7 +280,7 @@
 - id: cia.timers
   area: CIA
   what: timers A/B in all modes
-  cases: [cia.ciaa_ta_*, cia.ciaa_tb_*, cia.ciab_ta_*, cia.ciab_tb_*, interrupts.cia_*]
+  cases: [cia.ciaa_ta_*, cia.ciaa_tb_*, cia.ciab_ta_*, cia.ciab_tb_*, cia.ciaa_pb?_toggle, interrupts.cia_*]
 
 - id: cia.tod
   area: CIA
@@ -329,7 +329,7 @@
 - id: input.lightpen
   area: Input
   what: lightpen (VPOSR LP)
-  cases: [input.*lightpen*, input.*lp*]
+  not_covered: needs a lightpen pulse on the port 0 fire line, which the host cannot inject; no module tests it
 
 # ----------------------------------------------------------------- Floppy
 - id: floppy.drives

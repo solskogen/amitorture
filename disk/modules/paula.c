@@ -1,5 +1,5 @@
 /* paula: audio DMA/interrupts/modulation and the disk controller
- * (CONTRACT.md section 10, module id 14, bare phase, disk group "chip").
+ * (CONTRACT.md section 10, module id 14, bare phase, disk group "core").
  *
  * Expectations come from the Amiga Hardware Reference Manual (HRM):
  *   chapter 5 "Audio hardware" (AUDxLC/LEN/PER/VOL/DAT, DMA and interrupt
@@ -550,6 +550,38 @@ static void t_min_period(void)
                "per scan line (HRM DMA time slot allocation), so a channel can fetch at most "
                "one word (2 samples) per line; a block of LEN words then takes LEN lines "
                "(227.5 cck each), not LEN*2*PER", 0);
+}
+
+/* AUDxLEN = 0: the length counter is loaded with 0 and decremented through
+ * $FFFF, so the block is 65536 words (128 KB). The volume is 0; the DMA just
+ * reads chip RAM after the silent buffer. One block at P = 124 is about
+ * 4.6 s (PAL), so only the start-up block (interrupt 1 -> 2) is timed. */
+static void t_len_zero(void)
+{
+    ULONG t[4];
+    int n;
+    const UWORD P = 124;
+    const ULONG blk = 2UL * 65536UL * P;
+    aud_quiet();
+    log_reset();
+    tb_init();
+    amt_watchdog_kick();
+    ch_setup(3, zbuf(), 0, P, 0);
+    CREG(R_INTENA) = 0x8000 | INT_AUD(3);
+    CREG(R_DMACON) = 0x8208;
+    wait_count(3, 2, fr_for(blk + blk / 4));
+    CREG(R_DMACON) = 0x0008;
+    CREG(R_INTENA) = INT_AUD(3);
+    n = ch_times(3, t, 2);
+    aud_quiet();
+    amt_watchdog_kick();
+    chk_begin("len", "per");
+    chk_add("iv1", 0, P, pa_sample_invalid ? -1 : iv(t, n, 0), (LONG)(2UL * 65535UL * P - P),
+            (LONG)(blk + P));
+    chk_report("aud_len_zero",
+               "AUD3LEN = 0 must give a block of 65536 words (the length counter counts down "
+               "from 0 through $FFFF, HRM ch.5 AUDxLEN: 16-bit word count), so the start-up "
+               "block lasts about 65535..65536 words x 2 x AUDxPER; not 0 or 1 word", 0);
 }
 
 /* direct (non-DMA) output: one interrupt per data word */
@@ -1123,6 +1155,7 @@ void pa_audio_tests(void)
     t_double_buffer();
     t_per_change();
     t_min_period();
+    t_len_zero();
     t_manual();
     t_dma_off();
     t_modulation();

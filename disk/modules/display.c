@@ -2165,9 +2165,24 @@ static ULONG count_reads(void)
     return n;
 }
 
-static void dma_case(const char *id, int res, int np, UWORD fm)
+/* Relative judgement: the same polling loop run against a reference mode
+ * measured moments before in the same run. More bitplane DMA can only take
+ * slots away from the CPU (HRM 6, "DMA time slots": bitplane fetches have
+ * priority over the 68000), so reads with more DMA must not exceed the
+ * reference by more than DMA_SLACK_PCT (noise of non-cycle-exact / JIT /
+ * threaded cores, whose loop is not chip-bound: baseline spread <= 3%).
+ * `ge` reverses the rule (AGA FMODE=3 fetches 8bpl in fewer slots than
+ * FMODE=0, AGA HRM "FMODE"). The exact slot theft is only meaningful on a
+ * cycle-exact 68000 and is left to the timing fields. */
+#define DMA_SLACK_PCT 10
+/* one chip-bus access per 2 colour clocks: 64 lines x 228 cck / 2. A core
+ * whose reads exceed this does not tie the CPU to the bus at all (JIT,
+ * fast cores), and the comparison only measures host noise. */
+#define DMA_MAX_READS (64UL * 228 / 2)
+static ULONG dma_case(const char *id, int res, int np, UWORD fm, const char *ref_id, ULONG ref, int ge)
 {
-    ULONG n;
+    ULONG n, lim;
+    int ok;
     reset_scene();
     sc.flags |= SF_CUSTSPR;
     spr_all_empty();
@@ -2182,14 +2197,54 @@ static void dma_case(const char *id, int res, int np, UWORD fm)
     }
     n = count_reads();
     display_off();
-    amt_case_open(id, AMT_ST_PASS);
+    if (ref_id && (n > DMA_MAX_READS || ref > DMA_MAX_READS)) {
+        amt_case_open(id, AMT_ST_UNTESTABLE);
+        json_bool("engine_dep", 1);
+        json_str("why", "more reads than the chip bus has slots in 64 lines: this core's CPU "
+                 "is not held to the chip bus, so DMA cannot be seen taking slots");
+        json_obj("timing");
+        json_int("reads", (long)n);
+        json_int("ref_reads", (long)ref);
+        json_int("max_reads", DMA_MAX_READS);
+        json_obj_end();
+        amt_case_close();
+        return n;
+    }
+    if (!ref_id) {
+        ok = 1;
+        lim = 0;
+    } else if (ge) {
+        lim = ref - ref / 100 * DMA_SLACK_PCT;
+        ok = n >= lim;
+    } else {
+        lim = ref + ref / 100 * DMA_SLACK_PCT + 16;
+        ok = n <= lim;
+    }
+    amt_case_open(id, ok ? AMT_ST_PASS : AMT_ST_FAIL);
+    if (ref_id) {
+        json_bool("engine_dep", 1);
+        json_obj("expected");
+        json_str("vs", ref_id);
+        json_str("rule", ge ? "reads >= reference - 10%" : "reads <= reference + 10% + 16");
+        json_obj_end();
+        if (!ok) {
+            json_obj("got");
+            json_int(ge ? "reads_lt" : "reads_gt", (long)lim);
+            json_obj_end();
+            json_str("why", ge ? "fewer free CPU slots than the reference mode although it needs fewer DMA slots"
+                               : "more free CPU slots with more bitplane DMA than the reference mode");
+        }
+    }
     json_obj("timing");
     json_str("unit", "CPU word reads of chip RAM (8 per VHPOSR poll) completed in lines $60-$9F, "
              "standard DDF/DIW; fewer free slots with more planes (HRM 6: DMA time slots)");
     json_int("reads", (long)n);
+    if (ref_id)
+        json_int("ref_reads", (long)ref);
     json_int("lines", 64);
     json_obj_end();
     amt_case_close();
+    return n;
 }
 
 static void dma_tests(void)
@@ -2199,19 +2254,21 @@ static void dma_tests(void)
                                        "dma_cpu_lores_6bpl" };
     static const char *const hi[4] = { "dma_cpu_hires_1bpl", "dma_cpu_hires_2bpl", "dma_cpu_hires_3bpl",
                                        "dma_cpu_hires_4bpl" };
+    ULONG off, lr[7], f0;
     int n;
-    dma_case("dma_cpu_off", 0, -1, 0);
+    off = dma_case("dma_cpu_off", 0, -1, 0, 0, 0, 0);
     for (n = 0; n <= 6; n++)
-        dma_case(lo[n], 0, n, 0);
+        lr[n] = dma_case(lo[n], 0, n, 0, "dma_cpu_off", off, 0);
+    /* hires n planes fetches twice the words of lores n planes */
     for (n = 1; n <= 4; n++)
-        dma_case(hi[n - 1], 1, n, 0);
+        dma_case(hi[n - 1], 1, n, 0, lo[n], lr[n], 0);
     if (ecsd && ecsa)
-        dma_case("dma_cpu_shres_2bpl", 2, 2, 0);
+        dma_case("dma_cpu_shres_2bpl", 2, 2, 0, "dma_cpu_off", off, 0);
     else
         amt_case("dma_cpu_shres_2bpl", AMT_ST_SKIP, "superhires needs ECS");
     if (aga) {
-        dma_case("dma_cpu_aga_lores_8bpl_f0", 0, 8, 0);
-        dma_case("dma_cpu_aga_lores_8bpl_f3", 0, 8, 3);
+        f0 = dma_case("dma_cpu_aga_lores_8bpl_f0", 0, 8, 0, "dma_cpu_off", off, 0);
+        dma_case("dma_cpu_aga_lores_8bpl_f3", 0, 8, 3, "dma_cpu_aga_lores_8bpl_f0", f0, 1);
     } else {
         amt_case("dma_cpu_aga_lores_8bpl_f0", AMT_ST_SKIP, "AGA only");
         amt_case("dma_cpu_aga_lores_8bpl_f3", AMT_ST_SKIP, "AGA only");
@@ -2279,6 +2336,30 @@ static void shot_tests(void)
                   "visible across the left border");
     } else
         amt_case("shot_ecs_border", AMT_ST_SKIP, "BRDRBLNK/BRDSPRT need ECS Denise");
+    /* EHB: 6 planes lores without HAM/DPF, colours 32-63 = 0-31 at half
+     * brightness (HRM ch.3 "Extra half brite") */
+    reset_scene();
+    sc.con0 = res_con0(0, 6);
+    sc.flags |= SF_PAL32;
+    for (i = 0; i < 20; i++)
+        c20[i] = (UBYTE)(i < 10 ? 3 * i + 1 : 32 + 3 * (i - 10) + 1);
+    sc.mod1 = sc.mod2 = (WORD)-fill_cells(6, 1, 20, c20);
+    apply();
+    shot_only("shot_ehb", "6 planes lores (EHB): cells 0-9 colours 1,4,..,28, cells 10-19 the "
+              "same colours with plane 6 set (half brightness)");
+    /* AGA KILLEHB (BPLCON2 bit 9): the same picture, plane 6 now selects
+     * palette entries 32-63 like any other plane (AGA docs, BPLCON2) */
+    if (aga) {
+        reset_scene();
+        sc.con0 = res_con0(0, 6);
+        sc.con2 = 0x0200;
+        sc.flags |= SF_PAL256;
+        sc.mod1 = sc.mod2 = (WORD)-fill_cells(6, 1, 20, c20);
+        apply();
+        shot_only("shot_aga_killehb", "as shot_ehb with BPLCON2 KILLEHB: cells 10-19 show "
+                  "palette entries 33,36,..,60 of the 24-bit palette, not half brightness");
+    } else
+        amt_case("shot_aga_killehb", AMT_ST_SKIP, "KILLEHB needs AGA");
     /* AGA BPLCON4 bitplane XOR and sprite colour banks */
     if (aga) {
         reset_scene();
@@ -2298,6 +2379,164 @@ static void shot_tests(void)
                   "sprite banks 3/7), 8 sprites");
     } else
         amt_case("shot_aga_bplcon4", AMT_ST_SKIP, "BPLCON4 needs AGA");
+}
+
+/* ------------------------------------------------------------ frame length */
+#define VPOSW    0x02a
+#define BEAMCON0 0x1dc
+
+/* V from hw_beam(), which never mixes V8 of one line with V7-V0 of the next
+ * (a torn hw_vline() at $FF -> $100 reads as line 0 and ends a frame early) */
+static UWORD beam_v(void)
+{
+    ULONG b = hw_beam();
+    return (UWORD)(((b >> 16) & 7) << 8 | ((b >> 8) & 0xff));
+}
+
+/* highest V seen in each of n complete frames. Interrupts are blocked only
+ * from line $F8 to the wrap, so no handler can hide the last line. The
+ * watchdog counts VBLs, not loop passes: a JIT core polls >1M times a
+ * frame. With interrupts blocked only a pass cap can stop a frozen beam. */
+static void frame_max_lines(UWORD *mx, int n)
+{
+    ULONG budget, f0 = amt_frames_now();
+    UWORD sr = amt_get_sr(), v, m;
+    int f;
+    for (f = -1; f < n; f++) {
+        while (hw_vline() < 0xf8)
+            if (amt_frames_now() - f0 > (ULONG)n + 4)
+                goto wd;
+        amt_set_sr(0x2700);
+        budget = 20000000;
+        m = 0;
+        while ((v = beam_v()) >= 0x80) {
+            if (v > m)
+                m = v;
+            if (!--budget) {
+                amt_set_sr(sr);
+                goto wd;
+            }
+        }
+        amt_set_sr(sr);
+        if (f >= 0)
+            mx[f] = m;
+    }
+    return;
+wd:
+    amt_set_sr(0x2000);
+    amt_abort(AMT_ABORT_WATCHDOG);
+}
+
+static int lines_ok(const UWORD *mx, int n, UWORD a, UWORD b)
+{
+    int i;
+    for (i = 0; i < n; i++)
+        if (mx[i] != a && mx[i] != b)
+            return 0;
+    return 1;
+}
+
+static void json_lines(const char *key, const UWORD *mx, int n)
+{
+    int i;
+    json_arr(key);
+    for (i = 0; i < n; i++)
+        json_int(0, mx[i]);
+    json_arr_end();
+}
+
+/* VPOSW bit 15 writes LOF (HRM appendix A, VPOSR/VPOSW: "LOF long frame");
+ * without interlace it is not toggled, so a long frame has one more line
+ * than a short one: PAL 313/312 (last V $138/$137), NTSC 263/262
+ * ($106/$105). V8-V10 are written as 0 at line $20, where they are 0. */
+static void vposw_lof_test(void)
+{
+    UWORD s[3], l[3], rs, rl, lof0, base = pal ? 0x137 : 0x105;
+    int ok;
+    display_off();
+    lof0 = (UWORD)(CU(VPOSR) & 0x8000);
+    wait_vbl();
+    wait_line(0x20);
+    CU(VPOSW) = 0x0000;
+    rs = (UWORD)(CU(VPOSR) & 0x8000);
+    frame_max_lines(s, 3);
+    wait_vbl();
+    wait_line(0x20);
+    CU(VPOSW) = 0x8000;
+    rl = (UWORD)(CU(VPOSR) & 0x8000);
+    frame_max_lines(l, 3);
+    wait_vbl();
+    wait_line(0x20);
+    CU(VPOSW) = lof0;
+    ok = !rs && rl && lines_ok(s, 3, base, base) && lines_ok(l, 3, base + 1, base + 1);
+    amt_case_open("vposw_lof", ok ? AMT_ST_PASS : AMT_ST_FAIL);
+    if (!ok) {
+        json_obj("expect");
+        json_int("lof_after_0", 0);
+        json_int("lof_after_8000", 1);
+        json_int("last_v_short", base);
+        json_int("last_v_long", base + 1);
+        json_obj_end();
+        json_obj("got");
+        json_int("lof_after_0", rs ? 1 : 0);
+        json_int("lof_after_8000", rl ? 1 : 0);
+        json_lines("last_v_short", s, 3);
+        json_lines("last_v_long", l, 3);
+        json_obj_end();
+        json_str("why", "VPOSW bit 15 sets LOF (read back in VPOSR bit 15); with LACE off LOF "
+                 "is not toggled, and a frame with LOF = 1 has one extra line (HRM appendix A "
+                 "VPOSR/VPOSW, ch.3 interlace: long frame 313/263 lines, short 312/262)");
+    }
+    json_obj("ctx");
+    json_str("video", pal ? "PAL" : "NTSC");
+    json_obj_end();
+    json_obj("timing");             /* LOF at entry depends on which frame we start in */
+    json_hexn("lof_start", lof0, 4);
+    json_obj_end();
+    amt_case_close();
+}
+
+/* ECS Agnus BEAMCON0 bit 5 PAL selects PAL (312/313 lines) or NTSC
+ * (262/263) timing (HRM 3rd ed. appendix A BEAMCON0; ECS chapter
+ * "Programmable PAL/NTSC"). Both are measured, then the boot value is
+ * written back. */
+static void beamcon0_pal_test(void)
+{
+    UWORD p[3], n[3], b0 = pal ? 0x0020 : 0x0000;
+    int okp, okn;
+    if (!ecsa) {
+        amt_case("beamcon0_pal", AMT_ST_SKIP, "BEAMCON0 needs ECS Agnus or Alice");
+        return;
+    }
+    display_off();
+    wait_vbl();
+    CU(BEAMCON0) = 0x0020;
+    frame_max_lines(p, 3);
+    wait_vbl();
+    CU(BEAMCON0) = 0x0000;
+    frame_max_lines(n, 3);
+    wait_vbl();
+    CU(BEAMCON0) = b0;
+    wait_frames(2);
+    okp = lines_ok(p, 3, 0x137, 0x138);
+    okn = lines_ok(n, 3, 0x105, 0x106);
+    amt_case_open("beamcon0_pal", okp && okn ? AMT_ST_PASS : AMT_ST_FAIL);
+    if (!(okp && okn)) {
+        json_obj("expect");
+        json_str("last_v_pal", "311 or 312");
+        json_str("last_v_ntsc", "261 or 262");
+        json_obj_end();
+        json_obj("got");
+        json_lines("last_v_pal", p, 3);
+        json_lines("last_v_ntsc", n, 3);
+        json_obj_end();
+        json_str("why", "BEAMCON0 bit 5 (PAL) switches ECS Agnus/Alice between PAL frames of "
+                 "312/313 lines and NTSC frames of 262/263 lines (HRM appendix A BEAMCON0)");
+    }
+    json_obj("ctx");
+    json_hexn("beamcon0_restored", b0, 4);
+    json_obj_end();
+    amt_case_close();
 }
 
 /* ------------------------------------------------------------ main */
@@ -2333,6 +2572,8 @@ static void body(void)
     pal_tests();
     id_tests();
     dma_tests();
+    vposw_lof_test();
+    beamcon0_pal_test();
     shot_tests();
 }
 

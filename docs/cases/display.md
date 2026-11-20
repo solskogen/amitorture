@@ -1,4 +1,4 @@
-# display (module 12, AMT_PH_BARE, disk "chip")
+# display (module 12, AMT_PH_BARE, disk group "core")
 
 Audit validity: DENISEID stability compares only bits 7-0. Floating-bus
 coincidences cannot establish Denise identity; an uncorroborated ID assertion
@@ -98,5 +98,15 @@ sent.
 | pal_aga_rdram_24bit | 256 colours written high/low nibble per bank, read back with RDRAM | AGA docs BPLCON2 RDRAM, BPLCON3 LOCT/BANK | palette banks/LOCT wrong |
 | pal_aga_loct_copy | LOCT=0 write copies nibbles into the low half | AGA docs | 12-bit compatibility write wrong |
 | deniseid | 16 reads, checked against the Agnus ID read from VPOSR (not the probe): Alice => $F8 and stable; no Alice => not $F8; $FC must be stable; bits 15-8 ignored | HRM appendix C, AGA docs | wrong/unstable ID, Lisa without Alice or vice versa |
-| dma_cpu_* | timing only: CPU chip reads in 64 lines per mode | HRM 6 DMA slots | (informational) |
+| dma_cpu_off | CPU word reads of chip RAM in lines $60-$9F with no bitplanes; the reference for the others, always passes | HRM 6 DMA slots | (reference) |
+| dma_cpu_lores_Nbpl / dma_cpu_hires_Nbpl / dma_cpu_shres_2bpl / dma_cpu_aga_lores_8bpl_f0 | the same loop with more bitplane DMA, judged against a mode measured moments before in the same run (lores and shres against dma_cpu_off, hires N against lores N, aga f0 against off): fail if reads > ref + 10 % + 16; untestable if either count exceeds 7296 (64 lines × 114 bus slots), meaning the CPU is not tied to the chip bus (JIT, fast cores) | HRM 6 "DMA time slots": bitplane fetches outrank the CPU, so more DMA can never give the CPU more slots | CPU gets more chip bus with display DMA on (DMA not stealing slots) |
+| dma_cpu_aga_lores_8bpl_f3 | 8 planes FMODE=3 against FMODE=0: fail if reads < f0 − 10 % | AGA docs FMODE: 64-bit fetches need a quarter of the slots | wide fetch costs more CPU slots than 16-bit fetch |
+| vposw_lof | VPOSW = $0000 then $8000 (LACE off): VPOSR bit 15 reads back the written LOF, and the last line of 3 frames each is $137 / $138 (PAL) or $105 / $106 (NTSC); LOF restored | HRM appendix A VPOSR/VPOSW (LOF), ch.3 interlace (long frame one line longer) | LOF not writable, or frame length ignores LOF |
+| beamcon0_pal | ECS Agnus/Alice: BEAMCON0 = $0020 gives last lines 311/312, $0000 gives 261/262; boot value restored; SKIP on OCS Agnus | HRM appendix A BEAMCON0 bit 5 PAL | PAL bit ignored, wrong frame length |
 | shot_dpf_priorities / shot_ecs_border / shot_aga_bplcon4 | screenshot-only patterns: BPLCON2 priorities with sprites; BRDRBLNK/BRDSPRT; BPLCON4 XOR and sprite banks | pass = host acked | untestable without a host |
+| shot_ehb / shot_aga_killehb | screenshot-only: 6 planes lores, cells 10-19 have plane 6 set (EHB half brightness); AGA: the same with BPLCON2 KILLEHB (bit 9), plane 6 selects entries 32-63 instead | HRM ch.3 "Extra half brite"; AGA docs BPLCON2 KILLEHB | pass = host acked; colours are judged only by screenshot comparison |
+
+Not covered: BPLCON2 ZDBPSEL/ZDBPEN (and BPLCON3 BRDNTRAN) only drive the
+external ZD pin used by a genlock. Neither collisions nor the picture show
+them, so no case can observe them. Colour-only features (EHB, KILLEHB,
+BPLCON4 XOR) have no pixel readback and are screenshot cases.

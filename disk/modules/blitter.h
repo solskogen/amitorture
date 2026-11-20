@@ -12,6 +12,7 @@
 #define BF_CON0L    0x0010   /* ECS: write BLTCON0L = aux after BLTCON0 */
 #define BF_SPECIAL  0x0020   /* only run by a special test */
 #define BF_HOT      0x0040   /* also run under amt_hot() */
+#define BF_INFO     0x0080   /* rule not hardware-confirmed: never a fail */
 
 /* words at pool+off: odd seed -> xorshift32 upper halves, even -> seed>>16 */
 struct blt_fill {

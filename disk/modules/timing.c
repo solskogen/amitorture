@@ -1,11 +1,8 @@
-/* timing: a throughput and timing fingerprint (CONTRACT.md section 10, id 10).
+/* timing: beam/clock sanity cases (CONTRACT.md section 10, id 10).
  *
- * 1. Fixed CPU loops (timing_asm.s, timing_fpu.s), each run once to warm up
- *    and then three times measured, in CIA E-clock ticks (CIA-B timer A+B
- *    chained into a 32-bit down counter) and in colour clocks (amt_ticks()).
- *    They become `perf` records: no pass/fail on speed; the host compares
- *    bands and orderings. The loop results themselves are deterministic and
- *    ARE checked (loop_result_*).
+ * 1. Fixed CPU loops (timing_asm.s, timing_fpu.s) whose deterministic
+ *    results are checked over hot repetitions (loop_result_*). Throughput
+ *    is not measured here: the bench disk owns it (docs/BENCH.md).
  * 2. Deterministic sanity cases from the Amiga Hardware Reference Manual:
  *    E clock = colour clock / 5, VBL rate per CIA second, lines per frame
  *    (LOF, interlace alternation) and colour clocks per line (H wrap).
@@ -27,9 +24,6 @@
 AMT_MODULE(timing, 10, AMT_PH_BARE, AMT_MF_OWNS_DISPLAY, 4096, 4096);
 
 /* timing_asm.s / timing_fpu.s */
-ULONG tm_dbra(ULONG outer);
-ULONG tm_movereg(ULONG outer);
-ULONG tm_movemem(ULONG outer, void *src, void *dst);
 ULONG tm_mulu(ULONG outer);
 ULONG tm_divu(ULONG outer);
 ULONG tm_branch(ULONG outer);
@@ -198,68 +192,7 @@ static ULONG beam_vl(UWORD *lof)
 }
 #define beam_v() beam_vl(0)
 
-/* ------------------------------------------------------------ perf loops */
-struct loop {
-    const char *name;
-    ULONG outer;
-    ULONG ops_per_outer;
-    int kind;           /* 0 plain, 1 mem chip, 2 mem any */
-    ULONG (*fn)(ULONG);
-};
-
-static ULONG run_loop(const struct loop *l, ULONG outer)
-{
-    UBYTE *p;
-    if (l->kind == 1) {
-        p = amt_chip_pool();
-        return tm_movemem(outer, p, p + 2048);
-    }
-    if (l->kind == 2) {
-        p = amt_any_pool();
-        return tm_movemem(outer, p, p + 2048);
-    }
-    return l->fn(outer);
-}
-
-static void perf_loop(const struct loop *l)
-{
-    ULONG e0, e1, c0, c1, best_e = 0xffffffffUL, best_c = 0, e[3], c[3];
-    int i;
-
-    run_loop(l, 1);                     /* warm-up: caches, JIT */
-    for (i = 0; i < 3; i++) {
-        c0 = amt_ticks();
-        e0 = ec_read();
-        run_loop(l, l->outer);
-        e1 = ec_read();
-        c1 = amt_ticks();
-        e[i] = e0 - e1;
-        c[i] = c1 - c0;
-        if (e[i] < best_e) {
-            best_e = e[i];
-            best_c = c[i];
-        }
-        amt_watchdog_kick();
-    }
-    json_begin("perf");
-    json_str("mod", "timing");
-    json_str("name", l->name);
-    json_int("ops", (long)(l->outer * l->ops_per_outer));
-    json_int("ticks", (long)best_e);
-    json_int("tick_hz", tm_hz);
-    json_int("cck", (long)best_c);
-    json_int("cck_hz", (long)amt_eclock_hz());
-    json_arr("runs_ticks");
-    for (i = 0; i < 3; i++)
-        json_int(NULL, (long)e[i]);
-    json_arr_end();
-    json_arr("runs_cck");
-    for (i = 0; i < 3; i++)
-        json_int(NULL, (long)c[i]);
-    json_arr_end();
-    json_end();
-}
-
+/* ------------------------------------------------------------ loop results */
 static ULONG model_branch(ULONG outer)
 {
     ULONG s = 0x12345678UL, d = 0, o, i, c;
@@ -794,20 +727,8 @@ static void eclock_tests(void)
     amt_case_close();
 }
 
-static const struct loop loops[] = {
-    { "dbra",          100, 1000, 0, tm_dbra },
-    { "move_reg",      250,  800, 0, tm_movereg },
-    { "move_mem_chip", 100,  512, 1, 0 },
-    { "move_mem_any",  100,  512, 2, 0 },
-    { "mulu",           25,  800, 0, tm_mulu },
-    { "divu",           10,  800, 0, tm_divu },
-    { "branch",         64,  256, 0, tm_branch },
-};
-static const struct loop fpu_loop = { "fpu", 25, 800, 0, tm_fpu };
-
 void amt_run_timing(void)
 {
-    unsigned i;
     int fpu_ok = AMT_FPU() && !amt_probe_result.fpu_dis;
 
     tm_hz = (long)(amt_eclock_hz() / 5);
@@ -816,11 +737,6 @@ void amt_run_timing(void)
 
     beam_tests();
     eclock_tests();
-
-    for (i = 0; i < sizeof loops / sizeof loops[0]; i++)
-        perf_loop(&loops[i]);
-    if (fpu_ok)
-        perf_loop(&fpu_loop);
 
     check_loop("loop_result_mulu", hot_mulu, 0x3333UL * 0x5555UL,
                "MULU.W $5555,$3333 must give $1110EEEF (PRM MULU)");

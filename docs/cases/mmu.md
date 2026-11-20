@@ -39,7 +39,7 @@ Sources: `disk/modules/mmu.c` (tables, cases, expectations) and `disk/modules/mm
 | `modified_bit_write` | write through a fresh page | U and M set | all | M not set by the walk |
 | `modified_after_read` | read then write a page (ATC entry M=0) | the write must set M in memory (030UM 9.4.1, 040UM 3.2.3) | all | M only set on a miss |
 | `used_bit_tables` | the read's table walk | U set in the level-A/B (030) or root/pointer (040/060) descriptors | all | U only set in page descriptors |
-| `atc_stale_flusha` | change a descriptor without a flush, then PFLUSHA | before the flush old or new page allowed; after it the new page | all | PFLUSHA does not flush |
+| `atc_stale_flusha` | change a descriptor without a flush, then PFLUSHA | before the flush old or new page allowed; after it the new page. On 040/060 this case and the next three run CPUSHA DC after the descriptor writes and before the flush (the table search reads memory, not the data cache) | all | PFLUSHA does not flush |
 | `atc_pflush_page` | change two descriptors, flush one page (030 PFLUSH #5,#7,(A0); 040/060 PFLUSH (A0), DFC=5) | the flushed page is new, the other old or new | all | page flush ignores the address or the FC |
 | `pflushan_global` | G=1 and G=0 pages changed, PFLUSHAN then PFLUSHA | non-global new after PFLUSHAN; global old or new; both new after PFLUSHA (040UM 3.4, 060UM 4.3) | 040/060 | PFLUSHAN / G handling |
 | `pflushn_page` | PFLUSHN (A0) of a non-global page | new translation | 040/060 | PFLUSHN ignored |

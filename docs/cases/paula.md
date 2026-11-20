@@ -1,4 +1,4 @@
-# paula (module 14, AMT_PH_BARE, disk group "chip")
+# paula (module 14, AMT_PH_BARE, disk group "core")
 
 Audit validity and restoration: modulator alternatives are the disjoint
 intervals 2800-3600 and 6000-6800 cck, not their convex hull (4800 is rejected).
@@ -55,6 +55,7 @@ Failing records keep measured values (interrupt times, DSKSYN counts, DSKBYTR sa
 | `aud_double_buffer_len` | AUD0LEN 32->16 written in the handler of interrupt 3: interval 3->4 still 32 words, 4->5 and 5->6 16 words | HRM ch.5 double buffering (the interrupt means LC/LEN were copied) | LEN applied immediately (not double-buffered) or one block late |
 | `aud_per_change` | AUD1PER 200->300 in the handler of interrupt 3: that block already 1 old + 63 new samples; later blocks 2*32*300 | HRM ch.5: PER reloads at every sample end (not buffered) | period latched per block/word |
 | `aud_min_period` | PER 64 and 100 (< 124): block of 32 words lasts 32 lines (+-1 line), not 2*32*PER | HRM ch.5 minimum period 124; one audio DMA slot per channel per line | audio DMA not limited by slots |
+| `aud_len_zero` | AUD3LEN = 0, PER 124, volume 0: the start-up block (interrupt 1 to 2) lasts 2·65535·124 − 124 … 2·65536·124 + 124 cck (about 4.6 s) | HRM ch.5 AUDxLEN: the length counter is 16 bits and counts down through $FFFF, so 0 gives 65536 words | LEN 0 treated as 0 or 1 word (interrupt storm) or as a small count |
 | `aud_manual_words` | direct mode (no DMA): 8 AUDxDAT words fed by the handler: 8 interrupts, the first at once (<= PER), then every 2*PER | HRM ch.5 direct output; state diagram 000->010 (AUDxIR), 011->010 | no interrupt per word, wrong rate |
 | `aud_manual_idle` | interrupt 8 left pending (INTENA cleared instead): channel idles; clearing it later raises nothing | state diagram 011->000 (!AUDxON & AUDxIP) | channel keeps running/looping in direct mode |
 | `aud_dma_off_direct` | AUD1EN cleared in the handler of DMA interrupt 3: next interrupt 2*PER later (end of the current word), then every 2*PER (direct mode on the last data), idle once interrupt 8 is left pending | state diagram 011->010 when !AUDxON & !AUDxIP | DMA off stops at once / goes idle / keeps DMA running |

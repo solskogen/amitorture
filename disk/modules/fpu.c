@@ -507,7 +507,7 @@ static void run_pred(int fam)
         json_int("taken", (long)bres);
         json_hex("fpsr", bfpsr);
         json_obj_end();
-        json_str("why", "conditional predicate wrong for this FPSR condition code (N Z I NAN), or BSUN/IOP not set exactly for the IEEE-nonaware predicates ($10-$1F) with NAN set (MC68881 UM 4.?, Table of conditional tests; PRM 3-?)");
+        json_str("why", "conditional predicate wrong for this FPSR condition code (N Z I NAN), or BSUN/IOP not set exactly for the IEEE-nonaware predicates ($10-$1F) with NAN set (MC68881 UM section 4, conditional test definitions; M68000PM FBcc/FScc and section 3 floating-point conditional tests)");
         json_obj("ctx");
         json_int("bad", (long)nbad);
         json_int("combos", 256);
@@ -625,16 +625,16 @@ static void run_traps(void)
         ok = code == AMT_ABORT_UNEXPECTED && amt_last_exc.vector == e->vec;
         if (!ok)
             why = e->vec == 11 ? (fm & FM_6888X ?
-                    "6888x: the 040/060-only opmode must be an illegal coprocessor command -> F-line exception (vector 11), MC68881 UM 7.?, MC68020 UM 10.?" :
-                    "unimplemented on this FPU: with no FPSP (bare metal) the instruction must take the F-line/unimplemented-FP-instruction exception, vector 11 (MC68040 UM 9.?, MC68060 UM 6.?); Amiberry: fpu_no_unimplemented=false emulates it instead") :
-                  e->vec == 60 ? "68060: dynamic FMOVEM.X / FMOVEM.L #imm of several control registers / #imm .X are unimplemented effective addresses: vector 60 (MC68060 UM 6.?)" :
-                  "unsupported data type (packed decimal, denormal or unnormal operand) must take vector 55 on the 040/060 with no FPSP (MC68040 UM 9.?, MC68060 UM 6.?)";
+                    "6888x: the 040/060-only opmode must be an illegal coprocessor command -> F-line exception (vector 11), MC68881 UM section 7 (coprocessor interface: illegal command), MC68020 UM section 10" :
+                    "unimplemented on this FPU: with no FPSP (bare metal) the instruction must take the F-line/unimplemented-FP-instruction exception, vector 11 (MC68040 UM section 9, MC68060 UM section 6); Amiberry: fpu_no_unimplemented=false emulates it instead") :
+                  e->vec == 60 ? "68060: dynamic FMOVEM.X / FMOVEM.L #imm of several control registers / #imm .X are unimplemented effective addresses: vector 60 (MC68060 UM section 6)" :
+                  "unsupported data type (packed decimal, denormal or unnormal operand) must take vector 55 on the 040/060 with no FPSP (MC68040 UM section 9, MC68060 UM section 6)";
         else if ((amt_last_exc.frame[3] & 0xfff) != e->vec * 4 || !fmt_allowed(fmt, fl))
             why = "wrong exception stack frame format/vector offset";
         else if (amt_last_exc.pc != e->start && amt_last_exc.pc != e->next)
             why = "stacked PC is neither the instruction nor the next one";
         else if (e->vec == 11 && (fm & FM_040) && (((at[1] >> 24) & 0xfe) != 0x40 || ((at[1] >> 16) & 0xff) != 0x30))
-            why = "68040 after an unimplemented FP instruction: FSAVE must give the unimp frame (version $40/$41, size $30) the FPSP needs (MC68040 UM 9.?)";
+            why = "68040 after an unimplemented FP instruction: FSAVE must give the unimp frame (version $40/$41, size $30) the FPSP needs (MC68040 UM section 9)";
         else if (e->vec == 55 && (fm & FM_040) && (((at[1] >> 24) & 0xfe) != 0x40 ||
                  (((at[1] >> 16) & 0xff) != 0x30 && ((at[1] >> 16) & 0xff) != 0x60)))
             why = "68040 after an unsupported data type exception: FSAVE must give a non-idle frame (unimp $30 or busy $60)";
@@ -654,6 +654,9 @@ static void run_traps(void)
     }
 }
 
+/* the accrued byte an EXC byte implies (M68000PM 1.6.3; MC68881UM 4.6.4):
+ * IOP = BSUN|SNAN|OPERR, OVFL = OVFL, UNFL = UNFL&INEX2, DZ = DZ,
+ * INEX = INEX1|INEX2|OVFL */
 static void run_excs(void)
 {
     ULONG i;
@@ -662,7 +665,7 @@ static void run_excs(void)
         int code, fmt;
         const char *why = 0;
         const UBYTE *fl;
-        ULONG hot_rep = 0;
+        ULONG hot_rep = 0, ax = 0;
         if (!(e->mask & fm))
             continue;
         if (!e->enable && hardware_fpu_policy(e->name))
@@ -671,10 +674,23 @@ static void run_excs(void)
         code = amt_try(fpu_exc_run);
         fpu_after_trap(at);
         fmt = amt_last_exc.frame[3] >> 12;
+        /* the accrued byte the exception byte implies (M68000PM 1.6.3):
+         * IOP = BSUN|SNAN|OPERR, OVFL, UNFL = UNFL&INEX2, DZ,
+         * INEX = INEX1|INEX2|OVFL */
+        if (at[4] & 0xe000)
+            ax |= 0x80;
+        if (at[4] & 0x1000)
+            ax |= 0x40;
+        if ((at[4] & 0x0800) && (at[4] & 0x0200))
+            ax |= 0x20;
+        if (at[4] & 0x0400)
+            ax |= 0x10;
+        if (at[4] & 0x1300)
+            ax |= 0x08;
         fl = (fm & FM_6888X) ? ((e->mask & EXC_MID_6888X) ? f_9 : f_0) :
              (e->vec == 48 ? f_023 : f_03);
         if (code != AMT_ABORT_UNEXPECTED || amt_last_exc.vector != e->vec)
-            why = "enabled FPU exception (FPCR enable byte) must trap through its vector: 48 BSUN, 49 INEX, 50 DZ, 51 UNFL, 52 OPERR, 53 OVFL, 54 SNAN (MC68881 UM 6.1, MC68040 UM 9.?, MC68060 UM 6.?)";
+            why = "enabled FPU exception (FPCR enable byte) must trap through its vector: 48 BSUN, 49 INEX, 50 DZ, 51 UNFL, 52 OPERR, 53 OVFL, 54 SNAN (MC68881 UM 6.1, MC68040 UM section 9, MC68060 UM section 6)";
         else if ((amt_last_exc.frame[3] & 0xfff) != e->vec * 4 || !fmt_allowed(fmt, fl))
             why = "wrong exception stack frame format/vector offset";
         else if (amt_last_exc.pc != e->start && amt_last_exc.pc != e->fnop)
@@ -686,6 +702,8 @@ static void run_excs(void)
             why = "the FPSR exception status bit of the trapped exception is not set";
         else if (e->vec != 48 && at[5] != e->start)
             why = "FPIAR must hold the address of the instruction that caused the exception";
+        else if ((fm & FM_6888X) && (at[4] & 0xf8) != ax)
+            why = "the FPSR accrued exception byte must be updated from the exception byte even when the exception traps (IOP = BSUN|SNAN|OPERR, OVFL, UNFL = UNFL&INEX2, DZ, INEX = INEX1|INEX2|OVFL; FPSR cleared before the operation; M68000PM 1.6.3, MC68881UM 4.6.4)";
         /* Then again and again, until a JIT has compiled the trapping code
          * (its exception paths: a compiled instruction that hands enabled or
          * pending exceptions to the interpreter): the same trap every time. */
@@ -707,6 +725,8 @@ static void run_excs(void)
             json_int("vector", e->vec);
             json_str("format", fl == f_0 ? "0" : fl == f_9 ? "9" : fl == f_03 ? "0|3" : "0|2|3");
             json_hexn("fpsr_bit", e->excbit, 4);
+            if (fm & FM_6888X)
+                json_hexn("aexc", ax, 2);
             json_int("fpiar_off", 0);
             json_obj_end();
             trap_ctx(e->start, e->fnop, code);
@@ -763,7 +783,7 @@ static void case_frestore_null(void)
     json_obj("in");
     json_str("before", "FPCR=$30 FPSR=$0F00FFF8 FPIAR=$12345678 FP0-7=1..8, then FRESTORE of a null frame");
     json_obj_end();
-    json_str("why", "FRESTORE of a null frame resets the FPU: FPCR/FPSR/FPIAR = 0 and FP0-FP7 = NaN $7FFF FFFFFFFF FFFFFFFF (MC68881 UM 6.4.?/FRESTORE, MC68040 UM 9.?, MC68060 UM 6.?)");
+    json_str("why", "FRESTORE of a null frame resets the FPU: FPCR/FPSR/FPIAR = 0 and FP0-FP7 = NaN $7FFF FFFFFFFF FFFFFFFF (MC68881 UM 6.4, M68000PM FRESTORE, MC68040 UM section 9, MC68060 UM section 6)");
     amt_case_close();
 }
 
@@ -781,9 +801,9 @@ static void case_frames(void)
     /* null frame */
     if (fm & FM_060) {
         if (nsz != 12 || ((nb >> 8) & 0xff) != 0)
-            why = "68060 null FSAVE frame: 12 bytes with frame format byte (byte 2) $00 (MC68060 UM 6.?)";
+            why = "68060 null FSAVE frame: 12 bytes with frame format byte (byte 2) $00 (MC68060 UM section 6)";
     } else if (nsz != 4 || (nb >> 24) != 0)
-        why = "null FSAVE frame after a null FRESTORE: one longword with version byte $00 (MC68881 UM 6.4, MC68040 UM 9.?); the size byte is not checked";
+        why = "null FSAVE frame after a null FRESTORE: one longword with version byte $00 (MC68881 UM 6.4, MC68040 UM section 9); the size byte is not checked";
     amt_case_open("fsave_null_frame", why ? AMT_ST_FAIL : AMT_ST_PASS);
     if (why) {
         json_obj("expect");
@@ -804,14 +824,14 @@ static void case_frames(void)
     why = 0;
     if (fm & FM_060) {
         if (isz != 12 || ((o[5] >> 8) & 0xff) != 0x60)
-            why = "68060 idle FSAVE frame: 12 bytes, frame format byte $60 (MC68060 UM 6.?)";
+            why = "68060 idle FSAVE frame: 12 bytes, frame format byte $60 (MC68060 UM section 6)";
     } else if (fm & FM_040) {
         if (isz != 4 || (iv != 0x41 && iv != 0x40) || isize != 0)
-            why = "68040 idle FSAVE frame: one longword, version $41 (or $40), size $00 (MC68040 UM 9.?)";
+            why = "68040 idle FSAVE frame: one longword, version $41 (or $40), size $00 (MC68040 UM section 9)";
     } else {
         ULONG want = (fm & FM_881) ? 0x18 : 0x38;
         if (iv == 0 || isize != want || isz != isize + 4)
-            why = "6888x idle FSAVE frame: version byte nonzero, size $18 (68881) / $38 (68882), frame = size + 4 bytes (MC68881 UM 6.4.?)";
+            why = "6888x idle FSAVE frame: version byte nonzero, size $18 (68881) / $38 (68882), frame = size + 4 bytes (MC68881 UM 6.4)";
     }
     amt_case_open("fsave_idle_frame", why ? AMT_ST_FAIL : AMT_ST_PASS);
     if (why) {
@@ -879,7 +899,7 @@ static void case_frestore_bad(void)
     json_obj("in");
     json_str("frame", "5a5a5a5a 00000000 00000000 ...");
     json_obj_end();
-    json_str("why", "FRESTORE of a frame with an invalid version/format must take a format error (vector 14) (MC68020 UM 10.?, MC68040 UM 9.?, MC68060 UM 6.?)");
+    json_str("why", "FRESTORE of a frame with an invalid version/format must take a format error (vector 14) (MC68020 UM section 10, MC68040 UM section 9, MC68060 UM section 6)");
     amt_case_close();
 }
 
@@ -909,7 +929,7 @@ static void case_ctl(void)
     json_obj("in");
     json_str("written", "ffffffff to each");
     json_obj_end();
-    json_str("why", "unused FPCR bits (31-16, 3-0) and FPSR bits (31-28, 2-0) read as zero; FPIAR is 32 bits (MC68881 UM 1.?/2.?, MC68040 UM 9.?)");
+    json_str("why", "unused FPCR bits (31-16, 3-0) and FPSR bits (31-28, 2-0) read as zero; FPIAR is 32 bits (MC68881 UM section 2 (programming model), MC68040 UM section 9)");
     amt_case_close();
 }
 
@@ -974,7 +994,7 @@ static void case_fmovem(void)
         amt_case("fmovem_static", AMT_ST_PASS, 0);
     else
         report_mem("fmovem_static", mv_src, d, 24,
-                   "FMOVEM.X moves registers without conversion: +0, -inf, QNaN, SNaN, denormal, unnormal, max, -1.5 must come back bit-exact (MC68881 UM 4.?/FMOVEM; MC68040 UM 9.?)", 0, 0);
+                   "FMOVEM.X moves registers without conversion: +0, -inf, QNaN, SNaN, denormal, unnormal, max, -1.5 must come back bit-exact (M68000PM FMOVEM; MC68040 UM section 9)", 0, 0);
 
     for (i = 0; i < 28; i++)
         d[i] = 0x55555555UL;
@@ -1005,7 +1025,7 @@ static void case_fmovem(void)
             json_int("vector", 60);
             json_obj_end();
             trap_ctx((ULONG)fpu_dyn_run, 0, code);
-            json_str("why", "68060: FMOVEM.X with a dynamic register list is an unimplemented effective address: vector 60 (MC68060 UM 6.?)");
+            json_str("why", "68060: FMOVEM.X with a dynamic register list is an unimplemented effective address: vector 60 (MC68060 UM section 6)");
             amt_case_close();
         }
         return;

@@ -378,6 +378,7 @@ ILL	macro
 	ILL	$a000
 	ILL	$afff
 	ILL	$ffff
+	ILL	$4848			; BKPT #0 (68000: illegal; 010+: no ack)
 	xdef	_xs_ill_end
 _xs_ill_end:
 
@@ -387,6 +388,7 @@ _xs_trapv:
 _xs_trapv_at:
 	dc.w	$4e76
 _xs_trapv_nx:
+	move.w	sr,d7
 	rts
 
 ; CHK.W D1,D0
@@ -504,6 +506,7 @@ _xs_\1_nx:
 	UPRIV	urte,$4e73		; rte
 	UPRIV	utrap,$4e43		; trap #3 (user frame)
 	UPRIV	uaerr,$3010		; move.w (a0),d0 (68000/010: a0 odd)
+	UPRIV	uaerw,$3081		; move.w d1,(a0) (68000/010: a0 odd)
 
 ; ---------------------------------------------------- address error (000/010)
 	SNIP	aerw,$3010		; move.w (a0),d0
@@ -511,6 +514,7 @@ _xs_\1_nx:
 	SNIP	aeww,$3081		; move.w d1,(a0)
 	SNIP	aewl,$2081		; move.l d1,(a0)
 	SNIP	aejmp,$4ed0		; jmp (a0)
+	SNIP	aepdw,$3101		; move.w d1,-(a0) (a0 = odd + 2)
 	xdef	_xs_aetgt
 	cnop	0,2
 _xs_aetgt:
@@ -603,6 +607,65 @@ _xs_tri_at:
 _xs_tri_nx:
 	move.w	#$2700,sr
 _xs_tri_n2:
+	rts
+
+; trace + CHK.W (d0 = -1 < 0: traps), trace + DIVU.W by zero
+	xdef	_xs_trc,_xs_trc_at,_xs_trc_nx,_xs_trc_n2
+_xs_trc:
+	moveq	#-1,d0
+	moveq	#10,d1
+	move.w	#$a700,sr
+_xs_trc_at:
+	dc.w	$4181			; chk.w d1,d0
+_xs_trc_nx:
+	move.w	#$2700,sr
+_xs_trc_n2:
+	rts
+	xdef	_xs_trd,_xs_trd_at,_xs_trd_nx,_xs_trd_n2
+_xs_trd:
+	moveq	#1,d0
+	moveq	#0,d1
+	move.w	#$a700,sr
+_xs_trd_at:
+	dc.w	$80c1			; divu.w d1,d0
+_xs_trd_nx:
+	move.w	#$2700,sr
+_xs_trd_n2:
+	rts
+
+; MOVES (68010+): d0 = function code for SFC/DFC, a0 = buffer
+	xdef	_xs_moves
+_xs_moves:
+	dc.w	$4e7b,$0000		; movec d0,sfc
+	dc.w	$4e7b,$0001		; movec d0,dfc
+	dc.w	$0e90,$1000		; moves.l (a0),d1
+	dc.w	$0e68,$2800,$0004	; moves.w d2,4(a0)
+	dc.w	$0e28,$3800,$0007	; moves.b d3,7(a0)
+	dc.w	$0e68,$9000,$0008	; moves.w 8(a0),a1 (sign-extended)
+	move.l	a1,d4
+	dc.w	$4e7a,$5000		; movec sfc,d5
+	dc.w	$4e7a,$6001		; movec dfc,d6
+	rts
+
+; VBR (68010+): d0 = new VBR, then TRAP #5 through it. The xr stub resumes
+; in xr_call, so the C side restores VBR with xs_vbr_swap afterwards.
+	XS	vbr
+_xs_vbr:
+	dc.w	$4e7b,$0801		; movec d0,vbr
+_xs_vbr_at:
+	dc.w	$4e45			; trap #5
+_xs_vbr_nx:
+	move.w	sr,d7
+	rts
+; ULONG xs_vbr_swap(ULONG new): set VBR, return the old one
+	xdef	_xs_vbr_swap
+_xs_vbr_swap:
+	move.l	4(sp),d1
+	move.w	sr,-(sp)
+	move.w	#$2700,sr
+	dc.w	$4e7a,$0801		; movec vbr,d0
+	dc.w	$4e7b,$1801		; movec d1,vbr
+	move.w	(sp)+,sr
 	rts
 
 ; nested: TRAP #1 whose handler takes TRAP #2

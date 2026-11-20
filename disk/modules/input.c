@@ -1,5 +1,6 @@
-/* input: keyboard, mouse/joystick counters, pot ports, CD32 pad
- * (CONTRACT.md section 10, module id 15, disk group "chip").
+/* input: keyboard, mouse/joystick counters, pot ports, CD32 pad, UART
+ * status bits
+ * (CONTRACT.md section 10, module id 15, disk group "core").
  *
  * References: Amiga Hardware Reference Manual (HRM) 3rd ed., chapter 8
  * "Interface Hardware" (controller ports, keyboard), appendix A (JOYxDAT,
@@ -16,7 +17,8 @@
  * the event with a timeout and reports exact counts.
  *
  * Host-free cases (exact everywhere): JOYTEST read-back, POTGO output pin
- * read-back via POTINP; the pot counters are
+ * read-back via POTINP, UART TBE/TSRE after a send and RBF/OVRUN clear
+ * (one newline is sent at the runtime's SERPER); the pot counters are
  * reported as a timing field only (the values with nothing connected are
  * emulator/hardware specific).
  *
@@ -1388,6 +1390,92 @@ static void cd32_tests(void)
     cd32_req(0);
 }
 
+/* ============================================================ UART */
+/* Paula UART status bits (HRM appendix A, SERDATR): TBE = SERDAT empty,
+ * TSRE = shift register empty too (the stop bit has gone out), RBF/OVRUN =
+ * receive buffer full / overrun. OVRUN is reset together with RBF by
+ * clearing INTREQ bit 11 (HRM chapter 8, serial port). The byte sent is a
+ * newline at the runtime's own SERPER, so the host's record stream only
+ * sees an empty line. Skipped without serial (AMT_F_NOSERIAL). */
+#define SER_TBE   0x2000
+#define SER_TSRE  0x1000
+#define SER_RBF   0x4000
+#define SER_OVRUN 0x8000
+#define INT_RBF   0x0800
+
+static ULONG uart_wait(UWORD bits, ULONG to)
+{
+    ULONG t0 = cia_now(), el;
+    do {
+        el = cia_now() - t0;
+        if ((CRD(R_SERDATR) & bits) == bits)
+            return el;
+    } while (el < to);
+    return 0xffffffffUL;
+}
+
+static void uart_tests(void)
+{
+    UWORD per = ser_per(), d0, d1;
+    ULONG bit_cck, to, el;
+    if ((amt_par.flags & AMT_F_NOSERIAL) || !per) {
+        amt_case("uart_tsre_after_send", AMT_ST_SKIP, "serial output disabled (AMT_F_NOSERIAL)");
+        amt_case("uart_ovrun_clear", AMT_ST_SKIP, "serial output disabled (AMT_F_NOSERIAL)");
+        return;
+    }
+    bit_cck = (ULONG)(per & 0x7fff) + 1;
+    to = 40 * bit_cck + 4 * 227;             /* 4 characters' time plus margin */
+    (void)uart_wait(SER_TBE | SER_TSRE, 20 * to);   /* the runtime's last byte */
+    d0 = CRD(R_SERDATR);
+    CWR(R_SERDAT, 0x100 | '\n');
+    el = uart_wait(SER_TBE | SER_TSRE, to);
+    d1 = CRD(R_SERDATR);
+    amt_case_open("uart_tsre_after_send", el != 0xffffffffUL ? AMT_ST_PASS : AMT_ST_FAIL);
+    if (el == 0xffffffffUL) {
+        json_obj("expect");
+        json_hexn("serdatr_and_3000", SER_TBE | SER_TSRE, 4);
+        json_obj_end();
+        json_obj("got");
+        json_hexn("serdatr_before", d0, 4);
+        json_hexn("serdatr", d1, 4);
+        json_obj_end();
+        json_obj("in");
+        json_hexn("serper", per, 4);
+        json_int("timeout_cck", (long)to);
+        json_obj_end();
+        json_str("why", "after one SERDAT write (start + 8 data + stop bits) SERDATR TBE and TSRE (bits 13, 12) "
+                 "must both be set again within 4 character times (HRM appendix A: SERDATR)");
+    }
+    json_obj("timing");
+    if (el != 0xffffffffUL)
+        json_int("cck", (long)el);
+    json_int("expect_cck", (long)(10 * bit_cck));
+    json_obj_end();
+    json_str("note", "cck = beam time from the SERDAT write to TBE+TSRE, informational (an emulator without "
+             "serial timing sets them at once; hardware takes ~10 bit times)");
+    amt_case_close();
+
+    CWR(R_INTREQ, INT_RBF);
+    d1 = CRD(R_SERDATR);
+    if (!(d1 & (SER_RBF | SER_OVRUN)))
+        amt_case("uart_ovrun_clear", AMT_ST_PASS, 0);
+    else {
+        amt_case_open("uart_ovrun_clear", AMT_ST_FAIL);
+        json_obj("expect");
+        json_hexn("serdatr_and_c000", 0, 4);
+        json_obj_end();
+        json_obj("got");
+        json_hexn("serdatr", d1, 4);
+        json_obj_end();
+        json_obj("in");
+        json_hexn("intreq", INT_RBF, 4);
+        json_obj_end();
+        json_str("why", "clearing INTREQ RBF (bit 11) clears SERDATR RBF and OVRUN (bits 14, 15) "
+                 "(HRM chapter 8: serial port; nothing is received meanwhile)");
+        amt_case_close();
+    }
+}
+
 /* ============================================================ main */
 /* Does the host answer requests at all? No case of its own: when the
  * "wait" probe is not acknowledged, req() sets hnone and every host case
@@ -1402,6 +1490,7 @@ static void body(void)
     joytest_tests();
     potinp_tests();
     pot_counter_test();
+    uart_tests();
     host_probe();
     keyboard_tests();
     mouse_tests();

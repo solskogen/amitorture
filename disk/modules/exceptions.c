@@ -47,8 +47,11 @@ XS(divull); XS(divsll); XS(divul64); XS(divsl64); XS(divuli);
 XS(mulul64); XS(mulsl64); XS(movepw); XS(movepl); XS(cas2w); XS(cas2l); XS(casw);
 XS(fnop);
 XS(umovesr); XS(umovefsr); XS(uandisr); XS(uorisr); XS(ueorisr); XS(umoveusp);
-XS(umovec); XS(umoves); XS(urte); XS(utrap); XS(uaerr);
-XS(aerw); XS(aerl); XS(aeww); XS(aewl); XS(aejmp); XS(berr);
+XS(umovec); XS(umoves); XS(urte); XS(utrap); XS(uaerr); XS(uaerw);
+XS(aerw); XS(aerl); XS(aeww); XS(aewl); XS(aejmp); XS(aepdw); XS(berr);
+XS(vbr);
+extern UBYTE xs_moves[];
+ULONG xs_vbr_swap(ULONG vbr);
 XS(nest); XS(rte); XS(rte1);
 extern UBYTE xs_rte1_bad[];
 extern UBYTE xs_tr1[], xs_tr1_a[], xs_tr1_b[], xs_tr1_c[], xs_tr1_d[], xs_tr1_e[],
@@ -57,6 +60,8 @@ extern UBYTE xs_tr0[], xs_tr0_a[], xs_tr0_b[], xs_tr0_c[], xs_tr0_d[], xs_tr0_e[
     xs_tr0_f[], xs_tr0_g[], xs_tr0_x[], xs_tr0_end[], xs_tr0_sub[], xs_tr0_s1[];
 extern UBYTE xs_trt[], xs_trt_at[], xs_trt_nx[], xs_trt_n2[];
 extern UBYTE xs_tri[], xs_tri_at[], xs_tri_nx[], xs_tri_n2[];
+extern UBYTE xs_trc[], xs_trc_at[], xs_trc_nx[], xs_trc_n2[];
+extern UBYTE xs_trd[], xs_trd_at[], xs_trd_nx[], xs_trd_n2[];
 
 #define A(x) ((ULONG)(x))
 
@@ -396,8 +401,9 @@ static const char W_TRAP[] =
     "TRAP #n: vector 32+n, stacked SR = SR before the TRAP, stacked PC = next instruction; "
     "68010+: format $0, vector offset (32+n)*4 (M68000PRM TRAP, 68020UM 6.1.4/Table 6-5)";
 static const char W_TRAPV[] =
-    "TRAPV: V set -> vector 7, stacked PC = next instruction, CCR unchanged; 68020+: format $2 "
-    "with the TRAPV address; V clear -> no exception (M68000PRM TRAPV, 68020UM Table 6-5)";
+    "TRAPV, all 32 CCR values: V set -> vector 7, stacked PC = next instruction, CCR unchanged; "
+    "68020+: format $2 with the TRAPV address; V clear -> no exception and the CCR unchanged "
+    "(M68000PRM TRAPV, 68020UM Table 6-5)";
 static const char W_CHK[] =
     "CHK: Dn<0 -> vector 6 with N=1; Dn>bound (signed) -> vector 6 with N=0; else no trap. X not "
     "affected; Z,V,C undefined (masked), N undefined when no trap (masked). Stacked PC = next "
@@ -485,6 +491,19 @@ static const char W_TRTRAP4[] =
 static const char W_TRILL[] =
     "trace + ILLEGAL: an instruction that is not executed (illegal) is not traced; vector 4 with "
     "the traced SR, then tracing resumes at the next instruction (68000UM 6.3.8)";
+static const char W_TRCHK[] =
+    "trace + an instruction that traps (CHK out of bounds, DIVU by zero): the trap's exception "
+    "processing first, then the trace exception before the trap handler's first instruction "
+    "(trace PC = trap handler); after the handler's RTE the next instruction is traced "
+    "(68000UM 6.3.8, M68000PRM 1.6, 68020UM 6.1.8)";
+static const char W_MOVES[] =
+    "MOVES (68010+) reads/writes in the address space chosen by SFC/DFC (here 5, supervisor "
+    "data): long read, word and byte writes, word read to An sign-extended; MOVEC reads back "
+    "SFC/DFC (bits 2-0) (M68000PRM MOVES, MOVEC)";
+static const char W_VBR[] =
+    "68010+ VBR: exception vectors are fetched from VBR + 4 * vector; TRAP #5 with VBR moved to "
+    "a copy whose entry 37 points at another handler must go through the copy; the frame still "
+    "holds vector offset $094; MOVEC reads VBR back (M68000PRM 1.6, MOVEC; 68010UM 2.3)";
 static const char W_NEST[] =
     "TRAP inside a TRAP handler: the second frame is pushed below the first on the same "
     "supervisor stack with the handler's SR and PC; the first frame stays intact and both RTE "
@@ -530,35 +549,29 @@ static void t_trap(void)
 }
 
 /* ------------------------------------------------------------ TRAPV */
+/* every CCR value: V set -> vector 7 with the CCR unchanged in the stacked
+ * SR; V clear -> no exception and the CCR unchanged after the TRAPV */
 static void t_trapv(void)
 {
-    UWORD sr;
-    kbegin(W_TRAPV);
-    sr = 0x2702;
-    xset(sr);
-    rbegin(A(xs_trapv_at));
-    rin("sr", sr);
-    xrun(A(xs_trapv));
-    rexc(7, sr, 0xffff, A(xs_trapv_nx), A(xs_trapv_at), -1, 0);
-    rend();
-    sr = 0x271f;
-    xset(sr);
-    rbegin(A(xs_trapv_at));
-    rin("sr", sr);
-    xrun(A(xs_trapv));
-    rexc(7, sr, 0xffff, A(xs_trapv_nx), A(xs_trapv_at), -1, 0);
-    rend();
-    kend("trapv_v_set");
-
-    kbegin(W_TRAPV);
-    sr = 0x271d;
-    xset(sr);
-    rbegin(A(xs_trapv_at));
-    rin("sr", sr);
-    xrun(A(xs_trapv));
-    rnone(0, 0);
-    rend();
-    kend("trapv_v_clear");
+    int set, ccr;
+    for (set = 1; set >= 0; set--) {
+        kbegin(W_TRAPV);
+        for (ccr = 0; ccr < 32; ccr++) {
+            UWORD sr = 0x2700 | ccr;
+            if (((ccr & 2) != 0) != set)
+                continue;
+            xset(sr);
+            rbegin(A(xs_trapv_at));
+            rin("sr", sr);
+            xrun(A(xs_trapv));
+            if (set)
+                rexc(7, sr, 0xffff, A(xs_trapv_nx), A(xs_trapv_at), -1, 0);
+            else
+                rnone(sr, 0xff1f);
+            rend();
+        }
+        kend(set ? "trapv_v_set" : "trapv_v_clear");
+    }
 }
 
 /* ------------------------------------------------------------ TRAPcc */
@@ -980,6 +993,10 @@ static const struct il ill_tab[] = {
     { 0xa000, FALL, 10, "line_a_a000" },
     { 0xafff, FALL, 10, "line_a_afff" },
     { 0xffff, FALL, 11, "line_f_ffff" },
+    /* BKPT #0: 68000 an unassigned opcode; 68010+ run a breakpoint
+     * acknowledge cycle that no Amiga board answers, which the CPU ends as
+     * an illegal instruction (68010UM/68020UM BKPT, M68000PRM BKPT) */
+    { 0x4848, FALL, 4, "bkpt_illegal" },
 };
 
 static void t_illegal(void)
@@ -1108,6 +1125,8 @@ static int in_range(ULONG v, ULONG lo, ULONG hi)
     return v >= lo && v <= hi;
 }
 
+static ULONG ae_a0adj;                  /* a0 = addr + ae_a0adj (for -(An)) */
+
 static void ae_run(const char *id, ULONG fn, ULONG at, ULONG addr, int rw, int fc,
                    int ifetch, int user)
 {
@@ -1118,10 +1137,10 @@ static void ae_run(const char *id, ULONG fn, ULONG at, ULONG addr, int rw, int f
     kbegin(IS000 ? W_AE000 : IS010 ? W_AE010 : fam <= 3 ? W_AE020 : W_AE040);
     xset(sr);
     xr_usp = A(pool + P_USTK);
-    xr_ina0 = addr;
+    xr_ina0 = addr + ae_a0adj;
     xr_in[1] = 0x11223344UL;
     rbegin(at);
-    rin("a0_off", addr - at);       /* offsets from the instruction under test */
+    rin("a0_off", addr + ae_a0adj - at);      /* offsets from the instruction under test */
     rin("sr", sr);
     xrun(fn);
     if (xr_vec)
@@ -1163,7 +1182,10 @@ static void ae_run(const char *id, ULONG fn, ULONG at, ULONG addr, int rw, int f
             rcmp("frame_size", 14, xr_spbase - xr_ssp, T_INT);
             rcmp("status", (rw << 4) | fc, xr_frame[0] & 0x1f, T_H4);
             rcmpo("access_addr_off", addr, frl(xr_frame, 1));
-            rcmp("ir", *(UWORD *)at, xr_frame[3], T_H4);
+            /* MOVE to -(An) prefetches the next opcode before its write,
+             * so the IR word may hold that next opcode (both accepted) */
+            if (!(ae_a0adj && xr_frame[3] == ((UWORD *)at)[1]))
+                rcmp("ir", *(UWORD *)at, xr_frame[3], T_H4);
             rcmp("sr", ssr & srm, xr_frame[4] & srm, T_H4);
             pc = frl(xr_frame, 5);
             rcmp("handler_sr", (xr_frame[4] | 0x2000) & 0x3fff, xr_hsr, T_H4);
@@ -1191,17 +1213,19 @@ static void ae_run(const char *id, ULONG fn, ULONG at, ULONG addr, int rw, int f
 
 static void t_aerr(void)
 {
-    static const char *const ids[6] = {
+    static const char *const ids[8] = {
         "addr_err_read_word", "addr_err_read_long", "addr_err_write_word",
-        "addr_err_write_long", "addr_err_user_read", "addr_err_jmp_odd"
+        "addr_err_write_long", "addr_err_user_read", "addr_err_jmp_odd",
+        "addr_err_user_write", "addr_err_predec_write"
     };
     ULONG odd = A(pool + P_AE) + 1;
     int i;
     if (GE020) {
         /* data may be misaligned on 68020+ (see misaligned_data_020); an
          * instruction fetch from an odd address still takes vector 3 */
-        for (i = 0; i < 5; i++)
-            skip(ids[i], "68020+: misaligned data accesses do not take an address error (see "
+        for (i = 0; i < 8; i++)
+            if (i != 5)
+                skip(ids[i], "68020+: misaligned data accesses do not take an address error (see "
                          "misaligned_data_020); only addr_err_jmp_odd applies");
         ae_run(ids[5], A(xs_aejmp), A(xs_aejmp_at), A(xs_aetgt) + 1, 1, 6, 1, 0);
         return;
@@ -1212,6 +1236,11 @@ static void t_aerr(void)
     ae_run(ids[3], A(xs_aewl), A(xs_aewl_at), odd, 0, 5, 0, 0);
     ae_run(ids[4], A(xs_uaerr), A(xs_uaerr_at), odd, 1, 1, 0, 1);
     ae_run(ids[5], A(xs_aejmp), A(xs_aejmp_at), A(xs_aetgt) + 1, 1, 6, 1, 0);
+    ae_run(ids[6], A(xs_uaerw), A(xs_uaerw_at), odd, 0, 1, 0, 1);
+    /* -(An): the fault address is the decremented (odd) address */
+    ae_a0adj = 2;
+    ae_run(ids[7], A(xs_aepdw), A(xs_aepdw_at), odd, 0, 5, 0, 0);
+    ae_a0adj = 0;
 }
 
 static ULONG rd32(const UBYTE *p)
@@ -1440,6 +1469,158 @@ static void t_trace(void)
     tcheck(r, e, 2);
     rend();
     kend("trace_illegal_not_traced");
+}
+
+/* trace + an instruction that traps (CHK, DIVx by zero): like TRAP, the
+ * trap's exception processing runs first, then the trace exception before
+ * the trap handler's first instruction (68000UM 6.3.8 / M68000PRM 1.6 and
+ * 68020UM 6.1.8: CHK, CHK2, TRAPV, TRAPcc, DIVx by zero are traps). The trap
+ * frame's CCR is partly undefined, so event 1 is compared under srm. */
+static void tr_exc(const char *id, const char *why, ULONG fn, ULONG at, ULONG nx, ULONG n2,
+                   UWORD vec, UWORD sr1, UWORD srm1)
+{
+    struct tev e[3];
+    UWORD msk[3];
+    ULONG r;
+    int i, n = 3;
+
+    /* the trace frame holds the SR after the trap's exception processing:
+     * S set, T clear, the CCR the trapping instruction left */
+    e[0].vec = 9; e[0].sr = sr1 & 0x7fff; e[0].pc = amt_vbr()[vec]; e[0].addr = at;
+    e[1].vec = vec; e[1].sr = sr1; e[1].pc = nx; e[1].addr = at;
+    e[2].vec = 9; e[2].sr = 0x2700; e[2].pc = n2; e[2].addr = nx;
+    msk[0] = msk[1] = srm1;
+    msk[2] = 0xffff;
+    kbegin(why);
+    rbegin(at);
+    r = trace_run(fn, 0, 0);
+    R.pcrule = "trace frames: PC = the next instruction to execute (event 0: the trap handler), "
+               "addr (020+) = the traced instruction; event 1 = the trap frame";
+    rcmp("ret_vec", 0, r, T_INT);
+    if (xr_nlog != n)
+        tdump();
+    rcmp("events", n, xr_nlog, T_INT);
+    for (i = 0; i < n && i < xr_nlog; i++) {
+        volatile struct xlog *l = &xr_log[i];
+        int fmt = deffmt(e[i].vec);
+        UWORD fv = (UWORD)((fmt << 12) | (e[i].vec * 4));
+        int ok = l->vec == e[i].vec && (l->f[0] & msk[i]) == (e[i].sr & msk[i]) &&
+                 frl(l->f, 1) == e[i].pc && (IS000 || l->f[3] == fv) &&
+                 (!(GE020 && fmt == 2) || frl(l->f, 4) == e[i].addr);
+        rcmp("handler_sr", (l->f[0] | 0x2000) & 0x3fff, l->hsr, T_H4);
+        if (!ok) {
+            tdump();
+            R.ev = i;
+            rframe_from(l->f, 12);
+            rcmp("ev_vec", e[i].vec, l->vec, T_INT);
+            rcmp("ev_sr", e[i].sr & msk[i], l->f[0] & msk[i], T_H4);
+            rcmpo("ev_pc_off", e[i].pc, frl(l->f, 1));
+            if (!IS000)
+                rcmp("ev_fv", fv, l->f[3], T_H4);
+            if (GE020 && fmt == 2)
+                rcmpo("ev_addr_off", e[i].addr, frl(l->f, 4));
+            break;
+        }
+    }
+    rend();
+    kend(id);
+}
+
+static void t_trace_exc(void)
+{
+    if (fam >= 4) {
+        skip("trace_after_chk", "68000-68030 only: the 68040/060 trace rules for trapping "
+                                "instructions differ (see trace_trap_order)");
+        skip("trace_after_div0", "68000-68030 only: the 68040/060 trace rules for trapping "
+                                 "instructions differ (see trace_trap_order)");
+        return;
+    }
+    /* CHK.W d1,d0 with d0 = -1: N = 1, X kept (0), Z/V/C undefined */
+    tr_exc("trace_after_chk", W_TRCHK, A(xs_trc), A(xs_trc_at), A(xs_trc_nx), A(xs_trc_n2),
+           6, 0xa708, 0xff18);
+    /* DIVU.W by zero: C = 0, X kept (0), N/Z/V undefined */
+    tr_exc("trace_after_div0", W_TRCHK, A(xs_trd), A(xs_trd_at), A(xs_trd_nx), A(xs_trd_n2),
+           5, 0xa700, 0xff11);
+}
+
+/* ------------------------------------------------------------ MOVES / VBR */
+#define P_MOVES  1600           /* MOVES buffer (16 bytes) */
+#define P_VBR    2048           /* relocated vector table (1 KB) */
+
+static void t_moves(void)
+{
+    static const UBYTE init[16] = { 0xde, 0xad, 0xbe, 0xef, 0x11, 0x22, 0x33, 0x44,
+                                    0x80, 0x01, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb };
+    UBYTE *b = pool + P_MOVES;
+    int i;
+    if (IS000) {
+        skip("moves_sfc_dfc", "68010+ (MOVES/MOVEC are illegal on the 68000)");
+        return;
+    }
+    for (i = 0; i < 16; i++)
+        b[i] = init[i];
+    kbegin(W_MOVES);
+    xset(0x2700);
+    xr_in[0] = 5;                       /* supervisor data space */
+    xr_in[2] = 0x1234abcdUL;
+    xr_in[3] = 0x00000055UL;
+    xr_ina0 = A(b);
+    rbegin(A(xs_moves));
+    rin("sfc_dfc", 5);
+    xrun(A(xs_moves));
+    rnone(0, 0);
+    if (!xr_vec) {
+        rcmp("d1_moves_l_read", 0xdeadbeefUL, xr_out[1], T_H8);
+        rcmp("mem4_moves_w_write", 0xabcd, ((UWORD)b[4] << 8) | b[5], T_H4);
+        rcmp("mem6_untouched", 0x33, b[6], T_H4);
+        rcmp("mem7_moves_b_write", 0x55, b[7], T_H4);
+        rcmp("a1_moves_w_sext", 0xffff8001UL, xr_out[4], T_H8);
+        rcmp("sfc", 5, xr_out[5] & 7, T_INT);
+        rcmp("dfc", 5, xr_out[6] & 7, T_INT);
+    }
+    rend();
+    kend("moves_sfc_dfc");
+}
+
+static void t_vbr(void)
+{
+    volatile ULONG *nt = (volatile ULONG *)(pool + P_VBR);
+    volatile ULONG *ot = amt_vbr();
+    ULONG old, o37, back;
+    int i;
+    if (IS000) {
+        skip("vbr_relocated_trap", "68010+ (the 68000 has no VBR)");
+        return;
+    }
+    for (i = 0; i < 256; i++)
+        nt[i] = ot[i];
+    /* TRAP #5 (vector 37) through the new table lands in the stub for 38:
+     * only a CPU that uses VBR + 4 * 37 records vector 38 */
+    nt[37] = xr_stub_table[38 - 2];
+    o37 = ot[37];
+    old = xs_vbr_swap(A(ot));
+    xs_vbr_swap(old);
+    kbegin(W_VBR);
+    xset(0x2700);
+    xr_in[0] = A(nt);
+    rbegin(A(xs_vbr_at));
+    rin("vbr_off", A(nt) - A(pool));
+    xrun(A(xs_vbr));
+    back = xs_vbr_swap(old);
+    if (xr_vec)
+        rframe_from(xr_frame, 12);
+    rcmp("vbr_read", A(ot), old, T_H8);
+    rcmp("vec_stub", 38, xr_vec, T_INT);
+    if (xr_vec) {
+        rcmp("frame_size", 8, xr_spbase - xr_ssp, T_INT);
+        rcmp("fv", 0x0094, xr_frame[3], T_H4);
+        rcmpo("pc_off", A(xs_vbr_nx), frl(xr_frame, 1));
+        rcmp("sr", 0x2700, xr_frame[0], T_H4);
+    }
+    rcmp("vbr_after", A(nt), back, T_H8);
+    rcmp("old_table_untouched", o37, ot[37], T_H8);
+    rend();
+    kend("vbr_relocated_trap");
 }
 
 /* ------------------------------------------------------------ nested */
@@ -1767,6 +1948,9 @@ void amt_run_exceptions(void)
     t_aerr();
     t_misaligned();
     t_trace();
+    t_trace_exc();
+    t_moves();
+    t_vbr();
     t_nested();
     t_rte();
     t_unimpl060();

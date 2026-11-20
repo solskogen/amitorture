@@ -767,18 +767,15 @@ _fl_xmem_roxrl:				; longs from the start (a1 = start)
 	XMEPI
 
 ; ------------------------------------------------------------------ TRAP / RTE
-; void fl_trap_table(UWORD *out)   (vectors 33-35 and 7 installed by C)
-; for v 0..31 four words:
+; void fl_trap_table(UWORD *out)   (vectors 33-35 installed by C)
+; for v 0..31 three words:
 ;   trap #1 (handler EORI #$1F,CCR; RTE)       -> SR after
 ;   trap #2 (handler EORI.W #$1F,(SP); RTE)    -> SR after
 ;   trap #3 (handler MOVE SR,D5; RTE)          -> D5 (SR seen in the handler)
-;   TRAPV  (handler counts; RTE)               -> SR after
 	xdef	_fl_trap_table
 	xdef	_fl_trap1_h
 	xdef	_fl_trap2_h
 	xdef	_fl_trap3_h
-	xdef	_fl_trapv_h
-	xdef	_fl_trapv_count
 _fl_trap_table:
 	SAVE
 	move.l	48(sp),a0
@@ -793,9 +790,6 @@ _fl_trap_table:
 	move.w	d1,ccr
 	trap	#3
 	move.w	d5,(a0)+
-	move.w	d1,ccr
-	trapv
-	move.w	sr,(a0)+
 	addq.w	#1,d1
 	cmp.w	#32,d1
 	bne	.l
@@ -809,9 +803,6 @@ _fl_trap2_h:
 	rte
 _fl_trap3_h:
 	move.w	sr,d5
-	rte
-_fl_trapv_h:
-	addq.l	#1,_fl_trapv_count
 	rte
 
 ; ------------------------------------------------------------------ flags across gaps
@@ -1069,4 +1060,3 @@ fl_scratch:	ds.l	16
 fl_xc_pre:	ds.l	1
 fl_shift_mem:	ds.l	1
 _fl_shift_sr:	ds.w	2
-_fl_trapv_count:	ds.l	1

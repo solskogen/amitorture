@@ -1594,10 +1594,19 @@ static const char W_GLOB[] =
     "the non-global page must use its new descriptor, the global one may keep the old one; "
     "after PFLUSHA both use the new one (MC68040UM 3.4, MC68060UM 4.3, M68000PRM PFLUSH)";
 
+/* 040/060 table searches read memory, not the data cache: push a descriptor
+ * the CPU just wrote (the table memory may be copyback-cached) before the
+ * flush that must make it visible. */
+static void op_desc_push(void)
+{
+    if (!IS30)
+        op(O_C, 0, 0, 0);
+}
+
 static void t_atc(void)
 {
     ULONG v, P[4], *s0, *s1;
-    int i;
+    int i, r1, r2, r3;
     for (i = 0; i < 4; i++)
         P[i] = dpage(4096, i);
     if (!pre("atc_stale_flusha")) {
@@ -1610,16 +1619,17 @@ static void t_atc(void)
         nops = 0;
         op(O_R, LW(0) + 0x100, 0, 0);
         op(O_W, A(s0), gb_pdval(P[1], D_CI), 0);
-        op(O_R, LW(0) + 0x100, 0, 0);
+        r1 = op(O_R, LW(0) + 0x100, 0, 0);
+        op_desc_push();
         op(O_FL, 0, 0, 5);
-        op(O_R, LW(0) + 0x100, 0, 0);
+        r2 = op(O_R, LW(0) + 0x100, 0, 0);
         v = run_ops();
         last_vec = v;
         ck("vec", 0, v);
         ck("before", mk(P[0] + 0x100), ops[0].r);
-        ck2("stale_or_new", mk(P[0] + 0x100), mk(P[1] + 0x100), ops[2].r);
-        ck("after_pflusha", mk(P[1] + 0x100), ops[4].r);
-        cx("undef_stale_kept", ops[2].r == mk(P[0] + 0x100));
+        ck2("stale_or_new", mk(P[0] + 0x100), mk(P[1] + 0x100), ops[r1].r);
+        ck("after_pflusha", mk(P[1] + 0x100), ops[r2].r);
+        cx("undef_stale_kept", ops[r1].r == mk(P[0] + 0x100));
         rend("atc_stale_flusha");
     }
     if (!pre("atc_pflush_page")) {
@@ -1636,14 +1646,15 @@ static void t_atc(void)
         op(O_R, LW(1) + 0x104, 0, 0);
         op(O_W, A(s0), gb_pdval(P[2], D_CI), 0);
         op(O_W, A(s1), gb_pdval(P[3], D_CI), 0);
+        op_desc_push();
         op(O_FL, LW(0), IS30 ? 3 : 2, 5);
-        op(O_R, LW(0) + 0x104, 0, 0);
-        op(O_R, LW(1) + 0x104, 0, 0);
+        r1 = op(O_R, LW(0) + 0x104, 0, 0);
+        r2 = op(O_R, LW(1) + 0x104, 0, 0);
         v = run_ops();
         last_vec = v;
         ck("vec", 0, v);
-        ck("flushed_page_new", mk(P[2] + 0x104), ops[5].r);
-        ck2("other_page_old_or_new", mk(P[1] + 0x104), mk(P[3] + 0x104), ops[6].r);
+        ck("flushed_page_new", mk(P[2] + 0x104), ops[r1].r);
+        ck2("other_page_old_or_new", mk(P[1] + 0x104), mk(P[3] + 0x104), ops[r2].r);
         rend("atc_pflush_page");
     }
     if (!IS30 && !pre("pflushan_global")) {
@@ -1660,18 +1671,19 @@ static void t_atc(void)
         op(O_R, LW(1) + 0x108, 0, 0);
         op(O_W, A(s0), gb_pdval(P[2], D_CI | D_G), 0);
         op(O_W, A(s1), gb_pdval(P[3], D_CI), 0);
+        op_desc_push();
         op(O_FL, 0, 1, 5);                  /* PFLUSHAN */
-        op(O_R, LW(0) + 0x108, 0, 0);
-        op(O_R, LW(1) + 0x108, 0, 0);
+        r1 = op(O_R, LW(0) + 0x108, 0, 0);
+        r2 = op(O_R, LW(1) + 0x108, 0, 0);
         op(O_FL, 0, 0, 5);                  /* PFLUSHA */
-        op(O_R, LW(0) + 0x108, 0, 0);
+        r3 = op(O_R, LW(0) + 0x108, 0, 0);
         v = run_ops();
         last_vec = v;
         ck("vec", 0, v);
-        ck2("global_after_pflushan", mk(P[0] + 0x108), mk(P[2] + 0x108), ops[5].r);
-        ck("nonglobal_after_pflushan", mk(P[3] + 0x108), ops[6].r);
-        ck("global_after_pflusha", mk(P[2] + 0x108), ops[8].r);
-        cx("undef_global_kept_by_pflushan", ops[5].r == mk(P[0] + 0x108));
+        ck2("global_after_pflushan", mk(P[0] + 0x108), mk(P[2] + 0x108), ops[r1].r);
+        ck("nonglobal_after_pflushan", mk(P[3] + 0x108), ops[r2].r);
+        ck("global_after_pflusha", mk(P[2] + 0x108), ops[r3].r);
+        cx("undef_global_kept_by_pflushan", ops[r1].r == mk(P[0] + 0x108));
         rend("pflushan_global");
     }
     if (!IS30 && !pre("pflushn_page")) {
@@ -1684,12 +1696,13 @@ static void t_atc(void)
         nops = 0;
         op(O_R, LW(0) + 0x10c, 0, 0);
         op(O_W, A(s0), gb_pdval(P[1], D_CI), 0);
+        op_desc_push();
         op(O_FL, LW(0), 3, 5);              /* PFLUSHN (A0) */
-        op(O_R, LW(0) + 0x10c, 0, 0);
+        r1 = op(O_R, LW(0) + 0x10c, 0, 0);
         v = run_ops();
         last_vec = v;
         ck("vec", 0, v);
-        ck("nonglobal_after_pflushn", mk(P[1] + 0x10c), ops[3].r);
+        ck("nonglobal_after_pflushn", mk(P[1] + 0x10c), ops[r1].r);
         rend("pflushn_page");
     }
 }

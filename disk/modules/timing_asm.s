@@ -1,75 +1,13 @@
-; timing module: fixed CPU loops (68000 instruction set).
-; Every routine: ULONG fn(ULONG outer [, void *src, void *dst]), gcc stack
-; ABI (args at 4(sp)...), result in d0, d2-d7/a2-a6 preserved.
-; The inner loop body and count are fixed; `outer` only repeats it, so the
-; host can compare ops/ticks between machines.
+; timing module: fixed CPU loops whose results are checked (loop_result_*;
+; throughput is measured by the bench disk). 68000 instruction set.
+; Every routine: ULONG fn(ULONG outer), gcc stack ABI (args at 4(sp)...),
+; result in d0, d2-d7/a2-a6 preserved.
 
-	xdef	_tm_dbra
-	xdef	_tm_movereg
-	xdef	_tm_movemem
 	xdef	_tm_mulu
 	xdef	_tm_divu
 	xdef	_tm_branch
 
 	section	.text,code
-
-; 1000 x "dbra d2,*" per outer iteration
-_tm_dbra:
-	move.l	d2,-(sp)
-	move.l	8(sp),d0
-.o:	move.w	#999,d2
-.i:	dbra	d2,.i
-	subq.l	#1,d0
-	bne.s	.o
-	move.l	(sp)+,d2
-	rts
-
-; 100 x (8 x move.l reg,reg) per outer
-_tm_movereg:
-	movem.l	d2-d6,-(sp)
-	move.l	24(sp),d0
-	move.l	#$01234567,d3
-	moveq	#0,d4
-	moveq	#0,d5
-	moveq	#0,d6
-.o:	moveq	#99,d2
-.i:	move.l	d3,d4
-	move.l	d4,d5
-	move.l	d5,d6
-	move.l	d6,d3
-	move.l	d3,d4
-	move.l	d4,d5
-	move.l	d5,d6
-	move.l	d6,d3
-	dbra	d2,.i
-	subq.l	#1,d0
-	bne.s	.o
-	move.l	d3,d0
-	movem.l	(sp)+,d2-d6
-	rts
-
-; copy 2048 bytes src -> dst (64 x 8 x move.l (a0)+,(a1)+) per outer
-_tm_movemem:
-	movem.l	d2/a2-a3,-(sp)
-	move.l	16(sp),d0
-	move.l	20(sp),a2
-	move.l	24(sp),a3
-.o:	move.l	a2,a0
-	move.l	a3,a1
-	moveq	#63,d2
-.i:	move.l	(a0)+,(a1)+
-	move.l	(a0)+,(a1)+
-	move.l	(a0)+,(a1)+
-	move.l	(a0)+,(a1)+
-	move.l	(a0)+,(a1)+
-	move.l	(a0)+,(a1)+
-	move.l	(a0)+,(a1)+
-	move.l	(a0)+,(a1)+
-	dbra	d2,.i
-	subq.l	#1,d0
-	bne.s	.o
-	movem.l	(sp)+,d2/a2-a3
-	rts
 
 ; 100 x 8 x (move.w d5,d4 ; mulu.w d3,d4) per outer; d3=$5555 (8 one bits)
 ; result: $3333 * $5555 = $1110eeef

@@ -49,6 +49,7 @@ BF_NOZERO = 0x0008    # do not check BZERO
 BF_CON0L = 0x0010     # ECS: write BLTCON0L = aux after BLTCON0
 BF_SPECIAL = 0x0020   # only run by a special test (irq, bbusy, nasty)
 BF_HOT = 0x0040       # also run under amt_hot()
+BF_INFO = 0x0080      # rule not hardware-confirmed: reported, never a fail
 
 
 def s16(v):
@@ -240,7 +241,11 @@ class Case:
         sign = bool(con1 & SIGN)
         assert sign == (err < 0), self.id
         ptr = self.cpt
-        assert self.dpt == self.cpt
+        # The first dot goes to BLTDPT; after every D write the blitter copies
+        # the C pointer into D, so later dots land where C was read (the
+        # "first dot to a dummy word" polygon idiom, HRM 6 loads both with the
+        # start address only to keep that first dot on the line).
+        dptr = self.dpt
         onedot = False
         # BZERO (HRM 6: every D word the blit produced was zero). Which words a
         # SING step that draws no dot "produces" is not documented: the D words
@@ -257,11 +262,13 @@ class Case:
             if d:
                 zero_dot = False
             if draw:
-                mem.ww(ptr, d, "D")
+                mem.ww(dptr if dptr is not None else ptr, d, "D")
                 if d:
                     zero = zero_c = False
             elif c:
                 zero_c = False
+            if draw:
+                dptr = None
             bsh = (bsh + (1 if "texture_up" in MUTATE else -1)) & 15
             # minor step when SIGN is clear, then the major step
             dx = dy = 0
@@ -371,8 +378,9 @@ def area(cid, con0, con1=0, w=4, h=4, amod=0, bmod=0, cmod=0, dmod=0, **k):
 
 
 def line_case(cid, x1, y1, x2, y2, lf=0xca, sing=False, tex=0xffff, bsh=None, group="line",
-              note="", flags=0):
-    PW, PH = 40, 100                # plane: 320 x 100 pixels
+              note="", flags=0, dpt=None, PW=40, PH=100):
+    """PW x PH: plane bytes per row x rows (default 320 x 100 pixels).
+    dpt: (x, y) of the word that receives the first dot, default the start."""
     plane = 0x2000 + GUARD
     dx, dy = x2 - x1, y2 - y1
     adx, ady = abs(dx), abs(dy)
@@ -388,10 +396,11 @@ def line_case(cid, x1, y1, x2, y2, lf=0xca, sing=False, tex=0xffff, bsh=None, gr
     con0 = ((x1 & 15) << 12) | USEA | USEC | USED | lf
     con1 = (bsh << 12) | oct_ | (SING if sing else 0) | (SIGN if err < 0 else 0) | LINE
     ptr = plane + y1 * PW + 2 * (x1 >> 4)
-    assert 0 <= x1 < 320 and 0 <= x2 < 320 and 0 <= y1 < PH and 0 <= y2 < PH
+    assert 0 <= x1 < 8 * PW and 0 <= x2 < 8 * PW and 0 <= y1 < PH and 0 <= y2 < PH
+    dp = ptr if dpt is None else plane + dpt[1] * PW + 2 * (dpt[0] >> 4)
     return Case(cid, con0=con0, con1=con1, w=2, h=dmax + 1, adat=0x8000, bdat=tex,
                 amod=(4 * (dmin - dmax)) & 0xffff, bmod=(4 * dmin) & 0xffff, cmod=PW, dmod=PW,
-                apt=err & 0xffff, cpt=ptr, dpt=ptr, flags=BF_LINE | flags,
+                apt=err & 0xffff, cpt=ptr, dpt=dp, flags=BF_LINE | flags,
                 fills=[(plane - GUARD, (PW * PH + 2 * GUARD) // 2, None)],
                 window=(plane - GUARD, PW * PH + 2 * GUARD), group=group,
                 note=note or f"({x1},{y1})-({x2},{y2}) dmax={dmax} dmin={dmin} oct={oct_:#04x}"
@@ -443,8 +452,9 @@ def build_cases():
     # FWM/LWM whether it was fetched or preloaded (blitter_doblit: bltadat =
     # blt_info.bltadat when A is off, then &= blit_masktable[i];
     # blitter_loadadat: bltadat &= bltafwm/bltalwm). Not hardware-confirmed.
+    # BF_INFO: reported (with whether the hardware agreed) but never a fail.
     cases.append(area("mask_adat_rect", USEC | USED | 0x5a, 0, w=6, h=5, cmod=4, dmod=4,
-                      adat=0xffff, afwm=0x07ff, alwm=0xffe0, group="mask"))
+                      adat=0xffff, afwm=0x07ff, alwm=0xffe0, group="mask", flags=BF_INFO))
 
     # 4. modulos
     cases.append(area("mod_positive", ABCD | 0xd8, 0, w=3, h=6, amod=10, bmod=4, cmod=8, dmod=14,
@@ -547,6 +557,18 @@ def build_cases():
     cases.append(line_case("line_single_pixel", 123, 45, 123, 45))
     cases.append(line_case("line_two_pixels", 15, 45, 16, 45))
     cases.append(line_case("line_long", 0, 0, 319, 99))
+    # error-term edge cases: dmin = 1 (SIGN stays set until the one minor
+    # step), dmin = dmax - 1 (SIGN clear on all but one step), and the
+    # longest line, BLTSIZE height field 0 = 1024 dots (HRM 6: "height 0
+    # means 1024"), on a 32-pixel-wide plane
+    cases.append(line_case("line_dmin_1", 5, 60, 310, 61))
+    cases.append(line_case("line_dmin_dmax_m1", 200, 3, 104, 98))
+    cases.append(line_case("line_len_1024", 3, 0, 28, 1023, PW=4, PH=1024))
+    # first dot to BLTDPT, the rest where C is read (BLTDPT != BLTCPT): a
+    # line in two words of the same row, the first dot lands 40 rows below
+    cases.append(line_case("line_dpt_ne_cpt", 40, 20, 140, 50, dpt=(40, 60)))
+    cases.append(line_case("line_dpt_ne_cpt_sing", 40, 20, 100, 70, lf=0x4a, sing=True,
+                           dpt=(200, 90), group="line_sing"))
     # SING (one dot per horizontal line), every octant, XOR minterm
     for o, pts in oct_pts.items():
         dx, dy = pts[0]

@@ -286,6 +286,19 @@ static void report(const char *id, const struct blt_case *c, const struct result
         amt_case(id, AMT_ST_PASS, 0);
         return;
     }
+    if (c->flags & BF_INFO) {
+        /* expectation only from emulator sources, not from the HRM or a
+         * hardware capture: report what happened, never fail */
+        amt_case_open(id, AMT_ST_UNTESTABLE);
+        json_str("why", "expected value is not hardware-confirmed (tools/gen_blitter.py); "
+                        "result recorded for comparison only");
+        json_obj("ctx");
+        json_hex("undef_crc_model", c->crc);
+        json_hex("undef_crc_got", r->crc);
+        json_obj_end();
+        amt_case_close();
+        return;
+    }
     amt_case_open(id, AMT_ST_FAIL);
     json_obj("expect");
     json_hex("crc", c->crc);

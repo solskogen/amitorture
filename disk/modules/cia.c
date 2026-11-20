@@ -9,11 +9,12 @@
  * counts HSYNC. The E clock is CPU clock / 10 (709379 Hz PAL); one E clock
  * is exactly 5 colour clocks.
  *
- * Safety: PBON is never set (CIA-A PB is the parallel port, CIA-B PB the
- * floppy control lines), CIA-B SPMODE/CNT are never used (parallel BUSY/
- * POUT), PRA/PRB/DDR are never written. CIA-A SPMODE is only set for the
- * short serial-port output test, with $FF in SDR. Everything else is saved
- * and restored by cia_hw.h. */
+ * Safety: PBON is set only on CIA-A, for the short PB6/PB7 toggle tests
+ * (CIA-A PB is the parallel data port; CIA-B PB, the floppy control lines,
+ * is never touched); CIA-A DDRB/PRB are saved and restored around them.
+ * CIA-B SPMODE/CNT are never used (parallel BUSY/POUT), PRA is never
+ * written. CIA-A SPMODE is only set for the short serial-port output test,
+ * with $FF in SDR. Everything else is saved and restored by cia_hw.h. */
 #include "mod.h"
 #include "cia_hw.h"
 
@@ -516,6 +517,63 @@ static void t_cr_readback(const struct tm *t)
     }
 }
 
+/* Raw reads: high byte, then low byte, with no retry. The 8520 latches
+ * only the TOD on a read, not the timers (MOS 8520 data sheet, HRM
+ * appendix F), so a running timer can tear: the low byte read after the
+ * counter crossed $xx00 pairs with the old high byte. Informational for
+ * the running timer (tears are counted, a fast CPU sees few); a stopped
+ * timer must read the same value every time. */
+#define RAW_READS 2000
+static void t_raw_hilo(const struct tm *t)
+{
+    UWORD v, prev = 0xffff, bad = 0;
+    UBYTE h, l;
+    int i, n = 0, tears = 0, stopped_bad = 0;
+    tstop(t);
+    tload(t, 0x1234);
+    for (i = 0; i < 16; i++) {
+        h = cia_rd(t->c, t->hi);
+        l = cia_rd(t->c, t->lo);
+        v = (UWORD)((h << 8) | l);
+        if (v != 0x1234 && !stopped_bad) {
+            stopped_bad = 1;
+            bad = v;
+        }
+    }
+    tload(t, 0xffff);
+    cia_wr(t->c, t->cr, CR_RUNMODE | CR_LOAD | CR_START);
+    for (i = 0; i < RAW_READS; i++) {
+        h = cia_rd(t->c, t->hi);
+        l = cia_rd(t->c, t->lo);
+        v = (UWORD)((h << 8) | l);
+        if (v < 0x0400 || !(cia_rd(t->c, t->cr) & CR_START))
+            break;            /* stop well before the one-shot underflow */
+        if (n && v > prev)
+            tears++;
+        prev = v;
+        n++;
+    }
+    tstop(t);
+    amt_case_open(cid(t->pfx, "raw_hilo_read"), stopped_bad ? AMT_ST_FAIL : AMT_ST_PASS);
+    if (stopped_bad) {
+        json_obj("expect");
+        json_hexn("counter", 0x1234, 4);
+        json_obj_end();
+        json_obj("got");
+        json_hexn("counter", bad, 4);
+        json_obj_end();
+        json_str("why", "stopped timer loaded with $1234: high-then-low byte reads must return $1234 every time");
+    }
+    json_obj("timing");
+    json_int("reads", n);
+    json_int("tears", tears);
+    json_obj_end();
+    json_str("note", "running timer reads are not latched on the 8520 (only TOD is): a high-then-low read can "
+             "pair a stale high byte with the next low byte; tears = reads above the previous read of a "
+             "down-counting one-shot, informational");
+    amt_case_close();
+}
+
 static void timer_tests(const struct tm *t)
 {
     t_load(t);
@@ -528,6 +586,7 @@ static void timer_tests(const struct tm *t)
     if (!t->is_b)
         t_inmode_cnt(t);
     t_cr_readback(t);
+    t_raw_hilo(t);
 }
 
 /* timer B in INMODE=10: counts timer A underflows */
@@ -1302,6 +1361,111 @@ static void sdr_test(void)
     amt_case_close();
 }
 
+/* ------------------------------------------------------------ PB6/PB7 */
+/* PBON with OUTMODE=1 (toggle): the timer drives PB6 (TA) / PB7 (TB)
+ * whatever DDRB says; the output goes high when the timer starts and
+ * inverts at every underflow (MOS 8520 data sheet: CRA/CRB bits 1-2, HRM
+ * appendix F). PRB reads the pin, so polling it sees the square wave.
+ * CIA-A only (PB = parallel data); DDRB/PRB are saved and restored. Pulse
+ * mode (one E-clock pulse) is too short to sample and is not tested. */
+#define PB_LATCH 0x0400
+static void pb_toggle(const struct tm *t)
+{
+    UBYTE pbit = t->is_b ? 0x80 : 0x40, ddrb, prb, first, last, v;
+    ULONG t0;
+    int edges = 0, unf = 0, ok;
+    const char *id = t->is_b ? "ciaa_pb7_toggle" : "ciaa_pb6_toggle";
+    ddrb = cia_rd(CIAA_BASE, C_DDRB);
+    prb = cia_rd(CIAA_BASE, C_PRB);
+    cia_wr(CIAA_BASE, C_DDRB, 0x00);         /* PB inputs: only PBON drives the bit */
+    tstop(t);
+    tload(t, PB_LATCH);
+    (void)cia_icr(t->c);
+    cia_wr(t->c, t->cr, CR_PBON | CR_OUTMODE | CR_LOAD | CR_START);
+    first = last = cia_rd(CIAA_BASE, C_PRB) & pbit;
+    t0 = cia_now();
+    while (unf < 6 && cia_now() - t0 < MS(30)) {
+        v = cia_rd(CIAA_BASE, C_PRB) & pbit;
+        if (v != last) {
+            edges++;
+            last = v;
+        }
+        if (cia_icr(t->c) & t->bit)
+            unf++;
+    }
+    tstop(t);
+    cia_wr(t->c, t->cr, 0);
+    cia_wr(CIAA_BASE, C_PRB, prb);
+    cia_wr(CIAA_BASE, C_DDRB, ddrb);
+    ok = unf >= 4 && edges >= unf - 1 && edges <= unf + 1;
+    amt_case_open(id, ok ? AMT_ST_PASS : unf < 4 ? AMT_ST_UNTESTABLE : AMT_ST_FAIL);
+    if (!ok) {
+        json_obj("expect");
+        json_str("edges", "one per underflow (+-1)");
+        json_obj_end();
+        json_obj("got");
+        json_int("edges", edges);
+        json_int("underflows", unf);
+        json_hexn("first", first ? 1 : 0, 1);
+        json_obj_end();
+        json_obj("in");
+        json_hexn("cr", CR_PBON | CR_OUTMODE | CR_LOAD | CR_START, 2);
+        json_hexn("latch", PB_LATCH, 4);
+        json_hexn("ddrb", 0, 2);
+        json_obj_end();
+        json_str("why", unf < 4
+                 ? "timer underflows not seen in ICR within 30 ms: the PB output cannot be judged"
+                 : t->is_b
+                 ? "PBON + OUTMODE=1 on timer B: PB7 must invert at every underflow (MOS 8520 data sheet, "
+                   "CRB bits 1-2); PRB bit 7 reads the pin"
+                 : "PBON + OUTMODE=1 on timer A: PB6 must invert at every underflow (MOS 8520 data sheet, "
+                   "CRA bits 1-2); PRB bit 6 reads the pin");
+    }
+    json_obj("timing");
+    json_int("edges", edges);
+    json_int("underflows", unf);
+    json_hexn("first", first ? 1 : 0, 1);
+    json_obj_end();
+    amt_case_close();
+}
+
+/* SPMODE=0 (input): the serial port shifts on CNT edges only (the
+ * keyboard's clock on CIA-A); timer A underflows do not clock it and a
+ * write to SDR does not start an output shift (MOS 8520 data sheet: serial
+ * port). No ICR SP may appear within 4x the time an output shift would
+ * take. A keyboard byte also sets SP: then the case is untestable. */
+static void sdr_input_test(void)
+{
+    const struct tm *ta = &tms[0];
+    UBYTE acc = 0;
+    tstop(ta);
+    (void)cia_icr(CIAA_BASE);
+    tload(ta, SDR_LATCH);
+    cia_wr(CIAA_BASE, C_CRA, CR_LOAD | CR_START);   /* continuous, SPMODE=0 */
+    cia_wr(CIAA_BASE, C_SDR, 0xff);   /* $FF: KDAT idle even if it did shift */
+    {
+        ULONG t0 = cia_now();
+        do
+            acc |= cia_rd(CIAA_BASE, C_ICR);   /* raw: no handshake while TA runs */
+        while (!(acc & ICR_SP) && cia_now() - t0 < E2CC(4 * SDR_SHIFT_E) + 2 * 227);
+    }
+    tstop(ta);
+    if (acc & ICR_SP)
+        cia_kbd_handshake();
+    if (!(acc & ICR_SP))
+        amt_case("ciaa_sdr_input_no_shift", AMT_ST_PASS, 0);
+    else {
+        amt_case_open("ciaa_sdr_input_no_shift", AMT_ST_UNTESTABLE);
+        json_obj("got");
+        json_hexn("icr", acc, 2);
+        json_obj_end();
+        json_str("why", "ICR SP set with the serial port in input mode after an SDR write: either the "
+                 "write started an output shift (wrong: SPMODE=0 shifts only on CNT) or a keyboard byte "
+                 "arrived; the two cannot be told apart");
+        amt_case_close();
+    }
+}
+
 /* ------------------------------------------------------------ E clock */
 static void eclock_perf(int b)
 {
@@ -1420,6 +1584,9 @@ static void body(void)
         tod_tests(b);
     }
     sdr_test();
+    sdr_input_test();
+    pb_toggle(&tms[0]);
+    pb_toggle(&tms[1]);
     pra_read_rate();
     eclock_perf(0);
     eclock_perf(1);
