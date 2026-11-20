@@ -2,17 +2,14 @@
  * (docs/BENCH.md "Frame tier" and "Thread tier"). One count of a frame
  * block is one frame; the guest's clock can only say that a frame took a
  * frame, so these blocks need a host that times them with its own clock
- * (BH_HOST), as the cost of one emulated second. cia_write is the
- * exception: CIA write speed is the E-clock's on any machine.
+ * (BH_HOST), as the cost of one emulated second.
  *
  *   frame:  stop          the CPU idle in STOP, woken by the VBL: the
  *                         emulator's own cost (chipset, display, pacing)
  *           vbl_poll      busy-waiting on the beam, as games do
  *           chipset_load  STOP with a busy display: 6 planes, 8 sprites,
  *                         a copper list rewriting colours on every line
- *   thread: cia_write     back-to-back CIA writes: hand-offs between a
- *                         threaded CPU and the chipset thread
- *           stop_timer    STOP woken 1500 times a second by a CIA timer,
+ *   thread: stop_timer    STOP woken 1500 times a second by a CIA timer,
  *                         as an idle AmigaOS: the cost of waking the CPU
  *           flood_recovery  a CIA write flood, then quiet integer work: a
  *                         threaded CPU must come back after the flood
@@ -126,7 +123,7 @@ static ULONG sy_chipset_load(ULONG units, void *mem)
     screen_bare(1);
     return r;
 }
-/* cia_write: BSET/BCLR on the power LED bit of CIA-A PRA,
+/* A CIA write flood: BSET/BCLR on the power LED bit of CIA-A PRA,
  * Kickstart 1.3's Alert pattern: back-to-back CIA writes. With a threaded
  * CPU each one is a hand-off to the thread that runs the chipset, which
  * must still keep real time. The LED bit is put back as it was. */
@@ -191,7 +188,7 @@ static ULONG sy_stop_timer(ULONG units, void *mem)
 }
 
 /* flood_recovery: FR_CYCLES times a flood of CIA writes for FR_FLOOD_FRAMES
- * (cia_write's: BSET/BCLR on the power LED bit, the costliest CIA write for
+ * (sy_cia_write_led: BSET/BCLR on the power LED bit, the costliest CIA write for
  * the thread that serves it), then FR_QUIET_FRAMES of plain integer work
  * (add_l). A
  * threaded CPU that loses the flood to the host is moved to the main thread
@@ -231,12 +228,12 @@ struct sy_def {
     bh_fn fn;
 };
 
-/* Plan ids are part of the baseline format: never reuse or renumber one. */
+/* Plan ids are part of the baseline format: never reuse or renumber one.
+ * Retired: 210 (cia_write: only the E-clock bus wait, as cia_read). */
 static const struct sy_def defs[] = {
     { "stop",           "frame",  200, BH_FRAME | BH_HOST | BH_NOSUM, 1,    "frame", bm_stop },
     { "vbl_poll",       "frame",  201, BH_FRAME | BH_HOST | BH_NOSUM, 1,    "frame", bm_vbl_poll },
     { "chipset_load",   "frame",  202, BH_FRAME | BH_HOST | BH_NOSUM, 1,    "frame", sy_chipset_load },
-    { "cia_write",      "thread", 210, BH_NOSUM,                      1024, "insn",  sy_cia_write_led },
     { "stop_timer",     "thread", 211, BH_FRAME | BH_HOST | BH_NOSUM, 1,    "frame", sy_stop_timer },
     { "flood_recovery", "thread", 212, BH_FIXED | BH_HOST | BH_NOSUM, 1,    "run",   sy_flood_recovery },
 };

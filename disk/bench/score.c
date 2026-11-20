@@ -3,7 +3,9 @@
  * that ran before it (bh_result), turns them into absolute rates with the
  * guest's own clock, reports them as one `score` record and shows them on
  * the screen. No reference machine: every number is a rate (DMIPS = VAX
- * 11/780 Dhrystones, 1757 per second), a bandwidth or a time. */
+ * 11/780 Dhrystones, 1757 per second), a bandwidth or a time. "FPU Mops"
+ * is the dependent-chain FADD/FMUL rate (not a MFLOPS mix); "read MB/s"
+ * is MOVEM.L reads with the data cache off, 10^6 bytes per second. */
 #include "harness.h"
 #include "screen.h"
 
@@ -26,13 +28,14 @@ static U64 rate(const char *name, const char *kset, int *st)
 /* tenths of a ns per operation, 0 if there is none */
 static ULONG ns10(const char *name)
 {
-    ULONG n, best, per;
+    ULONG n, best, per, hz;
     U64 ops;
     int st = bh_result(name, 0, &n, &best, &per);
     if ((st != 1 && st != 2) || !n || !per)
         return 0;
     ops = (U64)per * n;
-    return (ULONG)((U64)best * 1000000000ULL / amt_cck_hz() * 10 / ops);
+    hz = amt_cck_hz();
+    return (ULONG)(((U64)(best / hz) * 10000000000ULL + (U64)(best % hz) * 10000000000ULL / hz) / ops);
 }
 
 /* v / 100 with two decimals, v / 10 with one */
@@ -60,7 +63,7 @@ static char l0[48], l1[48], l2[48], l3[48];
 void amt_run_bench_score(void)
 {
     U64 dh, fa, fm, r;
-    ULONG dmips = 0, mflops = 0, mbs[3], off, hit, walk, flt, pfa, pt;
+    ULONG dmips = 0, fmops = 0, mbs[3], off, hit, walk, flt, pfa, pt;
     long hit_pct = 0;
     int st, sa, sm, i, have_hit;
     const char *kset = "k020";
@@ -79,7 +82,7 @@ void amt_run_bench_score(void)
     fa = rate("fadd", 0, &sa);
     fm = rate("fmul", 0, &sm);
     if (fa && fm)
-        mflops = (ULONG)(2 * fa * fm / (fa + fm) / 10000);
+        fmops = (ULONG)(2 * fa * fm / (fa + fm) / 10000);
     for (i = 0; i < 3; i++) {
         r = rate(memn[i], 0, &st);
         mbs[i] = (ULONG)(r / 10000);
@@ -102,8 +105,8 @@ void amt_run_bench_score(void)
         json_int("dmips_x100", (long)dmips);
         json_str("dhry_kset", kset);
     }
-    if (mflops)
-        json_int("mflops_x100", (long)mflops);
+    if (fmops)
+        json_int("fpu_mops_x100", (long)fmops);
     for (i = 0; i < 3; i++)
         if (mbs[i])
             json_int(memk[i], (long)mbs[i]);
@@ -121,12 +124,12 @@ void amt_run_bench_score(void)
 
     p = str(l0, "DMIPS ");
     p = dmips ? fix(p, dmips, 2) : str(p, "?");
-    p = str(p, "  MFLOPS ");
-    if (mflops)
-        fix(p, mflops, 2);
+    p = str(p, "  FPU Mops ");
+    if (fmops)
+        fix(p, fmops, 2);
     else
         str(p, AMT_FPU() == AMT_FPU_NONE ? "none" : "?");
-    p = str(l1, "MB/s");
+    p = str(l1, "read MB/s");
     for (i = 0; i < 3; i++) {
         p = str(p, meml[i]);
         p = mbs[i] ? fix(p, mbs[i] / 10, 1) : str(p, i == 1 && amt_any_pool_on_chip_bus() ? "-" : "?");

@@ -34,7 +34,7 @@ static void set_pos(ULONG pos)
 static ULONG measure_res(void)
 {
     ULONG t = amt_ticks(), start = t, best = 0xffffffffUL, steps = 0;
-    ULONG limit = (ULONG)(amt_probe_result.pal ? 313 : 263) * 227UL * 12;
+    ULONG limit = amt_frame_cck() * 12;
     while (steps < 64 && amt_ticks() - start < limit) {
         ULONG u = amt_ticks();
         if (u != t) {
@@ -123,7 +123,7 @@ void bh_begin(void)
         inited = 1;
         host = (amt_par.flags & AMT_F_HOST) && amt_mbox;
         res_ticks = measure_res();
-        frame_cck = (amt_probe_result.pal ? 313UL : 263UL) * 227UL;
+        frame_cck = amt_frame_cck();
         tod_ok = tod_check();
         floor_ticks = amt_cck_hz() / 10;
         min_ticks = res_ticks > floor_ticks / 400 ? res_ticks * 400 : floor_ticks;
@@ -194,6 +194,7 @@ static void wait_frame(void)
 static ULONG timed(const struct bh_blk *b, ULONG count, const char *phase, ULONG *sum)
 {
     ULONG t0, t1, l0 = 0, l1 = 0, s, d, lost = 0;
+    UWORD dma;
     if (++seq > 255)
         seq = 1;
     amt_watchdog_kick();
@@ -207,6 +208,14 @@ static ULONG timed(const struct bh_blk *b, ULONG count, const char *phase, ULONG
     json_int("rs", (long)seq);
     json_end();
     set_pos(BH_POS_RUN | ((ULONG)b->id << 8) | seq);
+    /* display DMA (bitplanes, copper, sprites) off while a block runs, as
+     * xsysinfo does: code, stack and data on the chip bus would otherwise
+     * share it with the status screen. The frame and thread blocks measure
+     * the emulator with its display; blocks about contention turn on what
+     * they need themselves. */
+    dma = (UWORD)(CREG(R_DMACONR) & 0x01a0);
+    if (!(b->flags & (BH_FRAME | BH_HOST)))
+        CREG(R_DMACON) = 0x01a0;
     t0 = amt_ticks();
     if (tod_ok)
         l0 = tod_lines();
@@ -214,12 +223,16 @@ static ULONG timed(const struct bh_blk *b, ULONG count, const char *phase, ULONG
     t1 = amt_ticks();
     if (tod_ok)
         l1 = tod_lines();
+    if (!(b->flags & (BH_FRAME | BH_HOST))) {
+        CREG(R_DMACON) = 0x01a0;
+        CREG(R_DMACON) = (UWORD)(0x8000 | dma);
+    }
     d = t1 - t0;
     /* amt_ticks() counts frames in the VERTB handler; a machine that serves
      * that interrupt more than a frame late loses whole frames. The TOD
      * line count says how many: put them back. */
     if (tod_ok) {
-        ULONG cck = ((l1 - l0) & 0xffffffUL) * 227UL;
+        ULONG cck = amt_lines_cck((l1 - l0) & 0xffffffUL);
         if (cck > d + frame_cck / 2) {
             lost = (cck - d + frame_cck / 2) / frame_cck;
             d += lost * frame_cck;
@@ -450,6 +463,16 @@ done:
     }
     if (nonlinear)
         json_int("nonlinear", 1);
+    /* ns per unit x 10 from the fastest repetition (guest clock) */
+    if (count && b->per && best) {
+        ULONG hz = amt_cck_hz();
+        unsigned long long t10 = (unsigned long long)(best / hz) * 10000000000ULL +
+                                 (unsigned long long)(best % hz) * 10000000000ULL / hz;
+        unsigned long long ops = (unsigned long long)count * b->per;
+        unsigned long long nsu = (t10 + ops / 2) / ops;
+        if (nsu <= 0x7fffffffULL)
+            json_int("nsu", (long)nsu);
+    }
     json_obj("timing");
     json_int("best", (long)best);
     json_int("second", (long)second);

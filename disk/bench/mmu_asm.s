@@ -9,10 +9,12 @@
 	xdef	_bmm_fdesc,_bmm_finv,_bmm_fval,_bmm_fva,_bmm_fexp,_bmm_old2
 	xdef	_bmm_save,_bmm_setup,_bmm_restore
 	xdef	_bmm_read,_bmm_fault,_bmm_pflusha,_bmm_ptest,_bmm_berr
+	xdef	_bmm_keep,_bmm_on_c,_bmm_off_c
 
 	section	.data,data
 _bmm_fam:	dc.w	0
 _bmm_fexp:	dc.w	0
+_bmm_keep:	dc.w	0		; set: the caller turns the MMU on/off around the whole block
 _bmm_tc:	dc.l	0		; TC for the timed run (0 = MMU off)
 _bmm_tt:	dc.l	0,0		; TT0/TT1 (DTT0/DTT1) for the timed run
 _bmm_crp:	dc.l	0,0		; 030 root pointer of our tables
@@ -114,8 +116,21 @@ _bmm_restore:
 	nop
 	rts
 
+; the timed routines' on/off: nothing when mmu.c keeps the MMU on for the
+; whole block (bmm_keep), so the timed region holds only the work
+bmm_onk:
+	tst.w	_bmm_keep
+	beq.s	bmm_on
+	rts
+bmm_offk:
+	tst.w	_bmm_keep
+	beq.s	bmm_off
+	rts
+
 ; MMU on with _bmm_tc (0 for the "off" block) and off again. Both flush the
 ; ATC and the caches so every block starts the same way. d0/a0 clobbered.
+; Callable from C (void bmm_on_c(void), void bmm_off_c(void)).
+_bmm_on_c:
 bmm_on:
 	cmp.w	#3,_bmm_fam
 	bne.s	.n4
@@ -145,6 +160,7 @@ bmm_on:
 	nop
 	rts
 
+_bmm_off_c:
 bmm_off:
 	cmp.w	#3,_bmm_fam
 	bne.s	.f4
@@ -188,7 +204,7 @@ BM_OUT	macro
 ; sum is the same for every block (they all read the same physical data).
 _bmm_read:
 	BM_IN
-	bsr	bmm_on
+	bsr	bmm_onk
 	move.l	48(sp),d6
 	move.l	52(sp),a4
 	move.l	56(sp),d5
@@ -204,7 +220,7 @@ _bmm_read:
 	subq.l	#1,d6
 	bne.s	.o
 	move.l	d0,d2
-	bsr	bmm_off
+	bsr	bmm_offk
 	move.l	d2,d0
 	BM_OUT
 
@@ -213,7 +229,7 @@ _bmm_read:
 ; descriptor and returns, and the read completes.
 _bmm_fault:
 	BM_IN
-	bsr	bmm_on
+	bsr	bmm_onk
 	move.l	48(sp),d6
 	move.l	_bmm_fdesc,a2
 	move.l	_bmm_fva,a3
@@ -241,7 +257,7 @@ _bmm_fault:
 	bne.s	.l4
 .x:	clr.w	_bmm_fexp
 	move.l	d0,d2
-	bsr	bmm_off
+	bsr	bmm_offk
 	move.l	d2,d0
 	BM_OUT
 
@@ -274,7 +290,7 @@ _bmm_berr:
 ; ULONG bmm_pflusha(ULONG count): 16 PFLUSHA per count, MMU on
 _bmm_pflusha:
 	BM_IN
-	bsr	bmm_on
+	bsr	bmm_onk
 	move.l	48(sp),d6
 	cmp.w	#3,_bmm_fam
 	bne.s	.p4
@@ -289,7 +305,7 @@ _bmm_pflusha:
 	endr
 	subq.l	#1,d6
 	bne.s	.p4
-.px:	bsr	bmm_off
+.px:	bsr	bmm_offk
 	moveq	#0,d0
 	BM_OUT
 
@@ -297,7 +313,7 @@ _bmm_pflusha:
 ; on: 030 PTESTR #5,(a3),#7 (a full walk), 040 PTESTR (a3), 060 PLPAR (a3)
 _bmm_ptest:
 	BM_IN
-	bsr	bmm_on
+	bsr	bmm_onk
 	move.l	48(sp),d6
 	move.l	52(sp),a4
 	cmp.w	#4,_bmm_fam
@@ -324,6 +340,6 @@ _bmm_ptest:
 	subq.l	#1,d6
 	bne.s	.t6
 .tx:	move.l	a3,d2
-	bsr	bmm_off
+	bsr	bmm_offk
 	move.l	d2,d0
 	BM_OUT

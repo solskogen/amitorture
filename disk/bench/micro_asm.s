@@ -79,10 +79,7 @@ BMF_OUT	macro				; FP0-FP3 as singles, then as BM_OUT
 	xdef	_bm_custom_read
 	xdef	_bm_cia_read
 	xdef	_bm_cia_write
-	xdef	_bm_movec_vbr
-	xdef	_bm_pmove_tc
 	xdef	_bm_move16
-	xdef	_bm_movec_pcr
 	xdef	_bm_fadd
 	xdef	_bm_fmul
 	xdef	_bm_fdiv
@@ -99,7 +96,12 @@ BMF_OUT	macro				; FP0-FP3 as singles, then as BM_OUT
 	xdef	_bm_fmove_p_in
 	xdef	_bm_fmove_p_out
 	xdef	_bm_fmovem
-	xdef	_bm_fsave_frestore
+	xdef	_bm_mem_write
+	xdef	_bm_mem_copy
+	xdef	_bm_dispatch
+	xdef	_bm_smc_patch
+	xdef	_bm_unaligned_l
+	xref	_bm_flush_mode
 
 ; ------------------------------------------------------------ 68000 and up
 _bm_stop:				; STOP until the next interrupt (the runtime's
@@ -289,32 +291,6 @@ _bm_cia_write:				; BSET/BCLR the power LED bit (CIA-A PRA
 	bne	.o
 	BM_OUT
 
-; 68010+: read VBR, without changing exception vectors.
-_bm_movec_vbr:
-	BM_IN
-.o:	moveq	#15,d7
-.i:
-	rept	64
-	movec	vbr,d0
-	endr
-	dbf	d7,.i
-	subq.l	#1,d6
-	bne	.o
-	BM_OUT
-
-; 68030 MMU only: PMOVE TC to our pool, never change translation state.
-_bm_pmove_tc:
-	BM_IN
-.o:	moveq	#15,d7
-.i:
-	rept	64
-	dc.w	$f015,$4200		; pmove tc,(a5)
-	endr
-	dbf	d7,.i
-	subq.l	#1,d6
-	bne	.o
-	BM_OUT
-
 ; 68040/68060: 64 aligned 16-byte copies per inner loop, within our pool.
 	machine	68040
 _bm_move16:
@@ -330,19 +306,6 @@ _bm_move16:
 	bne	.o
 	BM_OUT
 	machine	68020
-
-; 68060 only: PCR read, preserving FPU enable and superscalar controls.
-_bm_movec_pcr:
-	BM_IN
-.o:	moveq	#15,d7
-.i:
-	rept	64
-	dc.w	$4e7a,$0808		; movec pcr,d0
-	endr
-	dbf	d7,.i
-	subq.l	#1,d6
-	bne	.o
-	BM_OUT
 
 ;--- memory read bandwidth (xsysinfo's method): 64 KB per unit in bursts of
 ; four MOVEM.L of 8 longs (128 bytes per iteration), from mem (16-byte
@@ -362,7 +325,138 @@ _bm_mem_read:
 	add.l	a2,d0
 	BM_OUT
 
+;--- memory write bandwidth: 64 KB per unit, four MOVEM.L of 8 longs per
+; iteration, downwards from mem + 64 KB. The data is constant (zeroes).
+_bm_mem_write:
+	BM_IN
+	sub.l	a1,a1
+	sub.l	a2,a2
+.o:	move.l	a5,a0
+	add.l	#65536,a0
+	move.w	#511,d7
+.i:
+	rept	4
+	movem.l	d0-d5/a1-a2,-(a0)
+	endr
+	dbf	d7,.i
+	subq.l	#1,d6
+	bne	.o
+	BM_OUT
+
+;--- memory copy bandwidth: the first 32 KB of mem to the second, 32 KB per
+; unit, 32 bytes per MOVEM.L pair. The checksum is the last 32 bytes moved.
+_bm_mem_copy:
+	BM_IN
+.o:	move.l	a5,a0
+	move.l	a5,a1
+	add.l	#32768,a1
+	move.w	#255,d7
+.i:
+	rept	4
+	movem.l	(a0)+,d0-d5/a2-a3
+	movem.l	d0-d5/a2-a3,(a1)
+	lea	32(a1),a1
+	endr
+	dbf	d7,.i
+	subq.l	#1,d6
+	bne	.o
+	add.l	a2,d0
+	add.l	a3,d0
+	BM_OUT
+
+;--- an interpreter's dispatch loop: fetch a bytecode, index a table of
+; handler offsets, jump; 64 bytecodes per program, 16 programs per unit
+; (1024 dispatches). The handlers are as small as an emulator's simplest.
+_bm_dispatch:
+	BM_IN
+	lea	dsp_tab(pc),a1
+dsp_unit:
+	moveq	#15,d7
+dsp_prog_start:
+	lea	dsp_prog(pc),a0
+dsp_next:
+	moveq	#0,d3
+	move.b	(a0)+,d3
+	move.w	0(a1,d3.w),d4
+	jmp	0(a1,d4.w)
+dsp_op0:
+	addq.l	#1,d0
+	bra.s	dsp_next
+dsp_op1:
+	add.l	d0,d1
+	bra.s	dsp_next
+dsp_op2:
+	eor.l	d1,d2
+	bra.s	dsp_next
+dsp_op3:				; end of program
+	dbf	d7,dsp_prog_start
+	subq.l	#1,d6
+	bne	dsp_unit
+	moveq	#0,d4
+	BM_OUT
+dsp_tab:
+	dc.w	dsp_op0-dsp_tab,dsp_op1-dsp_tab,dsp_op2-dsp_tab,dsp_op3-dsp_tab
+dsp_prog:				; bytecode = 2 * handler index
+	dc.b	0,2,0,4,2,0,0,4,2,2,0,4,0,2,4,0
+	dc.b	2,0,4,4,0,2,0,0,4,2,0,2,4,0,2,0
+	dc.b	0,4,2,0,2,4,0,0,2,0,4,2,0,4,2,2
+	dc.b	0,2,0,4,0,0,2,4,2,0,4,0,2,4,0,6
+	even
+
+;--- self-modifying code: per unit, patch the 32-bit immediate of an
+; ADD.L #imm,D0, make the CPU see it (68020/68030: CACR clear-instruction-
+; cache; 68040/68060: CPUSHA BC, as CacheClearU does) and run the 64
+; patched instructions. A JIT must notice and retranslate every time.
+_bm_smc_patch:
+	BM_IN
+	lea	smc_imm(pc),a3
+	lea	smc_code(pc),a4
+.o:	move.l	d6,(a3)
+	bsr.s	smc_flush
+	jsr	(a4)
+	subq.l	#1,d6
+	bne	.o
+	BM_OUT
+smc_flush:
+	move.l	_bm_flush_mode,d4
+	beq.s	.n
+	subq.l	#1,d4
+	bne.s	.c40
+	dc.w	$4e7a,$4002		; movec cacr,d4
+	or.w	#$0008,d4		; CI
+	dc.w	$4e7b,$4002		; movec d4,cacr
+	moveq	#0,d4
+	rts
+.c40:	dc.w	$f4f8			; cpusha bc
+	moveq	#0,d4
+.n:	rts
+	cnop	0,4
+smc_code:
+	dc.w	$0680			; add.l #imm,d0
+smc_imm:
+	dc.l	0
+	rept	63
+	addq.l	#1,d1
+	endr
+	rts
+
 ; ------------------------------------------------------------ 68020 and up
+_bm_unaligned_l:			; longs at odd addresses (address error on
+	BM_IN				; the 68000/68010): 32 loads and 32 stores
+	move.l	#$12345678,d1		; per 64, never overlapping
+	move.l	d1,1(a5)
+.o:	moveq	#15,d7
+.i:
+	rept	32
+	move.l	1(a5),d0
+	move.l	d0,7(a5)
+	endr
+	dbf	d7,.i
+	subq.l	#1,d6
+	bne	.o
+	moveq	#0,d1
+	BM_OUT
+
 _bm_mul_l:				; 32-bit forms: x * a * a^-1 = x (mod 2^32)
 	BM_IN
 	move.l	#$12345678,d0
@@ -573,7 +667,7 @@ _bm_\1:
 	endm
 
 	BMF1	fadd,<fadd.x fp1,fp0>				; FPU reference: 1.5 + n*0.5, exact
-	BMF2	fmul,<fmul.x fp4,fp0>,<fmul.x fp7,fp0>
+	BMF2	fmul,<fmul.x fp2,fp0>,<fmul.x fp1,fp0>		; 1.5 * 2 * 0.5 = 1.5, exact
 	BMF2	fdiv,<fdiv.x fp4,fp0>,<fdiv.x fp7,fp0>
 	BMF1	fsqrt,<fsqrt.x fp1,fp0>
 	BMF2	frem,<fmove.x fp3,fp0>,<frem.x fp2,fp0>		; 7.25 rem 2 = -0.75
@@ -630,23 +724,7 @@ _bm_fmovem:				; 8 registers out and back in
 	bne	.o
 	BMF_OUT
 
-_bm_fsave_frestore:			; idle frame out and back in
-	BM_IN
-	bsr	bm_fset
-	lea	512(a5),a4
-.o:	moveq	#15,d7
-.i:
-	rept	32
-	fsave	(a4)
-	frestore (a4)
-	endr
-	dbf	d7,.i
-	subq.l	#1,d6
-	bne	.o
-	BMF_OUT
-
 	cnop	0,4
-nullframe:	dc.l	0,0,0
 c_1p5:		dc.d	1.5
 c_0p5:		dc.d	0.5
 c_2:		dc.d	2.0

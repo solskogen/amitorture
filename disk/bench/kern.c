@@ -1,6 +1,6 @@
 /* bench_kernels: the kernel tier, real workloads from benchwork
- * (docs/BENCH.md "Kernel tier"). Every machine runs the 68000 set (k000);
- * a 68020 or later also runs k020 and, with an FPU, k020f, else k020s.
+ * (docs/BENCH.md "Kernel tier"). A 68000/68010 runs the 68000 set (k000);
+ * a 68020 or later runs k020 instead and, with an FPU, k020f, else k020s.
  * A kernel's memory comes from an arena in the module's any-pool (fast RAM
  * when there is some); its checksum after the first and the last
  * repetition must be the one the host computed when the disk was built
@@ -166,7 +166,7 @@ void amt_run_bench_kernels(void)
         const struct kn_set *s = &sets[i];
         if (s->api->version != KSET_VERSION)
             continue;
-        if (i > 0 && !cpu020)
+        if (i > 0 ? !cpu020 : cpu020)
             continue;
         if ((s->api == &k020f_kset && !fpu) || (s->api == &k020s_kset && fpu))
             continue;

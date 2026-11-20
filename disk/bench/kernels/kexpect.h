@@ -10,7 +10,7 @@ struct kexpect {
 };
 
 static const struct kexpect kexpect_k000[] = {
-    {"dhrystone", 0xcdafab83UL, 0xcdafab83UL},
+    {"dhrystone", 0x06e69d0fUL, 0x06e69d0fUL},
     {"scene-2d", 0x5213784dUL, 0x5213784dUL},
     {"zlib-deflate", 0xb14af591UL, 0xb14af591UL},
     {"zlib-inflate", 0x6e0dd610UL, 0x6e0dd610UL},
@@ -23,7 +23,7 @@ static const struct kexpect kexpect_k000[] = {
 };
 
 static const struct kexpect kexpect_k020[] = {
-    {"dhrystone", 0x485e35afUL, 0x485e35afUL},
+    {"dhrystone", 0x395de907UL, 0x395de907UL},
     {"scene-2d", 0xce295738UL, 0xce295738UL},
     {"zlib-deflate", 0x96fa083eUL, 0x96fa083eUL},
     {"zlib-inflate", 0xdc4c8450UL, 0xdc4c8450UL},

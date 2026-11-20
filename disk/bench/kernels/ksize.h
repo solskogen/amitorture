@@ -5,7 +5,10 @@
  * k020: a 14 MHz 68020 A1200 without fast RAM), so that even there a block
  * finishes in a few hundred milliseconds. Faster machines run more loops
  * per repetition, so they lose nothing. The sets are never compared with
- * each other, so their inputs may differ. KSET_REF is benchwork's own
+ * each other, so their inputs may differ. Dhrystone is the exception to
+ * the 100 ms rule: every loop starts with Dhry_Initialize() (a 10 KB clear),
+ * so a loop runs 1000/2000 Dhrystones (about 1 s on the slowest machine)
+ * to keep that cost under 1 % of the DMIPS figure. KSET_REF is benchwork's own
  * sizes, for a host build to compare checksums with benchwork.
  */
 #ifndef AMT_KSIZE_H
@@ -30,7 +33,7 @@
 #define KS_NFS3_VERTICES 50000
 #define KS_NFS3_TRIANGLES 6000
 #elif defined(KSET_000)
-#define KS_DHRY_RUNS     100UL
+#define KS_DHRY_RUNS     1000UL
 #define KS_SCENE_W       24
 #define KS_SCENE_H       12
 #define KS_CORPUS        (2UL * 1024)
@@ -48,7 +51,7 @@
 #define KS_NFS3_VERTICES 32
 #define KS_NFS3_TRIANGLES 8
 #else /* KSET_020 */
-#define KS_DHRY_RUNS     200UL
+#define KS_DHRY_RUNS     2000UL
 #define KS_SCENE_W       64
 #define KS_SCENE_H       24
 #define KS_CORPUS        (4UL * 1024)

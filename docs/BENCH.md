@@ -59,9 +59,14 @@ For every block the harness (`disk/bench/harness.c`):
      the same build on the x87 at extended precision. That counts as correct, with the note
      that the FPU ignored the rounding precision: the work and its time are the same;
    - micro blocks: all repetitions must return the same checksum, except blocks that read
-     changing hardware registers.
+     changing hardware registers. `add_l`, `add_l_nocache`, `mul_l`, `div_w`, `fadd`, `fmul`
+     and `smc_patch` also have a known result for each `count`; another one fails the block.
 
    Wrong results give `st: fail`. The timing is still reported.
+
+Bitplane, copper and sprite DMA are off during every timed run of the micro, kernel and MMU
+tiers, so the display doesn't steal chip bus cycles; the chip tier turns on what it measures.
+The `end` record has `nsu`, ns per unit ×10 from the fastest repetition.
 
 Every timed run starts just after a frame edge. Right before it the guest sends a `go`
 record and sets the mailbox position to `$10000 | id << 8 | rs` (`rs`: the run's sequence
@@ -94,7 +99,7 @@ the host's times are used and the flag is only a remark.
 
 `amt_ticks()` counts frames in the VERTB interrupt. A machine that serves that interrupt
 more than a frame late loses a whole frame from the clock: two vertical blanks are
-counted as one. One FPGA core did this during back-to-back CIA writes (`cia_write`), and
+counted as one. One FPGA core did this during back-to-back CIA writes (the retired `cia_write`), and
 its times were short by whole frames. CIA-B's TOD counter counts lines by itself, without
 an interrupt. At startup the harness checks it against the beam alone, over 150 lines
 of one frame, up to four times (env `tod: 1` if it counts them; otherwise `tod_lines` and
@@ -112,12 +117,19 @@ unrolled bodies of 64 instructions; `per` is the instruction count of one `count
 runs only on a CPU or FPU that implements its instructions in hardware.
 
 - **Integer:** empty, add_l, div_w, abcd_sbcd, roxl_roxr, movem, movep, trap_rte, mul_l,
-  mul_l64, div_l, div_l64, bfextu, bfffo, cas, cas2, chk2, pack_unpk.
-- **System:** custom_read, cia_read, movec_vbr, pmove_tc, move16, movec_pcr.
-- **Memory:** mem_read_chip (bitplane, copper and sprite DMA off), mem_read_fast,
-  mem_read_rom. Each reads 64 KB per `count`, in MOVEM.L bursts.
+  mul_l64, div_l, div_l64, bfextu, bfffo, cas, cas2, chk2, pack_unpk, unaligned_l (MOVE.L at
+  odd addresses, 68020 and up).
+- **System:** custom_read, cia_read, move16 (68040 and up).
+- **Memory:** mem_read_*, mem_write_* and mem_copy_* on chip and fast RAM (mem_read also on
+  ROM), in MOVEM.L bursts: 64 KB read or written per `count`, 32 KB copied.
+- **JIT:** dispatch (a bytecode interpreter's jump-table loop, 1024 dispatches per `count`);
+  smc_patch (patches an immediate in code, flushes the instruction cache, runs it: the cost
+  of self-modifying code); add_l_nocache (add_l with the instruction cache off, 68020 and up).
 - **FPU:** fadd, fmul, fdiv, fsqrt, frem, fscale, fintrz, fgetexp, fsin, fatan, fetox,
-  flogn, fmovecr, fmove_p_in, fmove_p_out, fmovem, fsave_frestore.
+  flogn, fmovecr, fmove_p_in, fmove_p_out, fmovem.
+
+Retired ids, never reused: 11 (movec_vbr), 22 (pmove_tc), 24 (movec_pcr), 48
+(fsave_frestore), 210 (cia_write, which only showed the CIA bus wait that cia_read shows).
 
 What is skipped, and why:
 - On a 68060: what it traps as unimplemented (MOVEP, CAS2, CHK2, 64-bit MUL/DIV).
@@ -131,13 +143,13 @@ Real workloads from benchwork, in kernel sets compiled per CPU class (`disk/benc
 
 | Set | Runs on | Kernels |
 |---|---|---|
-| `k000` | every CPU | integer kernels (dhrystone, scene-2d, zlib deflate/inflate, ftgrays, memcpy-large, aes-gcm, chacha20-poly1305) and the float kernels with soft float |
+| `k000` | 68000 and 68010 | integer kernels (dhrystone, scene-2d, zlib deflate/inflate, ftgrays, memcpy-large, aes-gcm, chacha20-poly1305) and the float kernels with soft float |
 | `k020` | 68020 and up | the integer kernels, compiled for 68020-68060 |
 | `k020f` | 68020 and up with an FPU | the float kernels using the FPU |
 | `k020s` | 68020 and up without an FPU | the float kernels with soft float |
 
-A 68020 or later runs both `k000` and its own sets. The 68000 code under a JIT is a useful
-measurement too.
+A 68020 or later runs only its own sets. Dhrystone does 1000 loops per `count` (`k000`) or
+2000 (`k020`), so its one-time setup is small next to the loops.
 
 Each kernel gets its memory from a 160 KB arena in the module's pool, fast RAM when there is
 some. Plan ids: `k000` 64+, `k020` 96+, `k020f` 128+, `k020s` 160+, in set order.
@@ -153,7 +165,6 @@ need a host that times them with its own clock, and they are skipped without one
 | `stop` | frame | the CPU idle in STOP, woken by the VBL: the emulator's own cost |
 | `vbl_poll` | frame | busy-waiting on the beam, as games do |
 | `chipset_load` | frame | STOP under a busy display (6 planes, 8 sprites, copper colour changes on every line) |
-| `cia_write` | thread | back-to-back CIA writes (runs without a host too) |
 | `stop_timer` | thread | STOP woken 1500 times a second by a CIA timer, as an idle AmigaOS |
 | `flood_recovery` | thread | a CIA write flood, then quiet integer work; mailbox position `$20000` during the quiet phases |
 
@@ -177,6 +188,22 @@ CPUs, on a 68020 + 68851, and when the MMU is already enabled (its tables belong
 
 The three read blocks read the same physical addresses, so they share one checksum.
 
+### Chip tier (`bench_chip`, module 45)
+
+Chipset throughput and contention. It runs after the score and doesn't change it. Each block
+sets up its own display and restores the bare screen after.
+
+| Block | Id | Unit | What |
+|---|---|---|---|
+| `chip_lores6` | 203 | byte | mem_read on chip RAM under a 6-plane lores display: CPU vs bitplane DMA |
+| `chip_hires4` | 204 | byte | the same under a 4-plane hires display |
+| `copper_load` | 205 | byte | the same under a copper list with 40 colour MOVEs on every line |
+| `irq_flood` | 206 | irq | a level-3 interrupt requested through INTREQ, taken and acknowledged: the round trip |
+| `blit_copy` | 207 | byte | blitter A→D copy, 64 words × 256 lines (32 KB per `count`) |
+| `blit_fill` | 208 | byte | blitter D-only fill, same size |
+
+Compare `chip_*` and `copper_load` with `mem_read_chip`, which runs with the display off.
+
 ### Score (`bench_score`, module 44)
 
 The last module runs nothing. It turns the results of the blocks before it into absolute
@@ -186,8 +213,8 @@ xsysinfo. There is no reference machine.
 | Number | From |
 |---|---|
 | DMIPS | `dhrystone` loops per second / 1757 (VAX 11/780 = 1). The `k020` set when it ran, else `k000` |
-| MFLOPS | harmonic mean of the `fadd` and `fmul` rates; `none` without an FPU |
-| MB/s chip, fast, rom | the `mem_read_*` blocks |
+| FPU Mops | harmonic mean of the `fadd` and `fmul` rates, in millions of register-to-register operations a second; `none` without an FPU. Not SysInfo's MFLOPS, which comes from a different loop |
+| read MB/s chip, fast, rom | the `mem_read_*` blocks |
 | MMU hit | how much slower `mmu_hit` is than `mmu_off`, in percent |
 | MMU miss | `mmu_walk` minus `mmu_hit`: the time of one table walk, in ns |
 | MMU fault | one `mmu_fault` round trip, in µs |

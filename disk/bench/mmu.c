@@ -22,7 +22,7 @@ AMT_MODULE(bench_mmu, 43, AMT_PH_BARE, 0, 0, POOL);
 #define A(x) ((ULONG)(x))
 #define VL(a) (*(volatile ULONG *)(a))
 
-extern UWORD bmm_fam, bmm_fexp;
+extern UWORD bmm_fam, bmm_fexp, bmm_keep;
 extern ULONG bmm_tc, bmm_tt[2], bmm_crp[2], bmm_root, bmm_orig[11];
 extern ULONG bmm_fdesc, bmm_finv, bmm_fval, bmm_fva, bmm_old2;
 void  bmm_save(void);
@@ -33,6 +33,8 @@ ULONG bmm_fault(ULONG count);
 ULONG bmm_pflusha(ULONG count);
 ULONG bmm_ptest(ULONG count, ULONG la);
 void  bmm_berr(void);
+void  bmm_on_c(void);
+void  bmm_off_c(void);
 
 #define WIN_LEN 0x200000UL         /* MB 0: read pages, MB 1: fault page */
 #define NEAR    64UL               /* step: 4 pages, all in the ATC */
@@ -245,6 +247,18 @@ static void set_blocks(const char *mem)
     blk(&bl[5], "mmu_ptest", 225, run_ptest, &r_pt, vf_ptest, 16, "insn", mem);
     blk(&bl[6], "mmu_plpa", 226, run_ptest, &r_pt, vf_ptest, 16, "insn", mem);
 }
+/* The MMU goes on (ATC and caches flushed) once per block, around all its
+ * repetitions, so switching it is not part of the timed work; the
+ * harness's own code and output between repetitions run identity-mapped. */
+static void run_on(const struct bh_blk *b, ULONG tc)
+{
+    use(tc);
+    bmm_keep = 1;
+    bmm_on_c();
+    bh_run(b);
+    bmm_off_c();
+    bmm_keep = 0;
+}
 static void skip_all(const char *why)
 {
     int i;
@@ -339,14 +353,16 @@ void amt_run_bench_mmu(void)
         tt_on[k] = tt_hits(bmm_orig[5 + k], W) ? 0 : bmm_orig[5 + k];
     for (i = 0; i < 4096; i++)
         VL(P + 4 * i) = 0x9e3779b9UL * (i + 1);
-    /* the cache mode MMU-off memory accesses get without a TT: 68040
-     * write-through, 68060 TC.DCO */
-    cm_mem = fam == 6 ? ((bmm_orig[0] >> 9) & 3) << 5 : 0;
+    /* our pages are cacheable write-through (CM 00) on both families, the
+     * 68040's MMU-off default; the data cache is off by module policy */
+    cm_mem = 0;
     cm_p = cm_of(P);
     if (fam == 3)
         build30();
     else {
-        tc_on = fam == 6 ? 0x8000UL | (bmm_orig[0] & 0x07fcUL) : 0x8000UL;
+        /* E, 4 KB pages; on the 68060 also NAI, FOTC/FITC (1/2-cache
+         * ATCs) and the DCO/DUO/DCI/DUI default cache modes all 0 */
+        tc_on = 0x8000UL;
         build40();
     }
     if (t_over) {
@@ -377,12 +393,12 @@ void amt_run_bench_mmu(void)
     old2 = amt_vec_set(2, bmm_berr);
     bmm_old2 = A(old2);
     for (k = 0; k < 5; k++)
-        bh_run(&bl[k]);
+        run_on(&bl[k], k == 0 ? 0 : tc_on);
     if (fam == 6) {
         bh_skip(&bl[5], "68060: no PTEST (PLPAR instead)");
-        bh_run(&bl[6]);
+        run_on(&bl[6], tc_on);
     } else {
-        bh_run(&bl[5]);
+        run_on(&bl[5], tc_on);
         bh_skip(&bl[6], "PLPAR is 68060 only");
     }
     amt_vec_set(2, old2);
