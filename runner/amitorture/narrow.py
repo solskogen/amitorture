@@ -423,6 +423,21 @@ def run(groups, launch, entry_of, module_id, budget_s, reruns=3, binaries=(), lo
             else:
                 w["params"].pop("modules", None)
     # then round-robin over the groups, `jobs` tasks at a time
+    # a group that did not reproduce in round 1 runs its other reruns first:
+    # if none of them reproduces either, its variants cannot tell anything
+    # (analyze treats every pass as inconclusive) and are dropped
+    unrepro = [w for w in work if w["res"].get("isolation_note")]
+    if unrepro:
+        run_batch([(w, t) for w in unrepro for t in w["tasks"] if t[0] == "rerun"])
+        for w in unrepro:
+            w["tasks"] = [t for t in w["tasks"] if t[0] != "rerun"]
+            g = w["g"]
+            if all(outcome(f, k, kind, g["ref_fp"].get(k)) != "bad"
+                   for f in w["base_runs"] for k, kind in g["cases"].items()):
+                w["res"]["not_tried"] += [f"{t[1]}={t[2]}" for t in w["tasks"]]
+                w["res"]["isolation_note"] += (f"; not reproduced in {len(w['base_runs'])} rerun(s): "
+                                               "neighbouring configs not tried")
+                w["tasks"] = []
     queue = []
     depth = max((len(w["tasks"]) for w in work), default=0)
     for i in range(depth):

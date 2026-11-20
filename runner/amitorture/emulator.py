@@ -235,8 +235,11 @@ def binary_info(binary, env):
 
 
 def port_free(port):
+    # SO_REUSEADDR like Amiberry's own bind (osdep/socket.cpp): a port whose
+    # last connection is in TIME_WAIT is usable, one still listening is not.
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:
+        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         s.bind(("127.0.0.1", port))
         return True
     except OSError:

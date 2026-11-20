@@ -44,8 +44,6 @@ class Policy(unittest.TestCase):
                 w = set(e["module_warp"])
                 self.assertLessEqual(w, pacing.WARP_SAFE, e["id"])
                 self.assertTrue(w <= set(coverage.AXES), e["id"])
-                if pacing._threaded(e):
-                    self.assertFalse(w, f"{name}: {e['id']} is threaded")
                 # twins share the policy, so parity compares like with like
                 ref = by_id.get(e.get("twin_of"))
                 if ref is not None:
@@ -57,8 +55,8 @@ class Policy(unittest.TestCase):
         a500 = next(e for e in es if e["id"] == "a500-68000-ce")
         self.assertEqual(set(a500["module_warp"]), pacing.WARP_SAFE)
         self.assertNotIn("misc_hw", a500["module_warp"])
-        fast = next(e for e in es if e["id"] == "a1200-68ec020-fast")
-        self.assertEqual(fast["module_warp"], [])      # its family has a threaded twin
+        for eid in ("a1200-68ec020-fast", "a1200-68ec020-fast-thr"):   # threaded twins share the policy
+            self.assertEqual(next(e for e in es if e["id"] == eid)["module_warp"], ["display"])
         nothr = next(e for e in es if e["id"] == "a4000-68040nommu-fast")
         self.assertEqual(nothr["module_warp"], ["display"])
 

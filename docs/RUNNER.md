@@ -16,8 +16,9 @@ check in every report).
 - **Emulator slots.** At most `nproc - 1` (at least 1) Amiberry processes run on the machine at a time, shared by every agent and
   tool. `tools/amislot.py` (flock on `~/.cache/amitorture/locks/emu-slot-N`, or `$XDG_CACHE_HOME/amitorture/locks` when that is set, or `$AMT_LOCK_DIR`, shared by every checkout; `AMT_MAX_EMU` can lower the count, never raise it; live Amiberry processes no slot holder accounts for count too) is held for the
   whole lifetime of every Amiberry process the runner starts: `--version`, `--dump-config`, emulation runs,
-  narrowing reruns, baseline repetitions, repro runs. `--jobs N` (default 1) runs N entries at once and is capped at
-  the slot count. Whatever waits for a free slot is recorded as `slot_wait_s` in `raw/<entry>/result.json`.
+  narrowing reruns, baseline repetitions, repro runs. `--jobs N` runs N launches (an entry's disks are one
+  each) at once and is capped at the slot count; the default `auto` takes the slot count (1 with `--show`; bench
+  entries always run one at a time). Whatever waits for a free slot is recorded as `slot_wait_s` in `raw/<entry>/result.json`.
   A slot that is free when a launcher looks is cleared of what a dead holder left in it (stale holder and
   emulator pids). A wait for a slot gives up at once on Ctrl+C (`emulator_slot(cancel=..., cancel_exc=...)`).
 - **Serial/GDB ports.** The runner uses 23540-23599 by default; `--ports LO-HI` (or `$AMT_PORTS`) gives it another
@@ -207,15 +208,16 @@ then acks. `pacing.py` holds the policy:
   network, timing, interrupts, cia;
 - 68000/68010 and cycle-exact machines warp every safe module (measured: about half the host time), other
   machines only display (96 -> 75 s, JIT 97 -> 52 s; the cpu modules get slower under the JIT);
-- a family (reference and twins) with a threaded CPU stays paced: warp changed interrupts, cia, timing and paula
-  results on the threaded CPU (results 20261110-172107Z), a finding of its own. The policy depends only on the
-  CPU model and core otherwise, so twins share it and parity compares like with like (`warp.modules` per disk
-  must match).
+- threaded CPUs follow the same policy: warp changed interrupts, cia, timing and paula results on the threaded
+  CPU (results 20261110-172107Z), which are not in `WARP_SAFE`; an A/B of the smoke's a600 and a1200 families
+  with their `-thr` twins (2026-11-20, 3 runs paced vs 3 warped) gave the same verdict and fingerprint for every
+  other case (only engine-dependent JIT DMA cases moved, which parity leaves out). The policy depends only on the
+  CPU model and core, so twins share it and parity compares like with like (`warp.modules` per disk must match).
 The disk's own policy (`--warp`, boot warp) is unchanged; `--warp` given explicitly turns per-module pacing off.
 Each disk result records `warp.modules` (the policy) and `warp.module_pacing` (what was acked). An audio
 capture does not stop it: marks are offsets in the capture file taken when served, and the modules that make
 sounds are never warped. Measured on smoke (paced vs per module, same code): verdicts identical but for a known
-flake; a500-68000-ce's module time 460 -> 261 s; most smoke machines have a threaded twin and stay paced.
+flake; a500-68000-ce's module time 460 -> 261 s; the a600/a1200 families 240 -> 99 s.
 `baseline` keeps the disk's pacing unless given `--module-warp auto`; `check` inherits the baseline's.
 
 ### Launch overhead
@@ -226,8 +228,13 @@ Measured: the core disk reaches its pacing ack after 6.6-7.1 s on fast machines 
 parameters) and copied (`adf.bake` with a cache under the run's temp dir). A boot-warped launch loads the payload
 at turbo drive speed (`SET_FLOPPY_SPEED 0`) and the `pacing` request restores real speed before the first module
 when the disk tests the floppy hardware. The runtime names its mailbox in `hello.mbox`, so the runner reads it
-without scanning chip RAM (the scan stays as the fallback). With several jobs the longest entries (by the
-planner's estimate) start first.
+without scanning chip RAM (the scan stays as the fallback).
+
+Each disk of an entry is a launch of its own, and with several jobs the disks of one entry run in parallel like
+those of different entries (the entry's result is combined once all are in). The longest launches start first:
+by their host time in an earlier run in the same work dir (`WORKDIR/launch-times.json`, only used for this
+order), else by the planner's estimate for the modules on that disk. Smoke at the default `--jobs auto` on a
+16-core x86 host (31 slots): 458 s with whole entries per job and the threaded families paced, 151 s now.
 
 ## Commands
 
@@ -378,7 +385,8 @@ amitorture run --amiberry BIN --kickstarts DIR [--matrix smoke] [--config GLOB .
 4. **Narrowing.** For each (entry, module) with failing cases or mismatches, the runner reruns only that module
    (`modules=<1<<id>`, same seed):
    - N times on the same config, giving `deterministic` / `intermittent` / `not reproduced` and a fail rate. If
-     the module alone never fails, the runner tries once with the full disk.
+     the first rerun (module alone) does not fail, the other reruns use the full disk and run before any variant;
+     if none of them fails either, the variants are skipped (a pass there could not tell anything).
    - On every neighbouring config with one setting changed: JIT off/on, each `comp_*`, cachesize 128/16384,
      fast/compat/CE, the adjacent CPU models, FPU native/softfloat, threaded off/on, chipset, PAL/NTSC, and each
      `--narrow-binary`. For an engine mismatch on a machine-changing axis, the reference entry is rerun with the

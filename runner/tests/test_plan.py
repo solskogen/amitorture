@@ -4,6 +4,7 @@ import os
 import re
 import sys
 import unittest
+from unittest import mock
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from amitorture import coverage, matrix, plan  # noqa: E402
@@ -97,3 +98,21 @@ class RunOrder(unittest.TestCase):
         costs = [planmod.entry_cost(es[i], coverage.modules_run(es[i])) for i in order]
         self.assertEqual(costs, sorted(costs, reverse=True))
         self.assertTrue(planmod._slow(es[order[0]]))
+
+    def test_disk_launches_measured_first(self):
+        from amitorture import runner
+        es = matrix.expand("smoke")[:2]
+        disks = [("1-core", "a"), ("2-cpu", "b"), ("3-exp", "c")]
+        tasks = [(i, d) for i in range(2) for d in disks]
+        times = runner.LaunchTimes("/nonexistent/launch-times.json")
+        order = runner.run_order(es, tasks, times)
+        self.assertEqual(sorted(order), list(range(len(tasks))))
+        times.note(es[1]["id"], "3-exp", 9999)
+        self.assertEqual(runner.run_order(es, tasks, times)[0], 5)
+
+    def test_jobs_auto(self):
+        from amitorture import emulator, runner
+        with mock.patch.object(emulator, "max_slots", return_value=7):
+            self.assertEqual(runner.resolve_jobs("auto"), 7)
+            self.assertEqual(runner.resolve_jobs("auto", show=True), 1)
+            self.assertEqual(runner.resolve_jobs(3), 3)

@@ -17,6 +17,15 @@ from . import cdimage
 from .emulator import RunnerError
 
 
+def resolve_jobs(jobs, show=False):
+    """--jobs: an int, or "auto": every machine-wide emulator slot
+    (emulator.max_slots: nproc - 1 or $AMT_MAX_EMU), one with --show (a
+    window per emulator). run_entries caps an int at the slots."""
+    if str(jobs).strip().lower() == "auto":
+        return 1 if show else max(1, emulator.max_slots())
+    return max(1, int(jobs or 1))
+
+
 class Options:
     def __init__(self, **kw):
         self.binary = kw["binary"]
@@ -38,7 +47,8 @@ class Options:
         self.boot_timeout = kw.get("boot_timeout", 60.0)
         self.verbose = kw.get("verbose", True)
         self.keep = kw.get("keep", False)
-        self.jobs = max(1, int(kw.get("jobs", 1) or 1))
+        self.jobs = resolve_jobs(kw.get("jobs", 1), kw.get("show", False))
+        self.jobs_auto = str(kw.get("jobs", 1)).strip().lower() == "auto"
         self.narrow = kw.get("narrow", True)
         self.narrow_budget = kw.get("narrow_budget", 7200.0)
         self.narrow_reruns = kw.get("narrow_reruns", 3)
@@ -1942,6 +1952,7 @@ class Context:
         watched = isolation.watched_paths(extra=[(os.path.dirname(opts.binary), False, "warn"),
                                                  (os.path.abspath(opts.kickstarts), False, "warn")])
         self.guard = isolation.Guard(watched).__enter__()
+        self.times = LaunchTimes(os.path.join(work, "launch-times.json"))
         probe_home = os.path.join(self.tmp, "probe-home")
         env = emulator.isolated_env(probe_home)
         self.environment = {
@@ -1975,20 +1986,32 @@ class Context:
         return self._binfo[binary]
 
     def run_entries(self, entries, binary=None, extra_options=None, on_result=None):
-        """Runs entries (opts.jobs at a time). Returns results in entry order."""
+        """Runs entries, opts.jobs launches at a time, and returns their
+        results in entry order. Each disk of an entry is a launch of its own
+        (a fresh boot), so with jobs > 1 the disks of one entry run in
+        parallel like those of different entries, longest first (run_order);
+        the entry's result is combined from its disks once all are done."""
         opts = self.opts
         results = [None] * len(entries)
         self.results_so_far = results      # what a Ctrl+C keeps
+        jobs = min(opts.jobs, emulator.max_slots())
+        if jobs < opts.jobs and not getattr(self, "_jobs_capped", False):
+            self._jobs_capped = True
+            log(opts, f"--jobs {opts.jobs} capped to {jobs}: machine-wide emulator slots (tools/amislot.py)")
 
-        def one(i, e):
+        def guarded(e, fn):
             try:
-                r = run_entry(opts, self.d, e, binary=binary, extra_options=extra_options)
+                return fn(), False
             except RunnerError as ex:
-                r = entry_error(e, ex)
+                return entry_error(e, ex), True
             except Exception as ex:   # a runner bug must not lose the other entries
                 import traceback
                 r = entry_error(e, f"runner exception {type(ex).__name__}: {ex}")
                 r["traceback"] = traceback.format_exc()[-3000:]
+                return r, True
+
+        def finish(i, r):
+            e = entries[i]
             if r["status"] in ("skip", "error") and "process" not in r:
                 log(opts, f"{e['id']}: {r['status']}: {r['reason']}")
             r["isolation_changes_so_far"] = len([c for c in self.guard.check() if c["severity"] == "fail"])
@@ -1996,15 +2019,47 @@ class Context:
             if on_result:
                 on_result(r)
 
-        jobs = min(opts.jobs, emulator.max_slots())
-        if jobs < opts.jobs and not getattr(self, "_jobs_capped", False):
-            self._jobs_capped = True
-            log(opts, f"--jobs {opts.jobs} capped to {jobs}: machine-wide emulator slots (tools/amislot.py)")
-        if jobs <= 1 or len(entries) <= 1:
+        if jobs <= 1:
             for i, e in enumerate(entries):
-                one(i, e)
-        else:
-            emulator.run_parallel(lambda ie: one(*ie), [(i, entries[i]) for i in run_order(entries)], jobs)
+                finish(i, guarded(e, lambda: run_entry(opts, self.d, e, binary=binary,
+                                                       extra_options=extra_options))[0])
+            return results
+
+        # One task per (entry, disk); an entry with no disk list (a single
+        # --adf, --no-disk) or none of the set's disks runs whole.
+        tasks, pending, lock = [], {}, threading.Lock()
+        for i, e in enumerate(entries):
+            disks = entry_disks(self.d, e)
+            if not disks or disks == [None]:
+                tasks.append((i, None))
+            else:
+                tasks += [(i, d) for d in disks]
+                pending[i] = {d[0]: None for d in disks}   # in disk order
+
+        def one(k):
+            i, d = tasks[k]
+            e = entries[i]
+            if d is None:
+                finish(i, guarded(e, lambda: run_entry(opts, self.d, e, binary=binary,
+                                                       extra_options=extra_options))[0])
+                return
+            r, failed = guarded(e, lambda: _run_disk(opts, self.d, e, binary=binary,
+                                                     extra_options=extra_options, disk=d))
+            if not failed:
+                self.times.note(e["id"], d[0], r.get("duration_s"))
+            subs = pending[i]
+            with lock:
+                subs[d[0]] = (r, failed)
+                done = all(subs.values())
+            if done:
+                got = list(subs.values())
+                err = next((r for r, failed in got if failed), None)
+                finish(i, err if err is not None else combine(e, [r for r, _ in got]))
+
+        try:
+            emulator.run_parallel(one, run_order(entries, tasks, self.times), jobs)
+        finally:
+            self.times.save()
         return results
 
     def close(self):
@@ -2025,13 +2080,64 @@ class Context:
         return self.environment["isolation"]
 
 
-def run_order(entries):
-    """Indices of entries, longest first by the planner's estimate (plan.py),
-    so that no long entry starts last and runs on alone; ties keep matrix
-    order. Results stay in matrix order."""
+def run_order(entries, tasks=None, times=None):
+    """Indices of tasks ((entry index, disk or None); default one whole
+    entry each), longest first, so that no long launch starts last and runs
+    on alone; ties keep matrix order. A disk launch's length is its host
+    time in an earlier run in this work dir (LaunchTimes) when known, else
+    the planner's estimate (plan.py) for the modules on that disk; a whole
+    entry's is the estimate. Results stay in matrix order."""
     from . import plan as planmod
-    return sorted(range(len(entries)), key=lambda i: -planmod.entry_cost(
-        entries[i], entries[i].get("plan_modules") or coverage.modules_run(entries[i])))
+    if tasks is None:
+        tasks = [(i, None) for i in range(len(entries))]
+
+    def cost(k):
+        i, d = tasks[k]
+        e = entries[i]
+        mods = e.get("plan_modules") or coverage.modules_run(e)
+        if d is not None:
+            known = times.get(e["id"], d[0]) if times is not None else None
+            if known is not None:
+                return known
+            group = d[0].split("-", 1)[-1]
+            mods = [m for m in mods if coverage.MODULE_GROUP.get(m) == group]
+            if not mods:
+                return planmod.BOOT_COST.get(group, (15, 5))[0 if planmod._slow(e) else 1]
+        return planmod.entry_cost(e, mods)
+    return sorted(range(len(tasks)), key=lambda k: -cost(k))
+
+
+class LaunchTimes:
+    """Host seconds of each (entry, disk) launch, kept across runs in
+    WORKDIR/launch-times.json. Only orders launches (run_order); never part
+    of a result."""
+
+    def __init__(self, path):
+        self.path = path
+        self.lock = threading.Lock()
+        try:
+            with open(path, encoding="utf-8") as fh:
+                self.t = {str(k): float(v) for k, v in json.load(fh).items()}
+        except (OSError, ValueError, TypeError, AttributeError):
+            self.t = {}
+
+    def get(self, eid, disk):
+        return self.t.get(f"{eid}|{disk}")
+
+    def note(self, eid, disk, seconds):
+        if seconds:
+            with self.lock:
+                self.t[f"{eid}|{disk}"] = round(float(seconds), 1)
+
+    def save(self):
+        with self.lock:
+            try:
+                tmp = f"{self.path}.{os.getpid()}.tmp"
+                with open(tmp, "w", encoding="utf-8") as fh:
+                    json.dump(self.t, fh, indent=0, sort_keys=True)
+                os.replace(tmp, self.path)
+            except OSError:
+                pass
 
 
 def select_entries(opts):
@@ -2109,7 +2215,7 @@ def run(opts):
         raise RunnerError("bench entries run the bench disk, the others the test disks: run them separately")
     if nb:
         opts.matrix = "bench"       # the bench disk, also for bench entries named with --config
-        if opts.jobs > 1:
+        if opts.jobs > 1 and not opts.jobs_auto:
             log(opts, f"--jobs {opts.jobs} ignored: bench entries run one at a time (docs/BENCH.md)")
             opts.jobs = 1
     if opts.launches is not None and opts.launches < 1:

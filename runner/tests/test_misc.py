@@ -642,6 +642,24 @@ class RunnerFixes(unittest.TestCase):
             for p in (50000, 50001, 50002):
                 emulator.release_port(p)
 
+    def test_port_in_time_wait_is_free_listening_is_not(self):
+        import socket
+        import time
+        from amitorture import emulator
+        lst = socket.socket()
+        lst.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        lst.bind(("127.0.0.1", 0))
+        lst.listen()
+        port = lst.getsockname()[1]
+        self.assertFalse(emulator.port_free(port))
+        cli = socket.create_connection(("127.0.0.1", port))
+        acc, _ = lst.accept()
+        acc.close()                 # server side closes first -> TIME_WAIT on the port
+        lst.close()
+        time.sleep(0.1)
+        cli.close()
+        self.assertTrue(emulator.port_free(port))
+
     def test_mailbox_overrun_is_a_problem(self):
         from amitorture import runner
         self.assertEqual(runner.mailbox_problems({"lost_bytes": 0}), [])

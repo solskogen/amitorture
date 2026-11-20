@@ -717,6 +717,26 @@ class Narrowing(unittest.TestCase):
                          log=lambda m: None, jobs=3)
         self.assertEqual(out["groups"][0]["cases"]["cpu.addx"]["signature"], ["comp_nf=false", "jit=off"])
 
+    def test_never_reproduced_skips_variants(self):
+        entry = dict(matrix.find("a4000-68040nommu-fast-jit"))
+        items = [{"kind": "case_fail", "entry": entry["id"], "mod": "cpu", "case": "addx", "case_key": "cpu.addx"}]
+        groups = narrow.groups_from(items, [{"id": entry["id"]}])
+        for reruns_fail, expect_variants in ((False, False), (True, True)):
+            launched = []
+
+            def launch(e, binary=None):
+                launched.append(e["id"])
+                bad = reruns_fail and e["id"].endswith("~rerun=2")
+                return self.fpx("fail" if bad else "pass")
+            out = narrow.run(groups, launch, lambda x: entry, {"cpu": 2}.get, budget_s=1e9, reruns=3,
+                             log=lambda m: None)
+            self.assertEqual(launched[:3], [entry["id"] + f"~rerun={i}" for i in (1, 2, 3)])
+            self.assertEqual(len(launched) > 3, expect_variants, launched)
+            g = out["groups"][0]
+            self.assertEqual(bool(g["not_tried"]), not expect_variants)
+            if not expect_variants:
+                self.assertTrue(g["cases"]["cpu.addx"]["statement"].startswith("not reproduced in 3"))
+
 
 class CodeMap(unittest.TestCase):
     def test_core_tables(self):

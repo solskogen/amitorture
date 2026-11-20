@@ -229,6 +229,18 @@ def parse_params(a):
     return p
 
 
+def _jobs_arg(v):
+    if v.strip().lower() == "auto":
+        return "auto"
+    try:
+        n = int(v)
+    except ValueError:
+        raise argparse.ArgumentTypeError(f"--jobs {v!r}: a number or auto") from None
+    if n < 1:
+        raise argparse.ArgumentTypeError("--jobs must be at least 1")
+    return n
+
+
 def parse_sets(a):
     out = {}
     for item in getattr(a, "set", None) or []:
@@ -518,9 +530,10 @@ def _common(p, kick_required=True, param_defaults=True):
     p.add_argument("--end-action", default="halt" if param_defaults else None, choices=["halt", "reboot", "return"],
                    help=END_HELP)
     p.add_argument("--param", action="append", metavar="KEY=VALUE", help=PARAM_HELP)
-    p.add_argument("--jobs", type=int, default=1, metavar="N",
-                   help="entries run in parallel (default 1), capped at the machine-wide emulator limit "
-                        "(nproc - 1, or a lower $AMT_MAX_EMU)")
+    p.add_argument("--jobs", type=_jobs_arg, default="auto", metavar="N|auto",
+                   help="emulator launches run in parallel (each disk of an entry is one), capped at the "
+                        "machine-wide emulator limit (nproc - 1, or a lower $AMT_MAX_EMU); default auto: that "
+                        "limit (1 with --show); bench entries always run one at a time")
     p.add_argument("--keep", action="store_true",
                    help="keep the per-run temp dir under WORKDIR/tmp (emulator homes, generated configs and media) "
                         "for debugging; normally removed at the end")

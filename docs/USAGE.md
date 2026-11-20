@@ -286,7 +286,7 @@ These boot from CD (CONTRACT §14): for an emulator run, the runner turns each b
 | `--workdir DIR` / `AMT_WORKDIR` | everything amitorture writes goes here (default `work/` in the checkout): `results/`, `baselines/`, `tmp/` |
 | `--kickstarts DIR` / `AMT_KICKSTARTS` | the ROM directory, read only (default `~/Amiberry/ROMs` when it exists) |
 | `AMT_MAX_EMU=N` | at most N emulators machine-wide (default and maximum: `nproc - 1`, at least 1). The limit is shared by every amitorture process and checkout (lock files in `$AMT_LOCK_DIR`, default `$XDG_CACHE_HOME/amitorture/locks`, else `~/.cache/amitorture/locks`). |
-| `--jobs N` | entries in parallel for one run (≤ the emulator slots) |
+| `--jobs N\|auto` | emulator launches in parallel for one run, each disk of an entry being one (≤ the emulator slots; default `auto`: all of them, 1 with `--show`) |
 | `--ports LO-HI` / `AMT_PORTS` | TCP port range for the emulators' serial ports (default 23540-23599) |
 | `--timeout S` / `--hang S` | per-disk launch limit (default 600 s) / no-progress limit (default 120 s) |
 | `--audio auto|on|off` | capture emulator audio for audio checks (default: only disks that ask for it) |

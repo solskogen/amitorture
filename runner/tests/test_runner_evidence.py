@@ -193,6 +193,34 @@ class Evidence(unittest.TestCase):
         self.assertEqual(launch.call_count, 2)
         self.assertEqual(r["status"], "pass")
 
+    def test_parallel_disk_launches_combine_like_run_entry(self):
+        a, b = matrix.find("a4000-68040nommu-fast"), matrix.find("a500-68000-ce")
+        disks = [("1-core", "a.adf"), ("2-cpu", "b.adf"), ("3-exp", "c.adf")]
+
+        def fake(opts, ctx, entry, binary=None, extra_options=None, disk=None):
+            if entry is b and disk[0] == "2-cpu":
+                raise emulator.RunnerError("no slot")
+            return result(entry["id"], disk_name=disk[0], duration_s=len(disk[0]), process={})
+
+        tmp = tempfile.TemporaryDirectory(dir=ROOT / "work" / "tmp")
+        self.addCleanup(tmp.cleanup)
+        ctx = runner.Context.__new__(runner.Context)
+        ctx.opts = SimpleNamespace(jobs=3, verbose=False)
+        ctx.d = {"disks": disks}
+        ctx.guard = SimpleNamespace(check=lambda: [])
+        ctx.times = runner.LaunchTimes(str(Path(tmp.name) / "launch-times.json"))
+        seen = []
+        with mock.patch.object(runner, "_run_disk", side_effect=fake), \
+                mock.patch.object(emulator, "max_slots", return_value=8):
+            got = ctx.run_entries([a, b], on_result=lambda r: seen.append(r["id"]))
+            want = runner.run_entry(None, ctx.d, a)
+        self.assertEqual(sorted(seen), sorted([a["id"], b["id"]]))
+        self.assertEqual([s["disk_name"] for s in got[0]["disks"]], ["1-core", "2-cpu", "3-exp"])
+        self.assertEqual({k: v for k, v in got[0].items() if k not in ("_merged", "isolation_changes_so_far")},
+                         {k: v for k, v in want.items() if k != "_merged"})
+        self.assertEqual((got[1]["status"], got[1]["reason"]), ("error", "no slot"))
+        self.assertEqual(runner.LaunchTimes(ctx.times.path).get(a["id"], "3-exp"), 5)
+
     def test_differing_boot_histories_align_unique_complete_boot_without_mutation(self):
         current = trace()
         earlier = [current[0], {"v": 1, "seq": 1, "t": "log", "msg": "reset before tests"}]
