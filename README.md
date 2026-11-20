@@ -115,7 +115,7 @@ python3 -m amitorture bench diff A_RESULTS B_RESULTS    # diff two finished runs
 
 `--matrix bench` has 17 entries from 68000 to 68060, with JIT and threaded-CPU twins. The disk measures
 instruction classes and memory paths, real workloads (dhrystone, zlib, AES-GCM ...), the emulator's own cost
-per frame and MMU costs, and ends with an xsysinfo-like score on screen (DMIPS, MFLOPS, MB/s, MMU). To keep the numbers meaningful on a desktop host:
+per frame and MMU costs, and ends with an xsysinfo-like score on screen (DMIPS, FPU Mops, read MB/s, MMU). To keep the numbers meaningful on a desktop host:
 
 - every emulator is pinned to the same fast host cores (`--pin`, default `auto`);
 - each entry is launched twice (`--launches N`), and each block keeps its fastest launch. The spread between
