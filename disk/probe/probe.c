@@ -575,14 +575,18 @@ static void probe_addr24(void)
         int r = addr24_board_alias();
         if (r >= 0) {
             P->addr24 = (UBYTE)r;
+            P->addr24_known = 1;
         } else {
+            /* nothing above 16 MB to alias against: untestable, so keep
+             * the old default (68EC020-style naming) but say so */
             P->addr24 = 1;
-            how("addr24:no-highmem assume 24");
+            how("addr24:no-highmem assume 24 (unknown)");
         }
     } else if (!hi) {
         P->addr24 = 0;
-        how("addr24:highmem, no alias pair, assume 32");
+        how("addr24:highmem, no alias pair, assume 32 (unknown)");
     } else {
+        P->addr24_known = 1;
         int alias;
         lo[0] = 0x4c4f574dUL;           /* "LOWM" */
         hi[0] = 0x48494748UL;           /* "HIGH" */
@@ -670,6 +674,25 @@ static void probe_chips(void)
     lisa = alice && stable && (d & 0xff) == 0xf8;
     /* No register is guaranteed on OCS: an open-bus coincidence is not ID. */
     ecsd = os_ecsd && stable && (d & 0xff) == 0xfc;
+    if (!gfx && !alice && stable && d == 0xfffc) {
+        /* KS 1.x graphics has no ChipRevBits: decide from the chip alone.
+         * The whole word must be $FFFC, and stay so with other custom
+         * registers read in between (they put other values on the data
+         * bus: open bus follows them, the ECS Denise register does not). */
+        int real = 1;
+        for (i = 0; i < 8 && real; i++) {
+            v = VPOSR;
+            v = *(volatile UWORD *)0xdff006UL;      /* VHPOSR */
+            if (DENISEID != 0xfffc)
+                real = 0;
+        }
+        if (real) {
+            ecsd = 1;
+            how_begin();
+            how_s("ecsd:hw-only (pre-V36 graphics)");
+            how_end();
+        }
+    }
 
     P->agnus_id = a;
     /* OCS Denise has no DENISEID register: the read floats (open bus), so
@@ -678,6 +701,12 @@ static void probe_chips(void)
     P->ecs_agnus = (UBYTE)(ecsa || alice);
     P->ecs_denise = (UBYTE)(ecsd || lisa);
     P->chipset = (lisa || alice) ? "AGA" : (ecsa || ecsd) ? "ECS" : "OCS";
+    if (alice && !lisa) {
+        how_begin();
+        how_s("chipset:mismatch alice without lisa denise=");
+        how_x(d, 4);
+        how_end();
+    }
     P->pal = (a & 0x10) ? 0 : 1;
 
     how_begin();
@@ -809,6 +838,7 @@ void amt_probe_with_claims(struct amt_probe *p, int retain_boards)
         probe_addr24();
     else {
         p->addr24 = p->cpu_family < 20;
+        p->addr24_known = 1;
         how(p->addr24 ? "addr24:000/010" : "addr24:32-bit cpu");
     }
     name_cpu();
@@ -961,6 +991,7 @@ int amt_probe_json(const struct amt_probe *p, char *buf, int len)
     jhex(&w, "fpu_frame", p->fpu_frame, 8);
     jint(&w, "mmu", p->mmu);
     jint(&w, "addr24", p->addr24);
+    jint(&w, "addr24_known", p->addr24_known);
     jhex(&w, "vbr", p->vbr, 8);
     jhex(&w, "cacr", p->cacr, 8);
     jopen(&w, "how", '[');

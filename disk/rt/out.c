@@ -3,6 +3,7 @@
 #include <proto/exec.h>
 #include <exec/memory.h>
 #include "rt.h"
+#include "mod.h"
 
 /* ------------------------------------------------------------------------ */
 /* small string helpers */
@@ -40,10 +41,13 @@ char *amt_vstr(char *dst, UWORD ver, UWORD rev)
 /* serial */
 
 static int ser_on;
+static UWORD ser_period;
 
-void ser_init(int pal, ULONG baud)
+UWORD ser_per(void) { return ser_period; }
+
+void ser_init(ULONG baud)
 {
-    ULONG clock = pal ? 3546895UL : 3579545UL;
+    ULONG clock = amt_cck_hz();     /* follows amt_probe_result.pal */
     ULONG per;
     if (amt_par.flags & AMT_F_NOSERIAL) {
         ser_on = 0;
@@ -60,6 +64,7 @@ void ser_init(int pal, ULONG baud)
     if (per > 0x7fff)
         per = 0x7fff;
     CREG(R_SERPER) = (UWORD)per;   /* bit 15 = 0: 8 data bits */
+    ser_period = (UWORD)per;
     ser_on = 1;
 }
 
@@ -80,6 +85,34 @@ void ser_write(const char *s, ULONG len)
 {
     while (len--)
         ser_putc(*s++);
+}
+
+/* "# <a><b><c><d>: <why>\n" on serial only: a human-readable comment line for
+ * whoever watches the serial port (real hardware, FPGA). Hosts ignore lines
+ * that start with "# " (CONTRACT section 5). Control characters and the
+ * newline are replaced so the comment stays one line. */
+void ser_comment(const char *a, const char *b, const char *c, const char *d, const char *why)
+{
+    const char *part[5];
+    int i;
+    if (!ser_on)
+        return;
+    part[0] = a; part[1] = b; part[2] = c; part[3] = d; part[4] = why;
+    ser_putc('#');
+    ser_putc(' ');
+    for (i = 0; i < 5; i++) {
+        const char *s = part[i];
+        ULONG n = 0;
+        if (!s)
+            continue;
+        if (i == 4) {
+            ser_putc(':');
+            ser_putc(' ');
+        }
+        for (; *s && n < 200; s++, n++)
+            ser_putc((UBYTE)*s < 0x20 || (UBYTE)*s > 0x7e ? '?' : *s);
+    }
+    ser_putc('\n');
 }
 
 /* ------------------------------------------------------------------------ */
@@ -164,6 +197,7 @@ static ULONG llen;
 static int overflow;
 static ULONG seq;
 static UBYTE first[DEPTH_MAX];   /* 1 = next element needs no comma */
+static char last_why[128];       /* top-level "why" of the record being built */
 static char closer[DEPTH_MAX];
 static int depth;
 
@@ -227,6 +261,7 @@ void json_begin(const char *type)
     llen = 0;
     overflow = 0;
     depth = 0;
+    last_why[0] = 0;
     first[0] = 1;
     put('{');
     put_key("v");
@@ -242,6 +277,17 @@ void json_str(const char *key, const char *val)
 {
     put_key(key);
     put_qstr(val ? val : "");
+    if (depth == 0 && key && val && key[0] == 'w' && key[1] == 'h' && key[2] == 'y' && !key[3]) {
+        ULONG i;
+        for (i = 0; val[i] && i < sizeof last_why - 1; i++)
+            last_why[i] = val[i];
+        last_why[i] = 0;
+    }
+}
+
+const char *json_last_why(void)
+{
+    return last_why;
 }
 
 /* Insert pre-serialised JSON (an object/array/value produced elsewhere,

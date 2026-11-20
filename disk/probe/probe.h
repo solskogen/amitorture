@@ -75,7 +75,10 @@ struct amt_probe {
     UBYTE ecs_agnus;      /* 0/1 (also 1 for AGA Alice) */
     UBYTE ecs_denise;     /* 0/1 (also 1 for AGA Lisa) */
     UBYTE pal;            /* 1 = PAL, 0 = NTSC */
-    UBYTE pad[3];
+    UBYTE addr24_known;   /* 1: addr24 was decided by the CPU model or an
+                             alias test; 0: only assumed (68020, nothing
+                             mapped above 16 MB to test against) */
+    UBYTE pad[2];
     ULONG vbr;
     ULONG cacr;           /* CACR as found (0 on 68000/68010) */
     ULONG agnus_id;       /* VPOSR bits 14-8 */

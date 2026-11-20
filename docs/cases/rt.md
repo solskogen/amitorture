@@ -10,4 +10,8 @@ Self-test of the bare-metal runtime (`disk/rt/`): the services every other bare 
 | `own_vector_trap0` | a handler a module installs with `amt_vec_set` runs | PRM: TRAP #0 takes vector 32 | the handler ran exactly twice for two TRAP #0 | VBR-relative vector fetch wrong |
 | `hot_repeat` | a pure integer loop gives the same result on every iteration of `amt_hot()` | determinism: the same code on the same data gives the same result | every iteration equals the first | with the JIT on: the compiled block differs from the interpreted first run; with it off: state leaking between iterations |
 
+| `fatal_no_try` | (only on a runtime bug) `amt_abort()` was called with no `amt_try` active, e.g. an exception outside any module | CONTRACT §10 | never emitted | the runtime itself trapped outside a try; the machine is halted at SR=$2700 after the record and a `# FATAL` serial comment |
+
+Every failing case record is followed on serial by a comment line `# FAIL <mod>.<case>: <why>` (CONTRACT §6), so a real machine or FPGA core can be watched with only a terminal.
+
 `hot_repeat` has no expected value of its own; the first iteration is the reference. That is the point of the case: with the JIT on, the first run is interpreted and the later ones compiled, so a difference is a miscompile. JIT/interpreter parity (the twin entries) checks the value itself.

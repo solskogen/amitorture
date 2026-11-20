@@ -16,6 +16,7 @@
 	xdef	_amt_try
 	xdef	_amt_abort
 	xdef	_amt_abort_d0
+	xref	_amt_fatal_no_try
 	xdef	_amt_get_sr
 	xdef	_amt_set_sr
 	xdef	_amt_run_on_stack
@@ -63,7 +64,9 @@ _amt_abort_d0:				; code in d0, callable from handlers
 	bne.s	try_out
 	moveq	#3,d0
 	bra.s	try_out
-.nojmp:	bra.s	.nojmp			; no try active: hang (cannot happen)
+.nojmp:	move.l	d0,-(sp)		; no try active (a runtime bug): report,
+	jsr	_amt_fatal_no_try	; then quarantine (does not return)
+.hang:	bra.s	.hang
 
 ; ---------------------------------------------------------------- sr
 _amt_get_sr:

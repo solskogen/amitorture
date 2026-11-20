@@ -7,9 +7,12 @@
 ; Loads the payload header (sector 2), allocates the payload's two segments
 ; (code; data + BSS), reads the blob through a chip RAM track buffer, checks
 ; its CRC-32, relocates, clears the BSS, stops the motor, clears the caches
-; (exec >= 37) and calls the payload entry.
+; and calls the payload entry. The header's sizes are checked against each
+; other before anything is allocated or read.
 ;
-; Only exec LVOs from KS1.2 are used, except CacheClearU (guarded).
+; Only exec LVOs from KS1.2 are used, except CacheClearU (exec >= 37). Before
+; V37 the caches of a 68020/030 (CACR CI|CD) or 68040 (CPUSHA BC) are
+; flushed directly through Supervisor().
 ; Before V36, trackdisk.device needs chip RAM buffers: the header copy and
 ; the track buffer are chip RAM, the segments go wherever AllocMem puts them
 ; (fast or slow RAM first), so a 512K chip + 512K slow A500 can hold the
@@ -18,6 +21,7 @@
 ; Build: vasmm68k_mot -Fbin -m68000 -no-opt -o bootblock.bin bootblock.s
 ; mkadf.py fills in the checksum at +4.
 
+_LVOSupervisor		equ	-30
 _LVOFindResident	equ	-96
 _LVOAllocMem		equ	-198
 _LVOFreeMem		equ	-210
@@ -26,6 +30,10 @@ _LVOCacheClearU		equ	-636
 
 LIB_VERSION		equ	20
 RT_INIT			equ	22
+ATTNFLAGS		equ	296
+AFB_68020		equ	1
+AFB_68040		equ	3
+MAX_SECTORS		equ	1760-3		; blob sectors after the header
 
 IO_COMMAND		equ	28
 IO_ERROR		equ	31
@@ -99,9 +107,51 @@ bb_code:
 	cmp.l	#2,H_VERSION(a4)
 	bne	.fail
 
-	; 2. the two segments
+	; header sanity: the sizes must agree with each other (mkadf.py
+	; layout()), so a corrupt or foreign header can not make us read,
+	; clear or jump outside the segments
 	move.l	H_ALLOC_SIZE(a4),d0
 	beq	.fail
+	move.l	d0,d1
+	and.w	#511,d1
+	bne	.fail			; alloc_size: whole sectors
+	cmp.l	H_IMAGE_SIZE(a4),d0
+	blo	.fail			; image_size <= alloc_size
+	move.l	H_ENTRY(a4),d1
+	btst	#0,d1
+	bne	.fail
+	cmp.l	H_IMAGE_SIZE(a4),d1
+	bhs	.fail			; entry < image_size, even
+	moveq	#9,d1
+	lsr.l	d1,d0			; code sectors
+	move.l	H_DATA_SECTORS(a4),d2
+	cmp.l	#MAX_SECTORS,d2
+	bhi	.fail
+	add.l	d2,d0
+	cmp.l	#MAX_SECTORS,d0
+	bhi	.fail
+	cmp.l	H_BLOB_SECTORS(a4),d0
+	bne	.fail			; blob = code + data sectors
+	lsl.l	d1,d2			; d2 = data sector bytes
+	cmp.l	H_DATA_ALLOC(a4),d2
+	bhi	.fail			; they fit segment 1
+	move.l	H_RELOC_COUNT(a4),d0
+	cmp.l	d2,d0
+	bhi	.fail			; (no overflow in * 4)
+	add.l	d0,d0
+	add.l	d0,d0
+	add.l	H_DATA_SIZE(a4),d0
+	bcs	.fail
+	cmp.l	d2,d0
+	bhi	.fail			; data + relocs inside the data sectors
+	move.l	H_DATA_SIZE(a4),d0
+	add.l	H_BSS_SIZE(a4),d0
+	bcs	.fail
+	cmp.l	H_DATA_ALLOC(a4),d0
+	bhi	.fail			; data + BSS inside segment 1
+
+	; 2. the two segments
+	move.l	H_ALLOC_SIZE(a4),d0
 	move.l	H_ALLOC_FLAGS(a4),d1
 	jsr	_LVOAllocMem(a6)
 	move.l	d0,a2
@@ -200,10 +250,23 @@ bb_code:
 
 	bsr	motor_off
 
-	; caches
+	; caches: the payload was written by the CPU (copy + relocation)
 	cmp.w	#37,LIB_VERSION(a6)
-	blo.s	.nocache
+	blo.s	.oldexec
 	jsr	_LVOCacheClearU(a6)
+	bra.s	.nocache
+.oldexec:
+	move.w	ATTNFLAGS(a6),d0
+	btst	#AFB_68020,d0		; also set for 030/040
+	beq.s	.nocache
+	move.l	a5,-(sp)
+	lea	flush_cacr(pc),a5
+	btst	#AFB_68040,d0
+	beq.s	.super
+	lea	flush_040(pc),a5
+.super:
+	jsr	_LVOSupervisor(a6)
+	move.l	(sp)+,a5
 .nocache:
 
 	; 6. call the payload
@@ -258,6 +321,16 @@ bb_code:
 .retfail:
 	moveq	#-1,d0
 	rts
+
+; Supervisor() routines (pre-V37 exec has no CacheClearU)
+flush_cacr:				; 68020/68030: CI (bit 3) + CD (bit 11)
+	dc.w	$4e7a,$0002		; movec cacr,d0
+	or.w	#$0808,d0
+	dc.w	$4e7b,$0002		; movec d0,cacr
+	rte
+flush_040:
+	dc.w	$f4f8			; cpusha bc
+	rte
 
 motor_off:
 	move.w	#TD_MOTOR,IO_COMMAND(a5)

@@ -141,6 +141,7 @@ older captures without it do not explicitly declare an instruction policy.
 - It is used both before and after the OS takeover; it never uses serial.device.
 - Host side (Amiberry): the config sets `serial_port=TCP://127.0.0.1:<port>/wait`. Amiberry listens there and the runner connects as a client.
 - The ROM may print to the serial port before the first record (the AROS ROM prints `ROMInfo: …` lines, CR LF terminated). The host ignores everything before the first line that starts with `{"v":`.
+- Comment lines: the runtime also writes human-readable lines starting with `# ` on serial only (never the mailbox, never counted in `done.records`), for whoever watches a real machine's or FPGA core's serial port: `# FAIL <mod>.<case>: <why>` after every failing `case` record, and `# FATAL <mod>...: <why>` before a quarantine (`amt_abort_fatal`, `amt_fatal_no_try`). Printable ASCII only, one line, at most ~200 characters per part. Hosts ignore lines that start with `# `; the JSON record stays the authority.
 
 ---------------------------------------------------------------------------
 ## 7. Memory mailbox
@@ -168,7 +169,7 @@ The host finds it by scanning chip RAM (from 0, in 16-byte steps) for the magic.
 `void amt_probe(struct amt_probe *p);` runs **with exec alive, before takeover** (it may use exec structures; for CPU tests it installs and restores its own trap vectors under Disable()). The header is `disk/probe/probe.h`. The JSON object in `hello.probe` mirrors the struct:
 - `cpu`: "68000|68010|68EC020|68020|68EC030|68030|68EC040|68LC040|68040|68EC060|68LC060|68060"
 - `cpu_rev`: number or -1
-- `fpu`: "none|68881|68882|68040|68060", `fpu_frame` (FSAVE idle frame size/version), `mmu` (0/1), `addr24` (0/1)
+- `fpu`: "none|68881|68882|68040|68060", `fpu_frame` (FSAVE idle frame size/version), `mmu` (0/1), `addr24` (0/1), `addr24_known` (0/1: 0 = addr24 only assumed)
 - `vbr`, `cacr` (hex)
 - `how`: an array of short strings saying which tests decided each value
 - `agnus_id`, `denise_id` (hex), `chipset`: "OCS|ECS|AGA" plus `ecs_agnus`/`ecs_denise` (0/1), `video`: "PAL|NTSC"
@@ -215,6 +216,9 @@ The API is in `disk/rt/mod.h`, which is authoritative; read it. In short:
   environment must be reset. It deliberately does not emit a normal `done` record or free buffers
   that an unquiesced DMA engine might still access. If the fatal report itself traps, the outer bare
   recovery stops the machine at SR=$2700 instead (sticky quarantine): it does not try again.
+  `amt_abort()` with no `amt_try` active (a runtime bug, `bare.s`) calls `amt_fatal_no_try(code)`: it
+  writes a `# FATAL` serial comment and a `fatal_no_try` fail record (`got.abort_code`, plus `vector`,
+  `sr`, `pc` for an unexpected exception), marks the mailbox aborted and spins at SR=$2700.
 
 ### Rules for every module
 1. **Expectations come from the architecture,** i.e. the M68000 PRM, the 68020/030/040/060 user manuals, the 6888x manual and the Amiga Hardware Reference Manual, **for the detected variant**. Never encode "what Amiberry does".
@@ -257,7 +261,7 @@ The API is in `disk/rt/mod.h`, which is authoritative; read it. In short:
 | 7 | cia | BARE | CIA-A/B timers, TOD, ICR, SDR |
 | 8 | blitter | BARE | minterms, shifts, masks, fill, line, sizes |
 | 9 | fpu | BARE | directed FPU edge cases per FPU type |
-| 10 | timing | BARE | throughput fingerprint (perf records) |
+| 10 | timing | BARE | beam/E-clock sanity, CPU loop results (throughput: bench disk) |
 | 11 | devio | OS | trackdisk/scsi.device I/O on signed test-owned media (disk: exp) |
 | 12 | display | BARE | Denise/Lisa: modes, palettes, playfields, sprites, collisions, AGA (disk: core) |
 | 13 | copper | BARE | copper instruction set, timing, danger bit, register classes (disk: core) |
@@ -281,7 +285,8 @@ The API is in `disk/rt/mod.h`, which is authoritative; read it. In short:
 | 42 | bench_system | BARE | bench disk only: frame and thread tiers |
 | 43 | bench_mmu | BARE | bench disk only: MMU tier |
 | 44 | bench_score | BARE | bench disk only: the score record and screen |
-| 45-63 | reserved | | later |
+| 45 | bench_chip | BARE | bench disk only: chipset tier (blitter, bitplane/copper contention, interrupts) |
+| 46-63 | reserved | | later |
 
 Disk groups are in disk/Makefile (`DISK_SET_*`). `make check-groups` fails if a module is in no group or in two.
 
@@ -479,7 +484,8 @@ recomputes `blob_crc32`. All fields are big-endian:
 | 16 | 120 × 8 | entries: u16 block id, u16 flags (bit 0 = skip), u32 count (0 = size it) |
 
 - Block ids are unique on the disk and never reused: micro 1-63, kernels 64-191 (per set,
-  see docs/BENCH.md), system 200-255.
+  see docs/BENCH.md), system/chip/MMU 200-255. Retired ids (11, 22, 24, 48, 210, docs/BENCH.md)
+  stay unused.
 - A plan that fails its magic, version or CRC check is ignored (the `env` record says
   `plan: -1`), and every block sizes itself.
 - A plan says nothing about what code a block runs. The runner does not check that before it

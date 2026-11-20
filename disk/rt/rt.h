@@ -98,9 +98,13 @@ extern struct amt_params amt_par;
 ULONG crc32_update(ULONG crc, const void *buf, ULONG len);   /* crc starts at 0 */
 
 /* --- out.c: serial (section 6) --- */
-void ser_init(int pal, ULONG baud);
+void ser_init(ULONG baud);   /* SERPER from amt_cck_hz() (amt_probe_result.pal) */
+UWORD ser_per(void);         /* the SERPER value ser_init wrote (0 = serial off) */
 void ser_putc(int c);
 void ser_write(const char *s, ULONG len);
+/* "# " a b c d ": " why newline, serial only (NULL parts are left out;
+ * why NULL: no ": " either) */
+void ser_comment(const char *a, const char *b, const char *c, const char *d, const char *why);
 
 /* --- out.c: mailbox (section 7) --- */
 #define MBOX_STATE_INIT     0
@@ -147,6 +151,8 @@ void json_arr(const char *key);                 /* opens [ */
 void json_arr_end(void);
 void json_end(void);
 ULONG json_records(void);                        /* records sent so far */
+const char *json_last_why(void);                 /* top-level "why" of the
+                                                    current/last record, "" if none */
 
 void amt_log(const char *msg);
 

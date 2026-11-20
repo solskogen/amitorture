@@ -257,8 +257,9 @@ long amt_hot_checked(ULONG (*fn)(ULONG iter), ULONG reps, ULONG *first, ULONG *b
     return -1;
 }
 
-/* colour clocks per line: 227 (PAL/NTSC short) or 228 (NTSC long line);
- * use 227.5 averaged as 455/2. Lines per frame: PAL 312/313, NTSC 262/263. */
+/* Colour clocks per line: 227 on PAL, alternately 227 and 228 on NTSC
+ * (227.5 on average). Lines per frame: PAL 313 (non-interlaced, LOF set),
+ * NTSC 263. */
 ULONG amt_cck_hz(void)
 {
     return amt_probe_result.pal ? 3546895UL : 3579545UL;
@@ -267,6 +268,16 @@ ULONG amt_cck_hz(void)
 ULONG amt_eclk_hz(void)
 {
     return amt_probe_result.pal ? 709379UL : 715909UL;
+}
+
+ULONG amt_lines_cck(ULONG lines)
+{
+    return lines * 227UL + (amt_probe_result.pal ? 0 : lines >> 1);
+}
+
+ULONG amt_frame_cck(void)
+{
+    return amt_lines_cck(amt_probe_result.pal ? 313 : 263);
 }
 
 ULONG amt_ticks(void)
@@ -288,9 +299,10 @@ ULONG amt_ticks(void)
      * the frame yet (interrupts masked, or not serviced yet): count it. */
     if ((req & 0x0020) && v < lines / 2)
         f1++;
-    /* colour clocks: frame * lines * 227 + v * 227 + h (approximate across
-     * short/long frames); never goes backwards */
-    t = (f1 * lines + v) * 227UL + h;
+    /* colour clocks: (frame * lines + v) lines of 227 (PAL) or 227.5 (NTSC)
+     * colour clocks, plus h (approximate across short/long frames); never
+     * goes backwards */
+    t = amt_lines_cck(f1 * lines + v) + h;
     if ((LONG)(t - last) < 0)
         t = last;
     return last = t;
@@ -324,10 +336,18 @@ static void count(int st)
     }
 }
 
+static int case_st;
+static char case_name[64];
+
 void amt_case_open(const char *case_id, int st)
 {
+    ULONG i;
     if (st < 0 || st > 3)
         st = AMT_ST_FAIL;
+    case_st = st;
+    for (i = 0; case_id && case_id[i] && i < sizeof case_name - 1; i++)
+        case_name[i] = case_id[i];
+    case_name[i] = 0;
     count(st);
     case_no++;
     mbox_set_pos(cur ? cur->id : 0, case_no);
@@ -340,6 +360,10 @@ void amt_case_open(const char *case_id, int st)
 void amt_case_close(void)
 {
     json_end();
+    /* human-readable line for a serial console: "# FAIL mod.case: why" */
+    if (case_st == AMT_ST_FAIL)
+        ser_comment("FAIL ", cur ? cur->name : "?", ".", case_name,
+                    json_last_why()[0] ? json_last_why() : "(no reason given)");
     if (bare_active)
         amt_watchdog_kick();
     screen_count(cur, m_pass, m_fail, m_skip, m_untestable, amt_n_pass + m_pass, amt_n_fail + m_fail,
@@ -386,11 +410,14 @@ ULONG amt_secs(ULONG s)
     return s * (amt_probe_result.pal ? 50UL : 60UL);
 }
 
-/* frame counting that works in both phases: count VPOS wraps from the beam */
-static ULONG beam_frames_wait_step(ULONG *lastv)
+/* Frame counting that works in both phases: count VPOS wraps from the beam.
+ * amt_beam() never mixes V8-V10 of one line with V0-V7 of another, and a
+ * wrap is only counted when V falls by more than 100 lines, so a jittery or
+ * slightly torn read can not count as a frame. */
+static ULONG beam_wrapped(ULONG *lastv)
 {
-    ULONG v = ((ULONG)(CREG(R_VPOSR) & 7) << 8) | (CREG(R_VHPOSR) >> 8);
-    ULONG wrapped = v < *lastv;
+    ULONG v = amt_beam() >> 8;
+    ULONG wrapped = v + 100 < *lastv;
     *lastv = v;
     return wrapped;
 }
@@ -418,7 +445,7 @@ int amt_request3(const char *what, const char *tag, const char *args_json, ULONG
          * give up at once instead of waiting out the timeout */
         if (amt_mbox->host_ack == (id | 0x80000000UL))
             return -1;
-        frames += beam_frames_wait_step(&lastv);
+        frames += beam_wrapped(&lastv);
         if (frames > timeout_frames)
             return 0;
         if (bare_active)
@@ -498,6 +525,39 @@ void amt_abort_fatal(int code)
                    "quarantined without OS resumption; reset this test machine");
     json_int("code", code);
     amt_case_close();
+    ser_comment("FATAL ", cur ? cur->name : "runtime", "", "",
+                "cleanup could not quiesce the hardware; quarantined, reset the machine");
+    mbox_set_state(MBOX_STATE_ABORTED);
+    for (;;)
+        ;
+}
+
+/* amt_abort() with no amt_try active (bare.s): a runtime bug. Report it
+ * on both transports, then quarantine: nothing is left to unwind to. Runs
+ * at SR=$2700, so the watchdog can not fire. */
+void amt_fatal_no_try(int code) __attribute__((noreturn));
+void amt_fatal_no_try(int code)
+{
+    char num[12];
+    amt_wd_armed = 0;
+    amt_n_aborted++;
+    amt_utoa(num, (ULONG)code);
+    ser_comment("FATAL ", cur ? cur->name : "runtime", ": amt_abort ", num,
+                "no amt_try active; machine halted");
+    amt_case_open("fatal_no_try", AMT_ST_FAIL);
+    json_obj("expect");
+    json_str("abort", "inside amt_try");
+    json_obj_end();
+    json_obj("got");
+    json_int("abort_code", code);
+    if (code == AMT_ABORT_UNEXPECTED) {
+        json_int("vector", amt_last_exc.vector);
+        json_hexn("sr", amt_last_exc.sr, 4);
+        json_hex("pc", amt_last_exc.pc);
+    }
+    json_obj_end();
+    json_str("why", "amt_abort with no amt_try active (runtime bug); machine halted");
+    json_end();
     mbox_set_state(MBOX_STATE_ABORTED);
     for (;;)
         ;
@@ -591,7 +651,7 @@ static void cpu_save(struct amt_cpustate *s)
         amt_cs_fpu_save(s);
 }
 
-static void cpu_restore(const struct amt_cpustate *s)
+static void cpu_restore(const struct amt_cpustate *s, int fpu)
 {
     int f = cpu_fam();
     if (f >= 40)
@@ -608,21 +668,33 @@ static void cpu_restore(const struct amt_cpustate *s)
         if (f >= 40)
             amt_cs_cpusha();
     }
-    if (has_fpu())
+    if (fpu)
         amt_cs_fpu_restore(s);
 }
 
-/* the fixed state every bare module starts from */
-static void cpu_module_policy(void)
+/* The fixed state every bare module starts from. needs_fpu: the module is
+ * AMT_MF_NEEDS_FPU, so an FPU the OS left disabled (68060 PCR.DFP = 1,
+ * probe fpu_dis) is enabled for it; the next call (fpu_on 0) puts the OS's
+ * PCR back. */
+static void cpu_policy(int needs_fpu)
 {
     struct amt_cpustate s = os_cpu;     /* MMU and PCR as the OS had them */
-    int f = cpu_fam();
+    int f = cpu_fam(), fpu = has_fpu();
+    if (needs_fpu && AMT_FPU() && f == 60 && amt_probe_result.fpu_dis) {
+        s.pcr &= ~2UL;                  /* PCR.DFP = 0 */
+        fpu = 1;
+    }
     if (f >= 40)
         s.cacr = 0x8000UL;              /* 040/060: IC on, DC off */
     else if (f >= 20)
         s.cacr = 0x0001UL;              /* 020/030: I-cache on, data cache off */
     s.fpcr = s.fpsr = s.fpiar = 0;
-    cpu_restore(&s);
+    cpu_restore(&s, fpu);
+}
+
+static void cpu_module_policy(void)
+{
+    cpu_policy(0);
 }
 
 static void cia_quiet(volatile UBYTE *c)
@@ -698,14 +770,18 @@ static void run_module(const struct amt_module *m)
     if (oom_why) {
         amt_case("module", AMT_ST_SKIP, oom_why);
     } else if ((m->flags & AMT_MF_NEEDS_FPU) && !AMT_FPU()) {
+        /* AMT_FPU() and not has_fpu(): an FPU disabled by the OS (68060
+         * PCR.DFP) is still tested; cpu_policy() enables it */
         amt_case("module", AMT_ST_SKIP, "no FPU in this machine");
+    } else if ((m->flags & AMT_MF_NEEDS_FPU) && !has_fpu() && m->phase == AMT_PH_OS) {
+        amt_case("module", AMT_ST_SKIP, "FPU disabled by the OS (68060 PCR.DFP) in the OS phase");
     } else if (m->phase == AMT_PH_OS) {
         m->run();
     } else if (refuse_why) {
         amt_case("module", AMT_ST_SKIP, refuse_why);
     } else {
         bare_reset_env();
-        cpu_module_policy();
+        cpu_policy(m->flags & AMT_MF_NEEDS_FPU);
         chip_module_policy();
         screen_bare(!(m->flags & AMT_MF_OWNS_DISPLAY));
         wd_limit = (amt_probe_result.pal ? 50UL : 60UL) * 120UL;
@@ -724,7 +800,7 @@ static void run_module(const struct amt_module *m)
                 ;
         }
         bare_reset_env();
-        cpu_module_policy();               /* also after an abort: caches/MMU/FPU */
+        cpu_module_policy();              /* also after an abort: caches/MMU/FPU */
         chip_module_policy();               /* disk DMA, FMODE, copper, CIAs quiet */
         screen_bare(1);
         if (code)
@@ -763,7 +839,7 @@ static void bare_super(void)
     amt_set_sr(0x2700);
     CREG(R_INTENA) = 0x7fff;
     CREG(R_INTREQ) = 0x0070;          /* drop our level-3 leftovers */
-    cpu_restore(&os_cpu);
+    cpu_restore(&os_cpu, has_fpu());
     chip_module_policy();
     cia_restore(&os_ciab);
     cia_restore(&os_ciaa);
@@ -848,13 +924,9 @@ static const char *hw_busy(int cli)
 /* frames by beam wraps (no VBL counter of ours runs in the OS phase) */
 static void beam_frames(ULONG n)
 {
-    UWORD last = 0, v;
-    while (n) {
-        v = (UWORD)(((CREG(R_VPOSR) & 7) << 8) | (CREG(R_VHPOSR) >> 8));
-        if (v < last)
-            n--;
-        last = v;
-    }
+    ULONG last = amt_beam() >> 8;
+    while (n)
+        n -= beam_wrapped(&last);
 }
 
 static void dos_delay(struct Library *dos, ULONG ticks)

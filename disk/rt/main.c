@@ -73,11 +73,13 @@ int amt_main(void)
 {
     load_params();
     mbox_init();
-    ser_init(SysBase->VBlankFrequency != 60, amt_par.baud);
+    /* until the probe has read the Agnus: exec's idea of the video mode */
+    probe.pal = SysBase->VBlankFrequency != 60;
+    ser_init(amt_par.baud);
 
     amt_probe_with_claims(&probe, amt_par.end_action == AMT_END_HALT ||
                                   amt_par.end_action == AMT_END_REBOOT);
-    ser_init(probe.pal, amt_par.baud);   /* now with the probed clock */
+    ser_init(amt_par.baud);   /* now with the probed clock */
 
     emit_hello();
     mbox_set_state(MBOX_STATE_RUNNING);

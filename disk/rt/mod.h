@@ -193,6 +193,10 @@ static inline ULONG amt_beam(void)
 ULONG amt_ticks(void);           /* colour clocks from the beam counter + VBL
                                     count (amt_cck_hz() per second) */
 ULONG amt_cck_hz(void);          /* colour clock: 3546895 PAL, 3579545 NTSC */
+ULONG amt_lines_cck(ULONG lines);/* colour clocks in `lines` beam lines: 227 per
+                                    line PAL, 227.5 on average NTSC */
+ULONG amt_frame_cck(void);       /* colour clocks per frame: PAL 313 x 227,
+                                    NTSC 263 x 227.5 */
 ULONG amt_eclk_hz(void);         /* CIA E-clock = cck/5: 709379 PAL, 715909 NTSC */
 #define amt_eclock_hz amt_cck_hz /* old name (it always meant the colour clock) */
 void  amt_watchdog_kick(void);   /* restart the module's watchdog period */
