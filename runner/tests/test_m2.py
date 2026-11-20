@@ -340,6 +340,13 @@ class Parity(unittest.TestCase):
         self.assertEqual({d["option"] for d in it["differing_options"]}, {"cachesize", "comp_nf"})
         self.assertEqual(it["ref"]["ctx"], {"sr": "2000"})
 
+    def test_engine_dep_case_not_compared(self):
+        ref = fake_result("m", [{"case": "dma", "st": "pass", "engine_dep": 1}])
+        twin = fake_result("m-jit", [{"case": "dma", "st": "untestable", "engine_dep": 1, "why": "x"}],
+                           twin_of="m", twin_kind="jit", options=self.opts_jit)
+        items, _ = parity.check_all([ref, twin])
+        self.assertEqual(items, [])
+
     def test_missing_case_is_failure(self):
         twin = fake_result("m-jit", [{"case": "add", "st": "pass", "ctx": {"sr": "2000"}}], twin_of="m",
                            twin_kind="jit", options=self.opts_jit)

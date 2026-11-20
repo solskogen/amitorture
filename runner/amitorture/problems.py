@@ -283,7 +283,7 @@ def write_pack(outdir, problem, item, entry, *, rom, ext_rom, adf_src, params, m
         info["files"].append("case.adf")
     except Exception as e:  # keep the rest of the pack
         info["adf_error"] = str(e)
-    threaded = entry["options"].get("cpu_threaded") == "true"
+    threaded = matrix.is_threaded(entry["options"])
     gdb_opts = {} if threaded else {"debugging_features": "gdbserver", "gdb_port": str(GDB_PORT)}
     rom_path = rom.get("path") if rom else (entry["rom"].get("builtin") or "")
     _, text = amiberry_cfg.build(entry, rom_path=rom_path, floppy=adf, serial_port=None,

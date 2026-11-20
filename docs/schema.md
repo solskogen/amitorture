@@ -28,9 +28,13 @@ One record per line:
   (`"pc":"0001a2c4"`), zero-padded to their natural width.
 - The same lines go to both transports, in the same order: serial (Paula
   UART) and the chip-RAM mailbox ring. The runner merges them by
-  `(boot, seq)`. `seq` restarting at 0 means a new boot.
+  `(boot, seq)`. `seq` restarting at 0 (or going back, e.g. after a
+  corrupted hello) means a new boot.
 - Text that is not a record (e.g. the AROS ROM's `ROMInfo: ...` lines on
   serial before the disk boots) is counted as noise and otherwise ignored.
+  Bytes before a record on its line (NULs) are counted as junk, not noise;
+  lines starting with `# ` are human comments (serial only) and are ignored
+  (docs/RUNNER.md "Serial stream rules").
 
 ### 1.2 `hello`: first record after the probe
 
@@ -72,6 +76,7 @@ finding (the runner reports it as `probe_mismatch`).
 | `fpu_frame` | hex | first long of the FSAVE idle frame (68881/2: version<<24 \| size<<16), 0 without FPU |
 | `mmu` | 0/1 | an MMU answered (PMOVE / MOVEC TC/URP worked) |
 | `addr24` | 0/1 | 24-bit address bus (68000/010/EC020; for others decided from memory above 16 MB; `how` says when it was only assumed) |
+| `addr24_known` | 0/1 | 1 when `addr24` was decided by the CPU model or an alias test; 0 when it was only assumed (68020 with nothing above 16 MB to alias against) |
 | `vbr` | hex | vector base register (0 on 68000) |
 | `cacr` | hex | cache control register as found (0 on 68000/010) |
 | `how` | [string] | short notes of the tests that decided each value, e.g. `"movec-cacr:ok cacr=00000001"`, `"addr24:no-highmem assume 24"`, `"fsave:41000000"`, `"agnus:23 alice pal"` |
@@ -90,7 +95,7 @@ Example (abbreviated):
 
 ```json
 {"v":1,"seq":0,"t":"hello","build":"nogit 2026-11-03","mode":0,"seed":1,"exec":"40.10","cpu":"68040","fpu":"68040","mmu":1,
- "probe":{"cpu":"68040","cpu_rev":-1,"fpu":"68040","fpu_frame":"41000000","mmu":1,"addr24":0,"vbr":"00000000","cacr":"00008000",
+ "probe":{"cpu":"68040","cpu_rev":-1,"fpu":"68040","fpu_frame":"41000000","mmu":1,"addr24":0,"addr24_known":1,"vbr":"00000000","cacr":"00008000",
   "how":["attn:804f","movec-vbr:ok vbr=00000000","movec-cacr:ok cacr=00008000","fsave:41000000","tc:p-rw urp:rw","addr24:32-bit cpu","agnus:23 alice pal","denise:fcf8 lisa"],
   "agnus_id":"0023","denise_id":"fcf8","chipset":"AGA","ecs_agnus":1,"ecs_denise":1,"video":"PAL","exec_attn":"804f","kick":"40.68","rom_base":"00f80000",
   "mem":[{"name":"expansion memory","lower":"08000020","upper":"08800000","attr":"0505","free":8313192},
@@ -199,12 +204,12 @@ are guest colour clocks (`tick_hz` per second).
 | `ev` | Fields |
 |---|---|
 | `env` | `tick_hz`; `res_ticks` (the smallest clock step seen); `min_ticks` (the shortest repetition without a host); `host` (0/1); `tod` (1: CIA-B's TOD counts lines, so lost frames are put back, BENCH.md "Lost frames"); `tod_lines` and `tod_beam` (if `tod` is 0: the TOD and beam line counts of the last check, -1 = none); `plan` (entries, -1 = invalid plan); `plan_exclusive` (if set) |
-| `begin` | `blk`, `tier` (`micro`/`kernel`/`frame`/`thread`/`mmu`), `id` (plan id), `unit`, `per` (units per count), `mem` (`chip`/`slow`/`fast`/`rom`, if any), `kset` (kernels), `plan` (the count from the plan, if any) |
+| `begin` | `blk`, `tier` (`micro`/`kernel`/`frame`/`thread`/`mmu`/`chip`), `id` (plan id), `unit`, `per` (units per count), `mem` (`chip`/`slow`/`fast`/`rom`, if any), `kset` (kernels), `plan` (the count from the plan, if any) |
 | `go` | `id`, `rs`: sent right before a timed run starts (nothing else is sent until its `run` record), so a host stamping serial arrival times has the run's start in this record's newline and its end in the first byte of the `run` record |
 | `run` | `blk`, `ph` (`cold`/`size`/`rep`), `n` (count), `rs` (run sequence 1-255; mailbox position `$10000 \| id<<8 \| rs` during the run), `lost_frames` (frames the clock missed and the harness added back, if any), `timing.t` (with them added) |
-| `end` | `blk`, `st` (`ok`/`unconfirmed`/`fail`), `why` (if not ok), `note` (a remark about the block), `n`, `reps`, `sum` (first checksum) and `sum_last` (if different; neither for blocks reading hardware), `nonlinear` (1 if doubling the count did not double the time it adds, BENCH.md "Linearity"; without a host the block is then `unconfirmed`), `timing{best, second, cold}` |
+| `end` | `blk`, `st` (`ok`/`unconfirmed`/`fail`), `why` (if not ok), `note` (a remark about the block), `n`, `reps`, `sum` (first checksum) and `sum_last` (if different; neither for blocks reading hardware), `nonlinear` (1 if doubling the count did not double the time it adds, BENCH.md "Linearity"; without a host the block is then `unconfirmed`), `nsu` (ns per unit ×10 from the fastest repetition, guest clock; left out if it does not fit 31 bits), `timing{best, second, cold}` |
 | `skip` | `blk`, `tier`, `id`, `why` |
-| `score` | once, at the end (BENCH.md "Score"); each field only if its blocks ran: `dmips_x100`, `dhry_kset`, `mflops_x100`, `chip_mbs_x100`, `fast_mbs_x100`, `rom_mbs_x100`, `mmu_hit_pct_x10` (`mmu_hit` over `mmu_off`, tenths of a percent), `mmu_miss_ns_x10`, `mmu_fault_ns`, `mmu_pflusha_ns_x10`, `mmu_ptest_ns_x10` (PLPAR on a 68060) |
+| `score` | once, at the end (BENCH.md "Score"); each field only if its blocks ran: `dmips_x100`, `dhry_kset`, `fpu_mops_x100` (harmonic mean of the `fadd` and `fmul` micro blocks, million register ops per second; not SysInfo MFLOPS), `chip_mbs_x100`, `fast_mbs_x100`, `rom_mbs_x100`, `mmu_hit_pct_x10` (`mmu_hit` over `mmu_off`, tenths of a percent), `mmu_miss_ns_x10`, `mmu_fault_ns`, `mmu_pflusha_ns_x10`, `mmu_ptest_ns_x10` (PLPAR on a 68060) |
 
 ```
 {"v":1,"seq":9,"t":"bench","ev":"begin","blk":"dhrystone","tier":"kernel","id":64,"unit":"loop","per":1,"mem":"fast","kset":"k000"} *xxxxxxxx
@@ -377,6 +382,9 @@ the same command (a serial capture is just the bytes).
   fingerprint. They record which of several architecturally allowed results happened, e.g. smc without a cache
   flush. Extraction keeps them as `excluded` (`{path: value}`), they stay in the record and in the report, and a
   parity item shows them as `not_compared_fields`.
+- **Engine-dependent cases.** A case record with `"engine_dep": 1` is still fingerprinted, but engine parity
+  skips it: its verdict depends on how fast the CPU runs against the chip bus (`display.dma_cpu_*`), so a JIT
+  twin may legitimately get UNTESTABLE where its interpreter reference gets PASS.
 
 ### 4.1a Disk sets
 

@@ -250,7 +250,10 @@ _ports_lock = threading.Lock()
 
 
 def pick_port(lo=PORT_RANGE[0], hi=PORT_RANGE[1]):
-    """A free port in the range, not handed out before (unless released)."""
+    """A free port in the range that no other launch holds: every port
+    handed out stays reserved until release_port (a port the emulator has
+    not bound yet looks free, so handing it out twice lets parallel jobs
+    collide)."""
     import random
     ports = list(range(lo, hi + 1))
     random.shuffle(ports)
@@ -259,11 +262,8 @@ def pick_port(lo=PORT_RANGE[0], hi=PORT_RANGE[1]):
             if p not in _ports_taken and port_free(p):
                 _ports_taken.add(p)
                 return p
-        # all handed out once: reuse those that are free again
-        for p in ports:
-            if port_free(p):
-                return p
-    raise RunnerError(f"no free TCP port in {lo}-{hi}")
+        held = sum(1 for p in ports if p in _ports_taken)
+    raise RunnerError(f"no free TCP port in {lo}-{hi} ({held} held by other launches of this runner)")
 
 
 def release_port(port):
@@ -312,8 +312,9 @@ class Process:
             text = raw.decode(errors="replace").rstrip("\n")
             with self.lock:
                 self.lines.append((t, text))
-                self.log.write(f"[{t:9.3f}] {text}\n")
-                self.log.flush()
+                if not self.log.closed:
+                    self.log.write(f"[{t:9.3f}] {text}\n")
+                    self.log.flush()
 
     def find(self, pattern):
         rx = re.compile(pattern)
@@ -389,15 +390,17 @@ class Process:
             return False
 
     def _done(self):
-        self.reader.join(timeout=2)
         try:
-            # Anything else left in the process group (helpers) goes too.
+            # Anything else left in the process group (helpers) goes too:
+            # they may hold the output pipe open and keep the reader alive.
             os.killpg(self.proc.pid, signal.SIGKILL)
         except (ProcessLookupError, PermissionError):
             pass
+        self.reader.join(timeout=2)
         with _live_lock:
             _live.discard(self.proc)
-        self.log.close()
+        with self.lock:     # a reader still alive must not write to a closed log
+            self.log.close()
         return self.stop_method
 
 

@@ -95,6 +95,27 @@ class Stamps(unittest.TestCase):
         st = bench.Stamper()
         st.feed(line(0, ev="go", id=1, rs=1) + b"{\"v\":1", 1.0)
         self.assertEqual(st.stamps, {})
+        self.assertEqual(st.unstamped, 1)
+
+    def test_a_go_ending_a_chunk_after_other_lines_is_stamped_at_its_newline(self):
+        st = bench.Stamper()
+        first, go = line(0, ev="begin", blk="x", id=1), line(1, ev="go", id=1, rs=1)
+        st.feed(first + go, 1.0)
+        st.feed(b"{", 1.25)
+        self.assertEqual(st.export(), [[len(first + go) - 1, 1.0, None, 1.25, None]])
+        self.assertEqual(st.unstamped, 0)
+
+    def test_runs_without_a_stamp_are_counted(self):
+        L = Launch()
+        L.begin("add_l", 3)
+        L.stamper.feed(line(L.seq, ev="go", id=3, rs=1) + line(L.seq + 1, ev="run", blk="add_l", ph="rep",
+                                                                n=1024, rs=1, timing={"t": 70000}), 5.0)
+        L.parser.feed(line(L.seq, ev="go", id=3, rs=1) + line(L.seq + 1, ev="run", blk="add_l", ph="rep",
+                                                               n=1024, rs=1, timing={"t": 70000}))
+        L.seq += 2
+        L.pull()
+        L.end(n=1024, reps=1)
+        self.assertEqual(L.h.result()["unstamped_runs"], 1)
 
     def test_a_run_with_another_sequence_falls_back_to_guest_time(self):
         L = Launch()
@@ -108,7 +129,7 @@ class Stamps(unittest.TestCase):
 
     def test_guest_times_from_a_nonlinear_clock_are_not_confirmed(self):
         L = Launch(host=False)
-        L.begin("cia_write", 210)
+        L.begin("cia_read", 10)
         L.run(64, 0, 372768)
         L.run(64, 0, 372768)
         L.end(n=64, reps=2, nonlinear=1)
@@ -116,10 +137,10 @@ class Stamps(unittest.TestCase):
 
     def test_lost_frames_are_kept(self):
         L = Launch(host=False)
-        L.begin("cia_write", 210)
+        L.begin("cia_read", 10)
         for rs in (1, 2):
-            L.send(ev="go", id=210, rs=rs)
-            L.send(ev="run", blk="cia_write", ph="rep", n=64, rs=rs, lost_frames=4, timing={"t": 657000})
+            L.send(ev="go", id=10, rs=rs)
+            L.send(ev="run", blk="cia_read", ph="rep", n=64, rs=rs, lost_frames=4, timing={"t": 657000})
         L.end(n=64, reps=2)
         b = L.h.result()["blocks"][0]
         self.assertEqual((b["lost_frames"], b["guest_t"], b["confirmed"]), (8, [657000, 657000], True))
@@ -189,6 +210,9 @@ class Decide(unittest.TestCase):
         ack, info = h.decide("bench_more", {"id": 3, "n": 4, "reps": 2})
         self.assertFalse(ack)
         self.assertIn("error", info)
+        self.assertEqual(len(h.decisions), 1)
+        self.assertTrue(h.decisions[0]["timeout"])
+        self.assertFalse(h.decisions[0]["ack"])
 
     def test_quiet_while_a_run_is_open(self):
         L = Launch()
@@ -316,6 +340,24 @@ class Diff(unittest.TestCase):
         self.assertEqual(bench.exit_status([{"verdict": "slower"}, {"verdict": "fail"}]), (1, "SLOWER"))
 
 
+class DiffEdges(unittest.TestCase):
+    def test_kernel_sets_of_one_block_are_paired_by_kset(self):
+        a = [blk("dhrystone", 100, 7, kset="k000"), blk("dhrystone", 50, 7, kset="k020")]
+        b = [blk("dhrystone", 50, 7, kset="k020"), blk("dhrystone", 100, 7, kset="k000")]
+        rows = bench.diff([entry("e", a)], [entry("e", b)])
+        self.assertEqual([r["verdict"] for r in rows], ["same", "same"])
+
+    def test_a_non_positive_value_is_incomparable(self):
+        r = bench._verdict(blk("a", 0), blk("a", 100))
+        self.assertEqual(r["verdict"], "incomparable")
+        self.assertEqual(bench._verdict(blk("a", 100), blk("a", -1))["verdict"], "incomparable")
+
+    def test_one_unknown_launch_spread_is_noted(self):
+        r = bench._verdict(blk("a", 100, launch_spread_pct=1.0), blk("a", 120))
+        self.assertEqual(r["verdict"], "slower")
+        self.assertIn("launch spread unknown on B", r["note"])
+
+
 class Launches(unittest.TestCase):
     def test_runner_merges_launches_worst_status(self):
         e = {"id": "bench-x"}
@@ -323,7 +365,7 @@ class Launches(unittest.TestCase):
                "bench": {"blocks": [blk("a", 100)]}}
         two = {"id": "bench-x", "status": "timeout", "reason": "late", "raw": "raw/bench-x/launch2/",
                "duration_s": 12, "bench": {"blocks": [blk("a", 99)]}}
-        r = runner.merge_launches(e, [one, two])
+        r = runner.merge_entry_launches(e, [one, two])
         self.assertEqual((r["status"], r["reason"], r["duration_s"]), ("timeout", "launch 2: late", 22))
         self.assertEqual([x["raw"] for x in r["launches"]], ["raw/bench-x/", "raw/bench-x/launch2/"])
         self.assertEqual(r["bench"]["blocks"][0]["value"], 99)
@@ -446,7 +488,7 @@ class Matrix(unittest.TestCase):
                                  check=True, capture_output=True, text=True).stdout
             sources = set(re.findall(r" -c -o \S+ ((?:modules|bench)/[^/\s]+\.c)", out))
             self.assertEqual(sources, {"bench/harness.c", "bench/micro.c", "bench/kern.c", "bench/system.c",
-                                              "bench/mmu.c", "bench/score.c"})
+                                              "bench/mmu.c", "bench/score.c", "bench/chip.c"})
             self.assertIn(f"{tmp}/amitorture-bench.adf", out)
 
 

@@ -901,7 +901,7 @@ def neighbours(entry):
             continue
         ch = dict(CORES[c])
         ch["cpu_speed"] = "real" if (c == "ce" or (c == "compat" and cpu_model in ("68000", "68010"))) else "max"
-        if o.get("cpu_threaded") == "true":
+        if is_threaded(o):
             ch["cpu_threaded"] = "false"
         var("core", c, ch)
     order = ["68000", "68010"] if cpu_model in ("68000", "68010") else ["68020", "68030", "68040", "68060"]
@@ -928,7 +928,7 @@ def neighbours(entry):
         if not sf and jit_on and o.get("compfpu", "true") == "true":
             ch["compfpu"] = "false"
         var("fpu_softfloat", ch["fpu_softfloat"], ch)
-    if o.get("cpu_threaded") == "true":
+    if is_threaded(o):
         var("cpu_threaded", "false", {"cpu_threaded": "false"})
     elif jit_ok:
         var("cpu_threaded", "true", {"cpu_threaded": "true"})
@@ -938,6 +938,11 @@ def neighbours(entry):
     ntsc = o.get("ntsc") == "true"
     var("video", "PAL" if ntsc else "NTSC", {"ntsc": "false" if ntsc else "true"})
     return out
+
+
+def is_threaded(options):
+    """Whether the options ask for the CPU on its own thread (cpu_threaded, any case)."""
+    return str((options or {}).get("cpu_threaded", "false")).strip().lower() == "true"
 
 
 def summary_line(options):
@@ -951,7 +956,7 @@ def summary_line(options):
     if jit:
         bits.append(f"JIT cachesize={o.get('cachesize')}")
         bits += [f"{k}={o.get(k)}" for k in JIT_DEFAULTS if o.get(k, JIT_DEFAULTS[k]) != JIT_DEFAULTS[k]]
-    if o.get("cpu_threaded") == "true":
+    if is_threaded(o):
         bits.append("cpu_threaded=true")
     if o.get("fpu_softfloat") == "true":
         bits.append("fpu_softfloat=true")

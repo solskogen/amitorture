@@ -258,7 +258,7 @@ def make_options(a, binary):
         module_warp=getattr(a, "module_warp", None),
         ports=parse_ports(getattr(a, "ports", None)),
         show=_check_show(a), bench_baseline=getattr(a, "bench_baseline", None), pin=getattr(a, "pin", None),
-        launches=getattr(a, "launches", None))
+        launches=getattr(a, "launches", None), out=getattr(a, "out", None))
 
 
 def _check_show(a):
@@ -622,6 +622,8 @@ def build_parser():
     p.add_argument("--launches", type=int, metavar="N",
                    help="bench entries: launch each N times (in rounds) and keep each block's fastest launch; "
                         "the launch-to-launch spread is what the diff takes as noise (default 2)")
+    p.add_argument("--out", metavar="DIR",
+                   help="write the results to DIR (must not exist yet) instead of WORKDIR/results/<run id>")
     p.set_defaults(fn=cmd_run)
 
     p = sub.add_parser("bench", help="bench results: `bench diff A B` compares two results dirs, `bench plan R` freezes a run's counts (docs/BENCH.md)")
@@ -739,7 +741,24 @@ def build_parser():
     p.add_argument("--workdir", default=DEFAULT_WORKDIR, metavar="DIR", help=WORKDIR_HELP)
     p.add_argument("--label", help="name of the results dir (default import-<time>)")
     p.set_defaults(fn=cmd_import)
+
+    p = sub.add_parser("decode", help="summarize a raw serial capture (real hardware / FPGA) on stdout; "
+                                      "writes nothing")
+    p.add_argument("capture", help="the serial capture, e.g. a MiSTer serial log")
+    p.set_defaults(fn=cmd_decode)
     return ap
+
+
+def cmd_decode(a):
+    from . import decode
+    try:
+        with open(a.capture, "rb") as f:
+            data = f.read()
+    except OSError as e:
+        raise RunnerError(f"cannot read {a.capture}: {e}")
+    text, problems = decode.decode(data, os.path.basename(a.capture))
+    sys.stdout.write(text)
+    return EXIT_PROBLEMS if problems else EXIT_OK
 
 
 def main(argv=None):

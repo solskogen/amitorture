@@ -5,6 +5,8 @@ so this works over Amiberry IPC READ_MEM, over a dump file, and in unit tests.
 """
 from __future__ import annotations
 
+import base64
+import json
 import struct
 import time
 
@@ -145,7 +147,12 @@ class RingFollower:
         if avail:
             data = read_ring_bytes(self.reader, self.addr, h1.ring_size, self.pos, avail)
         h2 = read_header(self.reader, self.addr)
-        if h2 is not None and h2.total - h2.ring_size > self.pos:
+        if h2 is None:
+            # cannot tell whether the guest overwrote what we read: do not trust it
+            lost += len(data)
+            self.pos += len(data)
+            data = b""
+        elif h2.total - h2.ring_size > self.pos:
             over = min(h2.total - h2.ring_size - self.pos, len(data))
             # The first `over` bytes may be torn: drop them.
             data = data[over:]
@@ -155,6 +162,25 @@ class RingFollower:
         self.lost += lost
         self.header = h2 or h1
         return {"header": self.header, "data": data, "lost": lost, "lost_at": lost_at}
+
+
+def read_jsonl(lines):
+    """Yields the events of a runner's mailbox.jsonl (an iterable of lines,
+    str or bytes) as dicts; data events get ``data`` (decoded bytes).
+    Unparsable lines are skipped."""
+    for line in lines:
+        try:
+            ev = json.loads(line)
+        except ValueError:
+            continue
+        if not isinstance(ev, dict):
+            continue
+        if ev.get("event") == "data":
+            try:
+                ev["data"] = base64.b64decode(ev.get("data_b64") or "")
+            except ValueError:
+                ev["data"] = b""
+        yield ev
 
 
 class Watch:

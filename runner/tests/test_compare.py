@@ -31,6 +31,19 @@ class Verdict(unittest.TestCase):
         self.assertEqual(compare.exit_status([{"verdict": "same"}, {"verdict": "faster"}])[0], 0)
         self.assertEqual(compare.exit_status([{"verdict": "slower"}])[0], 1)
 
+    def test_non_positive_medians_are_incomparable(self):
+        self.assertEqual(compare.verdict([0, 0, 0], [1, 1, 1], True, 2), ("incomparable", None))
+        self.assertEqual(compare.verdict([1, 1, 1], [-1, -1, -1], False, 2), ("incomparable", None))
+
+    def test_a_failed_launch_fails_the_comparison(self):
+        rows = [{"verdict": "same"}]
+        ok = {"returncode": 1, "verdict": "PASS (bench diff)"}
+        self.assertEqual(compare.exit_status(rows, [ok]), (0, "OK"))
+        self.assertEqual(compare.exit_status(rows, [ok, {"returncode": 2, "verdict": "PASS"}]),
+                         (1, "LAUNCH FAILED"))
+        self.assertEqual(compare.exit_status(rows, [{"returncode": 1, "verdict": "PROBLEMS"}]),
+                         (1, "LAUNCH FAILED"))
+
     def test_parse_cpus(self):
         self.assertEqual(compare.parse_cpus("2-4,8"), {2, 3, 4, 8})
         with self.assertRaises(ValueError):

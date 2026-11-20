@@ -93,7 +93,9 @@ static void fpu_exc_run(void) {
         amt_last_exc.frame[4] = e->start >> 16;
         amt_last_exc.frame[5] = e->start + wrong_instruction_pc;
     }
-    at[4] = e->excbit;
+    /* the hardware FPSR: exception byte plus the accrued byte it implies */
+    at[4] = e->excbit | ((e->excbit & 0xe000) ? 0x80 : 0) | ((e->excbit & 0x1000) ? 0x48 : 0) |
+            ((e->excbit & 0x0400) ? 0x10 : 0) | ((e->excbit & 0x0300) ? 0x08 : 0);
     at[5] = e->start;
 }
 static int amt_try(void (*operation)(void)) { ++calls; operation(); return AMT_ABORT_UNEXPECTED; }

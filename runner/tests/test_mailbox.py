@@ -110,6 +110,26 @@ class Follow(unittest.TestCase):
         self.assertTrue(good and good[-1] == 9)
         self.assertNotIn(0, good)
 
+    def test_a_failed_second_header_read_discards_the_data(self):
+        mem = FakeMem(0x20000)
+        g = Guest(mem, 0x4000, 256)
+        f = mailbox.RingFollower(mem, 0x4000)
+        g.write(recs(1)[0])
+        real = mailbox.read_header
+        calls = []
+
+        def flaky(reader, addr):
+            calls.append(addr)
+            return real(reader, addr) if len(calls) == 1 else None
+        mailbox.read_header = flaky
+        try:
+            r = f.poll()
+        finally:
+            mailbox.read_header = real
+        self.assertEqual((r["data"], r["lost"]), (b"", g.total))
+        self.assertEqual(f.pos, g.total)
+        self.assertEqual(f.poll()["data"], b"")      # not read again
+
     def test_guest_writes_during_read(self):
         """Bytes overwritten while we read them must not be trusted."""
         mem = FakeMem(0x20000)
@@ -156,6 +176,16 @@ class Follow(unittest.TestCase):
         self.assertEqual(h.state_name, "halted-after-done")
         self.assertEqual(h.total, len(recs(1)[0]))
         self.assertEqual(h.ring_size, 128)
+
+
+class Jsonl(unittest.TestCase):
+    def test_read_jsonl_decodes_data_and_skips_junk(self):
+        import base64
+        lines = ['{"event":"data","data_b64":"%s"}' % base64.b64encode(b"ab").decode(), "not json", "[1]",
+                 b'{"event":"lost","bytes":3}']
+        evs = list(mailbox.read_jsonl(lines))
+        self.assertEqual([e["event"] for e in evs], ["data", "lost"])
+        self.assertEqual(evs[0]["data"], b"ab")
 
 
 if __name__ == "__main__":

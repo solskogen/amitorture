@@ -905,11 +905,14 @@ def render_markdown(summ, env, results, items, problems, an):
         ser = (f"port {s.get('port')}, connected {'yes' if s.get('connected_after_s') is not None else 'NO'}"
                f"{' (accepted in log)' if s.get('accepted_in_log') else ''}, {s.get('bytes')} B")
         mbs = (f"{'at ' + mb['found_at'] if mb.get('found_at') else 'not found'}, {mb.get('scans')} scan(s) "
-               f"{mb.get('scan_reads')} reads {mb.get('scan_seconds')} s, {mb.get('bytes')} B, lost {mb.get('lost_bytes')}")
+               f"{mb.get('scan_reads')} reads {mb.get('scan_seconds')} s, {mb.get('bytes')} B, lost {mb.get('lost_bytes')}"
+               + "".join(f"; **{p}**" for p in mb.get("problems") or []))
         noise = ((r.get("records") or {}).get("noise") or {}).get("serial") or {}
         if noise.get("lines"):
             first = (noise.get("samples") or [{}])[0].get("text", "")
             ser += f", {noise['lines']} non-record line(s) e.g. {first[:60]!r}"
+        if noise.get("junk_bytes"):
+            ser += f", {noise['junk_bytes']} junk byte(s) before records"
         ex = pr.get("exit_before_stop", {})
         exs = "running" if ex.get("running") else (ex.get("signal") or f"code {ex.get('returncode')}")
         L.append(f"| {rid} | {_cell(ser)} | {_cell(mbs)} | `{_cell(ipc.get('endpoint'))}` {ipc.get('requests', '')} req "
@@ -1250,7 +1253,6 @@ def import_files(paths, outdir, label="import"):
     found in several files (serial + mailbox of one boot) are merged as
     transports; different disks are combined like `run` combines a set.
     """
-    import base64
     streams = {}
     env = {"run_id": label, "imported": [os.path.abspath(p) for p in paths]}
     parsers = []
@@ -1266,15 +1268,12 @@ def import_files(paths, outdir, label="import"):
             src, k = f"import:{p}#{k}", k + 1
         sp = recmod.StreamParser(src)
         if _is_mailbox_jsonl(data):
-            for line in data.splitlines():
-                try:
-                    ev = json.loads(line)
-                except ValueError:
-                    continue
+            from .mailbox import read_jsonl
+            for ev in read_jsonl(data.splitlines()):
                 if ev.get("event") == "data":
                     if ev.get("lost"):
                         sp.lose(ev["lost"], ev.get("lost_at", 0), "ring overrun")
-                    sp.feed(base64.b64decode(ev.get("data_b64", "")))
+                    sp.feed(ev["data"])
                 elif ev.get("event") == "vanished":
                     sp.lose(0, sp.splitter.base, "mailbox vanished")
         else:
@@ -1286,7 +1285,8 @@ def import_files(paths, outdir, label="import"):
     groups = _import_groups(streams)
     if not groups:
         groups = [("capture", {}, [])]
-    noise = {sp.source: {"lines": sp.noise_lines, "samples": sp.noise_samples[:10]} for sp in parsers}
+    noise = {sp.source: {"lines": sp.noise_lines, "junk_bytes": sp.junk_bytes, "samples": sp.noise_samples[:10]}
+             for sp in parsers}
     subs = []
     for index, (name, gstreams, alignment_issues) in enumerate(groups, 1):
         m = recmod.merge(gstreams)

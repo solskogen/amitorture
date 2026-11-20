@@ -199,9 +199,9 @@ Failures that share a cause are grouped into one problem: same module, same narr
 4. **Known bugs** live in `runner/amitorture/xfail.json` (key `<module>.<case>`, globs allowed, optional `configs` glob and `when` option conditions, `ref`/`why` text; a key may hold a list of entries when one case has several independent known causes). Add an entry when a finding is confirmed, so it shows as `xfail` instead of a new problem; the runner reports it as `fixed` once it passes. Local evidence reports belong in `docs/findings/`; this directory is ignored by Git and is not shipped with the repository.
 
 ---------------------------------------------------------------------------
-## 5. Real hardware and FPGA (not tested yet)
+## 5. Running on FPGA / real hardware
 
-The disks are meant to run unchanged on a real Amiga or an FPGA core. **Nobody has run them there yet:** everything in this section comes from the code, not from a run on real hardware.
+The disks run unchanged on a real Amiga or an FPGA core. The bench disk has been run on a MiSTer core (68040, AGA), captured over serial; the test disks have not been run on real hardware yet, so most of this section comes from the code (see "Not verified yet").
 
 ### What you need
 - **The three ADFs** from `disk/build/set/` (section 1), in one of these forms:
@@ -227,6 +227,7 @@ The runtime drives Paula's UART itself (rt/out.c), polled, never through serial.
 stty -F /dev/ttyUSB0 115200 cs8 -parenb -cstopb -crtscts raw -echo
 cat /dev/ttyUSB0 > capture.txt
 ```
+- Leading NUL or junk bytes (a serial line coming up) are counted and ignored, and so are lines starting with `# ` (the guest's human-readable comments, e.g. `# FAIL mod.case: why`).
 - One long capture across all three disks works: each boot is told apart by its `hello` record, and the lines between them (noise around a reset) are ignored.
 - Separate files work too, one per disk, with any names.
 - **Baud rate accuracy:** 115200 comes out within 0.7% (CONTRACT §6), well within what a PC UART accepts. If the capture is still garbled, or `import` finds bad CRCs or no records (a long or poor cable), use a lower rate such as 38400.
@@ -244,6 +245,13 @@ for f in disk/build/set/*.adf; do python3 tools/mkadf.py --in "$f" -o "hw/$(base
 - Always give `-o`: without it mkadf rewrites the input file. It doesn't create the output directory.
 - Keys: `mode`, `seed`, `end_action`, `baud`, `modules`, `floppy` and `flags` (comma-separated names or a number; it replaces all flags at once). Values and flag names: CONTRACT §4.
 - Parameters not given keep the value already in the disk. `python3 tools/mkadf.py --dump FILE` shows them.
+
+### A quick look: `decode`
+From `runner/`:
+```
+python3 -m amitorture decode ~/capture.txt
+```
+It prints the capture's summary on stdout and writes nothing: per boot, the `hello`, pass/fail/skip per module with each failing case and its why, the bench blocks (best time in guest ticks and ns per unit; skipped blocks with their reason), the bench `score` record, and integrity problems (bad CRCs, seq gaps, a missing `done`). Exit status 1 when a case or bench block failed or the capture is damaged or incomplete, else 0. Use `import` (below) for the full report.
 
 ### Making the report
 From `runner/`:
@@ -266,7 +274,7 @@ python3 -m amitorture import ~/core.txt ~/cpu.txt ~/fpu.txt … --label hw-a1200
 These boot from CD (CONTRACT §14): for an emulator run, the runner turns each baked disk into a bootable ISO. It does that inside the launch's temp directory and deletes the ISO afterwards (`--keep` keeps it). The trademark file the boot ROM checks is unpacked from your own extended ROM. No command writes such a disc for a real machine, and no CD has been tried on one, so CD32 and CDTV runs are emulator-only for now.
 
 ### Not verified yet
-- No run on a real Amiga or an FPGA core so far: the takeover and restore, the timing expectations and the serial rate tolerance are untried there.
+- Only the bench disk has run on an FPGA core so far (MiSTer, 68040 AGA, over serial). The test disks have not run on a real Amiga or an FPGA core: the takeover and restore of the test modules and their timing expectations are untried there.
 - No DF1 results disk (CONTRACT §11): serial is the only way to get results off a real machine.
 - The mailbox is only read by the runner, through the emulator's IPC. On real hardware nothing reads it.
 

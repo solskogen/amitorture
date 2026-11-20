@@ -64,6 +64,7 @@ class Options:
         self.pin_cpus = None                    # the resolved list, best first (run())
         self.bench_baseline = kw.get("bench_baseline")  # results dir: its bench counts, then a diff against it
         self.launches = kw.get("launches")      # launches per bench entry (None: bench.LAUNCHES)
+        self.out = kw.get("out")                # --out: the results dir (None: workdir/results/<run id>)
 
 
 def log(opts, msg):
@@ -103,7 +104,7 @@ class EntryRun:
         self._taken = {"serial": 0, "mailbox": 0}
         self.serial_times = []
         self._serial_bytes = 0
-        self._serial_boot = 0
+        self._boot_seen = 0         # highest boot index either transport has delivered
         self.lock = threading.Lock()
         self.wake = threading.Event()   # set when serial brings a request: the watch loop serves it at once
         self.serial_parser = records.StreamParser("serial")
@@ -251,8 +252,10 @@ class EntryRun:
                 for r in new:
                     if not r.crc_ok or r.obj is None:
                         continue
-                    if src == "serial" and r.boot > self._serial_boot:
-                        self._serial_boot = r.boot
+                    # whichever transport sees the new boot first resets the
+                    # request ids (the other may have lost the hello)
+                    if r.boot > self._boot_seen:
+                        self._boot_seen = r.boot
                         self.requests.new_boot()
                     if r.obj.get("t") in ("request", "capture"):
                         self.requests.offer(r.obj, src)
@@ -713,7 +716,7 @@ def disk_warp(opts, entry, info, capture=False, extra=None):
         # (cpu_speed max) keeps normal pacing, as it is used.
         o = entry["options"]
         jit = str(o.get("cachesize", "0")).strip() not in ("", "0")
-        threaded = str(o.get("cpu_threaded", "false")).strip().lower() == "true"
+        threaded = matrix.is_threaded(o)
         enabled = real_cpu_speed(o) and not jit and not threaded and not capture
         reason = ("bench disk, CPU paced to real timing: warp so the host's time measures the emulator"
                   if enabled else "bench disk, JIT/threaded/cpu_speed max: normal pacing")
@@ -1131,6 +1134,7 @@ def _run_disk(opts, ctx, entry, binary=None, extra_options=None, disk=None):
                      "accepted_in_log": bool(m_acc), "bytes": serial.bytes, "closed_by_peer": serial.closed_by_peer,
                      "error": serial.error, "raw": f"{rel}serial.bin"}
     res["mailbox"] = dict(run.mb, raw=f"{rel}mailbox.jsonl")
+    res["mailbox"]["problems"] = mailbox_problems(run.mb)
     res["host_context"] = dict(envinfo.host_brief(), jobs=opts.jobs, loadavg_start=load_start,
                                loadavg_end=_loadavg(), slot_wait_s=res.get("slot_wait_s"))
     if selftest_info is not None:
@@ -1228,7 +1232,7 @@ def entry_disks(ctx, entry):
     return disks
 
 
-def merge_launches(entry, launches):
+def merge_entry_launches(entry, launches):
     """One entry result from several launches of a bench entry (pure;
     unit-tested): per disk, the first launch's result with every block's
     fastest launch (bench.merge_launches), the worst status and the
@@ -1296,7 +1300,7 @@ def merged_rounds(entries, rounds):
     out = []
     for i, e in enumerate(entries):
         ls = [r[i] for r in full if not isinstance(r, dict) or i in r]
-        out.append(ls[0] if len(ls) == 1 else merge_launches(e, ls))
+        out.append(ls[0] if len(ls) == 1 else merge_entry_launches(e, ls))
     return out
 
 
@@ -1523,12 +1527,12 @@ def engine_adjustments(options, eng):
         add("cachesize", "0", f"{got_jit} (JIT active)", [eng["line"]])
     runs_on = eng.get("cpu_thread_runs_on")
     if runs_on is not None:
-        if options.get("cpu_threaded") == "true" and runs_on == "main":
+        if matrix.is_threaded(options) and runs_on == "main":
             add("cpu_threaded", "true", "false (the CPU ran on the main thread)",
                 eng["cpu_thread_refused"] + [eng["cpu_thread_runs_line"]])
         elif options.get("cpu_threaded", "false") != "true" and runs_on == "CPU":
             add("cpu_threaded", "false", "true (the CPU ran on the CPU thread)", [eng["cpu_thread_runs_line"]])
-    elif options.get("cpu_threaded") == "true" and (eng["cpu_thread_refused"] or not eng["cpu_thread_started"]):
+    elif matrix.is_threaded(options) and (eng["cpu_thread_refused"] or not eng["cpu_thread_started"]):
         add("cpu_threaded", "true", "false (threaded CPU not active)",
             eng["cpu_thread_refused"] or ['no \'uae_start_thread "cpu"\' in the log'])
     elif options.get("cpu_threaded", "false") != "true" and eng["cpu_thread_started"]:
@@ -1721,11 +1725,20 @@ def end_boot_warp(run, ipc, res):
     log(run.opts, f"{run.entry['id']}: {w['boot_error']}")
 
 
+def mailbox_problems(mb):
+    """Transport problems of the mailbox (records it lost are judged by the
+    merge: serial may hold them)."""
+    out = []
+    if mb.get("lost_bytes"):
+        out.append(f"mailbox overrun: {mb['lost_bytes']} ring byte(s) lost (overwritten or torn before they were read)")
+    return out
+
+
 def summarize_records(merged, run):
     sp, mp = run.serial_parser, run.mbox_parser
     return records.summarize(merged) | {
-        "noise": {"serial": {"lines": sp.noise_lines, "bytes": sp.noise_bytes, "samples": sp.noise_samples[:10]},
-                  "mailbox": {"lines": mp.noise_lines, "bytes": mp.noise_bytes, "samples": mp.noise_samples[:10]}},
+        "noise": {k: {"lines": p.noise_lines, "bytes": p.noise_bytes, "junk_bytes": p.junk_bytes,
+                      "samples": p.noise_samples[:10]} for k, p in (("serial", sp), ("mailbox", mp))},
         "lost": {"serial": sp.lost, "mailbox": mp.lost},
     }
 
@@ -2082,7 +2095,13 @@ def run(opts):
     report. Returns the results dir and the summary."""
     from . import analysis, report
     run_id = new_run_id()
-    outdir = unique_dir(os.path.join(os.path.abspath(opts.workdir), "results", run_id))
+    if opts.out:
+        outdir = os.path.abspath(opts.out)
+        if os.path.exists(outdir):
+            raise RunnerError(f"--out {opts.out}: already exists")
+        os.makedirs(outdir)
+    else:
+        outdir = unique_dir(os.path.join(os.path.abspath(opts.workdir), "results", run_id))
     run_id = os.path.basename(outdir)
     entries = select_entries(opts)
     nb = sum(1 for e in entries if matrix.is_bench(e))

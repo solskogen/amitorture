@@ -315,8 +315,9 @@ amitorture run --amiberry BIN --kickstarts DIR [--matrix smoke] [--config GLOB .
                [--baseline NAME] [--no-repro] [--amiberry-src DIR] [--xfail FILE]
                [--audio auto|on|off] [--warp off|auto|on] [--plan on|off] [--module-warp auto|off]
                [--boot-warp on|off] [--ports LO-HI] [--end-action halt|reboot|return] [-q] [--show]
-               [--no-disk] [--selftest]
+               [--no-disk] [--selftest] [--out DIR]
 ```
+- `--out DIR`: the results directory (must not exist yet; default `WORKDIR/results/<time>`).
 - `--end-action`: what the disk does after its last module (default `halt`; the runner stops the emulator itself).
 - `--show` (`run`, `baseline`, `check`, `repro` and `tests/smoke_disk.py`): show the emulator windows on your desktop; one window per running emulator, so `--jobs 4` gives four. Your own display settings are used as they are (your `SDL_*` video variables, `DISPLAY`, `WAYLAND_DISPLAY`); audio stays the runner's. HOME and `XDG_RUNTIME_DIR` stay isolated (Amiberry names its IPC socket `$XDG_RUNTIME_DIR/amiberry.sock`, which a test emulator must never take from your own Amiberry), so a relative `WAYLAND_DISPLAY` is passed as the full path of the same socket and an unset `XAUTHORITY` as your `~/.Xauthority`. Run it from a terminal on the desktop. Timing values may differ from a headless run. Implementation: `emulator.display_env`; without it every emulator runs with SDL's offscreen driver.
 - `--no-disk`: no disk in DF0; checks only the launch, IPC, serial and the mailbox scan.
@@ -618,8 +619,11 @@ amitorture compare --amiberry OLD --amiberry NEW [--label old --label new] [--co
 ```
 A/B performance check of two binaries on the bench disk (default `--matrix bench`): `--repeat` runs of
 `run --jobs 1` per binary, alternating the order, all doing the first launch's work. Verdicts, pinning and output
-(`WORKDIR/compare/<time>/COMPARE.md`, `compare.json`): docs/BENCH.md "Comparing two runs". Exit status 1 when any
-block is slower, else 0.
+(`WORKDIR/compare/<time>/COMPARE.md`, `compare.json`; each launch's results under `runs/<repeat>-<label>`):
+docs/BENCH.md "Comparing two runs". A warning when `--repeat` is under 3 (too few repeats to tell noise from a
+change). A block whose median is not a positive time is `incomparable`. Exit status 1 when any block is slower,
+when a launch failed (`LAUNCH FAILED`: exit status other than 0 or 1, or a run verdict other than PASS), or when
+nothing or not every block was measured; else 0.
 
 ### bench diff
 ```
@@ -684,6 +688,29 @@ Builds the same report from serial captures or `mailbox.jsonl` made elsewhere (r
   xfail and the docs/cases lines are applied. Exit status 0 for PASS, else 1.
 - The DF1 results-disk transport is not implemented (CONTRACT §11): serial is the only way off a real machine.
 
+### decode
+```
+amitorture decode CAPTURE
+```
+A quick text summary of one raw serial capture (`decode.py`), on stdout; nothing is written, no results directory.
+Per boot: the hello, pass/fail/skip per module with the failing cases and their why (modules without case records
+count on their `mod` end record), the bench blocks (best guest ticks; ns per unit from the end record's `nsu`, ns per
+unit ×10, else `timing.best` over `n` × `per` at the env record's `tick_hz`), skipped blocks, and the `score`
+record (`_x100`/`_x10` fields scaled). Exit status 1 on a failed case or bench block, bad CRCs, seq gaps, schema
+problems or a missing/inconsistent `done`; else 0. Usage: docs/USAGE.md §5.
+
+### Serial stream rules (both transports)
+- Bytes before a record on its line (NULs while a serial line comes up) are counted as junk (`noise.junk_bytes`)
+  and are not a problem; the record still counts.
+- Lines starting with `# ` are the guest's human comments (`# FAIL mod.case: why`, serial only): ignored, not noise.
+- A new boot starts at a valid record whose seq is 0 or lower than the previous one (so a boot whose hello was
+  corrupted is still told apart); the same nonzero seq again is a duplicate. Either transport seeing a new boot
+  resets the host-request ids.
+- Mailbox ring bytes overwritten or torn before they were read are reported as a transport problem
+  (`mailbox.problems`: "mailbox overrun"); the records themselves are judged by the merge (serial may hold them).
+- Bench runs whose go record and run record arrived in one serial chunk get no host stamp
+  (`bench.unstamped_runs`) and fall back to the guest's time.
+
 ## REPORT.md layout (run)
 
 1. Verdict line and a short paragraph on how to read the report.
@@ -742,5 +769,6 @@ The machine-readable files next to it: docs/schema.md §3.
 | `plan.py` | plans: the launches that run every coverage key once, cost estimates |
 | `pacing.py` | pacing per module: which modules of an entry run warped |
 | `times.py` | host time per disk and module of a results dir (`times`) |
+| `decode.py` | text summary of a raw serial capture (`decode`) |
 
 Unit tests: `cd runner && python3 -m unittest discover -s tests` (no emulator needed).

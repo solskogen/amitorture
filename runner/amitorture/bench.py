@@ -30,7 +30,7 @@ import os
 import re
 import time
 
-HOST_MIN_S = 0.2        # shortest host time of a timed run (micro, kernel, cia_write)
+HOST_MIN_S = 0.2        # shortest host time of a timed run (micro, kernel)
 COST_MIN_S = 0.5        # the same for the cost blocks (host CPU per emulated second)
 CONFIRM = {"ns_per_unit": 0.0025, "cpu_per_emu_s": 0.01}   # two fastest agree within
 MAX_REPS = 12           # BH_MAX_REPS
@@ -78,6 +78,7 @@ class Stamper:
         self.tail = b""
         self.stamps = {}
         self.open = None
+        self.unstamped = 0      # go records whose run started and ended inside one chunk
 
     def feed(self, data, t=None):
         if not data:
@@ -87,13 +88,23 @@ class Stamper:
             st = self.stamps[self.open]
             st[2], st[3] = t, self.cpu()
             self.open = None
+        start = self.pos            # stream offset of data[0]
         self.pos += len(data)
         buf = self.tail + data
-        if buf.endswith(b"\n"):
-            last = buf[buf.rfind(b"\n", 0, len(buf) - 1) + 1:]
-            if _GO.search(last):
-                self.stamps[self.pos - 1] = [t, self.cpu(), None, None]
-                self.open = self.pos - 1
+        base = start - len(self.tail)   # stream offset of buf[0]
+        i = buf.find(b"\n", len(self.tail))
+        while i >= 0:
+            line = buf[buf.rfind(b"\n", 0, i) + 1:i]
+            if _GO.search(line):
+                if i == len(buf) - 1:
+                    # the run started with this chunk's last byte: it ends with the next chunk
+                    self.stamps[base + i] = [t, self.cpu(), None, None]
+                    self.open = base + i
+                else:
+                    # bytes after the go newline came in the same chunk: the
+                    # run's start and end are not apart, so it gets no stamp
+                    self.unstamped += 1
+            i = buf.find(b"\n", i + 1)
         self.tail = buf[-256:]
 
     def export(self):
@@ -217,7 +228,10 @@ class Host:
             if b and (runs if what == "bench_longer" else len(runs) >= reps):
                 break
             if self.clock() > deadline:
-                return False, {"error": f"block {bid}: no run with n={n} to judge"}
+                info = {"error": f"block {bid}: no run with n={n} to judge"}
+                self.decisions.append({"what": what, "id": bid, "n": n, "reps": reps, "ack": False,
+                                       "timeout": True, **info})
+                return False, info
             self.sleep(0.01)
         unit = b["begin"].get("unit")
         m = metric_of(unit)
@@ -314,8 +328,12 @@ class Host:
             if second is not None and best:
                 r["spread_pct"] = round((second - best) / best * 100, 4)
             out.append(r)
-        return {"env": self.env, "basis": "host" if self.stamper is not None else "guest", "pacing": pacing,
-                "blocks": out, "decisions": self.decisions}
+        res = {"env": self.env, "basis": "host" if self.stamper is not None else "guest", "pacing": pacing,
+               "blocks": out, "decisions": self.decisions}
+        if self.stamper is not None:
+            # timed runs without a host time: their blocks fall back to guest ticks
+            res["unstamped_runs"] = sum(1 for b in self.blocks for x in b["runs"] if x.get("host_s") is None)
+        return res
 
     def _flood_shares(self, bid):
         flood = [s for s in self.samples if (s[2] & 0xFFFF0000) == POS_RUN and (s[2] >> 8) & 0xFF == (bid & 0xFF)]
@@ -377,6 +395,7 @@ def from_merged(merged, pacing=None):
 def summary(results):
     """summary.json "bench": per entry (and disk) its bench blocks."""
     from . import cases as casemod
+    from . import matrix
     out = []
 
     def thread_key(r):
@@ -384,7 +403,7 @@ def summary(results):
         return r.get("binary"), json.dumps(r.get("params") or {}, sort_keys=True), options
 
     def threaded(r):
-        return str((r.get("options") or {}).get("cpu_threaded", "false")).lower() == "true"
+        return matrix.is_threaded(r.get("options"))
 
     refs = {thread_key(r): r["id"] for r in results if not threaded(r) and not casemod.cpu_thread_active(r)}
     for r in results:
@@ -407,6 +426,11 @@ def summary(results):
     return out
 
 
+def block_key(x):
+    """A bench block across runs and launches: one plan id may run several kernel sets."""
+    return x.get("blk"), x.get("id"), x.get("kset")
+
+
 def merge_launches(benches):
     """One res["bench"] from the bench results of several launches of the
     same entry and disk: each block keeps its fastest launch (a failed one
@@ -415,7 +439,7 @@ def merge_launches(benches):
     benches = [b for b in benches if b]
     if not benches:
         return None
-    key = lambda x: (x.get("blk"), x.get("id"), x.get("kset"))
+    key = block_key
     order, cands = [], {}
     for b in benches:
         for x in b.get("blocks") or []:
@@ -521,12 +545,30 @@ def _verdict(a, b):
         return dict(row, verdict="skipped", why=b.get("why_no_value") or "no value")
     if a.get("blk") == "flood_recovery":
         return dict(row, verdict="info")
+    if a["value"] <= 0 or b["value"] <= 0:
+        return dict(row, verdict="incomparable", why=f"value {a['value']} vs {b['value']}: not a positive time")
     if a.get("n") != b.get("n"):
         row["note"] = f"count {a.get('n')} vs {b.get('n')}"
-    change = (b["value"] / a["value"] - 1) * 100 if a["value"] else 0.0
+    change = (b["value"] / a["value"] - 1) * 100
     row["change_pct"] = round(change, 3)
-    same, border = TOLERANCE.get(row["metric"], TOLERANCE["ns_per_unit"])
     spreads = (a.get("launch_spread_pct"), b.get("launch_spread_pct"))
+    v, why, note = judge(change, TOLERANCE.get(row["metric"], TOLERANCE["ns_per_unit"]), spreads,
+                         a.get("confirmed") and b.get("confirmed"))
+    if why:
+        row["why"] = why
+    if note:
+        row["note"] = "; ".join(x for x in (row.get("note"), note) if x)
+    return dict(row, verdict=v)
+
+
+def judge(change, tolerance, spreads=(None, None), confirmed=True):
+    """(verdict, why, note) of a change in percent (> 0: B is slower).
+    ``spreads``: the launch-to-launch spread in percent of each side (None:
+    one launch, or unknown); with both known they are the noise allowance."""
+    same, border = tolerance
+    why = note = None
+    if None in spreads and spreads != (None, None):
+        note = "launch spread unknown on " + ("A" if spreads[0] is None else "B")
     if abs(change) <= same:
         v = "same"
     elif abs(change) <= border:
@@ -536,13 +578,13 @@ def _verdict(a, b):
         allow = SPREAD_FACTOR * sum(spreads)
         v = "noisy" if abs(change) <= allow else "slower" if change > 0 else "faster"
         if v == "noisy":
-            row["why"] = f"the launches of the two runs differ by up to {allow:.1f}% between them"
-    elif not (a.get("confirmed") and b.get("confirmed")):
+            why = f"the launches of the two runs differ by up to {allow:.1f}% between them"
+    elif not confirmed:
         v = "noisy"
-        row["why"] = "one launch, unconfirmed repetitions"
+        why = "one launch, unconfirmed repetitions"
     else:
         v = "slower" if change > 0 else "faster"
-    return dict(row, verdict=v)
+    return v, why, note
 
 
 def diff(a_entries, b_entries):
@@ -557,9 +599,16 @@ def diff(a_entries, b_entries):
         pin = None
         if ae is not None and ae.get("pinned_to") != be.get("pinned_to"):
             pin = f"host CPUs {ae.get('pinned_to') or 'any'} vs {be.get('pinned_to') or 'any'}"
-        ab = {x["id"]: x for x in (ae or {}).get("blocks") or []}
-        for b in be.get("blocks") or []:
-            a = ab.pop(b["id"], None) if ae is not None else None
+        ab = {block_key(x): x for x in (ae or {}).get("blocks") or []}
+        bblocks = be.get("blocks") or []
+        pairs = {id(b): ab.pop(block_key(b), None) for b in bblocks}
+        for b in bblocks:
+            if pairs[id(b)] is None:
+                # the same plan block with another kernel set: shown as incomparable
+                k = next((k for k in ab if k[:2] == block_key(b)[:2]), None)
+                pairs[id(b)] = ab.pop(k) if k is not None else None
+        for b in bblocks:
+            a = pairs[id(b)] if ae is not None else None
             r = _verdict(a, b) if ae is not None else dict(_verdict(None, b), why="entry not in the reference")
             if pace and r["verdict"] not in ("fail", "new"):
                 r.update(verdict="incomparable", why=pace)

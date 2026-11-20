@@ -42,7 +42,7 @@ CLASS_FACTOR = {"threaded": 1.44, "jit": 1.07, "slow": 0.88, "fast": 1.0}
 
 def machine_class(entry):
     o = entry["options"]
-    if str(o.get("cpu_threaded")).lower() == "true":
+    if matrix.is_threaded(o):
         return "threaded"
     if str(o.get("cachesize", "0")).strip() not in ("", "0"):
         return "jit"

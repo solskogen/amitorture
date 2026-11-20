@@ -58,6 +58,10 @@ static void screen_count(const struct module *m, ULONG p, ULONG f, ULONG s, ULON
 static void ser_write(const char *s, ULONG n) { assert(fwrite(s, 1, n, stdout) == n); }
 static void mbox_write(const char *s, ULONG n) { (void)s; (void)n; }
 static void mbox_beat(void) {}
+static int case_st;
+static char case_name[64];
+static void ser_comment(const char *a, const char *b, const char *c, const char *d, const char *w)
+{ (void)a; (void)b; (void)c; (void)d; (void)w; }
 static void mbox_set_state(ULONG state) {
     assert(state == MBOX_STATE_ABORTED && fatal_quarantine);
     assert(disabled == 1 && forbidden == 1 && !amt_wd_armed);
@@ -311,6 +315,9 @@ static void json_hexn(const char *s, ULONG v, int width) { (void)s; (void)v; (vo
 static void json_int(const char *s, LONG v) { if (!strcmp(s, "code")) fatal_code = v; }
 static void json_str(const char *s, const char *v) { (void)s; fatal_why = v; }
 static void mbox_set_state(ULONG state) { fatal_state = state; longjmp(fatal_exit, 1); }
+static const struct { const char *name; } *cur;
+static void ser_comment(const char *a, const char *b, const char *c, const char *d, const char *w)
+{ (void)a; (void)b; (void)c; (void)d; (void)w; }
 """
         source += "\n".join(function(mod, name) for name in (
             "amt_on_return", "free_test_memory", "amt_return_cleanup",

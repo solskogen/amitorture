@@ -17,10 +17,13 @@ Verdict per block, with `threshold` percent:
                    than A's worst, or B's worst better than A's best);
   borderline       the medians differ by more than the threshold but the
                    repeats overlap: rerun with more repeats;
-  same             within the threshold.
+  same             within the threshold;
+  incomparable     a median is not a positive value.
+With fewer than 3 repeats a single outlier decides: compare warns.
 Writes COMPARE.md and compare.json (binaries with sha256, disk sha256, host
 and CPU frequency policy, load, affinity, every command). Exit status 1 if
-any block is slower.
+any block is slower or incomplete, or a launch failed (non-zero exit or a
+verdict other than PASS): a broken launch must not read as "no regression".
 """
 from __future__ import annotations
 
@@ -90,7 +93,7 @@ def verdict(a, b, higher, threshold):
     change_pct > 0 means B is better."""
     ma, mb = statistics.median(a), statistics.median(b)
     if ma <= 0 or mb <= 0:
-        return "same", 0.0
+        return "incomparable", None
     change = (mb / ma - 1) * 100 if higher else (ma / mb - 1) * 100
     if abs(change) <= threshold:
         return "same", change
@@ -121,7 +124,7 @@ def analyse(runs, labels, threshold):
             row.update(verdict="incomplete", change_pct=None)
         else:
             v, change = verdict(a, b, s["higher"], threshold)
-            row.update(verdict=v, change_pct=round(change, 2),
+            row.update(verdict=v, change_pct=None if change is None else round(change, 2),
                        median_a=statistics.median(a), median_b=statistics.median(b))
         rows.append(row)
     return rows
@@ -156,7 +159,8 @@ def markdown(manifest, rows):
                  f"{' / '.join(_fmt(x) for x in r['b'])} | {ch} | {v} |")
     L.extend(["", "## Launches", ""])
     for run in manifest["runs"]:
-        L.append(f"- repeat {run['repeat']} `{run['label']}`: {run['verdict']}, {run['seconds']:.0f} s, "
+        bad = " **FAILED** (exit %s)" % run.get("returncode") if failed_launches([run]) else ""
+        L.append(f"- repeat {run['repeat']} `{run['label']}`{bad}: {run['verdict']}, {run['seconds']:.0f} s, "
                  f"load {run['loadavg_start'][0]:.2f} -> {run['loadavg_end'][0]:.2f}: {run['result']}")
     return "\n".join(L) + "\n"
 
@@ -175,6 +179,9 @@ def run(a):
         raise RunnerError("--label: give two different names, one per binary")
     if a.repeat < 1:
         raise RunnerError("--repeat must be at least 1")
+    if a.repeat < 3:
+        print(f"[compare] warning: --repeat {a.repeat}: with fewer than 3 repeats one outlier launch decides "
+              f"the verdicts (use --repeat 3 or more)", file=sys.stderr, flush=True)
     if a.pin:
         try:
             os.sched_setaffinity(0, parse_cpus(a.pin))
@@ -221,18 +228,14 @@ def run(a):
                 cmd += ["--config", c]
             for s in a.set or []:
                 cmd += ["--set", s]
-            results = os.path.join(workdir, "results")
-            before = set(os.listdir(results)) if os.path.isdir(results) else set()
+            res = os.path.join(out, "runs", f"{rep}-{lab}")
+            cmd += ["--out", res]
             log = os.path.join(out, f"{rep}-{lab}.log")
             load0, t0 = os.getloadavg(), time.monotonic()
             if not a.quiet:
                 print(f"[compare] repeat {rep}/{a.repeat}: {lab}", flush=True)
             with open(log, "w", encoding="utf-8") as fh:
                 rc = subprocess.run(cmd, cwd=RUN_DIR, stdout=fh, stderr=subprocess.STDOUT).returncode
-            created = sorted(set(os.listdir(results)) - before) if os.path.isdir(results) else []
-            if len(created) != 1:
-                raise RunnerError(f"expected one new results dir from the run, got {created}: see {log}")
-            res = os.path.join(results, created[0])
             try:
                 with open(os.path.join(res, "summary.json"), encoding="utf-8") as fh:
                     summary = json.load(fh)
@@ -251,7 +254,7 @@ def run(a):
     save(rows)
     with open(os.path.join(out, "COMPARE.md"), "w", encoding="utf-8") as fh:
         fh.write(markdown(manifest, rows))
-    rc, word = exit_status(rows)
+    rc, word = exit_status(rows, manifest["runs"])
     print(f"{word}: {sum(r['verdict'] == 'slower' for r in rows)} slower, "
           f"{sum(r['verdict'] == 'faster' for r in rows)} faster, "
           f"{sum(r['verdict'] == 'borderline' for r in rows)} borderline, "
@@ -260,12 +263,22 @@ def run(a):
     return rc
 
 
-def exit_status(rows):
-    """(exit status, word): 1 when a block is slower, or when the
-    comparison measured nothing or not every block on both sides (a broken
-    run must not read as "no regression")."""
+def failed_launches(launches):
+    """The launches (manifest "runs") whose run verdict is not PASS, or that
+    exited with an error. Exit 1 with a PASS verdict is the launch's own
+    bench diff against the first launch (a measurement, judged here)."""
+    return [r for r in launches or []
+            if r.get("returncode") not in (0, 1) or not str(r.get("verdict") or "").startswith("PASS")]
+
+
+def exit_status(rows, launches=None):
+    """(exit status, word): 1 when a block is slower, when a launch failed,
+    or when the comparison measured nothing or not every block on both
+    sides (a broken run must not read as "no regression")."""
     if any(r["verdict"] == "slower" for r in rows):
         return 1, "SLOWER"
+    if failed_launches(launches):
+        return 1, "LAUNCH FAILED"
     if not rows:
         return 1, "NOTHING MEASURED"
     if any(r["verdict"] == "incomplete" for r in rows):

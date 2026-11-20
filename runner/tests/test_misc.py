@@ -619,5 +619,119 @@ class FinalScreenshot(unittest.TestCase):
         self.assertIn("Failed", res["final_screenshot"]["error"])
 
 
+class RunnerFixes(unittest.TestCase):
+    def test_is_threaded(self):
+        self.assertTrue(matrix.is_threaded({"cpu_threaded": " True "}))
+        self.assertFalse(matrix.is_threaded({"cpu_threaded": "false"}))
+        self.assertFalse(matrix.is_threaded({}))
+        self.assertFalse(matrix.is_threaded(None))
+
+    def test_pick_port_never_hands_out_a_held_port(self):
+        from amitorture import emulator
+        real = emulator.port_free
+        emulator.port_free = lambda p: True
+        try:
+            got = {emulator.pick_port(50000, 50002) for _ in range(3)}
+            self.assertEqual(got, {50000, 50001, 50002})
+            with self.assertRaises(emulator.RunnerError):
+                emulator.pick_port(50000, 50002)
+            emulator.release_port(50001)
+            self.assertEqual(emulator.pick_port(50000, 50002), 50001)
+        finally:
+            emulator.port_free = real
+            for p in (50000, 50001, 50002):
+                emulator.release_port(p)
+
+    def test_mailbox_overrun_is_a_problem(self):
+        from amitorture import runner
+        self.assertEqual(runner.mailbox_problems({"lost_bytes": 0}), [])
+        self.assertIn("mailbox overrun: 40", runner.mailbox_problems({"lost_bytes": 40})[0])
+
+    def test_a_boot_seen_only_on_the_mailbox_resets_the_requests(self):
+        import threading
+        from amitorture import runner
+
+        class Reqs:
+            boots = 0
+            def new_boot(self):
+                self.boots += 1
+            def offer(self, obj, src):
+                pass
+        er = object.__new__(runner.EntryRun)
+        er.bench, er.requests, er.lock = None, Reqs(), threading.Lock()
+        er._taken, er._boot_seen = {"serial": 0, "mailbox": 0}, 0
+        er.serial_parser, er.mbox_parser = records.StreamParser("serial"), records.StreamParser("mailbox")
+        enc = lambda q: records.encode({"v": 1, "seq": q, "t": "log", "msg": "m"})
+        er.serial_parser.feed(enc(0) + enc(1))
+        er.mbox_parser.feed(enc(0) + enc(1) + enc(0))
+        er.harvest()
+        self.assertEqual(er.requests.boots, 1)
+        er.serial_parser.feed(enc(0))       # serial catches up: the same boot, no second reset
+        er.harvest()
+        self.assertEqual(er.requests.boots, 1)
+
+
+class Decode(unittest.TestCase):
+    @staticmethod
+    def enc(seq, t, **kw):
+        return records.encode({"v": 1, "seq": seq, "t": t, **kw})
+
+    def capture(self, fail=True, done=True):
+        e = self.enc
+        recs = [e(0, "hello", build="b", cpu="68040", fpu="68040", mmu=1, probe={"chipset": "AGA"},
+                  mode="all", seed=1, exec=1),
+                e(1, "mod", ev="begin", mod="cpu"),
+                e(2, "case", mod="cpu", case="add", st="pass"),
+                e(3, "case", mod="cpu", case="div", st="fail" if fail else "pass", why="wrong flags",
+                  expect="1", got="2"),
+                e(4, "mod", ev="end", mod="cpu", **{"pass": 1, "fail": 1, "skip": 0, "untestable": 0}),
+                e(5, "bench", ev="env", tick_hz=1000000),
+                e(6, "bench", ev="begin", blk="add_l", tier="micro", id=3, unit="insn", per=2, mem="fast"),
+                e(7, "bench", ev="end", blk="add_l", st="ok", n=1000, reps=2, timing={"best": 4000}),
+                e(8, "bench", ev="begin", blk="fadd", tier="micro", id=4, unit="insn", per=1),
+                e(9, "bench", ev="end", blk="fadd", st="ok", n=10, reps=2, nsu=123, timing={"best": 1}),
+                e(10, "bench", ev="score", dmips_x100=4567, mmu_fault_ns=900)]
+        if done:
+            recs.append(e(11, "done", records=12, **{"pass": 1, "fail": int(fail), "skip": 0, "untestable": 0,
+                                                       "aborted": 0}))
+        return b"\x00" * 50 + recs[0] + b"# FAIL cpu.div: wrong flags\n" + b"".join(recs[1:])
+
+    def test_summary(self):
+        from amitorture import decode
+        text, problems = decode.decode(self.capture())
+        self.assertIn("FAIL cpu.div: wrong flags", text)
+        self.assertIn("50 junk byte(s)", text)
+        self.assertIn("1 comment line(s)", text)
+        # add_l from timing.best: 4000 ticks at 1 MHz over 1000 x 2 insns; fadd from nsu (x10)
+        self.assertRegex(text, r"add_l .* 2000\.0  insn")
+        self.assertRegex(text, r"fadd .* 12\.300  insn")
+        self.assertIn("dmips 45.67", text)
+        self.assertIn("mmu_fault_ns 900", text)
+        self.assertEqual(problems, ["1 failed case(s)"])
+
+    def test_clean_and_broken_off_captures(self):
+        from amitorture import decode
+        self.assertEqual(decode.decode(self.capture(fail=False))[1], [])
+        self.assertIn("no done record", decode.decode(self.capture(fail=False, done=False))[1])
+
+    def test_cli_writes_nothing(self):
+        from amitorture import cli
+        work = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+                            "work", "tmp")
+        os.makedirs(work, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=work) as d:
+            path = os.path.join(d, "cap.txt")
+            with open(path, "wb") as f:
+                f.write(self.capture(fail=False))
+            import contextlib
+            import io
+            out = io.StringIO()
+            with contextlib.redirect_stdout(out):
+                rc = cli.main(["decode", path])
+            self.assertEqual(rc, 0)
+            self.assertIn("OK", out.getvalue())
+            self.assertEqual(os.listdir(d), ["cap.txt"])
+
+
 if __name__ == "__main__":
     unittest.main()

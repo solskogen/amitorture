@@ -123,6 +123,8 @@ def extract_records(recs):
                           "fp": canonical(fp_obj), "rec": fp_obj, "timing": timing, "seq": rec.get("seq")}
             if excl:
                 cases[key]["excluded"] = excl
+            if rec.get("engine_dep"):
+                cases[key]["engine_dependent"] = True
         elif t == "perf":
             name = rec.get("name") or "perf"
             key = f"{rec.get('mod')}.{name}"
@@ -341,7 +343,8 @@ def cpu_thread_active(rec):
     for a in rec.get("adjusted") or []:
         if a.get("option") == "cpu_threaded":
             return str(a.get("resolved", "")).startswith("true")
-    return str((rec.get("options") or {}).get("cpu_threaded", "false")).lower() == "true"
+    from .matrix import is_threaded
+    return is_threaded(rec.get("options"))
 
 
 def host_desc(ctx):

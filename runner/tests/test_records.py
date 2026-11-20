@@ -64,7 +64,25 @@ class ParseLine(unittest.TestCase):
     def test_junk_before_record(self):
         r = records.parse_line(b"\x00\xffgarbage" + rec(2))
         self.assertTrue(r.crc_ok)
-        self.assertTrue(any("junk" in p for p in r.problems))
+        self.assertEqual(r.junk, 9)
+        self.assertEqual(r.problems, [])
+
+    def test_junk_is_counted_not_judged(self):
+        sp = records.StreamParser("serial")
+        sp.feed(b"\x00" * 962 + rec(0, "log") + rec(1))
+        sp.close()
+        self.assertEqual(sp.junk_bytes, 962)
+        self.assertEqual(sp.noise_lines, 0)
+        m = records.merge({"serial": sp.records})
+        self.assertEqual(m.schema_problems, [])
+        self.assertEqual([x["rec"]["seq"] for x in m.records], [0, 1])
+
+    def test_comment_lines_are_ignored(self):
+        sp = records.StreamParser("serial")
+        sp.feed(rec(0) + b"# FAIL mod.case: why\n" + b"\x00# note\n" + rec(1))
+        sp.close()
+        self.assertEqual((sp.comments, sp.noise_lines, sp.noise_bytes), (2, 0, 0))
+        self.assertEqual([r.seq for r in sp.records], [0, 1])
 
     def test_unparsable_json_with_good_crc(self):
         js = b'{"v":1,"seq":'
@@ -220,6 +238,21 @@ class Merge(unittest.TestCase):
         data = rec(0) + rec(1) + rec(0) + rec(1)
         m = records.merge({"serial": self.parse(data, "serial"), "mailbox": self.parse(data, "mailbox")})
         self.assertEqual([(x["boot"], x["seq"]) for x in m.records], [(0, 0), (0, 1), (1, 0), (1, 1)])
+
+
+class Boots(unittest.TestCase):
+    def boots(self, *seqs):
+        sp = records.StreamParser("serial")
+        sp.feed(b"".join(rec(s) for s in seqs))
+        return [r.boot for r in sp.records]
+
+    def test_seq_going_back_is_a_new_boot(self):
+        # the second boot's hello (seq 0) was corrupted: seq 1 after 5 still starts it
+        self.assertEqual(self.boots(0, 1, 2, 5, 1, 2), [0, 0, 0, 0, 1, 1])
+
+    def test_a_repeated_line_is_not_a_new_boot(self):
+        self.assertEqual(self.boots(0, 1, 2, 2, 3), [0, 0, 0, 0, 0])
+        self.assertEqual(self.boots(0, 1, 0, 1), [0, 0, 1, 1])
 
 
 if __name__ == "__main__":

@@ -8,9 +8,10 @@ For every (reference, twin) pair that both ran:
     (cases.strip_timing): a difference is an `engine_mismatch` with both
     values, the differing paths and the options the twins differ in;
   * perf records and timing fields are never compared here, nor are the
-    pseudo cases marked engine_dependent (host.speed_*, cases.py): how fast
-    the host runs an instruction is what tells the JIT and the interpreter
-    apart, so their verdicts may differ by design.
+    cases whose record carries "engine_dep": 1 (cases.py: engine_dependent).
+    Their verdict measures how closely the CPU is tied to the chip bus
+    (display.dma_cpu_*), which is what tells the JIT and the interpreter
+    apart, so it may differ by design.
 Bounded Paula/H-counter sampling that was explicitly inconclusive is listed
 as not comparable, not a match and not parity coverage. RTC wall-clock dates
 are compared through their architectural assertions and relationships; raw

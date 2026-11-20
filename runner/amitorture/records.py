@@ -52,6 +52,7 @@ class Record:
     crc_calc: str | None = None
     problems: list[str] = field(default_factory=list)
     boot: int = 0           # boot index within the source (seq restarts at 0 on reboot)
+    junk: int = 0           # bytes before the record on its line (noise, not a schema problem)
 
     @property
     def seq(self):
@@ -73,12 +74,14 @@ class Record:
             d["crc_given"], d["crc_calc"] = self.crc_given, self.crc_calc
         if self.problems:
             d["problems"] = self.problems
+        if self.junk:
+            d["junk"] = self.junk
         return d
 
 
-def looks_like_record(line: bytes) -> bool:
-    s = line.strip()
-    return s.startswith(b"{") and b" *" in s
+def is_comment(line: bytes) -> bool:
+    """A human comment line ("# FAIL mod.case: why"): not a record, not noise."""
+    return line.lstrip(b"\0").startswith(b"# ")
 
 
 def parse_line(line: bytes, source: str = "?", offset: int = 0) -> Record | None:
@@ -94,9 +97,7 @@ def parse_line(line: bytes, source: str = "?", offset: int = 0) -> Record | None
     if star < start:
         return None
     js, crc = line[start:star], line[star + 2:].strip()
-    rec = Record(source=source, raw=line[start:], offset=offset + start)
-    if start > 0:
-        rec.problems.append(f"{start} junk byte(s) before the record")
+    rec = Record(source=source, raw=line[start:], offset=offset + start, junk=start)
     rec.crc_given = crc.decode("latin-1")
     rec.crc_calc = crc32_hex(js)
     rec.crc_ok = rec.crc_given.lower() == rec.crc_calc and len(crc) == 8
@@ -192,12 +193,17 @@ class StreamParser:
         self.noise_lines = 0
         self.noise_bytes = 0
         self.noise_samples: list[dict] = []
+        self.junk_bytes = 0  # bytes before a record on its line (e.g. NULs from a serial line)
+        self.comments = 0    # "# " lines (human comments)
         self.lost: list[dict] = []  # byte ranges known to be lost (e.g. ring overrun)
         self._boot = 0
         self._last_seq = None
         self._resync = False
 
     def _line(self, off, line):
+        if is_comment(line):
+            self.comments += 1
+            return None
         rec = parse_line(line, self.source, off)
         if self._resync:
             # first line after a known loss (ring overrun): it normally starts
@@ -214,10 +220,13 @@ class StreamParser:
                 if len(self.noise_samples) < self.MAX_NOISE_SAMPLES:
                     self.noise_samples.append({"offset": off, "text": line[:200].decode("latin-1")})
             return None
+        self.junk_bytes += rec.junk
         s = rec.seq
         if s is not None and rec.crc_ok:
-            # seq restarts at 0 per boot: a hello with seq 0 after other records is a new boot.
-            if self._last_seq is not None and s == 0 and self._last_seq >= 0:
+            # seq restarts at 0 per boot and only grows within one: a valid seq
+            # that goes back is a new boot, even when its hello was corrupted
+            # (the same seq again is a duplicate line, unless it is 0).
+            if self._last_seq is not None and (s < self._last_seq or s == 0):
                 self._boot += 1
             self._last_seq = s
         rec.boot = self._boot

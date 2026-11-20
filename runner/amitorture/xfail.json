@@ -222,52 +222,67 @@
  "exceptions.chk_*": {
   "ref": "finding C8",
   "why": "MMU cores stack format $2 instruction address = insn+2 (Exception_mmu030/Exception_mmu)",
-  "configs": "*",
+  "configs": [
+   "*68040*",
+   "*68060*"
+  ],
   "when": {
    "mmu_model": "!0"
   },
   "tbd": false,
-  "seen": "amitorture final smoke 2026-11-03; see docs/findings/amiberry-2026-11-03.md"
+  "seen": "amitorture final smoke 2026-11-03; see docs/findings/amiberry-2026-11-03.md; passes on the 68030 MMU core since Amiberry 8.6.0 (2026-11-20 run), still wrong on 68040 MMU"
  },
  "exceptions.chk2_*": {
   "ref": "finding C8",
   "why": "MMU cores stack format $2 instruction address = insn+2 (Exception_mmu030/Exception_mmu)",
-  "configs": "*",
+  "configs": [
+   "*68040*",
+   "*68060*"
+  ],
   "when": {
    "mmu_model": "!0"
   },
   "tbd": false,
-  "seen": "amitorture final smoke 2026-11-03; see docs/findings/amiberry-2026-11-03.md"
+  "seen": "amitorture final smoke 2026-11-03; see docs/findings/amiberry-2026-11-03.md; passes on the 68030 MMU core since Amiberry 8.6.0 (2026-11-20 run), still wrong on 68040 MMU"
  },
  "exceptions.div*_zero": {
   "ref": "finding C8",
   "why": "MMU cores stack format $2 instruction address = insn+2 (Exception_mmu030/Exception_mmu)",
-  "configs": "*",
+  "configs": [
+   "*68040*",
+   "*68060*"
+  ],
   "when": {
    "mmu_model": "!0"
   },
   "tbd": false,
-  "seen": "amitorture final smoke 2026-11-03; see docs/findings/amiberry-2026-11-03.md"
+  "seen": "amitorture final smoke 2026-11-03; see docs/findings/amiberry-2026-11-03.md; passes on the 68030 MMU core since Amiberry 8.6.0 (2026-11-20 run), still wrong on 68040 MMU"
  },
  "exceptions.trapcc_*": {
   "ref": "finding C8",
   "why": "MMU cores stack format $2 instruction address = insn+2 (Exception_mmu030/Exception_mmu)",
-  "configs": "*",
+  "configs": [
+   "*68040*",
+   "*68060*"
+  ],
   "when": {
    "mmu_model": "!0"
   },
   "tbd": false,
-  "seen": "amitorture final smoke 2026-11-03; see docs/findings/amiberry-2026-11-03.md"
+  "seen": "amitorture final smoke 2026-11-03; see docs/findings/amiberry-2026-11-03.md; passes on the 68030 MMU core since Amiberry 8.6.0 (2026-11-20 run), still wrong on 68040 MMU"
  },
  "exceptions.trapv_v_set": {
   "ref": "finding C8",
   "why": "MMU cores stack format $2 instruction address = insn+2 (Exception_mmu030/Exception_mmu)",
-  "configs": "*",
+  "configs": [
+   "*68040*",
+   "*68060*"
+  ],
   "when": {
    "mmu_model": "!0"
   },
   "tbd": false,
-  "seen": "amitorture final smoke 2026-11-03; see docs/findings/amiberry-2026-11-03.md"
+  "seen": "amitorture final smoke 2026-11-03; see docs/findings/amiberry-2026-11-03.md; passes on the 68030 MMU core since Amiberry 8.6.0 (2026-11-20 run), still wrong on 68040 MMU"
  },
  "dispatch.c020_s2": {
   "ref": "finding J8",
@@ -884,5 +899,13 @@
   "when": {},
   "tbd": false,
   "seen": "cetiming on a1200-68020-ce and a1200-68ec020-ce, Amiberry master 1550f2f1a (2026-11-16); pass with Amiberry branch fix/ce020-timing"
+ },
+ "cia.ciaa_pb[67]_toggle": {
+  "ref": "amiberry cia.cpp (PBON output, ~line 1865)",
+  "why": "PBON + OUTMODE=1 (toggle): PB6/PB7 must invert at every timer underflow (MOS 8520 data sheet, CRA/CRB bits 1-2); Amiberry holds the level set at START instead of toggling",
+  "configs": "*",
+  "when": {},
+  "tbd": false,
+  "seen": "every smoke config, Amiberry master (2026-11-20)"
  }
 }

@@ -20,10 +20,11 @@ it. When windows overlap (coarse times), a line lists every candidate module
 """
 from __future__ import annotations
 
-import base64
 import json
 import os
 import re
+
+from .mailbox import read_jsonl
 
 # (category, regex) in priority order: the first match decides the category
 PATTERNS = [
@@ -114,13 +115,9 @@ def arrivals(rawdir):
     chunks = []
     try:
         with open(mj, encoding="utf-8") as fh:
-            for line in fh:
-                try:
-                    e = json.loads(line)
-                except ValueError:
-                    continue
-                if e.get("event") == "data" and e.get("data_b64"):
-                    chunks.append((e["t"], base64.b64decode(e["data_b64"])))
+            for e in read_jsonl(fh):
+                if e.get("event") == "data" and e["data"]:
+                    chunks.append((e.get("t", 0.0), e["data"]))
     except OSError:
         return [], None, False
     return _records_from_stream(chunks), "mailbox", False

@@ -68,6 +68,9 @@ static void amt_set_sr(unsigned short value)
     exit(0); /* Observe production fallback before its permanent spin. */
 }
 static void bare_reset_env(void) { assert(!fatal_quarantine); resets++; }
+static const struct { const char *name; } *cur;
+static void ser_comment(const char *a, const char *b, const char *c, const char *d, const char *w)
+{ (void)a; (void)b; (void)c; (void)d; (void)w; abort(); }
 """
         source += public_function(MOD, "amt_abort_fatal")
         source += r"""
